@@ -19,6 +19,10 @@ app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ limit: "25mb" }));
 app.use(cookieParser());
 
+// ✅ Agrega esto para verificar que las variables se cargan
+console.log('🔍 Verificando variables de entorno:');
+console.log('EMAIL_USER:', process.env.EMAIL_USER ? '✅ Cargado' : '❌ No cargado');
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Cargado' : '❌ No cargado');
 
 
 
