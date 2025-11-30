@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-gradient-to-br from-white to-cyan-400 text-black min-h-screen;
+}
