@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
-import { TOKEN_SECRET } from '../config.js';
+import { createAccessToken } from '../libs/jwt.js'; // Importa de jwt.js
+
 import nodemailer from 'nodemailer';
 import User from '../models/user.model.js';
 
@@ -21,11 +21,16 @@ export const sendResetPasswordEmail = async (email) => {
             };
         }   
         
-        const resetToken = jwt.sign({ 
-            id: user._id, 
-            email: user.email,
-            type: 'password_reset'
-        }, TOKEN_SECRET, { expiresIn: '1h' });
+  
+
+        const resetToken = await createAccessToken(
+            { 
+                id: user._id, 
+                email: user.email,
+                type: 'password_reset'
+            },
+            '1h'
+        );
         
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = Date.now() + 3600000;
