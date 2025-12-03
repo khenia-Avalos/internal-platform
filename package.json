@@ -1,11 +1,12 @@
 {
   "name": "mern_crud_auth",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MERN Stack CRUD with Authentication",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -r dotenv/config src/index.js",
+    "start": "node -r dotenv/config src/index.js"
   },
   "keywords": [],
   "author": "",

@@ -3,13 +3,33 @@ import User from '../models/user.model.js'
 import bcrypt from 'bcryptjs'
 import {createAccessToken } from '../libs/jwt.js'
 import jwt from 'jsonwebtoken'
-import {TOKEN_SECRET} from '../config.js'
+import {NODE_ENV, TOKEN_SECRET} from '../config.js'
 import { sendResetPasswordEmail } from '../services/authService.js'
 
 
-export const register = async ( req, res)=> {console.log(req.body)
-   
+
+const cookieOptions = {
+    httpOnly: NODE_ENV === "production",
+    secure: NODE_ENV === "production",
+    sameSite: NODE_ENV === "production" ? "none" : "lax",
+     path: "/",
+  };
+
+
+
+
+export const register = async ( req, res)=>{
    const {email, password, username} = req.body
+
+  if(!username || !email || !password){
+        return res.status(400).json(["All fields are required"])
+    }
+    const userFound = await User.findOne({email})
+    if(userFound) return res.status(400).json(["The email already exists"])
+
+
+
+
 try{
 
 const userFound = await User.findOne ({ email });
@@ -26,7 +46,7 @@ const passwordHash = await bcrypt.hash(password, 10)
    const  userSaved = await newUser.save();
    const token = await createAccessToken({id: userSaved._id})
    
-  res.cookie('token', token)
+    res.cookie('token',token,cookieOptions)
 
    res.json(
       {
@@ -51,6 +71,10 @@ const passwordHash = await bcrypt.hash(password, 10)
 export const login = async ( req, res)=> {console.log(req.body)
    
    const {email, password} = req.body
+    if(!email || !password){
+        return res.status(400).json(["Email and password are required"])
+    }
+
 try{
 
 const userFound = await User.findOne({email});
@@ -63,7 +87,8 @@ if (!isMatch) return res.status(400).json({message:"incorrect password"});
 
    const token = await createAccessToken({id: userFound._id})
    
-  res.cookie('token', token);
+       res.cookie('token',token, cookieOptions)
+
 
    res.json(
       {
@@ -84,14 +109,16 @@ if (!isMatch) return res.status(400).json({message:"incorrect password"});
 };
 
 
-export const logout = (req, res) =>{
-  res.cookie('token', "",{
-    expires: new Date(0)
-  });
-  return res.sendStatus(200);
-};
+export const logout = (req,res)=>{
+     
+    res.clearCookie('token',cookieOptions)
+    return res.json({message:"logout"})
+
+}
 
 export const profile = async (req, res) => {
+
+try{
 
 
  const userFound =  await User.findById(req.user.id)
@@ -104,6 +131,9 @@ export const profile = async (req, res) => {
   createdAt: userFound.createdAt,
   updatedAt: userFound.updatedAt,
  });
+ } catch (error){
+    res.status(500).json({message: error.message});
+ }
 };
 
 export const verifyToken = async ( req, res) => {
@@ -111,10 +141,12 @@ export const verifyToken = async ( req, res) => {
 
   if (!token) return res.status(401).json({message: "Unauthorized"});
 
-jwt.verify(token, TOKEN_SECRET, async(err, user)=>{
-  if (err) return res.status(401).json({message: "Unauthorized"});
+  try{
 
-  const userFound = await User.findById(user.id)
+ 
+        const decoded = jwt.verify(token,TOKEN_SECRET)
+
+  const userFound = await User.findById(decoded.id)
   if (!userFound)  return res.status(401).json({ message:"Unauthorized"});
 
 return res.json({
@@ -123,7 +155,10 @@ return res.json({
   email:userFound.email,
 
 });
-});
+  } catch (error){  
+   
+        return res.status(403).json("Invalid Token")
+  }
 
 };
 
@@ -134,28 +169,26 @@ export const forgotPassword = async ( req, res)=> {console.log(req.body)
 
    if (!email) return res.status(400).json({success:false, message:"Email is required"  });
 try{
-
-     console.log("🔍 Llamando a sendResetPasswordEmail...");
         const response = await sendResetPasswordEmail(email);
         
-        console.log("🔍 Respuesta de sendResetPasswordEmail:", response);
 
 
  if (response.success) {
       return res.status(200).json({
         success: true,
-        message: response.message,
-    resetLink: response.resetLink,
-                resetToken: response.resetToken || "NO_TOKEN" // Para debug
+    message: "If an account exists with this email, you will receive password reset instructions."
       });
   }else{
-    return res.status(401).json(response);
+    return res.status(200).json({
+                success: true,
+                message: "If an account exists with this email, you will receive password reset instructions."
+              });
   }
 } catch (error){
-  console.error('Error in user login:', error);
-  return res.status(500).json({
-    success:false,
-    message:"FAILED"
+   console.error('Error in forgot password:', error);
+  return res.status(200).json({
+    success:true,
+     message: "If an account exists with this email, you will receive password reset instructions."
   });
 }
   };
@@ -163,19 +196,45 @@ try{
 
 export const resetPassword = async (req, res) => {
     const {token,password} = req.body
+
+
+    if (!token || !password) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Token and new password are required" 
+        });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Password must be at least 6 characters long" 
+        });
+    }
+
+
+
     try {
         const decoded = jwt.verify(token, TOKEN_SECRET);
-        const user = await User.findById(decoded.id);
 
-        // ✅ CORRECCIÓN: Elimina las líneas con 'response' y agrega:
-        if (!user || user.resetPasswordToken !== token) {
-            return res.status(400).json({success: false, message: "Invalid token"});
+        const user = await User.findOne({//utilizo findOne en lugar de findById para verificar el token y su expiracion
+            _id: decoded.id,
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() } // Token no expirado
+        });
+
+ 
+    if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired reset token"
+            });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
         user.password = passwordHash;
-        user.resetPasswordToken = null;
-        user.resetPasswordExpires = null;
+        user.resetPasswordToken = undefined;//no usar null para evitar problemas con mongoose, lo marca como campo existente
+        user.resetPasswordExpires = undefined;
         await user.save();
 
         return res.status(200).json({success: true, message: "Password reset successfully"});
