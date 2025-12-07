@@ -15,6 +15,10 @@ function LoginPage() {
   const { signin, errors: signinErrors, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPwd, setShowPwd] = useState(false);
+  // Agrega al inicio del componente:
+const [email, setEmail] = useState('');
+
+
   
 
   const onSubmit = handleSubmit((data) => {

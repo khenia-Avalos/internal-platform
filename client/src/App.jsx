@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router";
 import { AuthProvider } from "./context/authContext";
 
 import RegisterPage from "./pages/RegisterPage";
@@ -11,7 +11,7 @@ import HomePage from "./pages/HomePage";
 import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
 import Navbar from "./components/Navbar";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 
 import ForgotPassword from "./pages/ForgotPassword"; 
 import ResetPassword from "./pages/ResetPassword"; 
