@@ -15,10 +15,7 @@ try{
             email
         }
         );
-        console.log(response.data);
-          console.log("✅ Respuesta completa:", response.data);
-        console.log("✅ ¿Tiene resetToken?:", !!response.data.resetToken);
-        console.log("✅ ¿Tiene resetLink?:", !!response.data.resetLink);
+     
 
              // ✅ GUARDA EL TOKEN SI VIENE EN LA RESPUESTA
             if (response.data.resetToken) {
@@ -48,8 +45,7 @@ try{
         <label>Email</label>
         <input type ="email" placeholder="Enter your email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
-
+   
         
         required />
     </div>
