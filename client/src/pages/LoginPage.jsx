@@ -15,8 +15,7 @@ function LoginPage() {
   const { signin, errors: signinErrors, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPwd, setShowPwd] = useState(false);
-  // Agrega al inicio del componente:
-const [email, setEmail] = useState('');
+
 
 
   
@@ -54,8 +53,7 @@ const [email, setEmail] = useState('');
             {...register("email", { required: true })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
             placeholder="Email"
-                        onChange={(e) => setEmail(e.target.value)} // ✅ AGREGAR ESTA LÍNEA
-
+           
           />
           {errors.email && (
             <p className='text-red-500'>Email is required</p>
