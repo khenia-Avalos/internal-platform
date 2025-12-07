@@ -1,7 +1,7 @@
 
 import React from "react";
 import axios from "axios";
-import {useLocation} from "react-router-dom";
+import {useLocation} from "react-router";
 import { useEffect } from "react";
 
 

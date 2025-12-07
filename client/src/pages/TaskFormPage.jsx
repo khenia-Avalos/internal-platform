@@ -1,6 +1,6 @@
 import {useForm} from 'react-hook-form'
 import { useTasks} from "../context/TasksContext"
-import {useNavigate, useParams} from 'react-router-dom'
+import {useNavigate, useParams} from 'react-router'
 import { use, useEffect } from 'react';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
