@@ -1,32 +1,37 @@
-import 'dotenv/config'; 
-import express from 'express';
-import morgan from 'morgan';
-import cookieParser from 'cookie-parser'
-import cors from 'cors'
+import express from "express";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+
+import authRoutes from "./routes/auth.routes.js";
+import customersRoutes from "./routes/customers.routes.js";
+import { FRONTEND_URL } from "./config.js";
+
+const app = express();
+
+app.set("trust proxy", 1)
+
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders:[
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+    exposedHeaders:["Set-Cookie"],
+  })
+);
 
 
-import authRoutes from './routes/auth.routes.js'
-import tasksRoutes from './routes/tasks.routes.js'
-
-const app = express()
-
-app.use(cors({
-  origin:'http://localhost:5173',
-  credentials:true
-}))
-app.use(morgan('dev'));
-app.use(express.json({ limit: "25mb" }));
-app.use(express.urlencoded({ limit: "25mb" }));
+app.use(morgan("dev"));
+app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Agrega esto para verificar que las variables se cargan
-console.log('🔍 Verificando variables de entorno:');
-console.log('EMAIL_USER:', process.env.EMAIL_USER ? '✅ Cargado' : '❌ No cargado');
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Cargado' : '❌ No cargado');
-
-
-
 app.use("/api", authRoutes);
-app.use("/api", tasksRoutes);
+app.use("/api", customersRoutes);
 
 export default app;

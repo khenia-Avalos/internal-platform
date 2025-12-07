@@ -4,7 +4,8 @@
 
 export const TOKEN_SECRET = process.env.TOKEN_SECRET;
 export const DB_URL = process.env.DB_URL;
-export const FRONTEND_URL = process.env.FRONTEND_URL;
+// config.js - TEMPORAL para que funcione
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 export const PORT = process.env.PORT;
 export const NODE_ENV = process.env.NODE_ENV;
 
