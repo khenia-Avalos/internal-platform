@@ -1,16 +1,31 @@
-console.log('=== MONGODB CONNECTION INFO ===');
-console.log('Current time:', new Date().toISOString());
-console.log('Mongoose version:', mongoose.version);
+import os from 'os';
+import https from 'https';
 
-// Esto puede mostrar info de conexión
-mongoose.connect(DB_URL, {
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-})
-.then(() => {
-  console.log('✅ MongoDB Connected');
-  console.log('Connection state:', mongoose.connection.readyState);
-})
-.catch(err => {
-  console.error('❌ Connection error:', err.message);
-});
+// Función para obtener IP pública
+const getPublicIP = () => {
+  return new Promise((resolve, reject) => {
+    https.get('https://api.ipify.org?format=json', (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          resolve(result.ip);
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }).on('error', reject);
+  });
+};
+
+// Ejecutar al inicio
+getPublicIP()
+  .then(ip => {
+    console.log('🎯 PUBLIC IP OF THIS RENDER INSTANCE:', ip);
+    console.log('📌 Add this to MongoDB Atlas Network Access:', ip + '/32');
+  })
+  .catch(err => {
+    console.error('❌ Cannot get public IP:', err.message);
+    console.log('📌 Network interfaces:', os.networkInterfaces());
+  });
