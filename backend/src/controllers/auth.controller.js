@@ -7,13 +7,17 @@ import {NODE_ENV, TOKEN_SECRET} from '../config.js'
 import { sendResetPasswordEmail } from '../services/authService.js'
 
 
+// auth.controller.js
+const isProduction = NODE_ENV === "production";
+
 const cookieOptions = {
-    httpOnly: true,
-    secure: false, // ← FALSE siempre en desarrollo
-    sameSite: 'lax', // ← 'lax' en desarrollo
+    httpOnly: true,  // SIEMPRE true
+    secure: isProduction,  // true en producción (Render usa HTTPS)
+    sameSite: isProduction ? "none" : "lax",  // 'none' en producción
     path: "/",
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días para testing
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 
 
