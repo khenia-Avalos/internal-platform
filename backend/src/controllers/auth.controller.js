@@ -7,15 +7,13 @@ import {NODE_ENV, TOKEN_SECRET} from '../config.js'
 import { sendResetPasswordEmail } from '../services/authService.js'
 
 
-
 const cookieOptions = {
-    httpOnly: NODE_ENV === "production",
-    secure: NODE_ENV === "production",
-    sameSite: NODE_ENV === "production" ? "none" : "lax",
-     path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
-
+    httpOnly: true,
+    secure: false, // ← FALSE siempre en desarrollo
+    sameSite: 'lax', // ← 'lax' en desarrollo
+    path: "/",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días para testing
+};
 
 
 
