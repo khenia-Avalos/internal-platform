@@ -1,6 +1,17 @@
-import axios from "./axios";
+import axios from './axios';
 
-export const registerRequest = (user) => axios.post("/register", user);
-export const loginRequest = (user) => axios.post("/login", user);
-export const logoutRequest = () => axios.post("/logout");
-export const verifyTokenRequest = () => axios.get("/verify");
+export const registerRequest = async (user) => {
+    return axios.post('/auth/register', user);
+};
+
+export const loginRequest = async (user) => {
+    return axios.post('/auth/login', user);
+};
+
+export const verifyTokenRequest = async () => {
+    return axios.get('/auth/verify');
+};
+
+export const logoutRequest = async () => {
+    return axios.get('/auth/logout');
+};
