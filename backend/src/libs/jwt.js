@@ -16,4 +16,4 @@ export function createAccessToken(payload, expiresIn = "1d") {
       }
     );
   });
-}
+} 

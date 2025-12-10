@@ -1,4 +1,3 @@
-
 import User from '../models/user.model.js'
 import bcrypt from 'bcryptjs'
 import {createAccessToken } from '../libs/jwt.js'
@@ -7,17 +6,18 @@ import {NODE_ENV, TOKEN_SECRET} from '../config.js'
 import { sendResetPasswordEmail } from '../services/authService.js'
 
 
+// auth.controller.js
 const isProduction = NODE_ENV === "production";
 
 const cookieOptions = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    httpOnly: true,  // SIEMPRE true
+    secure: isProduction,  // true en producción (Render usa HTTPS)
+    sameSite: isProduction ? "none" : "lax",  // 'none' en producción
     path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
-    // ✅ AÑADE esto para Render:
-    domain: isProduction ? ".onrender.com" : undefined
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
+
 
 
 export const register = async ( req, res)=>{
@@ -246,6 +246,4 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({success: false, message: "FAILED"});
     }
 };
-
-
 
