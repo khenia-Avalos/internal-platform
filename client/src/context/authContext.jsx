@@ -1,8 +1,8 @@
 import { createContext, useState, useContext, useEffect} from 'react'
 import {registerRequest} from '../api/auth'
 import {loginRequest, verifyTokenRequest} from '../api/auth'
-
-import axios from '../api/axios'
+import Cookies from 'js-cookie'
+import { is } from 'zod/v4/locales'
 
 
 
@@ -58,16 +58,12 @@ if (Array.isArray(error.response.data)){
 
 
 
-const logout = async () => {
-    try {
-        await axios.get('/auth/logout', { withCredentials: true });
-    } catch (error) {
-        console.error('Logout error:', error);
-    }
+const logout =()=>{
+    Cookies.remove("token");
     setIsAuthenticated(false);
     setUser(null);
-    // ❌ NO USES: Cookies.remove("token");
-};
+}
+
 
 
 
