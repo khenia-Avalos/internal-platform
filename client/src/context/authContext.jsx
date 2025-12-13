@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState , useContext} from "react";
+import { createContext, useEffect, useState , useContext , useRef} from "react";
 import Cookies from "js-cookie";
 
 import {
@@ -10,7 +10,7 @@ import {
 
 export const AuthContext = createContext();
 
-// ✅ ✅ ✅ AÑADE ESTE HOOK - ES LO QUE FALTA ✅ ✅ ✅
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -19,15 +19,16 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({  }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
+   const isMounted = useRef(true); // ✅ Para evitar actualizaciones después de desmontar
 
-  const signup = async (user) => {
+  const signup = async (userData) => {
     try {
-      const res = await registerRequest(user);
+      const res = await registerRequest(userData);
       setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
@@ -37,10 +38,10 @@ export const AuthProvider = ({ children }) => {
       return { ok: false };
     }
   };
-  const signin = async (user) => {
+  const signin = async (userData) => {
     try {
-      const res = await loginRequest(user);
-      setUser(res.data);
+        const res = await loginRequest(userData);
+        setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
       return { ok: true };
@@ -52,14 +53,31 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await logoutRequest();
-      setUser(null);
-      setIsAuthenticated(false);
+      // Limpiar cookies en frontend también por si acaso
+      Cookies.remove('token');
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setErrors([]);
+      }
       return { ok: true };
     } catch (error) {
-      setErrors(error.response.data || "Logout failed");
-      return { ok: false };
+      // Aún así limpiamos el estado frontend
+      Cookies.remove('token');
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setErrors(error.response?.data || ["Logout failed"]);
+      }
+      return { ok: false, error: error.response?.data };
     }
   };
+  useEffect(() => {
+    return () => {
+      isMounted.current = false; // ✅ Cleanup al desmontar
+    };
+  }, []);
+
 
   useEffect(() => {
     if (errors.length > 0) {
@@ -70,27 +88,53 @@ export const AuthProvider = ({ children }) => {
     }
   }, [errors]);
 
+  
   useEffect(() => {
+    let isSubscribed = true; // ✅ Controlar petición pendiente
+
     const checkLogin = async () => {
+      // ✅ Verificación temprana con cookies
+      const cookies = Cookies.get();
+      if (!cookies.token) {
+        if (isSubscribed) {
+          setIsAuthenticated(false);
+          setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const res = await verifyTokenRequest();
+        if (!isSubscribed) return;
+
         if (!res.data) {
           setIsAuthenticated(false);
           setUser(null);
+          // Limpiar cookie inválida
+          Cookies.remove('token');
         } else {
           setIsAuthenticated(true);
           setUser(res.data);
         }
       } catch (error) {
-        console.log(error);
+        if (!isSubscribed) return;
+        console.log('Auth error:', error);
         setIsAuthenticated(false);
         setUser(null);
-      } finally{
-        setLoading(false);
+        Cookies.remove('token'); // ✅ Limpiar cookie en error
+      } finally {
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
-    
     };
+
     checkLogin();
+
+    return () => {
+      isSubscribed = false; // ✅ Cleanup
+    };
   }, []);
 
   return (
