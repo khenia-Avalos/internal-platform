@@ -1,25 +1,22 @@
-import { createContext, useState, useContext, useEffect } from 'react'
-import { registerRequest, loginRequest, logoutRequest, verifyTokenRequest } from '../api/auth' // ✅ Agrega logoutRequest
-import Cookies from 'js-cookie'
+import { createContext, useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
-export const AuthContext = createContext()
+import {
+  loginRequest,
+  logoutRequest,
+  registerRequest,
+  verifyTokenRequest,
+} from "../api/auth";
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+export const AuthContext = createContext();
 
-export const AuthProvider = ({children}) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState([]);
 
-  // ✅ CORRIGE: "signup" no "singup"
-  const signup = async(user) => {
+  const signup = async (user) => {
     try {
       const res = await registerRequest(user);
       setUser(res.data);
@@ -31,7 +28,6 @@ export const AuthProvider = ({children}) => {
       return { ok: false };
     }
   };
-
   const signin = async (user) => {
     try {
       const res = await loginRequest(user);
@@ -44,7 +40,6 @@ export const AuthProvider = ({children}) => {
       return { ok: false };
     }
   };
-
   const logout = async () => {
     try {
       await logoutRequest();
@@ -61,24 +56,16 @@ export const AuthProvider = ({children}) => {
     if (errors.length > 0) {
       const timer = setTimeout(() => {
         setErrors([]);
-      }, 5000);
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [errors]);
 
   useEffect(() => {
-    const checklogin = async () => {
-      const cookies = Cookies.get();
-      if(!cookies.token) {
-        setIsAuthenticated(false); // ✅ Agrega esto
-        setUser(null); // ✅ Agrega esto
-        setLoading(false);
-        return;
-      }
-
+    const checkLogin = async () => {
       try {
         const res = await verifyTokenRequest();
-        if(!res.data) {
+        if (!res.data) {
           setIsAuthenticated(false);
           setUser(null);
         } else {
@@ -89,24 +76,24 @@ export const AuthProvider = ({children}) => {
         console.log(error);
         setIsAuthenticated(false);
         setUser(null);
-      } finally {
-        setLoading(false); // ✅ Añade finally para garantizar
+      } finally{
+        setLoading(false);
       }
-    };
     
-    checklogin();
+    };
+    checkLogin();
   }, []);
 
   return (
-    <AuthContext.Provider 
+    <AuthContext.Provider
       value={{
-        signup, // ✅ CORRIGE: "signup" no "singup"
+        user,
+        signup,
         signin,
         logout,
-        user,
         isAuthenticated,
         errors,
-        loading
+        loading,
       }}
     >
       {children}
