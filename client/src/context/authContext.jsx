@@ -1,12 +1,8 @@
-import { createContext, useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { createContext, useState, useContext, useEffect} from 'react'
+import {registerRequest} from '../api/auth'
+import {loginRequest, verifyTokenRequest} from '../api/auth'
+import Cookies from 'js-cookie'
 
-import {
-  loginRequest,
-  logoutRequest,
-  registerRequest,
-  verifyTokenRequest,
-} from "../api/auth";
 
 export const AuthContext = createContext();
 
@@ -84,19 +80,25 @@ export const AuthProvider = ({ children }) => {
     checkLogin();
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        signup,
+
+
+
+
+return(
+    <AuthContext.Provider 
+    value ={{
+        singup,
         signin,
         logout,
+        user,
         isAuthenticated,
         errors,
-        loading,
-      }}
+        loading
+    }}
+    
     >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+        {children}
+        </AuthContext.Provider>
+)
+
+}
