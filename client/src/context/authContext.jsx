@@ -1,10 +1,6 @@
-import { createContext, useState, useContext, useEffect} from 'react'
-import {registerRequest} from '../api/auth'
-import {loginRequest, verifyTokenRequest} from '../api/auth'
+import { createContext, useState, useContext, useEffect } from 'react'
+import { registerRequest, loginRequest, logoutRequest, verifyTokenRequest } from '../api/auth' // ✅ Agrega logoutRequest
 import Cookies from 'js-cookie'
-
-
-
 
 export const AuthContext = createContext()
 
@@ -17,27 +13,24 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({children}) => {
-const [user, setUser] = useState(null);
-const [isAuthenticated, setIsAuthenticated] = useState(false);
-const [errors, setErrors]= useState([]);
-const [loading, setLoading]= useState(true);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-
-const singup = async(user) => {
-        try{
-const res = await registerRequest(user)
-setUser(res.data);
+  // ✅ CORRIGE: "signup" no "singup"
+  const signup = async(user) => {
+    try {
+      const res = await registerRequest(user);
+      setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
       return { ok: true };
-    }catch (error ){
-  setErrors(error.response.data || "Error ");
+    } catch (error) {
+      setErrors(error.response.data || "Error registering");
       return { ok: false };
-
-
-
     }
-    };
+  };
 
   const signin = async (user) => {
     try {
@@ -52,7 +45,6 @@ setUser(res.data);
     }
   };
 
-
   const logout = async () => {
     try {
       await logoutRequest();
@@ -65,73 +57,59 @@ setUser(res.data);
     }
   };
 
-
-
-
-
-
-useEffect(()=>{
-    if (errors.length > 0){
-       const timer= setTimeout(()=>{
-            setErrors([])
-        },5000)
-        return () => clearTimeout(timer)
+  useEffect(() => {
+    if (errors.length > 0) {
+      const timer = setTimeout(() => {
+        setErrors([]);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-},[errors])
+  }, [errors]);
 
-
-useEffect(() =>{
-const checklogin = async () => {
-    const cookies = Cookies.get();
-    if(!cookies.token){
-      
+  useEffect(() => {
+    const checklogin = async () => {
+      const cookies = Cookies.get();
+      if(!cookies.token) {
+        setIsAuthenticated(false); // ✅ Agrega esto
+        setUser(null); // ✅ Agrega esto
         setLoading(false);
-
         return;
-        
-        }
-
-    try{
-const res = await verifyTokenRequest();
-
-if(!res.data) {
- setIsAuthenticated(false);
-setUser (null);
-
- } else {
-        setIsAuthenticated(true);
-        setUser(res.data);
       }
-    }catch (error){
-        console.log(error)
-        setIsAuthenticated(false);
-        setUser (null); 
-    }
 
-    }
+      try {
+        const res = await verifyTokenRequest();
+        if(!res.data) {
+          setIsAuthenticated(false);
+          setUser(null);
+        } else {
+          setIsAuthenticated(true);
+          setUser(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setLoading(false); // ✅ Añade finally para garantizar
+      }
+    };
     
     checklogin();
-},[]);
+  }, []);
 
-
-
-
-
-return(
+  return (
     <AuthContext.Provider 
-    value ={{
-        singup,
+      value={{
+        signup, // ✅ CORRIGE: "signup" no "singup"
         signin,
         logout,
         user,
         isAuthenticated,
         errors,
         loading
-    }}
-    
+      }}
     >
-        {children}
-        </AuthContext.Provider>
-)
-
-}
+      {children}
+    </AuthContext.Provider>
+  );
+};
