@@ -1,10 +1,17 @@
-import { createContext, useState, useContext, useEffect} from 'react'
-import {registerRequest} from '../api/auth'
-import {loginRequest, verifyTokenRequest} from '../api/auth'
+import { createContext, useState, useContext, useEffect } from 'react'
+import { registerRequest, loginRequest, logoutRequest, verifyTokenRequest } from '../api/auth'
 import Cookies from 'js-cookie'
 
-
 export const AuthContext = createContext();
+
+// ✅ AÑADE ESTE HOOK - ES LO QUE FALTA
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -24,6 +31,7 @@ export const AuthProvider = ({ children }) => {
       return { ok: false };
     }
   };
+
   const signin = async (user) => {
     try {
       const res = await loginRequest(user);
@@ -36,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       return { ok: false };
     }
   };
+
   const logout = async () => {
     try {
       await logoutRequest();
@@ -72,33 +81,26 @@ export const AuthProvider = ({ children }) => {
         console.log(error);
         setIsAuthenticated(false);
         setUser(null);
-      } finally{
+      } finally {
         setLoading(false);
       }
-    
     };
     checkLogin();
   }, []);
 
-
-
-
-
-return(
+  return (
     <AuthContext.Provider 
-    value ={{
-        singup,
+      value={{
+        signup, // ✅ CORRIGE: era "singup" (con typo)
         signin,
         logout,
         user,
         isAuthenticated,
         errors,
         loading
-    }}
-    
+      }}
     >
-        {children}
-        </AuthContext.Provider>
-)
-
-}
+      {children}
+    </AuthContext.Provider>
+  );
+};
