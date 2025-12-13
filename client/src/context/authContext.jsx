@@ -3,6 +3,7 @@ import {registerRequest} from '../api/auth'
 import {loginRequest, verifyTokenRequest} from '../api/auth'
 import Cookies from 'js-cookie'
 import { is } from 'zod/v4/locales'
+import { set } from 'mongoose'
 
 
 
@@ -20,49 +21,53 @@ export const useAuth = () => {
 
 
 export const AuthProvider = ({children}) => {
-    const [user, setUser] = useState(null);
+const [user, setUser] = useState(null);
 const [isAuthenticated, setIsAuthenticated] = useState(false);
 const [errors, setErrors]= useState([]);
 const [loading, setLoading]= useState(true);
 
-    const singup = async(user) => {
+
+const singup = async(user) => {
         try{
 const res = await registerRequest(user)
-console.log(res.data)
-setUser(res.data)
-setIsAuthenticated(true);
+setUser(res.data);
+      setIsAuthenticated(true);
+      setErrors([]);
+      return { ok: true };
     }catch (error ){
-console.log(error.response)
-        setErrors(error.response.data);
+  setErrors(error.response.data || "Error ");
+      return { ok: false };
 
 
 
     }
     };
 
-const signin = async (user) => {
-    try{
-        const res = await loginRequest(user)
-        console.log(res)
-        setIsAuthenticated(true)
-        setUser(res.data)
-    }catch (error){
-
-if (Array.isArray(error.response.data)){
-    return setErrors(error.response.data)
-}
-     setErrors([error.response.data.message])
-
+  const signin = async (user) => {
+    try {
+      const res = await loginRequest(user);
+      setUser(res.data);
+      setIsAuthenticated(true);
+      setErrors([]);
+      return { ok: true };
+    } catch (error) {
+      setErrors(error.response.data || "Login failed");
+      return { ok: false };
     }
-}
+  };
 
 
-
-const logout =()=>{
-    Cookies.remove("token");
-    setIsAuthenticated(false);
-    setUser(null);
-}
+  const logout = async () => {
+    try {
+      await logoutRequest();
+      setUser(null);
+      setIsAuthenticated(false);
+      return { ok: true };
+    } catch (error) {
+      setErrors(error.response.data || "Logout failed");
+      return { ok: false };
+    }
+  };
 
 
 
@@ -80,33 +85,31 @@ useEffect(()=>{
 
 
 useEffect(() =>{
-  async  function checklogin() {
-    const cookies=Cookies.get();
+const checklogin = async () => {
+    const cookies = Cookies.get();
     if(!cookies.token){
-        setIsAuthenticated(false);
+      
         setLoading(false);
 
-        return setUser(null);
+        return;
         
         }
 
     try{
 const res = await verifyTokenRequest();
-console.log(res)
+
 if(!res.data) {
  setIsAuthenticated(false);
-setLoading(false);
+setUser (null);
 
-return;
-}
-
-    setIsAuthenticated(true);
-    setUser(res.data);
-    setLoading(false);
+ } else {
+        setIsAuthenticated(true);
+        setUser(res.data);
+      }
     }catch (error){
+        console.log(error)
         setIsAuthenticated(false);
-        setUser(null);
-        setLoading(false);
+        setUser (null); 
     }
 
     }
