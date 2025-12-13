@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import { createContext, useEffect, useState, useContext, useRef } from "react";
 import Cookies from "js-cookie";
 import {
   loginRequest,
@@ -9,7 +9,6 @@ import {
 
 export const AuthContext = createContext();
 
-// ✅ AÑADE ESTO - Soluciona el error de build
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -18,68 +17,95 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {  // ✅ Mantiene 'children'
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
+  const isMounted = useRef(true); // ✅ Para evitar actualizaciones después de desmontar
 
-  const signup = async (user) => {
+  const signup = async (userData) => { // ✅ Renombrar parámetro para evitar conflicto
     try {
-      const res = await registerRequest(user);
-      setUser(res.data);
-      setIsAuthenticated(true);
-      setErrors([]);
+      const res = await registerRequest(userData);
+      if (isMounted.current) {
+        setUser(res.data);
+        setIsAuthenticated(true);
+        setErrors([]);
+      }
       return { ok: true };
     } catch (error) {
-      setErrors(error.response?.data || ["Error registering"]); // ✅ Optional chaining
-      return { ok: false };
+      if (isMounted.current) {
+        setErrors(error.response?.data || ["Error registering"]); // ✅ Optional chaining
+      }
+      return { ok: false, error: error.response?.data };
     }
   };
 
-  const signin = async (user) => {
+  const signin = async (userData) => {
     try {
-      const res = await loginRequest(user);
-      setUser(res.data);
-      setIsAuthenticated(true);
-      setErrors([]);
+      const res = await loginRequest(userData);
+      if (isMounted.current) {
+        setUser(res.data);
+        setIsAuthenticated(true);
+        setErrors([]);
+      }
       return { ok: true };
     } catch (error) {
-      setErrors(error.response?.data || ["Login failed"]);
-      return { ok: false };
+      if (isMounted.current) {
+        setErrors(error.response?.data || ["Login failed"]);
+      }
+      return { ok: false, error: error.response?.data };
     }
   };
 
   const logout = async () => {
     try {
       await logoutRequest();
-      Cookies.remove('token'); // ✅ Limpieza opcional
-      setUser(null);
-      setIsAuthenticated(false);
+      // Limpiar cookies en frontend también por si acaso
+      Cookies.remove('token');
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setErrors([]);
+      }
       return { ok: true };
     } catch (error) {
-      setErrors(error.response?.data || ["Logout failed"]);
-      return { ok: false };
+      // Aún así limpiamos el estado frontend
+      Cookies.remove('token');
+      if (isMounted.current) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setErrors(error.response?.data || ["Logout failed"]);
+      }
+      return { ok: false, error: error.response?.data };
     }
   };
 
   useEffect(() => {
+    return () => {
+      isMounted.current = false; // ✅ Cleanup al desmontar
+    };
+  }, []);
+
+  useEffect(() => {
     if (errors.length > 0) {
       const timer = setTimeout(() => {
-        setErrors([]);
+        if (isMounted.current) {
+          setErrors([]);
+        }
       }, 4000);
       return () => clearTimeout(timer);
     }
   }, [errors]);
 
   useEffect(() => {
-    let isActive = true; // ✅ Simple cleanup
+    let isSubscribed = true; // ✅ Controlar petición pendiente
 
     const checkLogin = async () => {
-      // ✅ Verificación optimizada con cookies
+      // ✅ Verificación temprana con cookies
       const cookies = Cookies.get();
       if (!cookies.token) {
-        if (isActive) {
+        if (isSubscribed) {
           setIsAuthenticated(false);
           setUser(null);
           setLoading(false);
@@ -89,22 +115,25 @@ export const AuthProvider = ({ children }) => {  // ✅ Mantiene 'children'
 
       try {
         const res = await verifyTokenRequest();
-        if (!isActive) return;
+        if (!isSubscribed) return;
 
         if (!res.data) {
           setIsAuthenticated(false);
           setUser(null);
+          // Limpiar cookie inválida
+          Cookies.remove('token');
         } else {
           setIsAuthenticated(true);
           setUser(res.data);
         }
       } catch (error) {
-        if (!isActive) return;
-        console.log(error);
+        if (!isSubscribed) return;
+        console.log('Auth error:', error);
         setIsAuthenticated(false);
         setUser(null);
+        Cookies.remove('token'); // ✅ Limpiar cookie en error
       } finally {
-        if (isActive) {
+        if (isSubscribed) {
           setLoading(false);
         }
       }
@@ -113,7 +142,7 @@ export const AuthProvider = ({ children }) => {  // ✅ Mantiene 'children'
     checkLogin();
 
     return () => {
-      isActive = false; // ✅ Cleanup simple
+      isSubscribed = false; // ✅ Cleanup
     };
   }, []);
 
