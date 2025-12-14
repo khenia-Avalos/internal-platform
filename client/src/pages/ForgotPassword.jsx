@@ -4,14 +4,9 @@ import axios from "axios"
 function ForgotPassword() {
     const [email, setEmail] = React.useState("");
     const [resetToken, setResetToken] = React.useState("");
-      const [loading, setLoading] = useState(false); // <-- AÑADE ESTO
-    const [message, setMessage] = useState("");
-    
     const handleSubmit =  async(e) => {
         e.preventDefault();
-        setLoading(true);
-        setMessage("");
-        setResetToken("");
+
 
 try{
     // Solución temporal para trabajar en ambos entornos
@@ -21,11 +16,9 @@ const API_URL = window.location.hostname === 'localhost'
 
 const response = await axios.post(
     `${API_URL}/api/forgot-password`,
-    { email },{
-         timeout: 30000, // 30 segundos timeout para Render
-    }
+    { email }
 );
-console.log("✅ Respuesta:", response.data);
+
      
 
              // ✅ GUARDA EL TOKEN SI VIENE EN LA RESPUESTA
@@ -40,28 +33,14 @@ console.log("✅ Respuesta:", response.data);
                 }
             }
     } catch (error) {
-            console.error("❌ Error completo:", error);
-            
-            let errorMsg = "Unknown error";
-            
-            if (error.code === "ECONNABORTED") {
-                errorMsg = "Request timed out. Render free tier can be slow.";
-            } else if (error.code === "ERR_NETWORK") {
-                errorMsg = "Network error. Backend might be sleeping.";
-            } else if (error.response) {
-                errorMsg = `Server error: ${error.response.status}`;
-            } else {
-                errorMsg = error.message;
-            }
-            
-            setResetToken("ERROR: " + errorMsg);
-            setMessage("Failed to send request.");
-        } finally {
-            setLoading(false); // <-- DESACTIVA LOADING
-        }
-    }
+         console.error("❌ Error completo:", error);
+        setResetToken("ERROR: " + error.message);
+}
 
-    return (
+}
+
+        
+  return (
 <div className="login-Container">
 
 <form onSubmit={handleSubmit}>
@@ -72,21 +51,10 @@ console.log("✅ Respuesta:", response.data);
         value={email}
    onChange={(e) => setEmail(e.target.value)}
         
-   required 
-                        disabled={loading} // <-- DESHABILITA MIENTRAS CARGA
-                    />
+        required />
     </div>
-      <button 
-                    type="submit" 
-                    className='login-btn'
-                    disabled={loading || !email} // <-- DESHABILITA SI ESTÁ CARGANDO O EMAIL VACÍO
-                >
-                    {loading ? "Sending..." : "Submit"} {/* <-- CAMBIA TEXTO */}
-                </button>
-            </form> 
-
-            
-            
+    <button type="submit" className= 'login-btn'>Submit</button>
+    </form> 
     {resetToken && (
     <div style={{marginTop: '20px', padding: '15px', background: '#f0f8ff'}}>
         <h3>Copy this token:</h3>
@@ -97,36 +65,7 @@ console.log("✅ Respuesta:", response.data);
         />
     </div>
 )}
-  {/* AÑADE ESTO PARA MOSTRAR ERRORES */}
-            {resetToken && resetToken.startsWith("ERROR:") && (
-                <div style={{
-                    marginTop: '20px',
-                    padding: '15px',
-                    background: '#ffebee',
-                    color: '#c62828',
-                    borderRadius: '4px'
-                }}>
-                    <h4>Error:</h4>
-                    <p>{resetToken.replace("ERROR: ", "")}</p>
-                    <small>Note: Render free tier can take 30-50 seconds to wake up.</small>
-                </div>
-            )}
-            
-            {/* INFO ADICIONAL */}
-            <div style={{
-                marginTop: '20px',
-                fontSize: '12px',
-                color: '#666',
-                padding: '10px',
-                background: '#f5f5f5',
-                borderRadius: '4px'
-            }}>
-                <p><strong>Note:</strong> Backend on Render free tier may take 30-60 seconds to respond on first request.</p>
-                <p>Current target: {window.location.hostname === 'localhost' 
-                    ? 'http://localhost:3000' 
-                    : 'https://backend-internal-platform.onrender.com'}</p>
-            </div>
-        </div>
-    );
+</div>
+  )
 }
 export default ForgotPassword;
