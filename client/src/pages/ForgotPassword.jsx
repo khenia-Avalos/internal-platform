@@ -9,12 +9,16 @@ function ForgotPassword() {
 
 
 try{
-    const response = await axios.post(
-        "http://localhost:3000/api/forgot-password",
-        {
-            email
-        }
-        );
+    // Solución temporal para trabajar en ambos entornos
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000' 
+    : 'https://backend-internal-platform.onrender.com';
+
+const response = await axios.post(
+    `${API_URL}/api/forgot-password`,
+    { email }
+);
+
      
 
              // ✅ GUARDA EL TOKEN SI VIENE EN LA RESPUESTA
