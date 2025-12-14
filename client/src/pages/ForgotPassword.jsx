@@ -1,9 +1,9 @@
-import react,{useState} from "react";
+import React, { useState } from "react";
 import axios from "axios"
 
 function ForgotPassword() {
-    const [email, setEmail] = react.useState("");
-    const [resetToken, setResetToken] = react.useState("");
+    const [email, setEmail] = React.useState("");
+    const [resetToken, setResetToken] = React.useState("");
     const handleSubmit =  async(e) => {
         e.preventDefault();
 
@@ -45,7 +45,7 @@ try{
         <label>Email</label>
         <input type ="email" placeholder="Enter your email"
         value={email}
-   
+   onChange={(e) => setEmail(e.target.value)}
         
         required />
     </div>
