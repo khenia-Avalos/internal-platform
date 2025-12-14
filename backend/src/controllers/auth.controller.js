@@ -22,15 +22,14 @@ const cookieOptions = {
 
 export const register = async ( req, res)=>{
    const {email, password, username} = req.body
+const errors = [];
+ if (!username ) errors.push ("Username is required");
+  if (!email ) errors.push ("Email is required");
+  if (!password ) errors.push ("Password is required");
 
-  if(!username || !email || !password){
-        return res.status(400).json(["All fields are required"])
-    }
-    const userFound = await User.findOne({email})
-    if(userFound) return res.status(400).json(["The email already exists"])
-
-
-
+if (  errors.length >0){
+    return res.status (400).json(errors);
+}
 
 try{
 
@@ -73,18 +72,21 @@ const passwordHash = await bcrypt.hash(password, 10)
 export const login = async ( req, res)=> {console.log(req.body)
    
    const {email, password} = req.body
-    if(!email || !password){
-        return res.status(400).json(["Email and password are required"])
-    }
+   const errors = [];
+   if (!email) errors.push ("Email is required");
+   if(!password)errors.push ("Password is required");
 
+   if (errors.length >0){
+    return res.status (400).json(errors);
+   }
 try{
 
 const userFound = await User.findOne({email});
 
-if (!userFound)  return res.status(400).json({message: "user not found"});
+if (!userFound)  return res.status(400).json(["invalid email or password"]);
 
 const isMatch = await bcrypt.compare(password, userFound.password);
-if (!isMatch) return res.status(400).json({message:"incorrect password"});
+if (!isMatch) return res.status(400).json(["invalid email or password"]);
 
 
    const token = await createAccessToken({id: userFound._id})
@@ -105,7 +107,7 @@ if (!isMatch) return res.status(400).json({message:"incorrect password"});
 
 
   } catch (error){
-    res.status(500).json({message: error.message});
+    res.status(500).json([error.message]);
   } 
    
 };
@@ -124,7 +126,7 @@ try{
 
 
  const userFound =  await User.findById(req.user.id)
- if (!userFound ) return res.status(400).json({message: "user not found"});
+ if (!userFound ) return res.status(400).json(["User not found"]);
 
  return res.json({
   id: userFound._id,
@@ -134,14 +136,14 @@ try{
   updatedAt: userFound.updatedAt,
  });
  } catch (error){
-    res.status(500).json({message: error.message});
+    res.status(500).json([error.message]);
  }
 };
 
 export const verifyToken = async ( req, res) => {
   const {token}= req.cookies
 
-  if (!token) return res.status(401).json({message: "Unauthorized"});
+  if (!token) return res.status(401).json(["Unauthorized"]);
 
   try{
 
@@ -149,8 +151,7 @@ export const verifyToken = async ( req, res) => {
         const decoded = jwt.verify(token,TOKEN_SECRET)
 
   const userFound = await User.findById(decoded.id)
-  if (!userFound)  return res.status(401).json({ message:"Unauthorized"});
-
+  if (!userFound)  return res.status(401).json(["Unauthorized"]);
 return res.json({
   id:userFound._id,
   username: userFound.username,
@@ -159,7 +160,7 @@ return res.json({
 });
   } catch (error){  
    
-        return res.status(403).json("Invalid Token")
+        return res.status(403).json(["Invalid token"]);
   }
 
 };
@@ -169,23 +170,17 @@ export const forgotPassword = async ( req, res)=> {console.log(req.body)
    
    const {email} = req.body
 
-   if (!email) return res.status(400).json({success:false, message:"Email is required"  });
+   if (!email) return res.status(400).json(["Email is required"]);
 try{
         const response = await sendResetPasswordEmail(email);
         
 
-
- if (response.success) {
       return res.status(200).json({
         success: true,
     message: "If an account exists with this email, you will receive password reset instructions."
       });
-  }else{
-    return res.status(200).json({
-                success: true,
-                message: "If an account exists with this email, you will receive password reset instructions."
-              });
-  }
+  
+  
 } catch (error){
    console.error('Error in forgot password:', error);
   return res.status(200).json({
@@ -199,23 +194,16 @@ try{
 export const resetPassword = async (req, res) => {
     const {token,password} = req.body
 
+const errors = [];
+if (!token) errors.push("Token is required");
+if (!password) errors.push("Password is required");
+if (errors.length > 0) {
+    return res.status(400).json(errors);
+}
 
-    if (!token || !password) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Token and new password are required" 
-        });
-    }
-
-    if (password.length < 6) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Password must be at least 6 characters long" 
-        });
-    }
-
-
-
+if (password.length < 6) {
+    return res.status(400).json(["Password must be at least 6 characters long"]);
+}
     try {
         const decoded = jwt.verify(token, TOKEN_SECRET);
 
@@ -227,10 +215,7 @@ export const resetPassword = async (req, res) => {
 
  
     if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid or expired reset token"
-            });
+            return res.status(400).json(["Invalid or expired token"]);
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -239,11 +224,11 @@ export const resetPassword = async (req, res) => {
         user.resetPasswordExpires = undefined;
         await user.save();
 
-        return res.status(200).json({success: true, message: "Password reset successfully"});
+        return res.status(200).json(["Password reset successfully"]);
 
     } catch (error) {
         console.error('Error in reset password:', error);
-        return res.status(500).json({success: false, message: "FAILED"});
+        return res.status(500).json(["invalid or expired token"]);
     }
 };
 
