@@ -56,6 +56,7 @@ const passwordHash = await bcrypt.hash(password, 10)
         email: userSaved.email,
         createdAt: userSaved.createdAt,
         updatedAt: userSaved.updatedAt,
+        token: token, // ← ¡IMPORTANTE!
       }
     );
 
@@ -91,22 +92,19 @@ if (!isMatch) return res.status(400).json(["invalid email or password"]);
 
    const token = await createAccessToken({id: userFound._id})
    
-       res.cookie('token',token, cookieOptions)
+    
+    res.cookie('token', token, cookieOptions);
 
-
-   res.json(
-      {
-        id: userFound._id,
-        username: userFound.username,
-        email: userFound.email,
-        createdAt: userFound.createdAt,
-        updatedAt: userFound.updatedAt,
-      }
-    );
-
-
-
-  } catch (error){
+    // ✅ DEVUELVE EL TOKEN en la respuesta JSON:
+    res.json({
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+      createdAt: userFound.createdAt,
+      updatedAt: userFound.updatedAt,
+      token: token, // ← ¡IMPORTANTE!
+    });
+  } catch (error) {
     res.status(500).json([error.message]);
   } 
    
