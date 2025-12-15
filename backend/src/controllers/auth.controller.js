@@ -173,7 +173,7 @@ return res.json({
 };
 
 export const forgotPassword = async (req, res) => {
-    console.log(req.body)
+       console.log('📧 Forgot password request:', req.body.email);
     const {email} = req.body
 
     if (!email) return res.status(400).json(["Email is required"]);
@@ -184,24 +184,44 @@ export const forgotPassword = async (req, res) => {
         
         console.log("📨 Respuesta de sendResetPasswordEmail:", response);
         
-        // Si el servicio devolvió el token, DEVUÉLVELO al frontend
-        if (response.resetToken) {
+        // ✅ NUEVA LÓGICA: Manejar según el entorno
+        if (NODE_ENV === 'development') {
+            // En desarrollo, puedes devolver más información
+            const devResponse = {
+                success: true,
+                message: response.message || "Password reset processed",
+            };
+            
+            // Solo incluir token/enlace si están disponibles (para pruebas)
+            if (response.debug && response.debug.resetLink) {
+                devResponse.debug = {
+                    note: "Solo visible en desarrollo",
+                    resetLink: response.debug.resetLink,
+                    service: response.debug.service
+                };
+                
+                // Si hay preview URL de Ethereal
+                if (response.debug.previewUrl) {
+                    devResponse.debug.previewUrl = response.debug.previewUrl;
+                }
+            }
+            
+            return res.status(200).json(devResponse);
+            
+        } else {
+            // ✅ EN PRODUCCIÓN (Render):
+            // NUNCA devolver el token en la respuesta JSON
+            // Siempre mismo mensaje (seguridad)
             return res.status(200).json({
                 success: true,
-                resetToken: response.resetToken, // ← ¡IMPORTANTE!
-                resetLink: response.resetLink,    // También el link si existe
-                message: response.message || "Password reset email sent successfully"
+                message: "If an account exists with this email, you will receive password reset instructions."
             });
         }
         
-        // Si no hay token, devuelve el mensaje normal
-        return res.status(200).json({
-            success: true,
-            message: response.message || "If an account exists with this email, you will receive password reset instructions."
-        });
-        
     } catch (error) {
-        console.error('Error in forgot password:', error);
+        console.error('❌ Error in forgot password:', error);
+        
+        // ✅ EN PRODUCCIÓN: Mismo mensaje siempre (por seguridad)
         return res.status(200).json({
             success: true,
             message: "If an account exists with this email, you will receive password reset instructions."
