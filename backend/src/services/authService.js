@@ -1,29 +1,48 @@
-import { createAccessToken } from '../libs/jwt.js'; // Importa de jwt.js
-
+import { createAccessToken } from '../libs/jwt.js';
+import {EMAIL_USER, EMAIL_PASS, FRONTEND_URL, NODE_ENV} from '../config.js';
 import nodemailer from 'nodemailer';
 import User from '../models/user.model.js';
 
-const transporter = nodemailer.createTransport({
+let transporter;
+
+// Verificar credenciales de email
+if (!EMAIL_USER || !EMAIL_PASS) {
+    console.error('❌ ERROR: EMAIL_USER o EMAIL_PASS no están configurados');
+    if (NODE_ENV === 'production') {
+        console.error('⚠️ En producción, configura EMAIL_USER y EMAIL_PASS en Render');
+    }
+}
+
+// Configurar transporter (igual para ambos entornos con Gmail)
+transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
     },
 });
 
+console.log(`📧 Transporter configurado para ${NODE_ENV === 'production' ? 'PRODUCCIÓN' : 'DESARROLLO'}`);
+
 export const sendResetPasswordEmail = async (email) => {
+    // Variables declaradas con let para poder asignarlas
+    let resetToken;
+    let resetLink;
+    let user;
+
     try {
-        const user = await User.findOne({ email: email });
+        // 1. Buscar usuario
+        user = await User.findOne({ email: email });
         if (!user) {
+            console.log('⚠️ No se encontró usuario con ese email:', email);
             return {
                 success: true,
                 message: 'If an account with that email exists, we have sent a password reset link'
             };
         }   
         
-  
-
-        const resetToken = await createAccessToken(
+        // 2. Crear token - IMPORTANTE: NO usar "const" aquí
+        resetToken = await createAccessToken(
             { 
                 id: user._id, 
                 email: user.email,
@@ -32,15 +51,33 @@ export const sendResetPasswordEmail = async (email) => {
             '1h'
         );
         
+        // 3. Guardar en la base de datos
         user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = Date.now() + 3600000;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
         await user.save();
         
-        const resetLink = `http://localhost:5173/reset-password?token=${encodeURIComponent(resetToken)}`;
-
-        // Enviar email con nuevo estilo
+        console.log('✅ Token creado para:', user.email);
+        
+        // 4. Crear enlace de reset
+        resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+        console.log('🔗 Enlace generado:', resetLink);
+        
+        // 5. Verificar si tenemos credenciales para enviar email
+        if (!EMAIL_USER || !EMAIL_PASS) {
+            console.log('⚠️ Credenciales de email no configuradas');
+            return {
+                success: true,
+                resetToken: resetToken,
+                resetLink: resetLink,
+                message: 'Token generated but email not sent (credentials missing)'
+            };
+        }
+        
+        // 6. Enviar email
+        console.log('📤 Enviando email a:', email);
+        
         await transporter.sendMail({
-            from: `"Clinica Veterinaria" <${process.env.EMAIL_USER}>`,
+            from: `"Clinica Veterinaria" <${EMAIL_USER}>`, // FIJATE: Usa EMAIL_USER, NO process.env.EMAIL_USER
             to: email,
             subject: 'Restablece tu Contraseña - Clinica Veterinaria',
             html: `
@@ -81,24 +118,38 @@ export const sendResetPasswordEmail = async (email) => {
                         Si no solicitaste este cambio, puedes ignorar este mensaje de forma segura. 
                         Tu cuenta permanecerá protegida.
                     </p>
-                    
-                   
                 </div>
             `
         });
 
+        console.log('✅ Email enviado exitosamente');
+        
         return {
             success: true,
-            message: 'If an account with that email exists, we have sent a password reset link',
+            message: 'Password reset email sent successfully',
             resetToken: resetToken,
-            resetLink: `http://localhost:5173/reset-password?token=${encodeURIComponent(resetToken)}`
-        }
+            resetLink: resetLink
+        };
 
     } catch (error) {
-        console.error('Error sending reset password email:', error);
+        console.error('❌ Error en sendResetPasswordEmail:', error);
+        
+        // Si ya habíamos generado el token, lo devolvemos aunque falle el email
+        if (resetToken) {
+            console.log('⚠️ Email falló, pero token fue generado');
+            return {
+                success: true,
+                resetToken: resetToken,
+                resetLink: resetLink || `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`,
+                message: `Token generated but email failed: ${error.message}`
+            };
+        }
+        
         return {
             success: false,
-            message: 'Failed to send password reset email'
+            message: 'Failed to send password reset email: ' + error.message
         };
     }
 }
+
+export { transporter };

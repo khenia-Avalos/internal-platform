@@ -165,49 +165,42 @@ return res.json({
 
 };
 
+export const forgotPassword = async (req, res) => {
+    console.log(req.body)
+    const {email} = req.body
 
-export const forgotPassword = async ( req, res)=> {console.log(req.body)
-   
-   const {email} = req.body
-
-   if (!email) return res.status(400).json(["Email is required"]);
-try{
-       const user =await User.findOne({ email});
-       if (!user){
+    if (!email) return res.status(400).json(["Email is required"]);
+    
+    try {
+        // Llama al servicio
+        const response = await sendResetPasswordEmail(email);
+        
+        console.log("📨 Respuesta de sendResetPasswordEmail:", response);
+        
+        // Si el servicio devolvió el token, DEVUÉLVELO al frontend
+        if (response.resetToken) {
+            return res.status(200).json({
+                success: true,
+                resetToken: response.resetToken, // ← ¡IMPORTANTE!
+                resetLink: response.resetLink,    // También el link si existe
+                message: response.message || "Password reset email sent successfully"
+            });
+        }
+        
+        // Si no hay token, devuelve el mensaje normal
         return res.status(200).json({
-            success:true,
-             message: "If an account exists with this email, you will receive password reset instructions."
-          });
-       }
-  
-const resetToken = await createAccessToken({id: user._id}, '15m');
-user.resetPasswordToken = resetToken;
-user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutos
-await user.save();
-
-try {
-  await sendResetPasswordEmail(email);
-
-}catch (emailError) {
-  console.log('email error:',emailError.message)
-}
-
-return res.status(200).json({
-  success:true,
-  resetToken: resetToken,
-   message: "password reset token generated successfully"
-});
-
-
-} catch (error){
-   console.error('Error in forgot password:', error);
-  return res.status(200).json({
-    success:true,
-     message: "If an account exists with this email, you will receive password reset instructions."
-  });
-}
-  };
-
+            success: true,
+            message: response.message || "If an account exists with this email, you will receive password reset instructions."
+        });
+        
+    } catch (error) {
+        console.error('Error in forgot password:', error);
+        return res.status(200).json({
+            success: true,
+            message: "If an account exists with this email, you will receive password reset instructions."
+        });
+    }
+};
 
 export const resetPassword = async (req, res) => {
     const {token,password} = req.body
