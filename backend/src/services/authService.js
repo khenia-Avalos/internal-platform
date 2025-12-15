@@ -1,149 +1,75 @@
-import { createAccessToken } from '../libs/jwt.js';
-import {EMAIL_USER, EMAIL_PASS, FRONTEND_URL, NODE_ENV, EMAIL_SERVICE ,EMAIL_HOST , EMAIL_PORT} from '../config.js';
-import nodemailer from 'nodemailer';
-import User from '../models/user.model.js';
-
-
 export const sendResetPasswordEmail = async (email) => {
-    // Variables declaradas con let para poder asignarlas
-    let resetToken;
-    let resetLink;
-    let user;
-    let transporter;
+    let resetToken, resetLink, user;
 
     try {
-          console.log('='.repeat(50));
-        console.log('📧 ENVÍO DE EMAIL DEFINITIVO');
-        console.log('📧 Servicio:', EMAIL_SERVICE || 'sendgrid (default)');
-         
-  // 1. Verificar credenciales PRIMERO
-        if (!EMAIL_USER || !EMAIL_PASS) {
-            console.log('❌ ERROR: Credenciales de email faltantes');
-            throw new Error('Email credentials not configured in Render');
+        console.log('='.repeat(50));
+        console.log('📧 SOLUCIÓN DIRECTA - Gmail');
+        
+        // 1. Verificar App Password
+        if (!process.env.EMAIL_PASS) {
+            console.log('❌ ERROR: No hay EMAIL_PASS en Render');
+            throw new Error('Configura EMAIL_PASS en Render con App Password de 16 caracteres');
         }
-
-        user = await User.findOne({ email: email });
+        
+        // 2. Crear token (simple y directo)
+        user = await User.findOne({ email });
         if (!user) {
-            console.log('⚠️ No se encontró usuario con ese email:', email);
-            return {
-                success: true,
-                message: 'If an account with that email exists, we have sent a password reset link'
-            };
-        }   
+            console.log('⚠️ Usuario no encontrado (seguridad)');
+            return { success: true };
+        }
         
-        // 2. Crear token - IMPORTANTE: NO usar "const" aquí
-        resetToken = await createAccessToken(
-            { 
-                id: user._id, 
-                email: user.email,
-                type: 'password_reset'
-            },
-            '1h'
-        );
-        
-        // 3. Guardar en la base de datos
+        resetToken = await createAccessToken({ id: user._id }, '1h');
         user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
+        user.resetPasswordExpires = Date.now() + 3600000;
         await user.save();
         
-        console.log('✅ Token creado para:', user.email);
+        resetLink = `https://frontend-internal-platform.onrender.com/reset-password?token=${encodeURIComponent(resetToken)}`;
+        console.log('✅ Token creado');
+        console.log('🔗 Enlace:', resetLink);
         
-        // 4. Crear enlace de reset
-        resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
-        console.log('🔗 Enlace generado:', resetLink);
+        // 3. ENVIAR EMAIL CON CONFIGURACIÓN QUE SÍ FUNCIONA
+        console.log('📤 Configurando Gmail...');
         
-     // 6. CREAR TRANSPORTER DENTRO DE LA FUNCIÓN (IMPORTANTE)
-        console.log('🔄 Creando transporter con Gmail...');
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER || 'kheniavalos@gmail.com',
+                pass: process.env.EMAIL_PASS,
+            }
+        });
         
-          
-        if (EMAIL_SERVICE === 'gmail' || (!EMAIL_SERVICE && !EMAIL_HOST)) {
-            // Gmail (fallback)
-            console.log('📧 Usando Gmail...');
-            transporter = nodemailer.createTransport({
-                host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
-                auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-                tls: { rejectUnauthorized: false },
-                connectionTimeout: 10000,
-            });
-        } else {
-            // SendGrid (RECOMENDADO)
-            console.log('📧 Usando SendGrid...');
-         // POR ESTO (VERSIÓN CORREGIDA):
-transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',  // ← FIJO, no variable
-    port: 587,                   // ← FIJO
-    secure: false,
-    auth: {
-        user: 'apikey',          // ← SIEMPRE 'apikey', literal
-        pass: EMAIL_PASS,        // ← Tu API Key que empieza con SG.
-    }
-});
-        }
+        console.log('📤 Enviando email...');
         
-        // 4. Verificar con TIMEOUT
-        console.log('🔄 Verificando conexión (timeout 8s)...');
-        await Promise.race([
-            transporter.verify(),
-            new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout SMTP (8s)')), 8000)
-            )
-        ]);
-        console.log('✅ Conexión verificada');
-        
-        // 5. Enviar email
-        console.log('📤 Enviando email definitivo...');
-        
-          const mailOptions = {
-            from: `"Clinica Veterinaria" <${EMAIL_USER}>`,
+        const info = await transporter.sendMail({
+            from: '"Clinica Veterinaria" <kheniavalos@gmail.com>',
             to: email,
-            subject: 'Restablece tu Contraseña - Clinica Veterinaria',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #06b6d4;">🔐 Restablecer Contraseña</h2>
-                    <p>Hola <strong>${user.username}</strong>,</p>
-                    <p>Haz clic aquí para resetear:</p>
-                    <a href="${resetLink}" style="background-color: #06b6d4; color: white; padding: 10px 20px;">
-                        🗝️ Crear Nueva Contraseña
-                    </a>
-                    <p><small>Enlace: ${resetLink}</small></p>
-                </div>
-            `
-        };
+            subject: 'Restablece tu Contraseña',
+            text: `Hola ${user.username}, haz clic aquí: ${resetLink}`,
+            html: `<p>Hola <strong>${user.username}</strong>,</p>
+                   <p><a href="${resetLink}">Haz clic aquí para resetear tu contraseña</a></p>`
+        });
         
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ ¡EMAIL ENVIADO EXITOSAMENTE!');
-        console.log('✅ Message ID:', info.messageId);
-
+        console.log('✅ ¡EMAIL ENVIADO! ID:', info.messageId);
         
         return {
             success: true,
-            message: 'Password reset email sent successfully',
             resetToken: resetToken,
-            resetLink: resetLink
+            resetLink: resetLink,
+            message: 'Email enviado exitosamente'
         };
 
     } catch (error) {
-               console.error('❌ ERROR en sendResetPasswordEmail:');
-        console.error('❌ Código:', error.code);
-        console.error('❌ Mensaje:', error.message);
-        console.error('❌ Stack:', error.stack);
-        // Si ya habíamos generado el token, lo devolvemos aunque falle el email
+        console.error('❌ Error:', error.message);
+        
         if (resetToken) {
-           
             return {
-                 success: true,
+                success: true,
                 resetToken: resetToken,
                 resetLink: resetLink,
-                message: `Token generated but email failed: ${error.message}`
+                message: `Token generado. Email falló: ${error.message}`
             };
         }
         
-        return {
-            success: false,
-            message: 'Failed to send password reset email: ' + error.message
-        };
+        return { success: false, message: error.message };
     }
-}
-
+};
