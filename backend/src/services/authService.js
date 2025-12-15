@@ -116,7 +116,7 @@ export const sendResetPasswordEmail = async (email) => {
         if (resetToken) {
            
             return {
-                 success: false,
+                 success: true,
                 resetToken: resetToken,
                 resetLink: resetLink,
                 message: `Token generated but email failed: ${error.message}`
