@@ -31,23 +31,27 @@ const onSubmit = handleSubmit (async(values) =>{
     }
   });
 
-  // ✅ MUY IMPORTANTE: Añade esto ANTES del return principal
+   // ✅ SOLO el spinner cuando está registrando
   if (isRegistering) {
     return (
-        <div className="flex h-[calc(100vh-100px)] justify-center items-center">
+      <div className="flex h-[calc(100vh-100px)] justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Creating account...</p>
+        </div>
+      </div>
+    );
+  }
 
-           
-        <div  className ="bg-zinc-800 max-w-md p-10 rounded-md">
-
-{
-    registerErrors.map ((error, i)=>(
-        <div className='bg-red-500 p-2 text-white' key={i}>
+  // ✅ ✅ ✅ EL RETURN PRINCIPAL DEBE ESTAR FUERA
+  return (
+    <div className="flex h-[calc(100vh-100px)] justify-center items-center">
+      <div className="bg-zinc-800 max-w-md p-10 rounded-md">
+        {registerErrors.map((error, i) => (
+          <div className='bg-red-500 p-2 text-white mb-2' key={i}>
             {error}
-            </div>
-    ))
-}
-
-
+          </div>
+        ))}
 <form onSubmit={onSubmit}>
 
  <h1 className="text-3xl font-bold mb-4">Register</h1>
@@ -101,9 +105,7 @@ const onSubmit = handleSubmit (async(values) =>{
 
         </div>
         </div>
-    )
+    );
 
-    }
-        }
-
+}
     export default RegisterPage
