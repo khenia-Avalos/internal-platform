@@ -31,6 +31,12 @@ export const sendResetPasswordEmail = async (email) => {
     let user;
 
     try {
+           console.log('='.repeat(50));
+        console.log('📧 INICIANDO ENVÍO DE EMAIL');
+        console.log('📧 Entorno:', NODE_ENV);
+        console.log('📧 Email destino:', email);
+        console.log('📧 EMAIL_USER configurado?:', EMAIL_USER ? '✅ SÍ' : '❌ NO');
+        console.log('📧 EMAIL_PASS configurado?:', EMAIL_PASS ? '✅ SÍ' : '❌ NO');
         // 1. Buscar usuario
         user = await User.findOne({ email: email });
         if (!user) {
@@ -65,6 +71,10 @@ export const sendResetPasswordEmail = async (email) => {
         // 5. Verificar si tenemos credenciales para enviar email
         if (!EMAIL_USER || !EMAIL_PASS) {
             console.log('⚠️ Credenciales de email no configuradas');
+              console.log('❌ ERROR: Credenciales de email NO configuradas en Render');
+            console.log('   Agrega en Render:');
+            console.log('   EMAIL_USER=tu_email@gmail.com');
+            console.log('   EMAIL_PASS=app_password_de_16_caracteres');
             return {
                 success: true,
                 resetToken: resetToken,
