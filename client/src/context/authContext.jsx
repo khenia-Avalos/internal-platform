@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
-
+  const [authChecked, setAuthChecked] = useState(false); // ✅ NUEVO
 
   const signup = async (user) => {
     try {
@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
   const signin = async (user) => {
+    setLoading(true);
     try {
       const res = await loginRequest(user);
       setUser(res.data);
@@ -66,9 +67,13 @@ export const AuthProvider = ({ children }) => {
       return { ok: false , 
         error: errorMessage
       };
+    } finally {
+      setLoading(false);
+      setAuthChecked(true); // ✅ Marcar listo
     }
   };
   const logout = async () => {
+    setLoading(true);
     try {
       await logoutRequest();
       setUser(null);
@@ -76,8 +81,9 @@ export const AuthProvider = ({ children }) => {
    localStorage.removeItem('token');
     sessionStorage.removeItem('token');
     
-    // ✅ FORZAR recarga para limpiar estado completamente
-    window.location.href = "/";  // Esto es CRÍTICO
+    setTimeout(() => {
+        window.location.href = "/";
+      }, 50);
     
     return { ok: true };
     } catch (error) {
@@ -118,6 +124,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       } finally {
         setLoading(false);
+        setAuthChecked(true); // ✅ Marcar que la verificación ha terminado
       }
     };
     checkLogin();
@@ -133,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         errors,
         loading,
+        authChecked, // ✅ NUEVO
       }}
     >
       {children}

@@ -1,32 +1,45 @@
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { useAuth } from "../context/authContext";
 import { Link } from "react-router";
 import {  useState} from "react";
 
 
 
-
-
-
-
-
 function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { signin, errors: signinErrors, isAuthenticated } = useAuth();
+  const { signin, errors: signinErrors } = useAuth();
   const [showPwd, setShowPwd] = useState(false);
+  const [isLoggingIn, setIsloggingIn] = useState(false);
 
   const onSubmit = handleSubmit(async (data) => {
+    setIsloggingIn(true); 
    const result =await signin(data);
-   if (result.ok && result.data?.token) {
-    // Backup en localStorage (para incógnito/fallback)
-    localStorage.setItem('token', result.data.token);
-    
-    // También en sessionStorage para pestañas actuales
-    sessionStorage.setItem('token', result.data.token);
-    
-    window.location.href = "/tasks";
+
+setIsloggingIn(false);
+
+   
+    if (result.ok && result.data?.token) {
+      localStorage.setItem('token', result.data.token);
+      sessionStorage.setItem('token', result.data.token);
+      
+      // Pequeño delay para evitar flash
+      setTimeout(() => {
+        window.location.href = "/tasks";
+      }, 100);
+    }
+  });
+
+  // ✅ MUY IMPORTANTE: Añade esto ANTES del return principal
+  if (isLoggingIn) {
+    return (
+      <div className="flex h-[calc(100vh-100px)] items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Logging in...</p>
+        </div>
+      </div>
+    );
   }
-});
 
   return (
     <div className="flex h-[calc(100vh-100px)] items-center justify-center">
@@ -51,6 +64,7 @@ function LoginPage() {
             {...register("email", { required: true })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
             placeholder="Email"
+            disabled={isLoggingIn}
            
           />
           {errors.email && (
@@ -65,10 +79,11 @@ function LoginPage() {
               {...register("password", { required: true })}
               className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
               placeholder="Password"
+              disabled={isLoggingIn}
             />
             <div
               className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => setShowPwd(!showPwd)}
+             onClick={() => !isLoggingIn && setShowPwd(!showPwd)}  // ✅ Solo si no está cargando
             >
               {showPwd ? (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#06b6d4" className="w-5 h-5">
