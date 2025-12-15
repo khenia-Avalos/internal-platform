@@ -35,7 +35,12 @@ export const AuthProvider = ({ children }) => {
   
       return { ok: true };
     } catch (error) {
-      setErrors(error.response.data || "Error registering");
+     const errorData = error.response?.data;
+      const errorMessage = errorData 
+        ? (Array.isArray(errorData) ? errorData : [errorData])
+        : ["Registration failed. Please try again."];
+      
+      setErrors(errorMessage);
       return { ok: false };
     }
   };
@@ -48,7 +53,13 @@ export const AuthProvider = ({ children }) => {
       navigate("/tasks");
       return { ok: true };
     } catch (error) {
-      setErrors(error.response.data || "Login failed");
+    // MANEJO SEGURO DEL ERROR
+      const errorData = error.response?.data;
+      const errorMessage = errorData 
+        ? (Array.isArray(errorData) ? errorData : [errorData])
+        : ["Login failed. Check your credentials."];
+      
+      setErrors(errorMessage);
       return { ok: false };
     }
   };
@@ -59,7 +70,9 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       return { ok: true };
     } catch (error) {
-      setErrors(error.response.data || "Logout failed");
+     // MANEJO SEGURO DEL ERROR
+      const errorMessage = error.response?.data || ["Logout failed"];
+      setErrors(Array.isArray(errorMessage) ? errorMessage : [errorMessage]);
       return { ok: false };
     }
   };

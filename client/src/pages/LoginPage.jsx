@@ -18,8 +18,14 @@ function LoginPage() {
   const onSubmit = handleSubmit(async (data) => {
    const result =await signin(data);
    if (result.ok){
-    Navigate("/tasks");
-   }
+  // Verifica también si hay token en la respuesta del backend
+    if (result.data?.token) {
+      localStorage.setItem('token', result.data.token); // si usas localStorage
+    }
+    window.location.href = "/tasks";
+  }
+  // Si result.ok es false, los errores ya se mostraron via setErrors
+   
   });
 
   return (
