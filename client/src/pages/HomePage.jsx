@@ -2,7 +2,7 @@ import { useAuth } from "../context/authContext";
 import { Link } from "react-router";
 
 function HomePage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading , authChecked } = useAuth();
    // ✅ Evitar mostrar contenido hasta que esté listo
   if (loading && !authChecked) {
     return (
