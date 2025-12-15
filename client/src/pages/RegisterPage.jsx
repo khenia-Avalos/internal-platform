@@ -10,8 +10,9 @@ const {register, handleSubmit,
     formState:{errors},
 
 }= useForm();
-const {singup, isAuthenticated, errors: registerErrors}= useAuth();
+const {signup, isAuthenticated, errors: registerErrors}= useAuth();
 const navigate= useNavigate()
+const [isRegistering, setIsRegistering] = useState(false);
 
 useEffect(() => {
     if (isAuthenticated) navigate("/tasks");     
@@ -19,13 +20,19 @@ useEffect(() => {
 
 
 const onSubmit = handleSubmit (async(values) =>{
-singup(values);
+ setIsRegistering(true); // Añade
+    const result = await signup(values); // Ahora funciona
+    setIsRegistering(false); // Añade
+    
+    if (result.ok && result.data?.token) {
+      localStorage.setItem('token', result.data.token);
+      sessionStorage.setItem('token', result.data.token);
+      window.location.href = "/tasks";
+    }
+  });
 
-
-});
-
-
-
+  // ✅ MUY IMPORTANTE: Añade esto ANTES del return principal
+  if (isRegistering) {
     return (
         <div className="flex h-[calc(100vh-100px)] justify-center items-center">
 
@@ -76,7 +83,13 @@ singup(values);
 ) }
 
 
-<button type = "submit">Register</button>
+<button 
+  type="submit" 
+  disabled={isRegistering}
+  className={`w-full ${isRegistering ? 'bg-gray-400' : 'bg-indigo-500'} text-white px-4 py-2 rounded-md my-2`}
+>
+  {isRegistering ? 'Creating Account...' : 'Register'}
+</button>
 
 </form>
 <p className= "flex gap-x-2 justify-between">
@@ -89,5 +102,8 @@ singup(values);
         </div>
         </div>
     )
-}
-export default RegisterPage
+
+    }
+        }
+
+    export default RegisterPage
