@@ -70,16 +70,16 @@ export const sendResetPasswordEmail = async (email) => {
         } else {
             // SendGrid (RECOMENDADO)
             console.log('📧 Usando SendGrid...');
-            transporter = nodemailer.createTransport({
-                host: EMAIL_HOST || 'smtp.sendgrid.net',
-                port: EMAIL_PORT || 587,
-                secure: false,
-                auth: {
-                    user: EMAIL_USER === 'apikey' ? 'apikey' : EMAIL_USER,
-                    pass: EMAIL_PASS,
-                },
-                tls: { rejectUnauthorized: false },
-            });
+         // POR ESTO (VERSIÓN CORREGIDA):
+transporter = nodemailer.createTransport({
+    host: 'smtp.sendgrid.net',  // ← FIJO, no variable
+    port: 587,                   // ← FIJO
+    secure: false,
+    auth: {
+        user: 'apikey',          // ← SIEMPRE 'apikey', literal
+        pass: EMAIL_PASS,        // ← Tu API Key que empieza con SG.
+    }
+});
         }
         
         // 4. Verificar con TIMEOUT
