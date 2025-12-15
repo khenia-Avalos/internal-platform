@@ -1,25 +1,19 @@
-// config.js - VERSIÓN DEFINITIVA
+// config.js - VERSIÓN SIMPLE PARA GMAIL
 console.log('🔧 Cargando config.js...');
 
 const NODE_ENV_VALUE = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV_VALUE === 'production';
 
-console.log('🔧 === CONFIGURACIÓN DEFINITIVA ===');
 console.log('🔧 NODE_ENV:', NODE_ENV_VALUE);
 
-// Configuración para SendGrid
-export const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'sendgrid'; // 'gmail' o 'sendgrid'
+// Configuración simple para Gmail
 export const EMAIL_USER = process.env.EMAIL_USER || '';
 export const EMAIL_PASS = process.env.EMAIL_PASS || '';
-export const EMAIL_HOST = process.env.EMAIL_HOST;
-export const EMAIL_PORT = process.env.EMAIL_PORT;
 
-// Verificar configuración
+// Verificar en producción
 if (IS_PRODUCTION) {
-    console.log('🔧 Email Service:', EMAIL_SERVICE);
-    console.log('🔧 EMAIL_HOST:', EMAIL_HOST || 'No configurado');
-    console.log('🔧 EMAIL_USER:', EMAIL_USER || 'No configurado');
-    console.log('🔧 EMAIL_PASS:', EMAIL_PASS ? '✅ Configurado' : '❌ Faltante');
+    console.log('🔧 EMAIL_USER:', EMAIL_USER || '❌ NO CONFIGURADO');
+    console.log('🔧 EMAIL_PASS:', EMAIL_PASS ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO');
 }
 
 export const NODE_ENV = NODE_ENV_VALUE;
