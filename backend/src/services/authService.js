@@ -1,5 +1,5 @@
 import { createAccessToken } from '../libs/jwt.js';
-import {EMAIL_USER, EMAIL_PASS, FRONTEND_URL, NODE_ENV} from '../config.js';
+import {EMAIL_USER, EMAIL_PASS, FRONTEND_URL, NODE_ENV, EMAIL_SERVICE ,EMAIL_HOST , EMAIL_PORT} from '../config.js';
 import nodemailer from 'nodemailer';
 import User from '../models/user.model.js';
 
@@ -9,15 +9,13 @@ export const sendResetPasswordEmail = async (email) => {
     let resetToken;
     let resetLink;
     let user;
+    let transporter;
 
     try {
           console.log('='.repeat(50));
-        console.log('📧 INICIANDO ENVÍO DE EMAIL');
-        console.log('📧 Entorno:', NODE_ENV);
-        console.log('📧 Email destino:', email);
-        console.log('📧 EMAIL_USER:', EMAIL_USER || '❌ NO CONFIGURADO');
-        console.log('📧 EMAIL_PASS:', EMAIL_PASS ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO');
-        
+        console.log('📧 ENVÍO DE EMAIL DEFINITIVO');
+        console.log('📧 Servicio:', EMAIL_SERVICE || 'sendgrid (default)');
+         
   // 1. Verificar credenciales PRIMERO
         if (!EMAIL_USER || !EMAIL_PASS) {
             console.log('❌ ERROR: Credenciales de email faltantes');
@@ -57,26 +55,45 @@ export const sendResetPasswordEmail = async (email) => {
      // 6. CREAR TRANSPORTER DENTRO DE LA FUNCIÓN (IMPORTANTE)
         console.log('🔄 Creando transporter con Gmail...');
         
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false,
-            auth: {
-                user: EMAIL_USER,
-                pass: EMAIL_PASS,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
+          
+        if (EMAIL_SERVICE === 'gmail' || (!EMAIL_SERVICE && !EMAIL_HOST)) {
+            // Gmail (fallback)
+            console.log('📧 Usando Gmail...');
+            transporter = nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 10000,
+            });
+        } else {
+            // SendGrid (RECOMENDADO)
+            console.log('📧 Usando SendGrid...');
+            transporter = nodemailer.createTransport({
+                host: EMAIL_HOST || 'smtp.sendgrid.net',
+                port: EMAIL_PORT || 587,
+                secure: false,
+                auth: {
+                    user: EMAIL_USER === 'apikey' ? 'apikey' : EMAIL_USER,
+                    pass: EMAIL_PASS,
+                },
+                tls: { rejectUnauthorized: false },
+            });
+        }
         
-        // 7. Verificar conexión
-        console.log('🔄 Verificando conexión SMTP...');
-        await transporter.verify();
-        console.log('✅ Conexión SMTP verificada');
+        // 4. Verificar con TIMEOUT
+        console.log('🔄 Verificando conexión (timeout 8s)...');
+        await Promise.race([
+            transporter.verify(),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout SMTP (8s)')), 8000)
+            )
+        ]);
+        console.log('✅ Conexión verificada');
         
-        // 6. Enviar email
-        console.log('📤 Enviando email a:', email);
+        // 5. Enviar email
+        console.log('📤 Enviando email definitivo...');
         
           const mailOptions = {
             from: `"Clinica Veterinaria" <${EMAIL_USER}>`,
