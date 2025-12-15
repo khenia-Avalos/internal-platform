@@ -139,7 +139,16 @@ try{
 };
 
 export const verifyToken = async ( req, res) => {
-  const {token}= req.cookies
+  // ✅ CAMBIO: Buscar token en cookies O en Authorization header
+  let token = req.cookies.token;
+  
+  // Si no hay en cookies, buscar en Authorization header
+  if (!token && req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7); // Extraer "Bearer token"
+    }
+  }
 
   if (!token) return res.status(401).json(["Unauthorized"]);
 
