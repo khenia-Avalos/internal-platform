@@ -259,13 +259,28 @@ const emailService = new EmailService();
  * Función principal - REEMPLAZA TU FUNCIÓN EXISTENTE
  */
 export const sendResetPasswordEmail = async (email) => {
-    console.log('='.repeat(50));
+
+      console.log('='.repeat(50));
     console.log('🔥 SENDGRID SOLUCIÓN - TODO EN UNO');
     console.log('📧 Para:', email);
     console.log('🔧 Servicio configurado:', EMAIL_SERVICE);
     
-    let resetToken, resetLink, user;
+    // ======== ¡PEGA AQUÍ EL CÓDIGO DE DIAGNÓSTICO! ========
+    console.log('='.repeat(60));
+    console.log('🔍 DIAGNÓSTICO PROFUNDO SENDGRID:');
+    console.log('   1. EMAIL_SERVICE:', EMAIL_SERVICE);
+    console.log('   2. SENDGRID_API_KEY definida?:', !!SENDGRID_API_KEY);
+    console.log('   3. Longitud de la clave:', SENDGRID_API_KEY?.length || 'NO DEFINIDA');
+    console.log('   4. ¿Empieza con "SG."?:', SENDGRID_API_KEY?.startsWith?.('SG.') || 'NO APLICA');
+    console.log('   5. Primeros 10 chars:', SENDGRID_API_KEY?.substring(0, 10) || 'NO DEFINIDA');
+    console.log('   6. Últimos 10 chars:', SENDGRID_API_KEY?.substring?.(-10) || 'NO DEFINIDA');
+    console.log('   7. SENDGRID_FROM_EMAIL:', SENDGRID_FROM_EMAIL);
+    console.log('   8. NODE_ENV:', NODE_ENV);
+    console.log('   9. FRONTEND_URL:', FRONTEND_URL);
+    console.log('='.repeat(60));
+    // ======== FIN DEL CÓDIGO DE DIAGNÓSTICO ========
     
+    let resetToken, resetLink, user;
     try {
         // 1. Buscar usuario
         user = await User.findOne({ email });
