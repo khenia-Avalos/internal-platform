@@ -4,6 +4,10 @@ import{useAuth} from "../context/authContext"
 
 function Navbar(){
     const {isAuthenticated, logout, user}= useAuth();
+      const handleLogout = async () => {
+    await logout();  // ✅ Esperar a que termine
+    // El logout ya debería redirigir automáticamente
+  };
 
     return(
        
@@ -28,11 +32,13 @@ function Navbar(){
      > ADD TASK</Link> 
      </li>
      <li>
-     <Link to= '/' onClick={()=>{
-        logout()
-     }
-     }> Logout</Link> 
-     </li>
+         <button 
+                onClick={handleLogout}  // ✅ Usar función async
+                className="text-white hover:text-red-300 transition"
+              > 
+                Logout
+              </button> 
+            </li>
 </>
      ) :(
         <>

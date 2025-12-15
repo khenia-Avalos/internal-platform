@@ -73,7 +73,13 @@ export const AuthProvider = ({ children }) => {
       await logoutRequest();
       setUser(null);
       setIsAuthenticated(false);
-      return { ok: true };
+   localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    
+    // ✅ FORZAR recarga para limpiar estado completamente
+    window.location.href = "/";  // Esto es CRÍTICO
+    
+    return { ok: true };
     } catch (error) {
      // MANEJO SEGURO DEL ERROR
       const errorMessage = error.response?.data || ["Logout failed"];
