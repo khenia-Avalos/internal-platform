@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route,Navigate } from "react-router";
 import { AuthProvider } from "./context/authContext";
 
 import RegisterPage from "./pages/RegisterPage";
@@ -38,8 +38,9 @@ function App() {
 
                 {/* Rutas con Navbar */}
                 <Route element={<LayoutWithNavbar />}>
+                     <Route path="/" element={<HomePage />} />
                   <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<HomePage />} />
+               
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
