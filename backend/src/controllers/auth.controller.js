@@ -172,15 +172,33 @@ export const forgotPassword = async ( req, res)=> {console.log(req.body)
 
    if (!email) return res.status(400).json(["Email is required"]);
 try{
-        const response = await sendResetPasswordEmail(email);
-        
+       const user =await User.findOne({ email});
+       if (!user){
+        return res.status(200).json({
+            success:true,
+             message: "If an account exists with this email, you will receive password reset instructions."
+          });
+       }
+  
+const resetToken = await createAccessToken({id: user._id}, '15m');
+user.resetPasswordToken = resetToken;
+user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutos
+await user.save();
 
-      return res.status(200).json({
-        success: true,
-    message: "If an account exists with this email, you will receive password reset instructions."
-      });
-  
-  
+try {
+  await sendResetPasswordEmail(email);
+
+}catch (emailError) {
+  console.log('email error:',emailError.message)
+}
+
+return res.status(200).json({
+  success:true,
+  resetToken: resetToken,
+   message: "password reset token generated successfully"
+});
+
+
 } catch (error){
    console.error('Error in forgot password:', error);
   return res.status(200).json({
