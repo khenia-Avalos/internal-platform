@@ -17,16 +17,16 @@ function LoginPage() {
 
   const onSubmit = handleSubmit(async (data) => {
    const result =await signin(data);
-   if (result.ok){
-  // Verifica también si hay token en la respuesta del backend
-    if (result.data?.token) {
-      localStorage.setItem('token', result.data.token); // si usas localStorage
-    }
+   if (result.ok && result.data?.token) {
+    // Backup en localStorage (para incógnito/fallback)
+    localStorage.setItem('token', result.data.token);
+    
+    // También en sessionStorage para pestañas actuales
+    sessionStorage.setItem('token', result.data.token);
+    
     window.location.href = "/tasks";
   }
-  // Si result.ok es false, los errores ya se mostraron via setErrors
-   
-  });
+});
 
   return (
     <div className="flex h-[calc(100vh-100px)] items-center justify-center">

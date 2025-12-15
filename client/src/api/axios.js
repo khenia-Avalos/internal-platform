@@ -8,10 +8,17 @@ const instance = axios.create({
   withCredentials: true,
 });
 
-// Añade interceptor para debug
 instance.interceptors.request.use(config => {
-  console.log('Enviando request a:', config.url);
-  console.log('Con cookies:', document.cookie);
+  // PRIMERO intenta con localStorage (funciona en incógnito)
+  let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  
+  // Si no hay token local, las cookies HTTP-Only se envían automáticamente
+  // (gracias a withCredentials: true)
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
   return config;
 });
 export default instance;
