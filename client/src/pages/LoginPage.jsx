@@ -16,7 +16,10 @@ function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
 
   const onSubmit = handleSubmit(async (data) => {
-   await signin(data);
+   const result =await signin(data);
+   if (result.ok){
+    Navigate("/tasks");
+   }
   });
 
   return (

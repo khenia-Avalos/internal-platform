@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState , useContext} from "react";
-import {useNavigate} from "react-router";
+
 
 import {
   loginRequest,
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
- const navigate = useNavigate();
+
 
   const signup = async (user) => {
     try {
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
-      navigate("/tasks");
+  
       return { ok: true };
     } catch (error) {
       setErrors(error.response.data || "Error registering");
