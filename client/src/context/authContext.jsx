@@ -50,8 +50,11 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
-      navigate("/tasks");
-      return { ok: true };
+     
+ return { 
+        ok: true,
+        data: res.data // Asegúrate de devolver data
+      };
     } catch (error) {
     // MANEJO SEGURO DEL ERROR
       const errorData = error.response?.data;
@@ -60,7 +63,9 @@ export const AuthProvider = ({ children }) => {
         : ["Login failed. Check your credentials."];
       
       setErrors(errorMessage);
-      return { ok: false };
+      return { ok: false , 
+        error: errorMessage
+      };
     }
   };
   const logout = async () => {
@@ -98,13 +103,16 @@ export const AuthProvider = ({ children }) => {
           setUser(res.data);
         }
       } catch (error) {
-        console.log(error);
+        console.log("Error verificando token:", error.message);
+        // Si es 401, simplemente no estamos autenticados
+        if (error.response?.status !== 401) {
+          console.error("Error inesperado:", error);
+        }
         setIsAuthenticated(false);
         setUser(null);
-      } finally{
+      } finally {
         setLoading(false);
       }
-    
     };
     checkLogin();
   }, []);

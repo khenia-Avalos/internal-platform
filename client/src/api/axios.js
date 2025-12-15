@@ -8,22 +8,10 @@ const instance = axios.create({
   withCredentials: true,
 });
 
-// Interceptor para manejar errores 401
-instance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Limpiar estado de autenticación
-      localStorage.removeItem("token"); // si usas localStorage
-      // Redirigir solo si estamos en una página protegida
-      if (!window.location.pathname.includes("/login") && 
-          !window.location.pathname.includes("/register")) {
-        window.location.href = "/login";
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-
+// Añade interceptor para debug
+instance.interceptors.request.use(config => {
+  console.log('Enviando request a:', config.url);
+  console.log('Con cookies:', document.cookie);
+  return config;
+});
 export default instance;

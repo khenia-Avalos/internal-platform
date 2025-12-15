@@ -12,7 +12,7 @@ import {  useState} from "react";
 
 function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { signin, errors: signinErrors } = useAuth();
+  const { signin, errors: signinErrors, isAuthenticated } = useAuth();
   const [showPwd, setShowPwd] = useState(false);
 
   const onSubmit = handleSubmit(async (data) => {
