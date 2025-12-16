@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import axios from "axios"
 
+
 function ForgotPassword() {
     const [email, setEmail] = React.useState("");
     const [resetToken, setResetToken] = React.useState("");
+    const [message, setMessage] = React.useState("");
+    const [error, setError] = React.useState("");
+    const [loading, setLoading] = React.useState(false);
     const handleSubmit =  async(e) => {
         e.preventDefault();
+        setLoading (true);
+        setMessage("");
+        setError("");
+        setResetToken("");
 
 
 try{
@@ -51,9 +59,11 @@ const response = await axios.post(
     } catch (error) {
          console.error("❌ Error completo:", error);
         setResetToken("ERROR: " + error.message);
-}
+           } finally {  // ← ¡ESTE BLOQUE FALTA!
+            setLoading(false); // ¡IMPORTANTE! Desactiva el loading
+        }
+    };
 
-}
 
         
   return (
@@ -67,20 +77,46 @@ const response = await axios.post(
         value={email}
    onChange={(e) => setEmail(e.target.value)}
         
-        required />
+        required
+        disabled={loading} />
     </div>
-    <button type="submit" className= 'login-btn'>Submit</button>
+    <button 
+                    type="submit" 
+                    className='login-btn'
+                    disabled={loading} // Deshabilitar mientras carga
+                >
+                    {loading ? "Enviando..." : "Submit"}
+                </button>
     </form> 
-    {resetToken && (
-    <div style={{marginTop: '20px', padding: '15px', background: '#f0f8ff'}}>
-        <h3>Copy this token:</h3>
-        <textarea 
-            value={resetToken}
-            readOnly
-            style={{width: '100%', height: '80px', padding: '10px'}}
-        />
-    </div>
-)}
+   {/* ✅ MENSAJE DE CONFIRMACIÓN */}
+            {message && (
+                <div style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#e8f5e9',
+                    border: '1px solid #4caf50',
+                    borderRadius: '8px',
+                    color: '#2e7d32'
+                }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>✅ ¡Email Enviado!</h4>
+                    <p style={{ margin: '5px 0' }}>{message}</p>
+                </div>
+            )}
+
+            {/* ✅ MENSAJE DE ERROR */}
+            {error && (
+                <div style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#ffebee',
+                    border: '1px solid #f44336',
+                    borderRadius: '8px',
+                    color: '#d32f2f'
+                }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>❌ Error</h4>
+                    <p>{error}</p>
+                </div>
+            )}
 </div>
   )
 }
