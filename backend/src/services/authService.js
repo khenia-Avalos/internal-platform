@@ -216,8 +216,6 @@ class EmailService {
                 <a href="${resetLink}" class="button">Restablecer Contraseña</a>
             </p>
             
-            <p>O copia y pega este enlace en tu navegador:</p>
-            <div class="link-box">${resetLink}</div>
             
             <p><strong>⚠️ Importante:</strong> Este enlace expirará en 1 hora.</p>
             <p>Si no solicitaste este cambio, puedes ignorar este email.</p>
