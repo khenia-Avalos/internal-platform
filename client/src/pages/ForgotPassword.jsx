@@ -32,6 +32,22 @@ const response = await axios.post(
                     setResetToken(token);
                 }
             }
+             //MUESTRA MENSAJE DE CONFIRMACIÓN
+            if (response.data.success) {
+                setMessage(response.data.message || "¡Email enviado! Revisa tu bandeja de entrada.");
+                
+                // Mensaje adicional sobre SPAM
+                setTimeout(() => {
+                    setMessage(prev => prev + " (Revisa la carpeta de SPAM o Promociones si no lo encuentras)");
+                }, 500);
+                
+                // Limpia el formulario después de 3 segundos
+                setTimeout(() => {
+                    setEmail("");
+                }, 3000);
+            } else {
+                setError(response.data.message || "Hubo un error. Intenta nuevamente.");
+            }
     } catch (error) {
          console.error("❌ Error completo:", error);
         setResetToken("ERROR: " + error.message);
