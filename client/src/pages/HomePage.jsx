@@ -4,12 +4,7 @@ import { Link } from "react-router";
 function HomePage() {
   const { isAuthenticated, user, loading, authChecked } = useAuth();
 if (loading) return null;
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-      </div>
-    );
-  }
+ 
   return (
     <div className="text-center py-10">
       <h1 className="text-4xl font-bold mb-6">HompePAGE</h1>
@@ -54,5 +49,5 @@ if (loading) return null;
     </div>
   );
 
-
+}
 export default HomePage;
