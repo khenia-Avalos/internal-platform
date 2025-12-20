@@ -21,6 +21,7 @@ try {
 
 class EmailService {
   async sendResetPassword(toEmail, username, resetLink) {
+    //busca usuario en bd
     try {
       const subject = "Restablece tu Contraseña - Clínica Veterinaria";
       const html = this.getHtmlTemplate(username, resetLink);
@@ -36,29 +37,29 @@ class EmailService {
         to: toEmail,
         from: {
           email: SENDGRID_FROM_EMAIL || "no-reply@clinicaveterinaria.com",
-          name: "Clínica Veterinaria"
+          name: "Clínica Veterinaria",
         },
         subject: subject,
         html: html,
         text: text,
         trackingSettings: {
           clickTracking: { enable: true },
-          openTracking: { enable: true }
+          openTracking: { enable: true },
         },
-        category: "password-reset"
+        category: "password-reset",
       };
 
-      const response = await sgMail.send(msg);
-      
+      const response = await sgMail.send(msg); //llama a la api de sendgrid
+
       return {
         success: true,
         service: "sendgrid",
-        messageId: response[0]?.headers?.['x-message-id'] || response[0]?.messageId,
+        messageId:
+          response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
+        // Esta línea intenta obtener el ID del mensaje de dos lugares posibles donde SendGrid podría guardarlo, usando optional chaining para evitar errores si alguna propiedad no existe.
       };
-
     } catch (error) {
-      console.error("❌ Error enviando email:", error.message);
-      // Log más detallado para debugging
+      console.error(" Error enviando email:", error.message);
       if (error.response) {
         console.error("Detalles SendGrid:", error.response.body);
       }
@@ -67,7 +68,6 @@ class EmailService {
   }
 
   getHtmlTemplate(username, resetLink) {
-    // Mantén tu plantilla HTML actual (la que ya tienes)
     return `
 <!DOCTYPE html>
 <html>
@@ -98,7 +98,7 @@ class EmailService {
             </p>
             
             
-            <p><strong>⚠️ Importante:</strong> Este enlace expirará en 1 hora.</p>
+            <p><strong> Importante:</strong> Este enlace expirará en 1 hora.</p>
             <p>Si no solicitaste este cambio, puedes ignorar este email.</p>
         </div>
         <div class="footer">
@@ -111,7 +111,6 @@ class EmailService {
   }
 
   getTextTemplate(username, resetLink) {
-    // Mantén tu plantilla de texto actual
     return `RESTABLECIMIENTO DE CONTRASEÑA
 
 Hola ${username},
@@ -138,13 +137,16 @@ export const sendResetPasswordEmail = async (email) => {
     user = await User.findOne({ email });
     if (!user) {
       return {
-        success: true,
-        message: "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
+        success: true,//por seguridad 
+        message:
+          "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
       };
     }
 
     resetToken = await createAccessToken({ id: user._id }, "1h");
-    resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(
+      resetToken
+    )}`;
 
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
@@ -152,23 +154,16 @@ export const sendResetPasswordEmail = async (email) => {
 
     const emailResult = await emailService.sendResetPassword(
       email,
-      user.username,
+      user.username,//llama al metodo del servicio de email
       resetLink
     );
 
     const response = {
       success: true,
-      message: "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
+      message:
+        "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
     };
 
-    // Solo mostrar debug en desarrollo si es necesario
-    if (NODE_ENV === "development") {
-      response.debug = {
-        service: emailResult.service,
-        resetLink: resetLink,
-        ...(emailResult.messageId && { messageId: emailResult.messageId }),
-      };
-    }
 
     return response;
   } catch (error) {
@@ -184,15 +179,16 @@ export const sendResetPasswordEmail = async (email) => {
       };
     }
 
-    // En producción, mensaje genérico
+    // En producción
     return {
       success: false,
-      message: "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
+      message:
+        "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
     };
   }
 };
 
-export const checkEmailConfig = async () => {
+export const checkEmailConfig = async () => {//codigo para debug 
   try {
     const config = {
       service: "sendgrid",
@@ -205,7 +201,7 @@ export const checkEmailConfig = async () => {
         apiKeyLength: SENDGRID_API_KEY?.length || 0,
         fromEmail: SENDGRID_FROM_EMAIL || "no configurado",
         status: SENDGRID_API_KEY ? "✅ CONFIGURADO" : "❌ NO CONFIGURADO",
-      }
+      },
     };
 
     return {
