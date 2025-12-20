@@ -83,13 +83,13 @@ export const login = async (req, res) => {
     res.cookie("token", token, cookieOptions);
 
      res.json({
-  user: {
-    id: userSaved._id,
-    username: userSaved.username,
-    email: userSaved.email,
-    createdAt: userSaved.createdAt,
-    updatedAt: userSaved.updatedAt,
-  },
+user: {
+  id: userFound._id,        // ✅ userFound SÍ EXISTE
+  username: userFound.username,
+  email: userFound.email,
+  createdAt: userFound.createdAt,
+  updatedAt: userFound.updatedAt,
+},
   accessToken: token,  
 });
   } catch (error) {
