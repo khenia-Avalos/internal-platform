@@ -44,14 +44,12 @@ export const register = async (req, res) => {
 
     res.cookie("token", token, cookieOptions);//para establecer el token como cookie en el navegador
 
-   res.json({
-  user: {
-    id: userSaved._id,
-    username: userSaved.username,
-    email: userSaved.email,
-    createdAt: userSaved.createdAt,
-    updatedAt: userSaved.updatedAt,
-  },
+  res.json({
+  id: userSaved._id,
+  username: userSaved.username,
+  email: userSaved.email,
+  createdAt: userSaved.createdAt,
+  updatedAt: userSaved.updatedAt,
   accessToken: token,  
 });
   } catch (error) {
@@ -82,14 +80,13 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, cookieOptions);
 
-     res.json({
-user: {
-  id: userFound._id,        // ✅ userFound SÍ EXISTE
+
+res.json({
+  id: userFound._id,       
   username: userFound.username,
   email: userFound.email,
   createdAt: userFound.createdAt,
   updatedAt: userFound.updatedAt,
-},
   accessToken: token,  
 });
   } catch (error) {
