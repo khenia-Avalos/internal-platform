@@ -135,15 +135,12 @@ export const verifyToken = async (req, res) => {
 
     const userFound = await User.findById(decoded.id);//busca usuario por id decodificado
     if (!userFound) return res.status(401).json(["Unauthorized"]);
-     return res.json({
-      user: {
-        id: userFound._id,
-        username: userFound.username,
-        email: userFound.email,
-     
-      }
-     
-    });
+   return res.json({
+  id: userFound._id,
+  username: userFound.username,
+  email: userFound.email,
+
+});
   } catch (error) {
     return res.status(403).json(["Invalid token"]);
   }
