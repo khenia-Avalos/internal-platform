@@ -18,9 +18,9 @@ function LoginPage() {
 setIsloggingIn(false);
 
    
-    if (result.ok && result.data?.token) {
-      localStorage.setItem('token', result.data.token);
-      sessionStorage.setItem('token', result.data.token);
+    if (result.ok && result.data?.accessToken) {
+      localStorage.setItem('token', result.data.accessToken);
+      sessionStorage.setItem('token', result.data.accessToken);
       
       // Pequeño delay para evitar flash
       setTimeout(() => {
