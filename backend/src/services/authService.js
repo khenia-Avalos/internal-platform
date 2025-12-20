@@ -1,193 +1,74 @@
-import { createAccessToken } from '../libs/jwt.js';
-import { 
-    EMAIL_SERVICE, 
-    EMAIL_USER, 
-    EMAIL_PASS, 
-    SENDGRID_API_KEY, 
-    SENDGRID_FROM_EMAIL,
-    FRONTEND_URL,
-    NODE_ENV
-} from '../config.js';
-import nodemailer from 'nodemailer';
-import User from '../models/user.model.js';
+import { createAccessToken } from "../libs/jwt.js";
+import {
+  SENDGRID_API_KEY,
+  SENDGRID_FROM_EMAIL,
+  FRONTEND_URL,
+  NODE_ENV,
+} from "../config.js";
+import User from "../models/user.model.js";
 
-// Importar SendGrid solo si se va a usar
 let sgMail;
-if (EMAIL_SERVICE === 'sendgrid' && SENDGRID_API_KEY) {
-    try {
-        sgMail = (await import('@sendgrid/mail')).default;
-        sgMail.setApiKey(SENDGRID_API_KEY);
-        console.log('✅ SendGrid inicializado correctamente');
-    } catch (error) {
-        console.error('❌ Error cargando SendGrid:', error.message);
-    }
+
+// Configura SendGrid una sola vez
+try {
+  sgMail = (await import("@sendgrid/mail")).default;
+  sgMail.setApiKey(SENDGRID_API_KEY);
+  console.log("✅ SendGrid configurado");
+} catch (error) {
+  console.error("❌ Error configurando SendGrid:", error.message);
+  throw new Error("SendGrid no se pudo configurar");
 }
 
-/**
- * Servicio unificado para enviar emails
- */
 class EmailService {
-    /**
-     * Enviar email de restablecimiento de contraseña
-     */
-    async sendResetPassword(toEmail, username, resetLink) {
-        try {
-            console.log(`📧 Enviando a: ${toEmail} (servicio: ${EMAIL_SERVICE})`);
-            
-            const subject = 'Restablece tu Contraseña - Clínica Veterinaria';
-            const html = this.getHtmlTemplate(username, resetLink);
-            const text = this.getTextTemplate(username, resetLink);
-            
-            // Seleccionar método según configuración
-            switch (EMAIL_SERVICE) {
-                case 'sendgrid':
-                    if (!sgMail) throw new Error('SendGrid no configurado');
-                    return await this.sendWithSendGrid(toEmail, subject, html, text);
-                
-                case 'gmail':
-                    return await this.sendWithGmail(toEmail, subject, html, text);
-                
-                default:
-                    return await this.sendWithEthereal(toEmail, subject, html, text);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error enviando email:', error.message);
-            throw error;
-        }
+  async sendResetPassword(toEmail, username, resetLink) {
+    try {
+      const subject = "Restablece tu Contraseña - Clínica Veterinaria";
+      const html = this.getHtmlTemplate(username, resetLink);
+      const text = this.getTextTemplate(username, resetLink);
+
+      // Verifica que SendGrid esté configurado
+      if (!sgMail) {
+        throw new Error("SendGrid no está configurado");
+      }
+
+      // Envía directamente con SendGrid
+      const msg = {
+        to: toEmail,
+        from: {
+          email: SENDGRID_FROM_EMAIL || "no-reply@clinicaveterinaria.com",
+          name: "Clínica Veterinaria"
+        },
+        subject: subject,
+        html: html,
+        text: text,
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true }
+        },
+        category: "password-reset"
+      };
+
+      const response = await sgMail.send(msg);
+      
+      return {
+        success: true,
+        service: "sendgrid",
+        messageId: response[0]?.headers?.['x-message-id'] || response[0]?.messageId,
+      };
+
+    } catch (error) {
+      console.error("❌ Error enviando email:", error.message);
+      // Log más detallado para debugging
+      if (error.response) {
+        console.error("Detalles SendGrid:", error.response.body);
+      }
+      throw error;
     }
-    
-    /**
-     * Enviar con SendGrid
-     */
-    async sendWithSendGrid(toEmail, subject, html, text) {
-        const fromEmail = SENDGRID_FROM_EMAIL || EMAIL_USER || 'noreply@clinicaveterinaria.com';
-        
-        const msg = {
-            to: toEmail,
-            from: {
-                email: fromEmail,
-                name: 'Clínica Veterinaria'
-            },
-            subject: subject,
-            html: html,
-            text: text
-        };
-        
-        const response = await sgMail.send(msg);
-        console.log('✅ Email enviado con SendGrid');
-        console.log('📧 Status:', response[0].statusCode);
-        
-        return {
-            success: true,
-            service: 'sendgrid',
-            messageId: response[0].headers?.['x-message-id']
-        };
-    }
-    
-    /**
-     * Enviar con Gmail
-     */
-    async sendWithGmail(toEmail, subject, html, text) {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: EMAIL_USER,
-                pass: EMAIL_PASS,
-            },
-            // Timeout más largo para Render
-            connectionTimeout: 30000,
-            socketTimeout: 30000,
-            greetingTimeout: 30000
-        });
-        
-        const mailOptions = {
-            from: `"Clínica Veterinaria" <${EMAIL_USER}>`,
-            to: toEmail,
-            subject: subject,
-            html: html,
-            text: text,
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email enviado con Gmail');
-        console.log('📧 Message ID:', info.messageId);
-        
-        return {
-            success: true,
-            service: 'gmail',
-            messageId: info.messageId
-        };
-    }
-    
-    /**
-     * Enviar con Ethereal (para desarrollo)
-     */
-    async sendWithEthereal(toEmail, subject, html, text) {
-        // Crear cuenta de prueba automáticamente
-        let testAccount;
-        try {
-            testAccount = await nodemailer.createTestAccount();
-            console.log('🌐 Cuenta Ethereal creada:', testAccount.user);
-        } catch (error) {
-            console.error('❌ Error creando cuenta Ethereal:', error.message);
-            // Fallback: simular envío en desarrollo
-            return this.simulateEmail(toEmail, username, resetLink);
-        }
-        
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.ethereal.email',
-            port: 587,
-            secure: false,
-            auth: {
-                user: testAccount.user,
-                pass: testAccount.pass,
-            },
-        });
-        
-        const mailOptions = {
-            from: `"Clínica Veterinaria" <${testAccount.user}>`,
-            to: toEmail,
-            subject: subject,
-            html: html,
-            text: text,
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        const previewUrl = nodemailer.getTestMessageUrl(info);
-        
-        console.log('✅ Email enviado con Ethereal');
-        console.log('📧 Preview URL:', previewUrl);
-        
-        return {
-            success: true,
-            service: 'ethereal',
-            previewUrl: previewUrl
-        };
-    }
-    
-    /**
-     * Simular envío de email (para cuando todo falla)
-     */
-    simulateEmail(toEmail, username, resetLink) {
-        console.log('🔧 SIMULANDO envío de email (modo desarrollo)');
-        console.log('📧 Para:', toEmail);
-        console.log('👤 Usuario:', username);
-        console.log('🔗 Enlace:', resetLink);
-        
-        return {
-            success: true,
-            service: 'simulated',
-            simulated: true,
-            resetLink: resetLink
-        };
-    }
-    
-    /**
-     * Template HTML profesional
-     */
-    getHtmlTemplate(username, resetLink) {
-        return `
+  }
+
+  getHtmlTemplate(username, resetLink) {
+    // Mantén tu plantilla HTML actual (la que ya tienes)
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -227,13 +108,11 @@ class EmailService {
     </div>
 </body>
 </html>`;
-    }
-    
-    /**
-     * Template texto plano
-     */
-    getTextTemplate(username, resetLink) {
-        return `RESTABLECIMIENTO DE CONTRASEÑA
+  }
+
+  getTextTemplate(username, resetLink) {
+    // Mantén tu plantilla de texto actual
+    return `RESTABLECIMIENTO DE CONTRASEÑA
 
 Hola ${username},
 
@@ -247,191 +126,99 @@ Este enlace expirará en 1 hora.
 Si no solicitaste este cambio, puedes ignorar este email.
 
 © ${new Date().getFullYear()} Clínica Veterinaria.`;
-    }
+  }
 }
 
-// Crear instancia única
 const emailService = new EmailService();
 
-/**
- * Función principal - REEMPLAZA TU FUNCIÓN EXISTENTE
- */
 export const sendResetPasswordEmail = async (email) => {
+  let resetToken, resetLink, user;
 
-      console.log('='.repeat(50));
-    console.log('🔥 SENDGRID SOLUCIÓN - TODO EN UNO');
-    console.log('📧 Para:', email);
-    console.log('🔧 Servicio configurado:', EMAIL_SERVICE);
-    
-    // ======== ¡PEGA AQUÍ EL CÓDIGO DE DIAGNÓSTICO! ========
-    console.log('='.repeat(60));
-    console.log('🔍 DIAGNÓSTICO PROFUNDO SENDGRID:');
-    console.log('   1. EMAIL_SERVICE:', EMAIL_SERVICE);
-    console.log('   2. SENDGRID_API_KEY definida?:', !!SENDGRID_API_KEY);
-    console.log('   3. Longitud de la clave:', SENDGRID_API_KEY?.length || 'NO DEFINIDA');
-    console.log('   4. ¿Empieza con "SG."?:', SENDGRID_API_KEY?.startsWith?.('SG.') || 'NO APLICA');
-    console.log('   5. Primeros 10 chars:', SENDGRID_API_KEY?.substring(0, 10) || 'NO DEFINIDA');
-    console.log('   6. Últimos 10 chars:', SENDGRID_API_KEY?.substring?.(-10) || 'NO DEFINIDA');
-    console.log('   7. SENDGRID_FROM_EMAIL:', SENDGRID_FROM_EMAIL);
-    console.log('   8. NODE_ENV:', NODE_ENV);
-    console.log('   9. FRONTEND_URL:', FRONTEND_URL);
-    console.log('='.repeat(60));
-    // ======== FIN DEL CÓDIGO DE DIAGNÓSTICO ========
-    
-    let resetToken, resetLink, user;
-    try {
-        // 1. Buscar usuario
-        user = await User.findOne({ email });
-        if (!user) {
-            console.log('⚠️ Usuario no encontrado (no se enviará email)');
-            // Por seguridad, siempre devolver éxito
-            return { 
-                success: true, 
-                message: 'Si el email existe, recibirás un enlace para restablecer tu contraseña.' 
-            };
-        }
-        
-        console.log('✅ Usuario encontrado:', user.username);
-        
-        // 2. Crear token
-        resetToken = await createAccessToken({ id: user._id }, '1h');
-        resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
-        
-        console.log('✅ Token creado');
-        console.log('🔗 Enlace generado');
-        
-        // 3. Guardar en base de datos
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
-        await user.save();
-        
-        // 4. Enviar email
-        console.log('🚀 Enviando email...');
-        const emailResult = await emailService.sendResetPassword(
-            email,
-            user.username,
-            resetLink
-        );
-        
-        console.log('✅ Proceso completado exitosamente');
-        console.log('📧 Servicio usado:', emailResult.service);
-        
-        // 5. Preparar respuesta
-        const response = {
-            success: true,
-            message: 'Se ha enviado un email con las instrucciones para restablecer tu contraseña.'
-        };
-        
-        // Información adicional para desarrollo
-        if (NODE_ENV === 'development') {
-            response.debug = {
-                service: emailResult.service,
-                resetLink: resetLink,
-                ...(emailResult.previewUrl && { previewUrl: emailResult.previewUrl }),
-                ...(emailResult.simulated && { simulated: true, note: 'Email simulado para desarrollo' })
-            };
-            
-            if (emailResult.previewUrl) {
-                console.log('🔗 Enlace para ver el email:', emailResult.previewUrl);
-            }
-            
-            if (emailResult.simulated) {
-                console.log('🔧 Email simulado. Enlace real:', resetLink);
-            }
-        }
-        
-        return response;
-        
-    } catch (error) {
-        console.error('❌ ERROR CRÍTICO:', error.message);
-        
-        // Manejo específico de errores
-        let userMessage = 'Error al procesar la solicitud';
-        
-        if (error.message.includes('SENDGRID_API_KEY') || error.message.includes('SendGrid no configurado')) {
-            userMessage = 'El servicio de email no está configurado correctamente';
-            console.log('🔧 SOLUCIÓN: Configura SENDGRID_API_KEY en Render');
-        } else if (error.message.includes('Invalid login') || error.message.includes('Authentication failed')) {
-            userMessage = 'Error de autenticación del servicio de email';
-            console.log('🔧 SOLUCIÓN: Verifica EMAIL_USER y EMAIL_PASS');
-        } else if (error.message.includes('Timeout')) {
-            userMessage = 'El servicio está respondiendo lentamente. Intenta nuevamente.';
-            console.log('🔧 SOLUCIÓN: Usa SendGrid en lugar de Gmail para producción');
-        }
-        
-        // SIEMPRE devolver el enlace si tenemos token (aunque falle el email)
-        if (resetToken && NODE_ENV === 'development') {
-            console.log('🔧 Enviando enlace directamente (modo desarrollo)');
-            return {
-                success: true,
-                message: `Email falló, pero aquí está tu enlace: ${resetLink}`,
-                debug: {
-                    error: error.message,
-                    resetLink: resetLink,
-                    note: 'Esto solo se muestra en desarrollo'
-                }
-            };
-        }
-        
-        // En producción, mensaje genérico
-        return { 
-            success: false, 
-            message: userMessage,
-            ...(NODE_ENV === 'development' && { error: error.message })
-        };
+  try {
+    user = await User.findOne({ email });
+    if (!user) {
+      return {
+        success: true,
+        message: "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
+      };
     }
+
+    resetToken = await createAccessToken({ id: user._id }, "1h");
+    resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
+    await user.save();
+
+    const emailResult = await emailService.sendResetPassword(
+      email,
+      user.username,
+      resetLink
+    );
+
+    const response = {
+      success: true,
+      message: "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
+    };
+
+    // Solo mostrar debug en desarrollo si es necesario
+    if (NODE_ENV === "development") {
+      response.debug = {
+        service: emailResult.service,
+        resetLink: resetLink,
+        ...(emailResult.messageId && { messageId: emailResult.messageId }),
+      };
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error in reset password email:", error);
+
+    // En desarrollo, puedes mostrar más información
+    if (NODE_ENV === "development") {
+      return {
+        success: false,
+        message: "Error enviando el email",
+        error: error.message,
+        ...(resetLink && { resetLink: resetLink }),
+      };
+    }
+
+    // En producción, mensaje genérico
+    return {
+      success: false,
+      message: "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
+    };
+  }
 };
 
-/**
- * Función extra para verificar configuración
- */
 export const checkEmailConfig = async () => {
-    console.log('🔍 Verificando configuración de email...');
-    
-    try {
-        const config = {
-            service: EMAIL_SERVICE,
-            nodeEnv: NODE_ENV,
-            frontendUrl: FRONTEND_URL,
-            isProduction: NODE_ENV === 'production',
-            timestamp: new Date().toISOString()
-        };
-        
-        if (EMAIL_SERVICE === 'sendgrid') {
-            config.sendgrid = {
-                apiKeyConfigured: !!SENDGRID_API_KEY,
-                apiKeyLength: SENDGRID_API_KEY?.length || 0,
-                fromEmail: SENDGRID_FROM_EMAIL,
-                status: SENDGRID_API_KEY ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO'
-            };
-            
-            if (SENDGRID_API_KEY) {
-                config.sendgrid.test = 'SendGrid listo para usar';
-            }
-            
-        } else if (EMAIL_SERVICE === 'gmail') {
-            config.gmail = {
-                user: EMAIL_USER ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO',
-                pass: EMAIL_PASS ? `✅ CONFIGURADO (${EMAIL_PASS.length} chars)` : '❌ NO CONFIGURADO',
-                note: EMAIL_PASS?.length !== 16 ? '⚠️ App Password debe tener 16 caracteres' : '✅ Longitud correcta'
-            };
-        } else {
-            config.service = 'ethereal (desarrollo)';
-        }
-        
-        console.log('✅ Configuración verificada:', config);
-        return {
-            success: true,
-            ...config,
-            message: 'Configuración verificada correctamente'
-        };
-        
-    } catch (error) {
-        console.error('❌ Error verificando configuración:', error);
-        return { 
-            success: false, 
-            message: 'Error verificando configuración',
-            error: error.message 
-        };
-    }
+  try {
+    const config = {
+      service: "sendgrid",
+      nodeEnv: NODE_ENV,
+      frontendUrl: FRONTEND_URL,
+      isProduction: NODE_ENV === "production",
+      timestamp: new Date().toISOString(),
+      sendgrid: {
+        apiKeyConfigured: !!SENDGRID_API_KEY,
+        apiKeyLength: SENDGRID_API_KEY?.length || 0,
+        fromEmail: SENDGRID_FROM_EMAIL || "no configurado",
+        status: SENDGRID_API_KEY ? "✅ CONFIGURADO" : "❌ NO CONFIGURADO",
+      }
+    };
+
+    return {
+      success: true,
+      ...config,
+      message: "Configuración de SendGrid verificada correctamente",
+    };
+  } catch (error) {
+    console.error("Error verificando configuración:", error);
+    return {
+      success: false,
+      message: "Error verificando configuración de SendGrid",
+      error: error.message,
+    };
+  }
 };

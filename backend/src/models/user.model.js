@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        // ✅ AGREGA ESTOS CAMPOS NUEVOS:
+       
         resetPasswordToken: {
             type: String,
             default: null
