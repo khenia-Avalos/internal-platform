@@ -17,7 +17,7 @@ function Navbar(){
 <Link to= {
   isAuthenticated ? '/tasks' : '/'
 }>
-   <h1 className="text-2xl font-bold">Tasks Manager</h1>
+   <h1 className="text-2xl font-bold">AgendaPro</h1>
 
 </Link>   
     <ul className = "flex gap-x-2">
