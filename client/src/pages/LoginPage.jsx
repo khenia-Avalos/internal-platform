@@ -25,12 +25,12 @@ function LoginPage() {
 
       // Pequeño delay para evitar flash
       setTimeout(() => {
-        window.location.href = "/tasks";
+        window.location.href = "/";
       }, 100);
     }
   });
 
-  // ✅ MUY IMPORTANTE: Añade esto ANTES del return principal
+ 
   if (isLoggingIn) {
     return (
       <div className="flex h-[calc(100vh-100px)] items-center justify-center">
