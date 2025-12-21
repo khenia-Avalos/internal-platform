@@ -74,7 +74,7 @@ function Navbar() {
         w-full md:w-auto 
         bg-white md:bg-transparent 
         shadow-lg md:shadow-none 
-        rounded-lg md:rounded-none 
+        rounded-lg md:rcommounded-none 
         py-4 md:py-0 
         px-4 md:px-0 
         z-10 
@@ -113,7 +113,7 @@ function Navbar() {
               <Link
                 to="/login"
                 onClick={handleNavClick}
-                className="bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-lg font-medium transition block md:inline-block"
+                className="bg-cyan-600 text-white hover:bg-cyan-700 px-3 py-1.5 rounded-lg font-medium transition block md:inline-block"
               >
                 Login
               </Link>
@@ -122,7 +122,7 @@ function Navbar() {
               <Link
                 to="/register"
                 onClick={handleNavClick}
-                className="bg-white text-cyan-600 border border-cyan-600 hover:bg-cyan-50 px-4 py-2 rounded-lg font-medium transition block md:inline-block"
+                className="bg-white text-cyan-600 border border-cyan-600 hover:bg-cyan-50 px-3 py-1.5 rounded-lg font-medium transition block md:inline-block"
               >
                 Register
               </Link>
