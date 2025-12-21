@@ -1,28 +1,24 @@
-
-import {useForm} from 'react-hook-form'
-import {useAuth} from "../context/authContext"
+import {useForm} from 'react-hook-form';
+import {useAuth} from "../context/authContext";
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router";
 import {Link} from "react-router";
 
-function RegisterPage(){
-const {register, handleSubmit, 
-    formState:{errors},
+function RegisterPage() {
+  const {register, handleSubmit, formState: {errors}} = useForm();
+  const {signup, isAuthenticated, errors: registerErrors} = useAuth();
+  const navigate = useNavigate();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [showPwd, setShowPwd] = useState(false); // ✅ FALTA: Estado para mostrar/ocultar contraseña
 
-}= useForm();
-const {signup, isAuthenticated, errors: registerErrors}= useAuth();
-const navigate= useNavigate()
-const [isRegistering, setIsRegistering] = useState(false);
-
-useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) navigate("/tasks");     
-}, [isAuthenticated]);
+  }, [isAuthenticated]);
 
-
-const onSubmit = handleSubmit (async(values) =>{
- setIsRegistering(true); // Añade
-    const result = await signup(values); // Ahora funciona
-    setIsRegistering(false); // Añade
+  const onSubmit = handleSubmit(async (values) => {
+    setIsRegistering(true);
+    const result = await signup(values);
+    setIsRegistering(false);
     
     if (result.ok && result.data?.token) {
       localStorage.setItem('token', result.data.token);
@@ -31,7 +27,7 @@ const onSubmit = handleSubmit (async(values) =>{
     }
   });
 
-   // ✅ SOLO el spinner cuando está registrando
+  // ✅ Solo spinner cuando se está registrando
   if (isRegistering) {
     return (
       <div className="flex h-[calc(100vh-100px)] justify-center items-center">
@@ -43,53 +39,52 @@ const onSubmit = handleSubmit (async(values) =>{
     );
   }
 
-  // ✅ ✅ ✅ EL RETURN PRINCIPAL DEBE ESTAR FUERA
   return (
     <div className="flex h-[calc(100vh-100px)] justify-center items-center">
-      <div className="bg-zinc-800 max-w-md p-10 rounded-md">
+      <div className="bg-white max-w-md w-full p-10 rounded-md shadow-md"> {/* Cambié a bg-white */}
         {registerErrors.map((error, i) => (
-          <div className='bg-red-500 p-2 text-white mb-2' key={i}>
+          <div className='bg-red-500 p-2 text-white text-center mb-2' key={i}>
             {error}
           </div>
         ))}
-<form onSubmit={onSubmit}>
+        
+        <form onSubmit={onSubmit}>
+          <h1 className="text-2xl font-bold text-cyan-600 mb-6">Create your account</h1> {/* Título más claro */}
+          
+          {/* Username */}
+          <input 
+            type="text" 
+            {...register("username", {required: true})}
+            className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+            placeholder="Username"
+          />
+          {errors.username && (
+            <p className='text-red-500 text-sm'>Username is required</p>
+          )}
 
- <h1 className="text-3xl font-bold mb-4">Register</h1>
-    <input type = "text" {...register("username", {required: true })}
-    className = "w-full bg-white text-amber-50 px-4 py-2 rounded-md my-2"
-    placeholder= "Username"
-    />
+          {/* Email */}
+          <input 
+            type="email"   
+            {...register("email", {required: true})} 
+            className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+            placeholder="Email"
+          />
+          {errors.email && (
+            <p className='text-red-500 text-sm'>Email is required</p>
+          )}
 
-{errors.username &&(
-    <p className='text-red-500'>Username is required</p>
-) }
-
-    <input type = "email"   {...register("email", {required: true })} 
-        className = "w-full bg-zinc-700 text-amber-50 px-4 py-2 rounded-md my-2"
-    placeholder= "email"
-
-/>
-
-{errors.email &&(
-    <p className='text-red-500'>email is required</p>
-) }
-
-
-
-  <h1 className="text-sm font-semibold text-black text-left mt-4">
-            Password
-          </h1>
+          {/* Password - CORREGIDO */}
           <div className="relative">
             <input
               type={showPwd ? "text" : "password"}
               {...register("password", { required: true })}
               className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
               placeholder="Password"
-              disabled={isLoggingIn}
+              disabled={isRegistering} // ✅ Cambié isLoggingIn por isRegistering
             />
             <div
               className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => !isLoggingIn && setShowPwd(!showPwd)} // ✅ Solo si no está cargando
+              onClick={() => !isRegistering && setShowPwd(!showPwd)} // ✅ Cambié isLoggingIn por isRegistering
             >
               {showPwd ? (
                 <svg
@@ -120,30 +115,29 @@ const onSubmit = handleSubmit (async(values) =>{
             </div>
           </div>
           {errors.password && (
-            <p className="text-red-500">Password is required</p>
+            <p className="text-red-500 text-sm">Password is required</p>
           )}
 
+          {/* Submit button */}
+          <button 
+            type="submit" 
+            disabled={isRegistering}
+            className={`w-full bg-cyan-600 text-white py-3 rounded-md hover:bg-cyan-700 transition mt-4 ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isRegistering ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
 
-
-<button 
-  type="submit" 
-  disabled={isRegistering}
-  className={`w-full ${isRegistering ? 'bg-gray-400' : 'bg-indigo-500'} text-white px-4 py-2 rounded-md my-2`}
->
-  {isRegistering ? 'Creating Account...' : 'Register'}
-</button>
-
-</form>
-<p className= "flex gap-x-2 justify-between">
-    Already have an account? <Link to = "/login"
-    className="text-sky-500"> login  </Link> 
-</p>
-
-
-
-        </div>
-        </div>
-    );
-
+        {/* Link to login */}
+        <p className="text-center text-gray-600 mt-6">
+          Already have an account?{' '}
+          <Link to="/login" className="text-cyan-600 font-semibold hover:text-cyan-700">
+            Login here
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
 }
-    export default RegisterPage
+
+export default RegisterPage;
