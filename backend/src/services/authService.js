@@ -36,14 +36,14 @@ class EmailService {
       const msg = {
         to: toEmail,
         from: {
-          email: SENDGRID_FROM_EMAIL || "no-reply@clinicaveterinaria.com",
+          email: SENDGRID_FROM_EMAIL ,
           name: "Clínica Veterinaria",
         },
         subject: subject,
         html: html,
         text: text,
         trackingSettings: {
-          clickTracking: { enable: true },
+          clickTracking: { enable: false },
           openTracking: { enable: true },
         },
         category: "password-reset",
