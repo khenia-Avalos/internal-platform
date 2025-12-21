@@ -1,11 +1,18 @@
 import { Link } from "react-router";
 import { useAuth } from "../context/authContext";
+import { useState } from "react";
 
 function Navbar() {
   const { isAuthenticated, logout, user } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const handleLogout = async () => {
-    await logout(); // ✅ Esperar a que termine
-    // El logout ya debería redirigir automáticamente
+    await logout();
+    setIsMenuOpen(false);
+  };
+
+  const handleNavClick = () => {
+    setIsMenuOpen(false);
   };
 
   return (
@@ -17,20 +24,84 @@ function Navbar() {
           </h1>
         </Link>
       </Link>
-      <ul className="flex gap-x-2">
+
+      <button
+        className="md:hidden text-cyan-600 focus:outline-none"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        {isMenuOpen ? (
+          // Icono de "X" cuando el menú está abierto
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        ) : (
+          // Icono de hamburguesa cuando el menú está cerrado
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        )}
+      </button>
+
+      <ul
+        className={`
+        ${isMenuOpen ? "flex" : "hidden"} 
+        md:flex 
+        flex-col md:flex-row 
+        absolute md:static 
+        top-20 md:top-auto 
+        left-0 md:left-auto 
+        w-full md:w-auto 
+        bg-white md:bg-transparent 
+        shadow-lg md:shadow-none 
+        rounded-lg md:rounded-none 
+        py-4 md:py-0 
+        px-4 md:px-0 
+        z-10 
+        gap-4 md:gap-x-6
+        items-center
+      `}
+      >
         {isAuthenticated ? (
           <>
-            <li>Welcome {user.username}</li>
-            <li>
-              <Link to="/add-task" className="bg-zinc-300 px-4 py-1 rounded-sm">
-                {" "}
-                ADD TASK
+            <li className="w-full md:w-auto text-center">
+              <span className="text-gray-700 font-medium py-2 block md:inline">
+                Welcome <span className="text-cyan-600">{user.username}</span>
+              </span>
+            </li>
+            <li className="w-full md:w-auto text-center">
+              <Link
+                to="/add-task"
+                onClick={handleNavClick}
+                className="bg-cyan-100 text-cyan-700 hover:bg-cyan-200 px-4 py-2 rounded-lg font-medium transition block md:inline-block"
+              >
+                + Add Task
               </Link>
             </li>
-            <li>
+            <li className="w-full md:w-auto text-center">
               <button
-                onClick={handleLogout} // ✅ Usar función async
-                className="text-white hover:text-red-300 transition"
+                onClick={handleLogout}
+                className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg font-medium transition w-full md:w-auto"
               >
                 Logout
               </button>
@@ -38,13 +109,21 @@ function Navbar() {
           </>
         ) : (
           <>
-            <li>
-              <Link to="/login" className="bg-zinc-300 px-4 py-1 rounded-sm">
+            <li className="w-full md:w-auto text-center">
+              <Link
+                to="/login"
+                onClick={handleNavClick}
+                className="bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-lg font-medium transition block md:inline-block"
+              >
                 Login
               </Link>
             </li>
-            <li>
-              <Link to="/Register" className="bg-zinc-300 px-4 py-1 rounded-sm">
+            <li className="w-full md:w-auto text-center">
+              <Link
+                to="/register"
+                onClick={handleNavClick}
+                className="bg-white text-cyan-600 border border-cyan-600 hover:bg-cyan-50 px-4 py-2 rounded-lg font-medium transition block md:inline-block"
+              >
                 Register
               </Link>
             </li>
@@ -54,4 +133,5 @@ function Navbar() {
     </nav>
   );
 }
+
 export default Navbar;
