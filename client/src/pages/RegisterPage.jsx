@@ -53,17 +53,16 @@ function RegisterPage() {
         ))}
 
         <form onSubmit={onSubmit}>
-          <link
+          <Link
             to="/"
             className="text-2xl font-bold text-cyan-600 text-center mb-6"
           >
             AgendaPro
-          </link>
+          </Link>
           <h1 className="text-2xl font-bold text-cyan-600 text-center mb-6">
             Create your account
           </h1>{" "}
-          {/* Título más claro */}
-          {/* Username */}
+       
           <input
             type="text"
             {...register("username", { required: true })}
