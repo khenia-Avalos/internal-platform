@@ -50,12 +50,12 @@ function LoginPage() {
           </div>
         ))}
 
-        <Link
-          to="/"
-          className="text-2xl font-bold text-cyan-600 text-center mb-6"
-        >
-          AgendaPro
-        </Link>
+     <Link
+  to="/"
+  className="text-2xl font-bold text-cyan-600 text-center mb-6 block"
+>
+  AgendaPro
+</Link>
 
         <form onSubmit={onSubmit}>
           <h1 className="text-sm font-semibold text-black text-left">Email</h1>
