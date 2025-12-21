@@ -12,8 +12,7 @@ function HomePage() {
       </div>
     );
   }
-
-  // ========== CONTENIDO PARA USUARIOS AUTENTICADOS ==========
+//autenticado
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
