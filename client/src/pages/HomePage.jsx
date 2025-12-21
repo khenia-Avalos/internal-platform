@@ -3,14 +3,19 @@ import { Link } from "react-router";
 
 function HomePage() {
   const { isAuthenticated, user, loading, authChecked } = useAuth();
-if (loading) return null;
- 
+  // ✅ Evitar mostrar contenido hasta que esté listo
+  if (loading && !authChecked) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+      </div>
+    );
+  }
   return (
     <div className="text-center py-10">
       <h1 className="text-4xl font-bold mb-6">HompePAGE</h1>
 
       {isAuthenticated ? (
-      
         <div className="mt-8">
           <h2 className="text-2xl text-green-600 mb-4">
             Welcome back, {user?.username}!
@@ -48,6 +53,6 @@ if (loading) return null;
       )}
     </div>
   );
-
 }
+
 export default HomePage;
