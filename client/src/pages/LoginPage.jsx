@@ -56,7 +56,6 @@ function LoginPage() {
         </h1>
 
         <form onSubmit={onSubmit}>
-          {/* Email */}
           <h1 className="text-sm font-semibold text-black text-left">Email</h1>
           <input
             type="email"
@@ -67,7 +66,7 @@ function LoginPage() {
           />
           {errors.email && <p className="text-red-500">Email is required</p>}
 
-          {/* Password */}
+  
           <h1 className="text-sm font-semibold text-black text-left mt-4">
             Password
           </h1>

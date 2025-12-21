@@ -11,7 +11,7 @@ function Navbar(){
 
     return(
        
-<nav className="bg-zinc-100 my-3 flex justify-between py-5 px-10 rounded-lg">
+<nav className="bg-white my-3 flex justify-between py-5 px-10 rounded-lg">
   
   
 <Link to= {
@@ -33,7 +33,7 @@ function Navbar(){
 </li>
 <li>
      <Link to= '/add-task'
-       className="bg-zinc-400 px-4 py-1 rounded-sm"
+       className="bg-zinc-300 px-4 py-1 rounded-sm"
      > ADD TASK</Link> 
      </li>
      <li>
@@ -49,13 +49,13 @@ function Navbar(){
         <>
         <li>
    <Link to= '/login'
-   className="bg-zinc-400 px-4 py-1 rounded-sm"
+   className="bg-zinc-300 px-4 py-1 rounded-sm"
    
    >Login</Link> 
 </li>
 <li>
      <Link to= '/Register'
-       className="bg-zinc-400 px-4 py-1 rounded-sm"
+       className="bg-zinc-300 px-4 py-1 rounded-sm"
      >Register</Link> 
      </li>
      </>
