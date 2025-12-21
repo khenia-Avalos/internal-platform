@@ -30,7 +30,6 @@ function LoginPage() {
     }
   });
 
- 
   if (isLoggingIn) {
     return (
       <div className="flex h-[calc(100vh-100px)] items-center justify-center">
@@ -51,9 +50,12 @@ function LoginPage() {
           </div>
         ))}
 
-        <h1 className="text-2xl font-bold text-cyan-600 text-center mb-6">
-          Clinica Veterinaria
-        </h1>
+        <link
+          to="/"
+          className="text-2xl font-bold text-cyan-600 text-center mb-6"
+        >
+          AgendaPro
+        </link>
 
         <form onSubmit={onSubmit}>
           <h1 className="text-sm font-semibold text-black text-left">Email</h1>
@@ -66,7 +68,6 @@ function LoginPage() {
           />
           {errors.email && <p className="text-red-500">Email is required</p>}
 
-  
           <h1 className="text-sm font-semibold text-black text-left mt-4">
             Password
           </h1>

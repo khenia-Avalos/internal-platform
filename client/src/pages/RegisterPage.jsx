@@ -1,28 +1,32 @@
-import {useForm} from 'react-hook-form';
-import {useAuth} from "../context/authContext";
-import {useEffect, useState} from "react";
-import {useNavigate} from "react-router";
-import {Link} from "react-router";
+import { useForm } from "react-hook-form";
+import { useAuth } from "../context/authContext";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { Link } from "react-router";
 
 function RegisterPage() {
-  const {register, handleSubmit, formState: {errors}} = useForm();
-  const {signup, isAuthenticated, errors: registerErrors} = useAuth();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const { signup, isAuthenticated, errors: registerErrors } = useAuth();
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
   const [showPwd, setShowPwd] = useState(false); // ✅ FALTA: Estado para mostrar/ocultar contraseña
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/tasks");     
+    if (isAuthenticated) navigate("/tasks");
   }, [isAuthenticated]);
 
   const onSubmit = handleSubmit(async (values) => {
     setIsRegistering(true);
     const result = await signup(values);
     setIsRegistering(false);
-    
+
     if (result.ok && result.data?.token) {
-      localStorage.setItem('token', result.data.token);
-      sessionStorage.setItem('token', result.data.token);
+      localStorage.setItem("token", result.data.token);
+      sessionStorage.setItem("token", result.data.token);
       window.location.href = "/tasks";
     }
   });
@@ -41,38 +45,44 @@ function RegisterPage() {
 
   return (
     <div className="flex h-[calc(100vh-100px)] justify-center items-center">
-      <div className="bg-white max-w-md w-full p-10 rounded-md shadow-md"> {/* Cambié a bg-white */}
+      <div className="bg-white max-w-md w-full p-10 rounded-md shadow-md">
         {registerErrors.map((error, i) => (
-          <div className='bg-red-500 p-2 text-white text-center mb-2' key={i}>
+          <div className="bg-red-500 p-2 text-white text-center mb-2" key={i}>
             {error}
           </div>
         ))}
-        
+
         <form onSubmit={onSubmit}>
-          <h1 className="text-2xl font-bold text-cyan-600 mb-6">Create your account</h1> {/* Título más claro */}
-          
+          <link
+            to="/"
+            className="text-2xl font-bold text-cyan-600 text-center mb-6"
+          >
+            AgendaPro
+          </link>
+          <h1 className="text-2xl font-bold text-cyan-600 text-center mb-6">
+            Create your account
+          </h1>{" "}
+          {/* Título más claro */}
           {/* Username */}
-          <input 
-            type="text" 
-            {...register("username", {required: true})}
+          <input
+            type="text"
+            {...register("username", { required: true })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
             placeholder="Username"
           />
           {errors.username && (
-            <p className='text-red-500 text-sm'>Username is required</p>
+            <p className="text-red-500 text-sm">Username is required</p>
           )}
-
           {/* Email */}
-          <input 
-            type="email"   
-            {...register("email", {required: true})} 
+          <input
+            type="email"
+            {...register("email", { required: true })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
             placeholder="Email"
           />
           {errors.email && (
-            <p className='text-red-500 text-sm'>Email is required</p>
+            <p className="text-red-500 text-sm">Email is required</p>
           )}
-
           {/* Password - CORREGIDO */}
           <div className="relative">
             <input
@@ -117,21 +127,25 @@ function RegisterPage() {
           {errors.password && (
             <p className="text-red-500 text-sm">Password is required</p>
           )}
-
           {/* Submit button */}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isRegistering}
-            className={`w-full bg-cyan-600 text-white py-3 rounded-md hover:bg-cyan-700 transition mt-4 ${isRegistering ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full bg-cyan-600 text-white py-3 rounded-md hover:bg-cyan-700 transition mt-4 ${
+              isRegistering ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            {isRegistering ? 'Creating Account...' : 'Create Account'}
+            {isRegistering ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         {/* Link to login */}
         <p className="text-center text-gray-600 mt-6">
-          Already have an account?{' '}
-          <Link to="/login" className="text-cyan-600 font-semibold hover:text-cyan-700">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-cyan-600 font-semibold hover:text-cyan-700"
+          >
             Login here
           </Link>
         </p>

@@ -44,7 +44,6 @@ function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-  
               <h3 className="text-xl font-bold text-gray-800 mb-3">
                 Crear Nueva Cita
               </h3>
@@ -60,7 +59,6 @@ function HomePage() {
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-            
               <h3 className="text-xl font-bold text-gray-800 mb-3">
                 Ver Reportes
               </h3>
@@ -77,7 +75,6 @@ function HomePage() {
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-          
               <h3 className="text-xl font-bold text-gray-800 mb-3">
                 Configurar Servicios
               </h3>
@@ -111,8 +108,7 @@ function HomePage() {
           historiales, envía recordatorios y haz crecer tu negocio desde un solo
           lugar.
         </p>
-       
- 
+
         <div className="max-w-4xl mx-auto bg-gradient-to-r from-cyan-100 to-blue-100 h-64 rounded-2xl flex items-center justify-center">
           <p className="text-gray-500">[Dashboard de ejemplo del sistema]</p>
         </div>
@@ -208,8 +204,6 @@ function HomePage() {
           </div>
         </div>
       </section>
-
-  
     </div>
   );
 }
