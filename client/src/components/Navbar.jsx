@@ -113,8 +113,7 @@ function Navbar() {
               <Link
                 to="/login"
                 onClick={handleNavClick}
-                className="bg-cyan-600 text-white hover:bg-cyan-700 px-1.5 py-2 rounded-lg font-medium transition block md:inline-block"
-              >
+  className="bg-cyan-600 text-white hover:bg-cyan-700 px-2 py-1 rounded-md font-medium text-sm transition inline-block"              >
                 Login
               </Link>
             </li>
@@ -122,8 +121,7 @@ function Navbar() {
               <Link
                 to="/register"
                 onClick={handleNavClick}
-                className="bg-white text-cyan-600 border border-cyan-600 hover:bg-cyan-50 px-1.5 py-2 rounded-lg font-medium transition block md:inline-block"
-              >
+  className="bg-cyan-600 text-white hover:bg-cyan-700 px-2 py-1 rounded-md font-medium text-sm transition inline-block"              >
                 Register
               </Link>
             </li>
