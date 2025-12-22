@@ -82,7 +82,7 @@ function RegisterPage() {
           {errors.email && (
             <p className="text-red-500 text-sm">Email is required</p>
           )}
-          {/* Password - CORREGIDO */}
+
           <div className="relative">
             <input
               type={showPwd ? "text" : "password"}
