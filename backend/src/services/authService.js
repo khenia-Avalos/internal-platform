@@ -76,9 +76,9 @@ class EmailService {
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: #C0C0C0; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .button { background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+        .button { background: #C0C0C0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
         .link-box { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; word-break: break-all; }
         .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
     </style>
@@ -86,7 +86,7 @@ class EmailService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Restablecer Contraseña</h1>
+            <h1> Restablecer Contraseña</h1>
         </div>
         <div class="content">
             <h2>Hola ${username},</h2>
