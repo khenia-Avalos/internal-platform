@@ -1,66 +1,53 @@
-import React from "react";
 import axios from "axios";
-import {useLocation, useNavigate} from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-
-
-
-
+import { useForm } from "react-hook-form";
 
 function ResetPassword() {
-    const [password, setPassword] = React.useState("");
-    const [confirmPassword, setConfirmPassword] = React.useState("");
-    const [resetToken, setResetToken] = React.useState("");
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+    const [resetToken, setResetToken] = useState("");
     const [success, setSuccess] = useState(false);
+    const [apiError, setApiError] = useState("");
+    
     const location = useLocation();
     const navigate = useNavigate();
+    
+    // ✅ React Hook Form
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+        watch,
+        reset
+    } = useForm();
 
-useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const token = params.get("token");
-       
-    if (token) {
-        const decodedToken = decodeURIComponent(token);
-          const cleanToken = decodedToken.replace(/['"]/g, '').trim();
+    const password = watch("password"); // Para validar confirmPassword
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const token = params.get("token");
+           
+        if (token) {
+            const decodedToken = decodeURIComponent(token);
+            const cleanToken = decodedToken.replace(/['"]/g, '').trim();
             setResetToken(cleanToken);
-    }else{
-        setError("No token provided in URL");
-    }
-}, [location.search]);
+        } else {
+            setApiError("No token provided in URL");
+        }
+    }, [location.search]);
 
- const goToLogin = () => {
+    const goToLogin = () => {
         navigate("/login");
     };
 
-
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    setError("");
-    if (password !== confirmPassword) {
-        alert("Passwords do not match");
-       setLoading(false);
-        return;
-    }   
-    
-    if (password.length < 6) {
-            setError("Password must be at least 6 characters");
-            setLoading(false);
-            return;
-        }
+    const onSubmit = async (data) => {
+        setApiError("");
         
         if (!resetToken) {
-            setError("No reset token available.");
-            setLoading(false);
+            setApiError("No reset token available.");
             return;
         }
     
         try {
-            // ✅ MISMA LÓGICA DE URL QUE FORGOT-PASSWORD
             const API_URL = window.location.hostname === 'localhost' 
                 ? 'http://localhost:3000' 
                 : 'https://backend-internal-platform.onrender.com';
@@ -69,44 +56,36 @@ const handleSubmit = async (e) => {
                 `${API_URL}/api/reset-password`,
                 {
                     token: resetToken,
-                    password: password
+                    password: data.password
                 }
             );
             
-            
-            // Manejar respuesta
             if (response.data.success || 
                 (Array.isArray(response.data) && response.data.includes("Password reset successfully"))) {
                 
-                setMessage("✅ Password reset successfully!");
                 setSuccess(true);
-               
+                reset(); // Limpia el formulario
+                
             } else {
-                setError(response.data?.[0] || response.data?.message || "Unknown error");
+                setApiError(response.data?.[0] || response.data?.message || "Unknown error");
             }
             
         } catch (error) {
-            
             if (error.response) {
-                // Error del servidor
                 const serverError = error.response.data?.[0] || 
                                    error.response.data?.message || 
                                    `Server error: ${error.response.status}`;
-                setError("❌ " + serverError);
+                setApiError("❌ " + serverError);
                 
             } else if (error.request) {
-                // Sin conexión
-                setError("❌ Cannot connect to server. Check your internet connection.");
+                setApiError("❌ Cannot connect to server. Check your internet connection.");
             } else {
-                // Error de configuración
-                setError("❌ Error: " + error.message);
+                setApiError("❌ Error: " + error.message);
             }
-        } finally {
-            setLoading(false);
         }
     };
 
-  return (
+    return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div>
@@ -134,15 +113,15 @@ const handleSubmit = async (e) => {
                 )}
 
                 {/* ✅ MENSAJE DE ERROR */}
-                {error && !success && (
+                {apiError && !success && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-700">{error}</p>
+                        <p className="text-red-700">{apiError}</p>
                     </div>
                 )}
 
-                {/* ✅ FORMULARIO SOLO SI NO HAY ÉXITO */}
+                {/* ✅ FORMULARIO SOLO SI NO HAY ÉXITO - AHORA CON REACT HOOK FORM */}
                 {!success && (
-                    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -150,15 +129,24 @@ const handleSubmit = async (e) => {
                                 </label>
                                 <input
                                     id="password"
-                                    name="password"
                                     type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    {...register("password", {
+                                        required: "Password is required",
+                                        minLength: {
+                                            value: 6,
+                                            message: "Password must be at least 6 characters"
+                                        }
+                                    })}
+                                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm disabled:opacity-50"
                                     placeholder="Enter new password"
-                                    disabled={loading}
+                                    disabled={isSubmitting}
                                 />
+                                {/* ✅ ERRORES AUTOMÁTICOS */}
+                                {errors.password && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                        {errors.password.message}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
@@ -167,25 +155,32 @@ const handleSubmit = async (e) => {
                                 </label>
                                 <input
                                     id="confirmPassword"
-                                    name="confirmPassword"
                                     type="password"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    {...register("confirmPassword", {
+                                        required: "Please confirm your password",
+                                        validate: value => 
+                                            value === password || "Passwords do not match"
+                                    })}
+                                    className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm disabled:opacity-50"
                                     placeholder="Confirm new password"
-                                    disabled={loading}
+                                    disabled={isSubmitting}
                                 />
+                                {/* ✅ ERRORES AUTOMÁTICOS */}
+                                {errors.confirmPassword && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                        {errors.confirmPassword.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         <div>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isSubmitting}
+                                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? (
+                                {isSubmitting ? (
                                     <span className="flex items-center">
                                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -215,4 +210,5 @@ const handleSubmit = async (e) => {
         </div>
     );
 }
+
 export default ResetPassword;
