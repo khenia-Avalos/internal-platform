@@ -67,10 +67,28 @@ function RegisterPage() {
             type="text"
             {...register("username", { required: true })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
-            placeholder="Username"
+            placeholder="Name"
           />
           {errors.username && (
-            <p className="text-red-500 text-sm">Username is required</p>
+            <p className="text-red-500 text-sm">Name is required</p>
+          )}
+          <input
+            type="text"
+            {...register("lastname", { required: true })}
+            className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+            placeholder="last Name"
+          />
+          {errors.lastname && (
+            <p className="text-red-500 text-sm">Last Name is required</p>
+          )}
+          <input
+            type="text"
+            {...register("phoneNumber", { required: true })}
+            className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+            placeholder="Phone Number"
+          />
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-sm">Phone Number is required</p>
           )}
           {/* Email */}
           <input
