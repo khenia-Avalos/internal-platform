@@ -13,12 +13,20 @@ const userSchema = new mongoose.Schema(
             trim: true,
             unique: true
         },
-        phoneNumber: {
+     phoneNumber: {
             type: String,
             required: true,
             trim: true,
-          
-        },
+            validate: {
+                validator: function(v) {
+                    // Remover todos los caracteres no numéricos
+                    const digitsOnly = v.replace(/\D/g, '');
+                    // Verificar si tiene al menos 8 dígitos
+                    return digitsOnly.length >= 8;
+                },
+                message: props => `Phone number must have at least 8 digits. You entered: ${props.value}`
+            }
+        },  
         lastname: {
             type: String,
             required: true,
