@@ -13,20 +13,20 @@ const userSchema = new mongoose.Schema(
             trim: true,
             unique: true
         },
-     phoneNumber: {
-            type: String,
-            required: true,
-            trim: true,
-            validate: {
-                validator: function(v) {
-                    // Remover todos los caracteres no numéricos
-                    const digitsOnly = v.replace(/\D/g, '');
-                    // Verificar si tiene al menos 8 dígitos
-                    return digitsOnly.length >= 8;
-                },
-                message: props => `Phone number must have at least 8 digits. You entered: ${props.value}`
-            }
-        },  
+     // En tu modelo User.js
+phoneNumber: {
+  type: String,
+  required: true,
+  trim: true,
+  validate: {
+    validator: function(v) {
+      // ✅ CORREGIDO - MISMA que el frontend
+      const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
+      return phoneRegex.test(v);
+    },
+    message: "Invalid phone format. Use +50670983832 or +506 7098 3832"
+  }
+},
         lastname: {
             type: String,
             required: true,
