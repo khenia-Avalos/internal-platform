@@ -83,9 +83,13 @@ function RegisterPage() {
           )}
           <input
             type="text"
-            {...register("phoneNumber", { required: true })}
+            {...register("phoneNumber", { required: true,
+                value: 8,
+      message: "Phone number must have at least 8 digits"
+             })}
             className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
             placeholder="Phone Number"
+            
           />
           {errors.phoneNumber && (
             <p className="text-red-500 text-sm">Phone Number is required</p>
