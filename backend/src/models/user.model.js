@@ -13,14 +13,13 @@ const userSchema = new mongoose.Schema(
             trim: true,
             unique: true
         },
-     // En tu modelo User.js
+
 phoneNumber: {
   type: String,
   required: true,
   trim: true,
   validate: {
     validator: function(v) {
-      // ✅ CORREGIDO - MISMA que el frontend
       const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
       return phoneRegex.test(v);
     },
