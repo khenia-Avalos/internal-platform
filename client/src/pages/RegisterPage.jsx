@@ -81,19 +81,34 @@ function RegisterPage() {
           {errors.lastname && (
             <p className="text-red-500 text-sm">Last Name is required</p>
           )}
-          <input
-            type="text"
-            {...register("phoneNumber", { required: true,
-                value: 8,
-      message: "Phone number must have at least 8 digits"
-             })}
-            className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
-            placeholder="Phone Number"
-            
-          />
-          {errors.phoneNumber && (
-            <p className="text-red-500 text-sm">Phone Number is required</p>
-          )}
+         <input
+  type="text"
+  {...register("phoneNumber", {
+    required: "Phone number with country code is required",
+    pattern: {
+      value: /^\+\d{1,4}[0-9\s\-]{8,15}$/,
+      message: "Format: +50670983832 or +506 7098 3832"
+    },
+    validate: {
+      minDigits: (value) => {
+        const digitsOnly = value.replace(/\D/g, '');
+        return digitsOnly.length >= 9 || "Minimum 9 digits total";
+      },
+      validCountryCode: (value) => {
+        // Verificar que tenga + seguido de 1-4 dígitos
+        return /^\+\d{1,4}/.test(value) || "Start with + and country code";
+      }
+    }
+  })}
+  className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+  placeholder="+50670983832"
+/>
+{errors.phoneNumber && (
+  <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>
+)}
+<small className="text-gray-500 text-xs block -mt-1 mb-2">
+  Include country code (+506 Costa Rica, +1 USA/Canada, +52 Mexico, etc.)
+</small>
           {/* Email */}
           <input
             type="email"
