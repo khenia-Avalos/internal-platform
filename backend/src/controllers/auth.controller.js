@@ -17,9 +17,11 @@ const cookieOptions = {
 };
 
 export const register = async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password, username, lastname, phoneNumber } = req.body;
   const errors = [];
   if (!username) errors.push("Username is required");
+    if (!lastname) errors.push("Last name is required"); // ← AÑADE
+  if (!phoneNumber) errors.push("Phone number is required"); // ← AÑADE
   if (!email) errors.push("Email is required");
   if (!password) errors.push("Password is required");
 
@@ -37,6 +39,8 @@ export const register = async (req, res) => {
     const newUser = new User({//objeto en memoria
       username,
       email,
+       lastname,      // ← AÑADE
+      phoneNumber,   // ← AÑADE
       password: passwordHash,
     });
     const userSaved = await newUser.save();//guardar en bd 
@@ -47,6 +51,8 @@ export const register = async (req, res) => {
   res.json({
   id: userSaved._id,
   username: userSaved.username,
+     lastname: userSaved.lastname,    // ← AÑADE
+      phoneNumber: userSaved.phoneNumber, // ← AÑADE
   email: userSaved.email,
   createdAt: userSaved.createdAt,
   updatedAt: userSaved.updatedAt,
@@ -84,6 +90,8 @@ export const login = async (req, res) => {
 res.json({
   id: userFound._id,       
   username: userFound.username,
+      lastname: userFound.lastname,    // ← AÑADE
+    phoneNumber: userFound.phoneNumber, 
   email: userFound.email,
   createdAt: userFound.createdAt,
   updatedAt: userFound.updatedAt,
@@ -108,6 +116,8 @@ export const profile = async (req, res) => {
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
+         lastname: userFound.lastname,    // ← AÑADE
+      phoneNumber: userFound.phoneNumber, 
       createdAt: userFound.createdAt,
       updatedAt: userFound.updatedAt,
     });
@@ -138,6 +148,8 @@ export const verifyToken = async (req, res) => {
    return res.json({
   id: userFound._id,
   username: userFound.username,
+     lastname: userFound.lastname,    // ← AÑADE
+    phoneNumber: userFound.phoneNumber,
   email: userFound.email,
 
 });
