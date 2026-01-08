@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route,Navigate } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AuthProvider } from "./context/authContext";
 
 import RegisterPage from "./pages/RegisterPage";
@@ -7,6 +7,7 @@ import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
+import AdminDashboard from "./pages/AdminDashboard"; // ← NUEVO IMPORT
 
 import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
@@ -19,7 +20,6 @@ import ResetPassword from "./pages/ResetPassword";
 function App() {
   
   return (
-   
       <AuthProvider>
         <TaskProvider>
           <BrowserRouter>
@@ -31,31 +31,35 @@ function App() {
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-             
-             
-             
                 </Route>
 
                 {/* Rutas con Navbar */}
                 <Route element={<LayoutWithNavbar />}>
-                     <Route path="/" element={<HomePage />} />
+                  <Route path="/" element={<HomePage />} />
+                  
+                  {/* Rutas protegidas para usuarios autenticados */}
                   <Route element={<ProtectedRoute />}>
-               
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
-
-
-
+                  </Route>
+                  
+                  {/* 🔴 Ruta EXCLUSIVA para admin - CON NAVBAR */}
+                  <Route element={<ProtectedRoute requireAdmin={true} />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    {/* Puedes añadir más rutas de admin aquí */}
+                    {/* <Route path="/admin/users" element={<AdminUsersPage />} /> */}
                   </Route>
                 </Route>
+                
+                {/* Ruta 404 */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
           </BrowserRouter>
         </TaskProvider>
       </AuthProvider>
-
   );
 }
 
