@@ -12,10 +12,15 @@ function AdminDashboard() {
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(null);
 
+  // ✅ OBTENER URL DESDE VARIABLES DE ENTORNO
+  // En local: VITE_API_URL=http://localhost:4000
+  // En Render: VITE_API_URL=https://tu-backend.onrender.com
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
   // ✅ Verificar si es admin
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) {
-      navigate("/"); // Redirigir si no es admin
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
@@ -29,24 +34,54 @@ function AdminDashboard() {
           
           const token = localStorage.getItem('token') || sessionStorage.getItem('token');
           
-          // Configurar axios para todas las peticiones
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          if (!token) {
+            throw new Error("No authentication token found");
+          }
           
-          // Cargar datos en paralelo
+          console.log("🌐 API URL:", API_URL);
+          console.log("🔑 Token disponible:", token ? "Sí" : "No");
+          
+          // Configurar headers
+          const config = {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          };
+          
+          // Cargar datos en paralelo - USANDO VARIABLE DE ENTORNO
           const [usersRes, statsRes] = await Promise.all([
-            axios.get('http://localhost:4000/api/admin/new-users'),
-            axios.get('http://localhost:4000/api/admin/stats')
+            axios.get(`${API_URL}/api/admin/new-users`, config),
+            axios.get(`${API_URL}/api/admin/stats`, config)
           ]);
           
-          setNewUsers(usersRes.data.data || usersRes.data);
-          setStats(statsRes.data.data || statsRes.data);
-        } catch (error) {
-          console.error("Error cargando datos admin:", error);
-          setError(error.response?.data?.error || error.message);
+          console.log("✅ Datos recibidos - Usuarios:", usersRes.data);
+          console.log("✅ Datos recibidos - Stats:", statsRes.data);
           
-          // Si es error 403 (no autorizado), redirigir
-          if (error.response?.status === 403) {
-            navigate("/");
+          setNewUsers(usersRes.data?.data || usersRes.data || []);
+          setStats(statsRes.data?.data || statsRes.data || {});
+        } catch (error) {
+          console.error("❌ Error cargando datos admin:", error);
+          console.error("URL usada:", API_URL);
+          console.error("Error completo:", error.response || error.message);
+          
+          // Manejo detallado de errores
+          if (error.response) {
+            // El servidor respondió con error
+            setError(`Error ${error.response.status}: ${error.response.data?.error || error.response.statusText}`);
+            
+            if (error.response.status === 403) {
+              navigate("/");
+            } else if (error.response.status === 401) {
+              setError("Sesión expirada. Por favor, inicia sesión nuevamente.");
+            }
+          } else if (error.request) {
+            // No se recibió respuesta
+            setError(`No se pudo conectar con el servidor: ${API_URL}`);
+            console.error("Request was made but no response received");
+          } else {
+            // Error en la configuración
+            setError(error.message || "Error desconocido al cargar datos");
           }
         } finally {
           setLoadingData(false);
@@ -57,7 +92,7 @@ function AdminDashboard() {
     if (user?.role === 'admin') {
       fetchAdminData();
     }
-  }, [user, navigate]);
+  }, [user, navigate, API_URL]);
 
   if (loading || loadingData) {
     return (
@@ -65,13 +100,14 @@ function AdminDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando panel de administración...</p>
+          <p className="text-sm text-gray-400 mt-2">Conectando a: {API_URL}</p>
         </div>
       </div>
     );
   }
 
   if (!user || user.role !== 'admin') {
-    return null; // Ya se redirige en el useEffect
+    return null;
   }
 
   return (
@@ -89,6 +125,9 @@ function AdminDashboard() {
                 <span className="ml-2 px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full text-sm font-medium">
                   Administrador
                 </span>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Backend: {API_URL.replace('https://', '').replace('http://', '').split('/')[0]}
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -122,8 +161,19 @@ function AdminDashboard() {
                   Error al cargar datos: {error}
                 </p>
                 <p className="text-xs text-red-600 mt-1">
-                  Verifica que el backend esté corriendo en puerto 4000
+                  URL del backend: {API_URL}
                 </p>
+                <p className="text-xs text-red-600 mt-1">
+                  {import.meta.env.PROD 
+                    ? "Modo producción - Verifica que el backend esté desplegado" 
+                    : "Modo desarrollo - Verifica que el backend esté corriendo en puerto 4000"}
+                </p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-2 px-3 py-1 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200"
+                >
+                  Reintentar
+                </button>
               </div>
             </div>
           </div>
@@ -321,8 +371,8 @@ function AdminDashboard() {
                   <span className="text-sm font-medium">{stats.byRole?.admin || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Última actualización:</span>
-                  <span className="text-sm font-medium">Ahora</span>
+                  <span className="text-sm text-gray-600">Modo:</span>
+                  <span className="text-sm font-medium">{import.meta.env.MODE}</span>
                 </div>
               </div>
             </div>
@@ -338,7 +388,7 @@ function AdminDashboard() {
               Sistema de Administración AgendaPro • v1.0.0
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              Acceso restringido a administradores • {new Date().getFullYear()}
+              Backend: {API_URL.replace('https://', '').replace('http://', '')} • {new Date().getFullYear()}
             </p>
           </div>
         </div>
