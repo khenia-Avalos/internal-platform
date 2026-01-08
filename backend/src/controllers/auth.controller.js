@@ -54,6 +54,8 @@ export const register = async (req, res) => {
      lastname: userSaved.lastname,    // ← AÑADE
       phoneNumber: userSaved.phoneNumber, // ← AÑADE
   email: userSaved.email,
+        role: userSaved.role,             // ← NUEVO
+
   createdAt: userSaved.createdAt,
   updatedAt: userSaved.updatedAt,
   accessToken: token,  
@@ -93,6 +95,7 @@ res.json({
       lastname: userFound.lastname,    // ← AÑADE
     phoneNumber: userFound.phoneNumber, 
   email: userFound.email,
+        role: userFound.role,   
   createdAt: userFound.createdAt,
   updatedAt: userFound.updatedAt,
   accessToken: token,  
@@ -117,7 +120,8 @@ export const profile = async (req, res) => {
       username: userFound.username,
       email: userFound.email,
          lastname: userFound.lastname,    // ← AÑADE
-      phoneNumber: userFound.phoneNumber, 
+      phoneNumber: userFound.phoneNumber,
+          role: userFound.role,    
       createdAt: userFound.createdAt,
       updatedAt: userFound.updatedAt,
     });
@@ -151,6 +155,7 @@ export const verifyToken = async (req, res) => {
      lastname: userFound.lastname,    // ← AÑADE
     phoneNumber: userFound.phoneNumber,
   email: userFound.email,
+        role: userFound.role,  
 
 });
   } catch (error) {

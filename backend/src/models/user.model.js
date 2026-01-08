@@ -44,7 +44,12 @@ phoneNumber: {
         resetPasswordExpires: {
             type: Date,
             default: null
-        }
+        },
+          role: {
+            type: String,
+            enum: ['admin', 'employee', 'client'],
+            default: 'client' 
+        },
     }, {
         timestamps: true
     }
