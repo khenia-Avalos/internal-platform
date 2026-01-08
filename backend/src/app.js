@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import tasksRoutes from './routes/tasks.routes.js'
-import adminRoutes from './src/routes/admin.routes.js';     // ← ¡NUEVO!
+import adminRoutes from './routes/admin.routes.js';     // ← ¡NUEVO!
 
 import { FRONTEND_URL } from "./config.js";
 
