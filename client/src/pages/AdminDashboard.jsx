@@ -8,26 +8,12 @@ function AdminDashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [newUsers, setNewUsers] = useState([]);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    newUsersLast7Days: 0,
-    byRole: { admin: 0, client: 0, employee: 0 },
-    growthPercentage: 0
-  });
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(null);
-  const [apiUrl, setApiUrl] = useState("");
+  const [refreshInterval, setRefreshInterval] = useState(null);
 
-  // ✅ Obtener API_URL de forma segura
-  useEffect(() => {
-    const url = import.meta.env.VITE_BACKEND_URL || 
-                import.meta.env.VITE_API_URL || 
-                (window.location.hostname.includes('localhost') 
-                  ? "http://localhost:4000" 
-                  : `https://${window.location.hostname.replace('frontend-', 'backend-').replace('www.', '')}`);
-    setApiUrl(url);
-    console.log("🔧 API URL configurada:", url);
-  }, []);
+  // ✅ URL del backend
+  const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
   // ✅ Verificar si es admin
   useEffect(() => {
@@ -36,154 +22,104 @@ function AdminDashboard() {
     }
   }, [user, loading, navigate]);
 
-  // ✅ Cargar datos del admin
-  useEffect(() => {
-    const fetchAdminData = async () => {
-      if (user?.role === 'admin' && apiUrl) {
-        try {
-          setLoadingData(true);
-          setError(null);
-          
-          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-          
-          if (!token) {
-            throw new Error("No se encontró token de autenticación");
-          }
-          
-          console.log("🌐 Conectando a backend:", apiUrl);
-          
-          const config = {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 10000 // 10 segundos timeout
-          };
-          
-          // Cargar datos con manejo individual de errores
-          let usersResponse, statsResponse;
-          
-          try {
-            usersResponse = await axios.get(`${apiUrl}/api/admin/new-users`, config);
-            console.log("✅ Respuesta usuarios:", usersResponse.data);
-          } catch (usersError) {
-            console.warn("⚠️ Error cargando usuarios:", usersError.message);
-            usersResponse = { data: [] };
-          }
-          
-          try {
-            statsResponse = await axios.get(`${apiUrl}/api/admin/stats`, config);
-            console.log("✅ Respuesta estadísticas:", statsResponse.data);
-          } catch (statsError) {
-            console.warn("⚠️ Error cargando estadísticas:", statsError.message);
-            statsResponse = { data: {} };
-          }
-          
-          // 🔒 MANEJO SEGURO DE DATOS - CRÍTICO
-          // Procesar usuarios - siempre garantizar array
-          const usersData = usersResponse.data;
-          let safeUsers = [];
-          
-          if (Array.isArray(usersData)) {
-            safeUsers = usersData;
-          } else if (usersData && typeof usersData === 'object') {
-            if (Array.isArray(usersData.data)) {
-              safeUsers = usersData.data;
-            } else if (usersData.users && Array.isArray(usersData.users)) {
-              safeUsers = usersData.users;
-            }
-          }
-          
-          console.log(`📊 Usuarios procesados: ${safeUsers.length}`);
-          
-          // Procesar estadísticas - siempre garantizar objeto
-          const statsData = statsResponse.data;
-          let safeStats = {
-            totalUsers: 0,
-            newUsersLast7Days: 0,
-            byRole: { admin: 0, client: 0, employee: 0 },
-            growthPercentage: 0
-          };
-          
-          if (statsData && typeof statsData === 'object') {
-            const data = statsData.data || statsData;
-            
-            safeStats = {
-              totalUsers: Number(data.totalUsers) || Number(data.total) || 0,
-              newUsersLast7Days: Number(data.newUsersLast7Days) || Number(data.newUsers) || 0,
-              byRole: {
-                admin: Number(data.byRole?.admin) || Number(data.admins) || 0,
-                client: Number(data.byRole?.client) || Number(data.clients) || 0,
-                employee: Number(data.byRole?.employee) || Number(data.employees) || 0
-              },
-              growthPercentage: Number(data.growthPercentage) || 0
-            };
-          }
-          
-          console.log("📈 Estadísticas procesadas:", safeStats);
-          
-          setNewUsers(safeUsers);
-          setStats(safeStats);
-          
-        } catch (error) {
-          console.error("❌ Error en fetchAdminData:", error);
-          
-          let errorMessage = "Error desconocido";
-          
-          if (error.response) {
-            errorMessage = `Error ${error.response.status}: ${error.response.data?.error || error.response.statusText}`;
-            if (error.response.status === 403) {
-              navigate("/");
-            }
-          } else if (error.request) {
-            errorMessage = `No se pudo conectar al servidor: ${apiUrl}`;
-          } else {
-            errorMessage = error.message;
-          }
-          
-          setError(errorMessage);
-          
-          // Usar datos por defecto para que la UI no se rompa
-          setNewUsers([]);
-          setStats({
-            totalUsers: 0,
-            newUsersLast7Days: 0,
-            byRole: { admin: 0, client: 0, employee: 0 },
-            growthPercentage: 0
-          });
-          
-        } finally {
-          setLoadingData(false);
+  // ✅ Función para cargar usuarios
+  const fetchNewUsers = async () => {
+    if (user?.role === 'admin') {
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error("No se encontró token de autenticación");
+        }
+
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 5000
+        };
+
+        const response = await axios.get(`${API_URL}/api/admin/new-users`, config);
+        
+        // 🔒 Procesar datos de forma segura
+        const usersData = response.data;
+        let safeUsers = [];
+
+        if (Array.isArray(usersData)) {
+          safeUsers = usersData;
+        } else if (usersData && typeof usersData === 'object' && Array.isArray(usersData.data)) {
+          safeUsers = usersData.data;
+        }
+
+        // Filtrar solo usuarios con role "client"
+        const clientUsers = safeUsers.filter(user => user.role === 'client');
+        
+        // Ordenar por fecha más reciente primero
+        clientUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        setNewUsers(clientUsers);
+        setError(null);
+        
+      } catch (error) {
+        console.error("❌ Error cargando usuarios:", error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/");
         }
       }
-    };
-    
-    if (user?.role === 'admin' && apiUrl) {
-      fetchAdminData();
-    } else if (!apiUrl) {
-      setLoadingData(false);
-      setError("URL del backend no configurada");
     }
-  }, [user, navigate, apiUrl]);
+  };
 
-  // ✅ Asegurar que newUsers siempre sea array válido
-  const safeNewUsers = Array.isArray(newUsers) ? newUsers.filter(user => user && typeof user === 'object') : [];
+  // ✅ Cargar datos inicial y configurar refresco automático
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      // Cargar datos inmediatamente
+      fetchNewUsers().finally(() => setLoadingData(false));
 
-  if (loading || (loadingData && !error)) {
+      // Configurar refresco automático cada 30 segundos
+      const interval = setInterval(fetchNewUsers, 30000);
+      setRefreshInterval(interval);
+
+      // Limpiar intervalo al desmontar
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }
+  }, [user]);
+
+  // ✅ Función para formatear fecha
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+
+    if (diffMins < 1) return "Hace unos segundos";
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // ✅ Refrescar manualmente
+  const handleRefresh = () => {
+    setLoadingData(true);
+    fetchNewUsers().finally(() => setLoadingData(false));
+  };
+
+  if (loading || loadingData) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-cyan-500 mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold text-gray-700 mb-2">Cargando Panel de Administración</h2>
           <p className="text-gray-500 mb-4">Por favor, espera...</p>
-          <div className="inline-block bg-cyan-50 text-cyan-700 px-4 py-2 rounded-lg text-sm">
-            <span className="font-medium">Backend:</span> {apiUrl || "Configurando..."}
-          </div>
-          {apiUrl && (
-            <p className="text-xs text-gray-400 mt-3">
-              Conectando a: {apiUrl.replace('https://', '').replace('http://', '')}
-            </p>
-          )}
         </div>
       </div>
     );
@@ -194,55 +130,42 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* HEADER ADMIN */}
-      <header className="bg-white shadow-lg border-b border-gray-200">
+      <header className="bg-white shadow border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl">
-                  <span className="text-2xl text-white">👑</span>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Panel de Administración
-                  </h1>
-                  <p className="text-gray-600 mt-1">
-                    Bienvenido, <span className="font-semibold text-cyan-600">{user?.username}</span>
-                    <span className="ml-2 px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full text-sm font-medium">
-                      Administrador
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <div className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  <span className="font-medium">URL:</span> {apiUrl ? apiUrl.replace('https://', '').replace('http://', '') : 'No configurada'}
-                </div>
-                <div className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  <span className="font-medium">Usuarios:</span> {safeNewUsers.length} cargados
-                </div>
-                <div className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  <span className="font-medium">Modo:</span> {import.meta.env.MODE}
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                👑 Panel de Administración
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Bienvenido, <span className="font-semibold text-cyan-600">{user?.username}</span>
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={handleRefresh}
+                disabled={loadingData}
+                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {loadingData ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    <span>Actualizando...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🔄</span>
+                    <span>Actualizar</span>
+                  </>
+                )}
+              </button>
               <Link 
                 to="/tasks" 
-                className="px-4 py-2 bg-white text-cyan-600 border border-cyan-600 rounded-lg hover:bg-cyan-50 transition flex items-center gap-2"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
               >
-                <span>📋</span>
-                <span className="hidden sm:inline">Mis Tareas</span>
-                <span className="sm:hidden">Tareas</span>
-              </Link>
-              <Link 
-                to="/" 
-                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition flex items-center gap-2"
-              >
-                <span>🏠</span>
-                <span className="hidden sm:inline">Inicio</span>
+                📋 Tareas
               </Link>
             </div>
           </div>
@@ -250,351 +173,241 @@ function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* BANNER DE ERROR */}
-        {error && (
-          <div className="mb-8 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 p-6 rounded-r-lg shadow">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 p-2 bg-red-100 rounded-lg">
-                <span className="text-red-600 text-xl">⚠️</span>
-              </div>
-              <div className="ml-4 flex-1">
-                <h3 className="text-lg font-semibold text-red-800">Error de conexión</h3>
-                <p className="text-red-700 mt-1">{error}</p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium"
-                  >
-                    🔄 Reintentar
-                  </button>
-                  <a 
-                    href={apiUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
-                  >
-                    🔗 Verificar backend
-                  </a>
-                  <Link 
-                    to="/tasks"
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition text-sm font-medium"
-                  >
-                    📋 Ir a tareas
-                  </Link>
-                </div>
-                <p className="text-xs text-red-600 mt-4">
-                  <strong>Solución:</strong> Verifica que el backend esté ejecutándose y que las variables de entorno estén correctamente configuradas.
+        {/* NOTIFICACIONES EN VIVO */}
+        <div className="mb-8">
+          <div className="bg-white rounded-xl shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  📊 Registros en Vivo
+                </h2>
+                <p className="text-gray-600 text-sm">
+                  Usuarios clientes registrados recientemente
                 </p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* TARJETAS DE ESTADÍSTICAS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            { 
-              title: "Total Usuarios", 
-              value: stats.totalUsers, 
-              icon: "👥", 
-              color: "blue",
-              description: "Usuarios registrados totales"
-            },
-            { 
-              title: "Nuevos (7 días)", 
-              value: stats.newUsersLast7Days, 
-              icon: "🆕", 
-              color: "green",
-              description: "Registros recientes"
-            },
-            { 
-              title: "Administradores", 
-              value: stats.byRole.admin, 
-              icon: "👑", 
-              color: "purple",
-              description: "Usuarios con rol admin"
-            },
-            { 
-              title: "Crecimiento", 
-              value: `${stats.growthPercentage}%`, 
-              icon: "📈", 
-              color: "yellow",
-              description: "Incremento mensual"
-            }
-          ].map((card, index) => (
-            <div 
-              key={index} 
-              className={`bg-white rounded-xl shadow-lg p-6 border-l-4 border-${card.color}-500 hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">{card.title}</p>
-                  <p className="text-3xl font-bold text-gray-900">{card.value}</p>
-                  <p className="text-xs text-gray-400 mt-2">{card.description}</p>
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-500">
+                  Actualización automática cada 30 segundos
                 </div>
-                <div className={`text-3xl text-${card.color}-500 bg-${card.color}-50 p-3 rounded-full`}>
-                  {card.icon}
+                <div className={`h-3 w-3 rounded-full ${refreshInterval ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+              </div>
+            </div>
+
+            {/* CONTADOR Y ESTADO */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-sm text-blue-600">Total Registrados</div>
+                <div className="text-2xl font-bold text-gray-900">{newUsers.length}</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-sm text-green-600">Últimas 24h</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {newUsers.filter(user => {
+                    const userDate = new Date(user.createdAt);
+                    const now = new Date();
+                    const diffHours = (now - userDate) / 3600000;
+                    return diffHours <= 24;
+                  }).length}
+                </div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="text-sm text-purple-600">Última hora</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {newUsers.filter(user => {
+                    const userDate = new Date(user.createdAt);
+                    const now = new Date();
+                    const diffHours = (now - userDate) / 3600000;
+                    return diffHours <= 1;
+                  }).length}
+                </div>
+              </div>
+              <div className="bg-cyan-50 p-4 rounded-lg">
+                <div className="text-sm text-cyan-600">Estado</div>
+                <div className="text-2xl font-bold text-gray-900 flex items-center">
+                  <div className={`h-3 w-3 rounded-full mr-2 ${refreshInterval ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  {refreshInterval ? 'Activo' : 'Inactivo'}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* SECCIÓN PRINCIPAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* NUEVOS USUARIOS */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-center justify-between">
+            {/* LISTA DE USUARIOS */}
+            {error ? (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <span className="text-red-500 mr-2">⚠️</span>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                      <span className="p-2 bg-cyan-100 text-cyan-600 rounded-lg">📋</span>
-                      Nuevos Usuarios Registrados
-                    </h2>
-                    <p className="text-gray-600 text-sm mt-1">
-                      Usuarios registrados en los últimos 7 días
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full text-sm font-medium">
-                      {safeNewUsers.length} {safeNewUsers.length === 1 ? 'usuario' : 'usuarios'}
-                    </span>
-                    <button 
-                      onClick={() => window.location.reload()}
-                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                      title="Actualizar"
-                    >
-                      🔄
-                    </button>
+                    <p className="font-medium">Error al cargar usuarios</p>
+                    <p className="text-sm">{error}</p>
                   </div>
                 </div>
               </div>
-              
-              <div className="overflow-hidden">
-                {safeNewUsers.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="text-5xl mb-6 text-gray-200">👤</div>
-                    <h3 className="text-lg font-medium text-gray-500 mb-2">
-                      {loadingData ? 'Cargando usuarios...' : 'No hay usuarios recientes'}
-                    </h3>
-                    <p className="text-gray-400 max-w-md mx-auto text-sm">
-                      {error 
-                        ? 'No se pudieron cargar los usuarios debido a un error de conexión.' 
-                        : 'Los usuarios registrados en los últimos 7 días aparecerán aquí.'}
-                    </p>
-                    {error && (
-                      <button 
-                        onClick={() => window.location.reload()}
-                        className="mt-6 px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition"
-                      >
-                        Reintentar conexión
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {safeNewUsers.map((user, index) => (
-                      <div 
-                        key={user._id || user.id || index} 
-                        className="p-6 hover:bg-gray-50 transition group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="relative">
-                              <div className="flex-shrink-0 h-14 w-14 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-cyan-700 font-bold text-xl">
-                                  {(user.username || 'U').charAt(0).toUpperCase()}
+            ) : newUsers.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4 text-gray-300">👤</div>
+                <h3 className="text-lg font-medium text-gray-500 mb-2">
+                  No hay usuarios registrados
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Los nuevos usuarios clientes aparecerán aquí automáticamente
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Usuario
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Información
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Fecha de Registro
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {newUsers.map((user) => (
+                        <tr key={user._id} className="hover:bg-gray-50 transition">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-cyan-600 font-bold">
+                                  {user.username?.charAt(0).toUpperCase() || 'U'}
                                 </span>
                               </div>
-                              {user.role === 'admin' && (
-                                <div className="absolute -top-1 -right-1 h-6 w-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white">👑</span>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {user.username} {user.lastname}
                                 </div>
-                              )}
-                            </div>
-                            <div className="ml-5">
-                              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-cyan-700 transition">
-                                {user.username || 'Usuario'} {user.lastname || ''}
-                              </h3>
-                              <div className="flex items-center mt-1.5 space-x-4">
-                                <span className="text-sm text-gray-600 flex items-center gap-1">
-                                  <span>📧</span>
-                                  {user.email || 'Sin email'}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                  user.role === 'admin' ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800' :
-                                  user.role === 'employee' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800' :
-                                  'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800'
-                                }`}>
-                                  {user.role === 'admin' ? '👑 Administrador' : 
-                                   user.role === 'employee' ? '👨‍💼 Empleado' : 
-                                   '👤 Cliente'}
-                                </span>
+                                <div className="text-xs text-cyan-600 bg-cyan-50 px-2 py-1 rounded-full inline-block mt-1">
+                                  Cliente
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {
-                                weekday: 'short',
-                                day: 'numeric',
-                                month: 'short'
-                              }) : 'Sin fecha'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">{user.email}</div>
+                            <div className="text-sm text-gray-500">{user.phoneNumber}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-xs font-mono text-gray-500 bg-gray-50 p-2 rounded">
+                              {user._id?.substring(0, 8)}...
                             </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {user.createdAt ? new Date(user.createdAt).toLocaleTimeString('es-ES', {
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(user._id)}
+                              className="text-xs text-cyan-600 hover:text-cyan-800 mt-1"
+                              title="Copiar ID"
+                            >
+                              📋 Copiar
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {new Date(user.createdAt).toLocaleTimeString('es-ES', {
                                 hour: '2-digit',
                                 minute: '2-digit'
-                              }) : ''}
+                              })}
                             </div>
-                            <div className="mt-2">
-                              <button className="text-xs text-cyan-600 hover:text-cyan-800 font-medium">
-                                Ver detalles →
-                              </button>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {formatDate(user.createdAt)}
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* PIE DE TABLA */}
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                  <div className="text-sm text-gray-500">
+                    Mostrando {newUsers.length} usuario{newUsers.length !== 1 ? 's' : ''}
                   </div>
-                )}
-              </div>
-              
-              {safeNewUsers.length > 0 && (
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-600">
-                      Mostrando {Math.min(safeNewUsers.length, 10)} de {safeNewUsers.length} usuarios
-                    </p>
-                    <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium">
-                      Ver todos los usuarios →
-                    </button>
+                  <div className="text-xs text-gray-400">
+                    Última actualización: {new Date().toLocaleTimeString('es-ES')}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* INFORMACIÓN ADICIONAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* ESTADÍSTICAS RÁPIDAS */}
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              📈 Distribución por Hora
+            </h3>
+            <div className="space-y-4">
+              {[24, 12, 6, 1].map((hours) => {
+                const count = newUsers.filter(user => {
+                  const userDate = new Date(user.createdAt);
+                  const now = new Date();
+                  const diffHours = (now - userDate) / 3600000;
+                  return diffHours <= hours;
+                }).length;
+
+                return (
+                  <div key={hours} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      Últimas {hours} {hours === 1 ? 'hora' : 'horas'}
+                    </span>
+                    <div className="flex items-center">
+                      <span className="text-lg font-bold text-gray-900 mr-2">{count}</span>
+                      <div className="h-2 bg-gray-200 rounded-full w-32">
+                        <div 
+                          className="h-2 bg-cyan-500 rounded-full"
+                          style={{ width: `${(count / Math.max(newUsers.length, 1)) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* BARRA LATERAL */}
-          <div className="space-y-6">
-            {/* ACCIONES RÁPIDAS */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="p-2 bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-600 rounded-lg">⚡</span>
-                Acciones Rápidas
-              </h3>
-              <div className="space-y-3">
-                <Link
-                  to="/admin/users"
-                  className="block p-4 rounded-xl border border-gray-200 hover:border-cyan-300 hover:bg-cyan-50 transition group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg">
-                      <span className="text-white">👥</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 group-hover:text-cyan-700">Gestionar Usuarios</h4>
-                      <p className="text-sm text-gray-600">Ver y administrar todos los usuarios</p>
-                    </div>
-                  </div>
-                </Link>
-                
-                <button className="block w-full text-left p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
-                      <span className="text-white">📊</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 group-hover:text-green-700">Generar Reporte</h4>
-                      <p className="text-sm text-gray-600">Exportar datos estadísticos</p>
-                    </div>
-                  </div>
-                </button>
-                
-                <button className="block w-full text-left p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                      <span className="text-white">⚙️</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 group-hover:text-purple-700">Configuración</h4>
-                      <p className="text-sm text-gray-600">Ajustes del sistema y permisos</p>
-                    </div>
-                  </div>
-                </button>
+          {/* INFORMACIÓN DEL SISTEMA */}
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              ⚙️ Configuración del Sistema
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Backend URL</span>
+                <span className="text-sm font-mono text-gray-900">
+                  {API_URL.replace('https://', '').replace('http://', '')}
+                </span>
               </div>
-            </div>
-
-            {/* ACTIVIDAD RECIENTE */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="p-2 bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-600 rounded-lg">📝</span>
-                Actividad Reciente
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition">
-                  <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600">👤</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Nuevo usuario registrado</p>
-                    <p className="text-xs text-gray-500 mt-1">Juan Pérez se registró hace 2 horas</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition">
-                  <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600">✅</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Usuario verificado</p>
-                    <p className="text-xs text-gray-500 mt-1">María García completó su perfil</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition">
-                  <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600">🔄</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Sistema actualizado</p>
-                    <p className="text-xs text-gray-500 mt-1">Backend reiniciado hace 5 horas</p>
-                  </div>
-                </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Modo</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  import.meta.env.PROD 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {import.meta.env.PROD ? 'Producción' : 'Desarrollo'}
+                </span>
               </div>
-            </div>
-
-            {/* INFORMACIÓN DEL SISTEMA */}
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span className="p-2 bg-white/10 rounded-lg">ℹ️</span>
-                Información del Sistema
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="text-sm text-gray-300">Versión</span>
-                  <span className="text-sm font-medium">v2.1.0</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="text-sm text-gray-300">Usuarios totales</span>
-                  <span className="text-sm font-medium">{stats.totalUsers}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="text-sm text-gray-300">Administradores</span>
-                  <span className="text-sm font-medium">{stats.byRole.admin}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-300">Estado</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${error ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
-                    {error ? 'Con errores' : 'Operativo'}
-                  </span>
-                </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Intervalo de actualización</span>
+                <span className="text-sm text-gray-900">30 segundos</span>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/10">
-                <p className="text-xs text-gray-400 text-center">
-                  Última actualización: {new Date().toLocaleTimeString('es-ES')}
-                </p>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600">Sesión activa</span>
+                <span className="text-sm text-gray-900">
+                  {user?.username} ({user?.email})
+                </span>
               </div>
             </div>
           </div>
@@ -602,35 +415,15 @@ function AdminDashboard() {
       </main>
 
       {/* FOOTER */}
-      <footer className="mt-12 py-8 border-t border-gray-200 bg-white">
+      <footer className="mt-12 py-6 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="flex justify-center items-center gap-4 mb-4">
-              <div className="h-10 w-10 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">AP</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">AgendaPro Admin</h4>
-                <p className="text-sm text-gray-600">Sistema de administración</p>
-              </div>
-            </div>
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Sistema de Administración AgendaPro • v2.1.0
+              © {new Date().getFullYear()} Panel de Administración • AgendaPro
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              Acceso restringido a administradores • Desarrollado con React & Node.js
+              Monitoreo en tiempo real • Solo administradores
             </p>
-            <div className="mt-4 flex justify-center gap-4">
-              <span className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                Backend: {apiUrl ? apiUrl.replace('https://', '').replace('http://', '').split('/')[0] : 'No configurado'}
-              </span>
-              <span className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                Usuarios: {stats.totalUsers}
-              </span>
-              <span className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                Modo: {import.meta.env.MODE}
-              </span>
-            </div>
           </div>
         </div>
       </footer>
