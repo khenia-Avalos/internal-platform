@@ -15,7 +15,7 @@ function AdminDashboard() {
   // ✅ OBTENER URL DESDE VARIABLES DE ENTORNO
   // En local: VITE_API_URL=http://localhost:4000
   // En Render: VITE_API_URL=https://tu-backend.onrender.com
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
   // ✅ Verificar si es admin
   useEffect(() => {
