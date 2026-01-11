@@ -4,7 +4,7 @@ import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
 import { NODE_ENV, TOKEN_SECRET } from "../config.js";
 import { sendResetPasswordEmail } from "../services/authService.js";
-
+//ESTE ARCHIVO CONTIENE TODAS LAS FUNCIONES RELACIONADAS CON AUTENTICACIÓN Y USUARIOS
 
 const isProduction = NODE_ENV === "production";
 
@@ -261,11 +261,7 @@ export const resetPassword = async (req, res) => {
 
 
 
-// ============================================
-// FUNCIONES DE ADMINISTRADOR
-// ============================================
 
-// ✅ Obtener usuarios nuevos (últimos 7 días) - SOLO PARA ADMIN
 export const getNewUsers = async (req, res) => {
   try {
     console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
@@ -289,12 +285,14 @@ export const getNewUsers = async (req, res) => {
     })
     .select('-password -resetPasswordToken -resetPasswordExpires -__v')
     .sort({ createdAt: -1 }) // Más recientes primero
-    .limit(100); // Limitar resultados
+    .limit(100); 
     
     console.log(`📊 Usuarios encontrados (últimos 7 días): ${users.length}`);
     
-    // Devolver como array directo (ESTO ES LO QUE ESPERA TU FRONTEND)
-    res.json(users);
+    res.json({
+      success: true,
+      data: users
+    });
     
   } catch (error) {
     console.error("❌ Error en getNewUsers:", error);
@@ -306,7 +304,7 @@ export const getNewUsers = async (req, res) => {
   }
 };
 
-// ✅ Obtener estadísticas generales - SOLO PARA ADMIN
+
 export const getAdminStats = async (req, res) => {
   try {
     console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
@@ -323,14 +321,10 @@ export const getAdminStats = async (req, res) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
     // Obtener estadísticas en paralelo
     const [
       totalUsers,
       newUsersLast7Days,
-      newUsersLast30Days,
       usersByRoleResult
     ] = await Promise.all([
       // Total de usuarios
@@ -338,9 +332,6 @@ export const getAdminStats = async (req, res) => {
       
       // Usuarios nuevos en últimos 7 días
       User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
-      
-      // Usuarios nuevos en últimos 30 días
-      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       
       // Contar usuarios por rol
       User.aggregate([
@@ -356,26 +347,26 @@ export const getAdminStats = async (req, res) => {
     // Convertir array de roles a objeto
     const byRole = {};
     usersByRoleResult.forEach(item => {
-      byRole[item._id] = item.count;
+      byRole[item._id] = item.count;//Crea propiedad dinámica
     });
     
-    // Calcular porcentaje de crecimiento (últimos 30 días vs total)
+    // Calcular porcentaje de crecimiento (últimos 7 días vs total)
     const growthPercentage = totalUsers > 0 
-      ? Math.round((newUsersLast30Days / totalUsers) * 100)
+      ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
       : 0;
     
-    // Estructurar respuesta
     const stats = {
       success: true,
-      totalUsers,
-      newUsersLast7Days,
-      newUsersLast30Days,
-      byRole: {
-        admin: byRole.admin || 0,
-        client: byRole.client || 0,
-        employee: byRole.employee || 0
-      },
-      growthPercentage
+      data: {
+        totalUsers,
+        newUsersLast7Days,
+        growthPercentage,
+        byRole: {
+          admin: byRole.admin || 0,
+          client: byRole.client || 0,
+          employee: byRole.employee || 0
+        }
+      }
     };
     
     console.log("📈 Estadísticas calculadas:", stats);
