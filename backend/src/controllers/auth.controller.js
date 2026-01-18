@@ -258,127 +258,127 @@ export const resetPassword = async (req, res) => {
 };
 
 
+/* 
 
 
 
+// export const getNewUsers = async (req, res) => {
+//   try {
+//     console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
+    
+//     // Verificar que el usuario sea admin (ya lo hace el middleware, pero por seguridad)
+//     if (req.user.role !== 'admin') {
+//       return res.status(403).json({ 
+//         success: false, 
+//         error: "Acceso denegado. Solo administradores" 
+//       });
+//     }
+    
+//     // Calcular fecha de hace 7 días
+//     const sevenDaysAgo = new Date();
+//     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+//     // Buscar usuarios registrados en los últimos 7 días
+//     // Excluir password y otros datos sensibles
+//     const users = await User.find({
+//       createdAt: { $gte: sevenDaysAgo }
+//     })
+//     .select('-password -resetPasswordToken -resetPasswordExpires -__v')
+//     .sort({ createdAt: -1 }) // Más recientes primero
+//     .limit(100); 
+    
+//     console.log(`📊 Usuarios encontrados (últimos 7 días): ${users.length}`);
+    
+//     res.json({
+//       success: true,
+//       data: users
+//     });
+    
+//   } catch (error) {
+//     console.error("❌ Error en getNewUsers:", error);
+//     res.status(500).json({ 
+//       success: false,
+//       error: "Error al obtener usuarios",
+//       message: error.message 
+//     });
+//   }
+// };
 
-export const getNewUsers = async (req, res) => {
-  try {
-    console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
-    
-    // Verificar que el usuario sea admin (ya lo hace el middleware, pero por seguridad)
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ 
-        success: false, 
-        error: "Acceso denegado. Solo administradores" 
-      });
-    }
-    
-    // Calcular fecha de hace 7 días
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    // Buscar usuarios registrados en los últimos 7 días
-    // Excluir password y otros datos sensibles
-    const users = await User.find({
-      createdAt: { $gte: sevenDaysAgo }
-    })
-    .select('-password -resetPasswordToken -resetPasswordExpires -__v')
-    .sort({ createdAt: -1 }) // Más recientes primero
-    .limit(100); 
-    
-    console.log(`📊 Usuarios encontrados (últimos 7 días): ${users.length}`);
-    
-    res.json({
-      success: true,
-      data: users
-    });
-    
-  } catch (error) {
-    console.error("❌ Error en getNewUsers:", error);
-    res.status(500).json({ 
-      success: false,
-      error: "Error al obtener usuarios",
-      message: error.message 
-    });
-  }
-};
 
-
-export const getAdminStats = async (req, res) => {
-  try {
-    console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
+// export const getAdminStats = async (req, res) => {
+//   try {
+//     console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
     
-    // Verificar que el usuario sea admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ 
-        success: false, 
-        error: "Acceso denegado. Solo administradores" 
-      });
-    }
+//     // Verificar que el usuario sea admin
+//     if (req.user.role !== 'admin') {
+//       return res.status(403).json({ 
+//         success: false, 
+//         error: "Acceso denegado. Solo administradores" 
+//       });
+//     }
     
-    // Calcular fechas
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+//     // Calcular fechas
+//     const sevenDaysAgo = new Date();
+//     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Obtener estadísticas en paralelo
-    const [
-      totalUsers,
-      newUsersLast7Days,
-      usersByRoleResult
-    ] = await Promise.all([
-      // Total de usuarios
-      User.countDocuments(),
+//     // Obtener estadísticas en paralelo
+//     const [
+//       totalUsers,
+//       newUsersLast7Days,
+//       usersByRoleResult
+//     ] = await Promise.all([
+//       // Total de usuarios
+//       User.countDocuments(),
       
-      // Usuarios nuevos en últimos 7 días
-      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+//       // Usuarios nuevos en últimos 7 días
+//       User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
       
-      // Contar usuarios por rol
-      User.aggregate([
-        {
-          $group: {
-            _id: "$role",
-            count: { $sum: 1 }
-          }
-        }
-      ])
-    ]);
+//       // Contar usuarios por rol
+//       User.aggregate([
+//         {
+//           $group: {
+//             _id: "$role",
+//             count: { $sum: 1 }
+//           }
+//         }
+//       ])
+//     ]);
     
-    // Convertir array de roles a objeto
-    const byRole = {};
-    usersByRoleResult.forEach(item => {
-      byRole[item._id] = item.count;//Crea propiedad dinámica
-    });
+//     // Convertir array de roles a objeto
+//     const byRole = {};
+//     usersByRoleResult.forEach(item => {
+//       byRole[item._id] = item.count;//Crea propiedad dinámica
+//     });
     
-    // Calcular porcentaje de crecimiento (últimos 7 días vs total)
-    const growthPercentage = totalUsers > 0 
-      ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
-      : 0;
+//     // Calcular porcentaje de crecimiento (últimos 7 días vs total)
+//     const growthPercentage = totalUsers > 0 
+//       ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
+//       : 0;
     
-    const stats = {
-      success: true,
-      data: {
-        totalUsers,
-        newUsersLast7Days,
-        growthPercentage,
-        byRole: {
-          admin: byRole.admin || 0,
-          client: byRole.client || 0,
-          employee: byRole.employee || 0
-        }
-      }
-    };
+//     const stats = {
+//       success: true,
+//       data: {
+//         totalUsers,
+//         newUsersLast7Days,
+//         growthPercentage,
+//         byRole: {
+//           admin: byRole.admin || 0,
+//           client: byRole.client || 0,
+//           employee: byRole.employee || 0
+//         }
+//       }
+//     };
     
-    console.log("📈 Estadísticas calculadas:", stats);
+//     console.log("📈 Estadísticas calculadas:", stats);
     
-    res.json(stats);
+//     res.json(stats);
     
-  } catch (error) {
-    console.error("❌ Error en getAdminStats:", error);
-    res.status(500).json({ 
-      success: false,
-      error: "Error al obtener estadísticas",
-      message: error.message 
-    });
-  }
-};
+//   } catch (error) {
+//     console.error("❌ Error en getAdminStats:", error);
+//     res.status(500).json({ 
+//       success: false,
+//       error: "Error al obtener estadísticas",
+//       message: error.message 
+//     });
+//   }
+// }; */
