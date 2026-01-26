@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
+
 function ResetPassword() {
   const [resetToken, setResetToken] = useState("");
   const [success, setSuccess] = useState(false);

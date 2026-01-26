@@ -1,5 +1,6 @@
 export const formConfig = {
   register: {
+    title:"Create your account",
     fields: [
       {
         name: "username",
@@ -77,12 +78,15 @@ export const formConfig = {
           className: "text-cyan-600 font-semibold hover:text-cyan-700"
         }
       ]
-    }
+    },
+    submitLabel:"registrarse"
+    
   },
     
  
   
   login: {
+    title:"LOGIN",
     fields: [
       {
         name: "email",
@@ -123,10 +127,12 @@ export const formConfig = {
           className: "text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200 underline"
         }
       ]
-    }
+    },
+        submitLabel:"Iniciar sesion"
   },
   
-  forgotPassword: {
+  forgot: {
+    title:"Forgot password",
     fields: [
       {
         name: "email",
@@ -138,13 +144,26 @@ export const formConfig = {
           pattern: {
             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
             message: "Email inválido"
+            
           }
         }
       }
+    ],
+     
+  redirect: {  
+    links: [
+      {
+        linkText: "← Back to Login",
+        to: "/login",
+        className: "text-cyan-600 hover:text-cyan-700 font-medium"
+      }
     ]
   },
+        submitLabel:"submit"
+  },
   
-  resetPassword: {
+  reset: {
+    title:"Reset password",
     fields: [
       {
         name: "password",
@@ -182,6 +201,7 @@ export const formConfig = {
           className: "text-sm text-gray-600 hover:text-gray-800 underline"
         }
       ]
-    }
+    },
+        submitLabel:"enviar"
   }
 };
