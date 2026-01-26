@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../hooks/useAuth"; 
 import { useState } from "react";
 
 function Navbar() {
