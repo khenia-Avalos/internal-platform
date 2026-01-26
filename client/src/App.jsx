@@ -7,7 +7,6 @@ import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
-import AdminDashboard from "./pages/AdminDashboard"; // ← NUEVO IMPORT
 
 import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
@@ -45,12 +44,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                   </Route>
                   
-                  {/* 🔴 Ruta EXCLUSIVA para admin - CON NAVBAR */}
-                  <Route element={<ProtectedRoute requireAdmin={true} />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    {/* Puedes añadir más rutas de admin aquí */}
-                    {/* <Route path="/admin/users" element={<AdminUsersPage />} /> */}
-                  </Route>
+                  
                 </Route>
                 
                 {/* Ruta 404 */}
