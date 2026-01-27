@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AuthProvider } from "./context/authContext";
-import { AuthPage } from "../pages/AuthPage"; 
+import { AuthPage } from "./pages/AuthPage"; 
 
 import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
