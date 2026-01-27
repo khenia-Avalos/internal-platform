@@ -62,53 +62,64 @@ setLoading(true);  // Para mostrar "cargando..."
 
 }
 
-const resetPassword = async (token, newPassword) => {
-  setLoading(true);
-  setMessage("");
-  setError("");
-  
-  try {
-    const API_URL = window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://backend-internal-platform.onrender.com";
 
-    const response = await axios.post(`${API_URL}/api/reset-password`, {
-      token: token,
-      password: newPassword,
-    });
+   const resetPassword = async (token, newPassword) => {  // token: el token de la URL
+  // newPassword: la nueva contraseña
+    setApiError("");
+    setLoading(true);  // Para mostrar "cargando..."
+setMessage("");    // Limpia mensajes anteriores
 
-    // ✅ Verifica si fue exitoso
-    const isSuccessful = response.data.success || 
-      (Array.isArray(response.data) && 
-       response.data.includes("Password reset successfully"));
+/* 
+    if (!resetToken) {
+      setApiError("No reset token available.");
+      return;
+//     } */
+// NO tienes estado resetToken
 
-    if (isSuccessful) {
-      setMessage("¡Contraseña cambiada exitosamente!");
-      return true;  // ← Devuelve TRUE si fue exitoso
-    } else {
-      // Maneja errores del backend
-      const errorMessage = response.data?.[0] || 
-                          response.data?.message || 
-                          "Error desconocido";
-      setError(errorMessage);
-      return false;  // ← Devuelve FALSE si hubo error
-    }
-  } catch (error) {
-    // Manejo de errores de red/axios
-    if (error.response) {
-      const serverError = error.response.data?.[0] || 
-                         error.response.data?.message || 
-                         `Error ${error.response.status}`;
-      setError(serverError);
-    } else if (error.request) {
-      setError("No se pudo conectar al servidor. Verifica tu conexión.");
-    } else {
-      setError("Error: " + error.message);
-    }
-    return false;  // ← Devuelve FALSE por error de catch
+// NO es responsabilidad del hook validar si hay token
+
+    try {
+      const API_URL =
+        window.location.hostname === "localhost"
+          ? "http://localhost:3000"
+          : "https://backend-internal-platform.onrender.com";
+
+      const response = await axios.post(`${API_URL}/api/reset-password`, {
+        token: token,
+        password:newPassword,
+      });
+
+      if (
+        response.data.success ||
+        (Array.isArray(response.data) &&
+        
+          response.data.includes("Password reset successfully"))
+          
+      ) {
+    setMessage("¡Contraseña cambiada exitosamente!"); 
+
+      } else {
+        setApiError(
+          response.data?.[0] || response.data?.message || "Unknown error"
+        );
+      }
+    } catch (error) {
+      if (error.response) {
+        const serverError =
+          error.response.data?.[0] ||
+          error.response.data?.message ||
+          `Server error: ${error.response.status}`;
+        setApiError(" " + serverError);
+      } else if (error.request) {
+        setApiError(
+          " Cannot connect to server. Check your internet connection."
+        );
+      } else {
+        setApiError(" Error: " + error.message);
+      }
   } finally {
-    setLoading(false);
-  }
+  setLoading(false);  // ✅ Se ejecuta SIEMPRE (éxito o error)
+}
 
 }
 

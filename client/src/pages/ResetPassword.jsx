@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { usePassword } from "../hooks/usePassword";
@@ -7,12 +8,14 @@ import { formConfig } from "./formConfig";
 function ResetPassword() {
   const [resetToken, setResetToken] = useState("");
   const [success, setSuccess] = useState(false);
-  const [urlError, setUrlError] = useState("");
+    const [urlError, setUrlError] = useState("");  // Para error de token en URL
 
   const { resetPassword, message, error, loading } = usePassword();
+
   const location = useLocation();
   const navigate = useNavigate();
 
+  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
@@ -23,6 +26,8 @@ function ResetPassword() {
       setResetToken(cleanToken);
     } else {
       setUrlError("No se encontró token en la URL. Verifica el link del email.");
+
+
     }
   }, [location.search]);
 
@@ -30,11 +35,18 @@ function ResetPassword() {
     navigate("/login");
   };
 
-  const handleSubmit = async (data) => {
-    if (!resetToken) return;
-    
-    const wasSuccessful = await resetPassword(resetToken, data.password);
-    if (wasSuccessful) {
+ 
+const handleSubmit = async (data) => {
+  if (!resetToken) {
+
+    return;
+  }
+  
+  // Llama al hook
+  await resetPassword(resetToken, data.password);
+  
+  // ✅ Verifica si fue exitoso (si hay mensaje y no hay error)
+    if (message && !error) {
       setSuccess(true);
     }
   };
@@ -70,7 +82,7 @@ function ResetPassword() {
     <DynamicForm
       {...formConfig.reset}
       onSubmit={handleSubmit}
-      errors={allErrors}
+      errors={allErrors}  // ✅ Combina ambos tipos de error
       successMessage={message}
       isLoading={loading}
     />
