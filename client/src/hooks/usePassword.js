@@ -3,17 +3,22 @@ import { useEffect, useState } from "react";
 
 
 export const usePassword =()=>{
-  const [resetToken, setResetToken] = useState("");
+  //resettoken no va porque cada componente lo usa diferente
   const [apiError, setApiError] = useState("");
 const [message, setMessage]=useState("");
+const [loading, setLoading] = useState(false);
 
 
 
 
-const forgotPassword = async (data) => {
+
+const forgotPassword = async (email) => {//cambia data a email porque aqui no maneja form
     setMessage("");
     setApiError("");
-    setResetToken("");
+setLoading(true);  // Para mostrar "cargando..."
+
+
+
 
     try {
       // Solución temporal para trabajar en ambos entornos
@@ -23,52 +28,22 @@ const forgotPassword = async (data) => {
           : "https://backend-internal-platform.onrender.com";
 
       const response = await axios.post(`${API_URL}/api/forgot-password`, {
-        email: data.email,
+        email: email,
       });
 
-      // ✅ GUARDA EL TOKEN SI VIENE EN LA RESPUESTA
-      if (response.data.resetToken) {
-        setResetToken(response.data.resetToken);
-      } else if (response.data.debug?.resetLink) {
-        // Si viene el link, extrae el token
-        const url = new URL(response.data.debug.resetLink);
-        const token = url.searchParams.get("token");
-        if (token) setResetToken(token);
-        }else if (response.data.resetLink){
-            const url= new URL(response.data.resetLink);
-            const token = url.searchParams.get("token")
-            if (token) setResetToken(token);
-
-        }
-      
       //MUESTRA MENSAJE DE CONFIRMACIÓN
       if (response.data.success) {
         setMessage(
           response.data.message ||
             "¡Email enviado! Revisa tu bandeja de entrada."
         );
-
-        setTimeout(() => {
-          setMessage(
-            (prev) =>
-              prev +
-              " (Revisa la carpeta de SPAM o Promociones si no lo encuentras)"
-          );
-        }, 500);
-
-   // Limpia el formulario
-        reset({ email: "" });
-
-        // Para desarrollo: muestra el token si existe
-        if (resetToken && process.env.NODE_ENV === "development") {
-          console.log("Token de desarrollo:", resetToken);
-        }
+   
       } else {
         // Si el backend devuelve error pero con success: false
         setApiError(response.data.message || "Hubo un error. Intenta nuevamente.");
       }
     } catch (error) {
-      console.error("❌ Error completo:", error);
+      
       
       // Manejo específico de errores de red o del servidor
       if (error.response) {
@@ -81,20 +56,27 @@ const forgotPassword = async (data) => {
         // Error al configurar la petición
         setApiError("Error al procesar la solicitud.");
       }
-    }
-  };
+   } finally {  
+  setLoading(false);
+}
+
+}
 
 
-
-
-
-   const resetPassword = async (data) => {
+   const resetPassword = async (token, newPassword) => {  // token: el token de la URL
+  // newPassword: la nueva contraseña
     setApiError("");
+    setLoading(true);  // Para mostrar "cargando..."
+setMessage("");    // Limpia mensajes anteriores
 
+/* 
     if (!resetToken) {
       setApiError("No reset token available.");
       return;
-    }
+//     } */
+// NO tienes estado resetToken
+
+// NO es responsabilidad del hook validar si hay token
 
     try {
       const API_URL =
@@ -103,17 +85,19 @@ const forgotPassword = async (data) => {
           : "https://backend-internal-platform.onrender.com";
 
       const response = await axios.post(`${API_URL}/api/reset-password`, {
-        token: resetToken,
-        password: data.password,
+        token: token,
+        password:newPassword,
       });
 
       if (
         response.data.success ||
         (Array.isArray(response.data) &&
+        
           response.data.includes("Password reset successfully"))
+          
       ) {
-        setSuccess(true);
-        reset(); // Limpia el formulario
+    setMessage("¡Contraseña cambiada exitosamente!"); 
+
       } else {
         setApiError(
           response.data?.[0] || response.data?.message || "Unknown error"
@@ -133,9 +117,17 @@ const forgotPassword = async (data) => {
       } else {
         setApiError(" Error: " + error.message);
       }
-    }
-  };
-
-
+  } finally {
+  setLoading(false);  // ✅ Se ejecuta SIEMPRE (éxito o error)
+}
 
 }
+
+return {
+  forgotPassword,
+  resetPassword,
+  message,
+  error: apiError,  // Devuelve apiError como "error"
+  loading,
+};
+};
