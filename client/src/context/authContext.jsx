@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
       };
     } finally {
       setLoading(false);
-      setAuthChecked(true); // ✅ Marcar listo
+      setAuthChecked(true); // ✅ Marcar liso
     }
   };
   const logout = async () => {

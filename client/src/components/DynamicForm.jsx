@@ -1,4 +1,3 @@
-import axios from "axios"
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
@@ -9,21 +8,14 @@ export const DynamicForm = ({
   onSubmit,
   errors = [],
   submitLabel = "Enviar",    
-  redirect = {},
- // ========== PROPS DE ESTADO ==========
-  isLoading: externalLoading = false,  // ← RENOMBRADO + valor por defecto
-  successMessage = "",                // ← Valor por defecto
-  
+  redirect = {}, 
+   isLoading = false
 
 }) => {
 
   //ESTADOS INTERNOS
   const [showPassword, setShowPassword] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage]=useState("");
-const [apiError, setApiError] = useState("");
-const [resetToken, setResetToken] = useState("");
-const [success, setSuccess] = useState(false);
+
 //HOOKS DE RUTA
 
   const location = useLocation();
@@ -34,23 +26,15 @@ const [success, setSuccess] = useState(false);
     register, 
     handleSubmit, 
     formState: { errors: formErrors },
-    reset:resetForm,
-    watch
   } = useForm();
 
   const handleFormSubmit = handleSubmit(async (data) => {
-    setLoading(true);
-    try {
-      await onSubmit(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
+      await onSubmit(data);//solo ejecuta onSubmit , el padre maneja todo en context
+ 
   });
 
   const togglePassword = (fieldName) => {
-    if (!loading) {
+    if (!isLoading) {
       setShowPassword((prevState) => ({
         ...prevState,
         [fieldName]: !prevState[fieldName]
@@ -58,7 +42,7 @@ const [success, setSuccess] = useState(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-100px)] items-center justify-center">
         <div className="text-center">
@@ -101,14 +85,14 @@ const [success, setSuccess] = useState(false);
                   type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
                   className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
                   placeholder={field.placeholder}
-                  disabled={loading}
+                  disabled={isLoading}
                   {...register(field.name, field.validation)}
                 />
 
                 {field.type === "password" && (
                   <div
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                    onClick={() => !loading && togglePassword(field.name)}
+                    onClick={() => !isLoading && togglePassword(field.name)}
                   >
                     {showPassword[field.name] ? (
                       <svg
@@ -157,11 +141,12 @@ const [success, setSuccess] = useState(false);
             </div>
           ))}  {/* ← CIERRA el .map() aquí */}
 
-          <button
+       <button
             type="submit"     
-            className="w-full bg-cyan-600 text-white py-2 rounded-md hover:bg-cyan-700 transition mt-4"
+            className="w-full bg-cyan-600 text-white py-2 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}  // ← ✅ isLoading prop
           >
-            {submitLabel}
+            {isLoading ? "Processing..." : submitLabel}  // ← ✅ isLoading prop
           </button>
           
         </form>
