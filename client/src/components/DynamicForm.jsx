@@ -124,14 +124,13 @@ export const DynamicForm = ({
                 )}
               </div>
 
-              {/* ERRORES DE VALIDACIÓN - DENTRO del map, PARA ESTE FIELD */}
               {formErrors[field.name] && (
                 <p className="text-red-500 text-sm mt-1">
                   {formErrors[field.name].message || `${field.label} es requerido`}
                 </p>
               )}
 
-              {/* HELPER TEXT - DENTRO del map, PARA ESTE FIELD */}
+      
               {field.helperText && (
                 <small className="text-gray-500 text-xs block mt-1">
                   {field.helperText}
@@ -146,7 +145,7 @@ export const DynamicForm = ({
             className="w-full bg-cyan-600 text-white py-2 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}  // ← ✅ isLoading prop
           >
-            {isLoading ? "Processing..." : submitLabel}  // ← ✅ isLoading prop
+            {isLoading ? "Processing..." : submitLabel} 
           </button>
           
         </form>
