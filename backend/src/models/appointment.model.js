@@ -17,11 +17,23 @@ const appointmentSchema = new mongoose.Schema({
   },
   startTime: {
     type: String, // HH:mm formato 24h
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
+      },
+      message: 'Formato de hora inválido (HH:mm)'
+    }
   },
   endTime: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
+      },
+      message: 'Formato de hora inválido (HH:mm)'
+    }
   },
   
   // Estado y tipo
@@ -37,9 +49,14 @@ const appointmentSchema = new mongoose.Schema({
   },
   
   // Relaciones
-  client: {
+  pet: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
+    ref: 'Pet',
+    required: true
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Owner',
     required: true
   },
   veterinarian: {
@@ -47,7 +64,7 @@ const appointmentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  createdBy: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -60,7 +77,8 @@ const appointmentSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    min: 0
+    min: 0,
+    default: 0
   },
   paid: {
     type: Boolean,
@@ -78,16 +96,44 @@ const appointmentSchema = new mongoose.Schema({
   },
   reminderDate: {
     type: Date
+  },
+  
+  // Check-in/out
+  checkInTime: {
+    type: Date
+  },
+  checkOutTime: {
+    type: Date
+  },
+  duration: {
+    type: Number, // en minutos
+    min: 0
   }
 }, {
   timestamps: true,
   versionKey: false
 });
 
-// Índices para búsqueda por fecha y estado
+// Índices para búsqueda rápida
 appointmentSchema.index({ appointmentDate: 1, startTime: 1 });
 appointmentSchema.index({ status: 1 });
-appointmentSchema.index({ client: 1 });
+appointmentSchema.index({ pet: 1 });
+appointmentSchema.index({ owner: 1 });
 appointmentSchema.index({ veterinarian: 1 });
+appointmentSchema.index({ userId: 1 });
+
+// Middleware para calcular duración automáticamente
+appointmentSchema.pre('save', function(next) {
+  if (this.startTime && this.endTime) {
+    const [startHours, startMinutes] = this.startTime.split(':').map(Number);
+    const [endHours, endMinutes] = this.endTime.split(':').map(Number);
+    
+    const startTotal = startHours * 60 + startMinutes;
+    const endTotal = endHours * 60 + endMinutes;
+    
+    this.duration = endTotal - startTotal;
+  }
+  next();
+});
 
 export default mongoose.model('Appointment', appointmentSchema);
