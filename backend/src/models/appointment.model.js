@@ -1,7 +1,7 @@
+// backend/src/models/appointment.model.js
 import mongoose from 'mongoose';
 
 const appointmentSchema = new mongoose.Schema({
-  // Información de la cita
   title: {
     type: String,
     required: true,
@@ -16,7 +16,7 @@ const appointmentSchema = new mongoose.Schema({
     required: true
   },
   startTime: {
-    type: String, // HH:mm formato 24h
+    type: String,
     required: true,
     validate: {
       validator: function(v) {
@@ -35,8 +35,6 @@ const appointmentSchema = new mongoose.Schema({
       message: 'Formato de hora inválido (HH:mm)'
     }
   },
-  
-  // Estado y tipo
   status: {
     type: String,
     enum: ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show'],
@@ -47,8 +45,6 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['consulta', 'vacunacion', 'cirugia', 'grooming', 'urgencia', 'seguimiento', 'otros'],
     default: 'consulta'
   },
-  
-  // Relaciones
   pet: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Pet',
@@ -69,8 +65,6 @@ const appointmentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  
-  // Información adicional
   service: {
     type: String,
     trim: true
@@ -88,8 +82,6 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  
-  // Recordatorios
   reminderSent: {
     type: Boolean,
     default: false
@@ -97,8 +89,6 @@ const appointmentSchema = new mongoose.Schema({
   reminderDate: {
     type: Date
   },
-  
-  // Check-in/out
   checkInTime: {
     type: Date
   },
@@ -106,7 +96,7 @@ const appointmentSchema = new mongoose.Schema({
     type: Date
   },
   duration: {
-    type: Number, // en minutos
+    type: Number,
     min: 0
   }
 }, {
@@ -116,13 +106,13 @@ const appointmentSchema = new mongoose.Schema({
 
 // Índices para búsqueda rápida
 appointmentSchema.index({ appointmentDate: 1, startTime: 1 });
+appointmentSchema.index({ veterinarian: 1, appointmentDate: 1, startTime: 1 }); // Nuevo índice
 appointmentSchema.index({ status: 1 });
 appointmentSchema.index({ pet: 1 });
 appointmentSchema.index({ owner: 1 });
-appointmentSchema.index({ veterinarian: 1 });
 appointmentSchema.index({ userId: 1 });
 
-// Middleware para calcular duración automáticamente
+// Middleware para calcular duración
 appointmentSchema.pre('save', function(next) {
   if (this.startTime && this.endTime) {
     const [startHours, startMinutes] = this.startTime.split(':').map(Number);
@@ -135,5 +125,33 @@ appointmentSchema.pre('save', function(next) {
   }
   next();
 });
+
+// Método estático para verificar disponibilidad
+appointmentSchema.statics.checkAvailability = async function(veterinarianId, date, startTime, endTime, excludeId = null) {
+  const appointmentDate = new Date(date);
+  
+  const query = {
+    veterinarian: veterinarianId,
+    appointmentDate: appointmentDate,
+    status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
+    $or: [
+      {
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime }
+      }
+    ]
+  };
+  
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+  
+  const conflictingAppointment = await this.findOne(query);
+  
+  return {
+    available: !conflictingAppointment,
+    conflictingAppointment
+  };
+};
 
 export default mongoose.model('Appointment', appointmentSchema);
