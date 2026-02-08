@@ -1,16 +1,14 @@
+// backend/src/index.js
 import 'dotenv/config';
 import app from "./app.js";
 import { PORT } from "./config.js";
 import { connectDB } from "./db.js";
 
-// Importar rutas EXISTENTES
+// Importar rutas
 import authRoutes from './routes/auth.routes.js';
 import taskRoutes from './routes/tasks.routes.js';
-
-// Importar NUEVAS rutas
 import ownerRoutes from './routes/owner.routes.js';
-// import petRoutes from './routes/pet.routes.js'; // TEMPORAL: Comenta hasta crear
-// import appointmentRoutes from './routes/appointment.routes.js'; // TEMPORAL: Comenta
+import petRoutes from './routes/pet.routes.js';
 
 // Conectar a la base de datos
 connectDB();
@@ -18,9 +16,8 @@ connectDB();
 // Registrar rutas
 app.use('/api', authRoutes);
 app.use('/api', taskRoutes);
-app.use('/api', ownerRoutes);        // ✅ SOLO UNA VEZ
-// app.use('/api', petRoutes);        // TEMPORAL: Comenta
-// app.use('/api', appointmentRoutes); // TEMPORAL: Comenta
+app.use('/api', ownerRoutes);
+app.use('/api', petRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {
@@ -29,6 +26,5 @@ app.listen(PORT, () => {
     console.log(`   - Auth: /api/login, /api/register, etc.`);
     console.log(`   - Tasks: /api/tasks`);
     console.log(`   - Owners: /api/owners`);
-    console.log(`   - Pet: /api/pets (próximamente)`);
-    console.log(`   - Appointments: /api/appointments (próximamente)`);
+    console.log(`   - Pets: /api/pets ✅`);
 });
