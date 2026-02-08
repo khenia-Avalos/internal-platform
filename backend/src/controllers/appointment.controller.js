@@ -62,23 +62,48 @@ const getStatusText = (status) => {
   return statusMap[status] || status;
 };
 
-// Obtener veterinarios disponibles
+// backend/src/controllers/appointment.controller.js
+// REEMPLAZAR LA FUNCIÓN getAvailableVeterinarians con esta versión mejorada:
+
 export const getAvailableVeterinarians = async (req, res) => {
   try {
     const { date, time } = req.query;
     const userId = req.user.id;
     
+    console.log('='.repeat(60));
+    console.log('👨‍⚕️ GET AVAILABLE VETERINARIANS REQUEST');
+    console.log('👤 User ID:', userId);
+    console.log('📅 Requested Date:', date);
+    console.log('⏰ Requested Time:', time);
+    
     // Obtener todos los veterinarios activos
     const veterinarians = await User.find({
       role: 'veterinarian',
-      active: true,
-      userId: userId
+      active: true
     }).select('-password');
     
-    if (!date) {
+    console.log('🔍 Veterinarios encontrados:', veterinarians.length);
+    veterinarians.forEach(vet => {
+      console.log(`   - ${vet.username} (ID: ${vet._id})`);
+    });
+    
+    if (!veterinarians.length) {
       return res.json({
         success: true,
-        veterinarians
+        veterinarians: [],
+        message: 'No hay veterinarios registrados en el sistema'
+      });
+    }
+    
+    if (!date) {
+      console.log('ℹ️ No se proporcionó fecha, retornando todos los veterinarios');
+      return res.json({
+        success: true,
+        veterinarians: veterinarians.map(vet => ({
+          ...vet.toObject(),
+          available: true,
+          message: 'Selecciona una fecha para ver disponibilidad'
+        }))
       });
     }
     
@@ -88,22 +113,33 @@ export const getAvailableVeterinarians = async (req, res) => {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = days[dayOfWeek];
     
+    console.log('📅 Día de la semana:', dayName);
+    
     const veterinariansWithAvailability = await Promise.all(
       veterinarians.map(async (vet) => {
+        console.log(`\n🔍 Procesando veterinario: ${vet.username}`);
+        
         const availability = vet.defaultAvailability[dayName];
+        console.log(`   📊 Disponibilidad configurada:`, availability);
         
         // Verificar si tiene excepciones para esta fecha
-        const exception = vet.exceptions.find(ex => 
-          ex.date.toDateString() === appointmentDate.toDateString()
+        const exception = vet.exceptions?.find(ex => 
+          ex.date && ex.date.toDateString() === appointmentDate.toDateString()
         );
         
-        const isAvailable = exception ? exception.available : availability.available;
+        console.log(`   ⚠️ Excepciones encontradas:`, exception);
         
-        if (!isAvailable) {
+        const isAvailableBySchedule = exception ? exception.available : availability.available;
+        console.log(`   ✅ Disponible por horario: ${isAvailableBySchedule}`);
+        
+        if (!isAvailableBySchedule) {
+          const reason = exception ? exception.reason : 'No disponible este día según horario';
+          console.log(`   ❌ No disponible: ${reason}`);
           return {
             ...vet.toObject(),
             available: false,
-            reason: exception ? exception.reason : 'No disponible este día'
+            reason,
+            availableSlots: []
           };
         }
         
@@ -114,45 +150,73 @@ export const getAvailableVeterinarians = async (req, res) => {
           status: { $in: ['scheduled', 'confirmed', 'in-progress'] }
         });
         
+        console.log(`   📅 Citas existentes: ${existingAppointments.length}`);
+        
         // Si se especificó una hora, verificar disponibilidad en esa hora
         if (time) {
           const [hour, minute] = time.split(':').map(Number);
           const requestedTime = hour * 60 + minute;
           
+          console.log(`   ⏰ Hora solicitada: ${time} (${requestedTime} minutos)`);
+          
           // Verificar conflicto con citas existentes
           const hasConflict = existingAppointments.some(apt => {
             const aptStart = parseInt(apt.startTime.split(':')[0]) * 60 + parseInt(apt.startTime.split(':')[1]);
             const aptEnd = parseInt(apt.endTime.split(':')[0]) * 60 + parseInt(apt.endTime.split(':')[1]);
-            return (requestedTime < aptEnd && (requestedTime + (vet.appointmentDuration || 30)) > aptStart);
+            const conflict = (requestedTime < aptEnd && (requestedTime + (vet.appointmentDuration || 30)) > aptStart);
+            
+            if (conflict) {
+              console.log(`   ⚠️ Conflicto con cita: ${apt.startTime}-${apt.endTime}`);
+            }
+            
+            return conflict;
           });
+          
+          const slots = getAvailableTimeSlots(vet, date, existingAppointments);
+          console.log(`   🕒 Slots disponibles: ${slots.length}`);
           
           return {
             ...vet.toObject(),
             available: !hasConflict,
-            availableSlots: hasConflict ? [] : getAvailableTimeSlots(vet, date, existingAppointments)
+            availableSlots: slots
           };
         }
         
         // Obtener slots disponibles
         const availableSlots = getAvailableTimeSlots(vet, date, existingAppointments);
+        console.log(`   🕒 Slots disponibles totales: ${availableSlots.length}`);
         
         return {
           ...vet.toObject(),
           available: availableSlots.length > 0,
-          availableSlots
+          availableSlots,
+          schedule: {
+            start: availability.start,
+            end: availability.end
+          }
         };
       })
     );
     
+    const availableVets = veterinariansWithAvailability.filter(vet => vet.available);
+    console.log(`\n✅ Veterinarios disponibles: ${availableVets.length}/${veterinarians.length}`);
+    
     res.json({
       success: true,
-      veterinarians: veterinariansWithAvailability
+      veterinarians: veterinariansWithAvailability,
+      summary: {
+        total: veterinarians.length,
+        available: availableVets.length,
+        date: appointmentDate.toDateString(),
+        dayName
+      }
     });
   } catch (error) {
-    console.error('Error getting available veterinarians:', error);
+    console.error('❌ Error getting available veterinarians:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener veterinarios disponibles'
+      message: 'Error al obtener veterinarios disponibles',
+      error: error.message
     });
   }
 };
