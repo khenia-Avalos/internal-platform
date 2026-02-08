@@ -5,7 +5,7 @@ import { connectDB } from "./db.js";
 
 // Importar rutas EXISTENTES
 import authRoutes from './routes/auth.routes.js';
-import taskRoutes from './routes/task.routes.js';
+import taskRoutes from './routes/tasks.routes.js';
 
 // Importar NUEVAS rutas
 import ownerRoutes from './routes/owner.routes.js';
