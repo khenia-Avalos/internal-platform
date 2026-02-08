@@ -4,23 +4,24 @@ const ownerSchema = new mongoose.Schema({
   // Información personal
   firstName: {
     type: String,
-    required: true,
+    required: [true, 'El nombre es requerido'],
     trim: true
   },
   lastName: {
     type: String,
-    required: true,
+    required: [true, 'El apellido es requerido'],
     trim: true
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'El email es requerido'],
     trim: true,
+    lowercase: true,
     unique: true
   },
   phone: {
     type: String,
-    required: true,
+    required: [true, 'El teléfono es requerido'],
     trim: true
   },
   address: {
@@ -30,7 +31,7 @@ const ownerSchema = new mongoose.Schema({
   dni: {
     type: String,
     trim: true,
-    unique: true
+    default: ''  // Cambiado: sin unique, valor por defecto vacío
   },
   
   // Relaciones
@@ -42,13 +43,14 @@ const ownerSchema = new mongoose.Schema({
   
   // Metadata
   emergencyContact: {
-    name: String,
-    phone: String,
-    relationship: String
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    relationship: { type: String, default: '' }
   },
   notes: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   status: {
     type: String,
