@@ -1,27 +1,28 @@
+// backend/src/controllers/auth.controller.js
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
 import { NODE_ENV, TOKEN_SECRET } from "../config.js";
 import { sendResetPasswordEmail } from "../services/authService.js";
-//ESTE ARCHIVO CONTIENE TODAS LAS FUNCIONES RELACIONADAS CON AUTENTICACIÓN Y USUARIOS
 
 const isProduction = NODE_ENV === "production";
 
 const cookieOptions = {
-  httpOnly: true, // SIEMPRE true(lo protege contra XSS)
-  secure: isProduction, //solo se envian por https no http (Render usa HTTPS)
-  sameSite: isProduction ? "none" : "lax", // permite enviar cookie a otros dominiod 
-  path: "/",//disponible en toda la app
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 export const register = async (req, res) => {
-  const { email, password, username, lastname, phoneNumber } = req.body;
+  const { email, password, username, lastname, phoneNumber, role } = req.body;
   const errors = [];
+  
   if (!username) errors.push("Username is required");
-    if (!lastname) errors.push("Last name is required"); // ← AÑADE
-  if (!phoneNumber) errors.push("Phone number is required"); // ← AÑADE
+  if (!lastname) errors.push("Last name is required");
+  if (!phoneNumber) errors.push("Phone number is required");
   if (!email) errors.push("Email is required");
   if (!password) errors.push("Password is required");
 
@@ -31,42 +32,47 @@ export const register = async (req, res) => {
 
   try {
     const userFound = await User.findOne({ email });
-    if(userFound)
-      return res.status(400).json([" the email is already in use"]);
+    if (userFound)
+      return res.status(400).json(["the email is already in use"]);
 
+    // IMPORTANTE: Solo permitir crear usuarios con rol 'client' desde registro público
+    // Para crear admin/veterinarian/assistant, se debe hacer desde panel admin
+    const allowedRole = 'client'; // Siempre 'client' para registro público
+    
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = new User({//objeto en memoria
+    const newUser = new User({
       username,
       email,
-       lastname,      // ← AÑADE
-      phoneNumber,   // ← AÑADE
+      lastname,
+      phoneNumber,
       password: passwordHash,
+      role: allowedRole, // Forzar rol client
     });
-    const userSaved = await newUser.save();//guardar en bd 
+    
+    const userSaved = await newUser.save();
     const token = await createAccessToken({ id: userSaved._id });
 
-    res.cookie("token", token, cookieOptions);//para establecer el token como cookie en el navegador
+    res.cookie("token", token, cookieOptions);
 
-  res.json({
-  id: userSaved._id,
-  username: userSaved.username,
-     lastname: userSaved.lastname,    // ← AÑADE
-      phoneNumber: userSaved.phoneNumber, // ← AÑADE
-  email: userSaved.email,
-        role: userSaved.role,             // ← NUEVO
-
-  createdAt: userSaved.createdAt,
-  updatedAt: userSaved.updatedAt,
-  accessToken: token,  
-});
+    res.json({
+      id: userSaved._id,
+      username: userSaved.username,
+      lastname: userSaved.lastname,
+      phoneNumber: userSaved.phoneNumber,
+      email: userSaved.email,
+      role: userSaved.role,
+      createdAt: userSaved.createdAt,
+      updatedAt: userSaved.updatedAt,
+      accessToken: token,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 export const login = async (req, res) => {
-  console.log(req.body);
+  console.log("🔑 LOGIN REQUEST:", req.body);
 
   const { email, password } = req.body;
   const errors = [];
@@ -76,38 +82,53 @@ export const login = async (req, res) => {
   if (errors.length > 0) {
     return res.status(400).json(errors);
   }
+  
   try {
     const userFound = await User.findOne({ email });
 
     if (!userFound) return res.status(400).json(["invalid email or password"]);
 
+    // Verificar si el usuario está activo
+    if (userFound.active === false) {
+      return res.status(403).json(["Usuario inactivo. Contacte al administrador"]);
+    }
+
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch) return res.status(400).json(["invalid email or password"]);
 
-    const token = await createAccessToken({ id: userFound._id });
+    const token = await createAccessToken({ 
+      id: userFound._id,
+      role: userFound.role 
+    });
 
     res.cookie("token", token, cookieOptions);
 
-
-res.json({
-  id: userFound._id,       
-  username: userFound.username,
-      lastname: userFound.lastname,    // ← AÑADE
-    phoneNumber: userFound.phoneNumber, 
-  email: userFound.email,
-        role: userFound.role,   
-  createdAt: userFound.createdAt,
-  updatedAt: userFound.updatedAt,
-  accessToken: token,  
-});
+    res.json({
+      id: userFound._id,
+      username: userFound.username,
+      lastname: userFound.lastname,
+      phoneNumber: userFound.phoneNumber,
+      email: userFound.email,
+      role: userFound.role,
+      specialty: userFound.specialty,
+      createdAt: userFound.createdAt,
+      updatedAt: userFound.updatedAt,
+      accessToken: token,
+    });
+    
+    console.log(`✅ Login exitoso: ${userFound.username} (${userFound.role})`);
   } catch (error) {
+    console.error("❌ Login error:", error);
     res.status(500).json([error.message]);
   }
 };
 
 export const logout = (req, res) => {
   res.clearCookie("token", cookieOptions);
-  return res.json({ message: "logout" });
+  return res.json({ 
+    success: true, 
+    message: "Sesión cerrada exitosamente" 
+  });
 };
 
 export const profile = async (req, res) => {
@@ -119,9 +140,11 @@ export const profile = async (req, res) => {
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
-         lastname: userFound.lastname,    // ← AÑADE
+      lastname: userFound.lastname,
       phoneNumber: userFound.phoneNumber,
-          role: userFound.role,    
+      role: userFound.role,
+      specialty: userFound.specialty,
+      active: userFound.active,
       createdAt: userFound.createdAt,
       updatedAt: userFound.updatedAt,
     });
@@ -131,14 +154,12 @@ export const profile = async (req, res) => {
 };
 
 export const verifyToken = async (req, res) => {
+  let token = req.cookies.token;
 
-  let token = req.cookies.token;//busca token en cookies
-
- 
-  if (!token && req.headers.authorization) {//si no esta en cookies busca en headers
+  if (!token && req.headers.authorization) {
     const authHeader = req.headers.authorization;
     if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7);//elimina "Bearer " para obtener el token
+      token = authHeader.substring(7);
     }
   }
 
@@ -147,22 +168,149 @@ export const verifyToken = async (req, res) => {
   try {
     const decoded = jwt.verify(token, TOKEN_SECRET);
 
-    const userFound = await User.findById(decoded.id);//busca usuario por id decodificado
+    const userFound = await User.findById(decoded.id);
     if (!userFound) return res.status(401).json(["Unauthorized"]);
-   return res.json({
-  id: userFound._id,
-  username: userFound.username,
-     lastname: userFound.lastname,    // ← AÑADE
-    phoneNumber: userFound.phoneNumber,
-  email: userFound.email,
-        role: userFound.role,  
-
-});
+    
+    return res.json({
+      id: userFound._id,
+      username: userFound.username,
+      lastname: userFound.lastname,
+      phoneNumber: userFound.phoneNumber,
+      email: userFound.email,
+      role: userFound.role,
+      specialty: userFound.specialty,
+      active: userFound.active,
+    });
   } catch (error) {
     return res.status(403).json(["Invalid token"]);
   }
 };
 
+// ADMIN FUNCTIONS - Solo accesibles por usuarios admin
+export const createUserByAdmin = async (req, res) => {
+  try {
+    // Verificar que el usuario que hace la petición sea admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json(["Acceso denegado. Solo administradores"]);
+    }
+
+    const { email, password, username, lastname, phoneNumber, role, specialty } = req.body;
+    const errors = [];
+    
+    if (!username) errors.push("Username is required");
+    if (!lastname) errors.push("Last name is required");
+    if (!phoneNumber) errors.push("Phone number is required");
+    if (!email) errors.push("Email is required");
+    if (!password) errors.push("Password is required");
+    if (!role) errors.push("Role is required");
+
+    if (errors.length > 0) {
+      return res.status(400).json(errors);
+    }
+
+    // Validar rol
+    const validRoles = ['admin', 'veterinarian', 'assistant', 'client'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json(["Rol inválido"]);
+    }
+
+    const userFound = await User.findOne({ email });
+    if (userFound)
+      return res.status(400).json(["El email ya está en uso"]);
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      username,
+      email,
+      lastname,
+      phoneNumber,
+      password: passwordHash,
+      role,
+      specialty: role === 'veterinarian' ? specialty : undefined,
+      active: true,
+    });
+    
+    const userSaved = await newUser.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Usuario creado exitosamente",
+      user: {
+        id: userSaved._id,
+        username: userSaved.username,
+        lastname: userSaved.lastname,
+        phoneNumber: userSaved.phoneNumber,
+        email: userSaved.email,
+        role: userSaved.role,
+        specialty: userSaved.specialty,
+        active: userSaved.active,
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getUsers = async (req, res) => {
+  try {
+    // Verificar que el usuario que hace la petición sea admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json(["Acceso denegado. Solo administradores"]);
+    }
+
+    const users = await User.find({})
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      users
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    // Verificar que el usuario que hace la petición sea admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json(["Acceso denegado. Solo administradores"]);
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+
+    // No permitir actualizar password desde aquí
+    if (updates.password) {
+      delete updates.password;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true }
+    ).select('-password -resetPasswordToken -resetPasswordExpires');
+
+    if (!user) {
+      return res.status(404).json(["Usuario no encontrado"]);
+    }
+
+    res.json({
+      success: true,
+      message: "Usuario actualizado",
+      user
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Las funciones forgotPassword y resetPassword se mantienen igual
+// ...
+
+// RECUPERAR CONTRASEÑA
 export const forgotPassword = async (req, res) => {
   console.log("📧 Forgot password request:", req.body.email);
   const { email } = req.body;
@@ -170,13 +318,11 @@ export const forgotPassword = async (req, res) => {
   if (!email) return res.status(400).json(["Email is required"]);
 
   try {
-  
     const response = await sendResetPasswordEmail(email);
 
     console.log("📨 Respuesta de sendResetPasswordEmail:", response);
 
     if (NODE_ENV === "development") {
-   
       const devResponse = {
         success: true,
         message: response.message || "Password reset processed",
@@ -189,7 +335,6 @@ export const forgotPassword = async (req, res) => {
           service: response.debug.service,
         };
 
-
         if (response.debug.previewUrl) {
           devResponse.debug.previewUrl = response.debug.previewUrl;
         }
@@ -199,24 +344,21 @@ export const forgotPassword = async (req, res) => {
     } else {
       return res.status(200).json({
         success: true,
-        message:
-          "If an account exists with this email, you will receive password reset instructions.",
+        message: "If an account exists with this email, you will receive password reset instructions.",
       });
     }
   } catch (error) {
     console.error("❌ Error in forgot password:", error);
-
-  
     return res.status(200).json({
       success: true,
-      message:
-        "If an account exists with this email, you will receive password reset instructions.",
+      message: "If an account exists with this email, you will receive password reset instructions.",
     });
   }
 };
 
+// RESETEAR CONTRASEÑA
 export const resetPassword = async (req, res) => {
-  const { token, password } = req.body;//token del email y nueva contraseña
+  const { token, password } = req.body;
 
   const errors = [];
   if (!token) errors.push("Token is required");
@@ -226,18 +368,16 @@ export const resetPassword = async (req, res) => {
   }
 
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json(["Password must be at least 6 characters long"]);
+    return res.status(400).json(["Password must be at least 6 characters long"]);
   }
+
   try {
     const decoded = jwt.verify(token, TOKEN_SECRET);
 
     const user = await User.findOne({
-      
       _id: decoded.id,
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }, 
+      resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
@@ -246,139 +386,137 @@ export const resetPassword = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     user.password = passwordHash;
-    user.resetPasswordToken = undefined; 
+    user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
 
     return res.status(200).json(["Password reset successfully"]);
   } catch (error) {
     console.error("Error in reset password:", error);
-    return res.status(500).json(["invalid or expired token"]);
+    return res.status(500).json(["Invalid or expired token"]);
   }
 };
 
 
-/* 
 
+// OBTENER USUARIOS NUEVOS (ÚLTIMOS 7 DÍAS)
+export const getNewUsers = async (req, res) => {
+  try {
+    console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
+    
+    // Verificar que el usuario sea admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        error: "Acceso denegado. Solo administradores" 
+      });
+    }
+    
+    // Calcular fecha de hace 7 días
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Buscar usuarios registrados en los últimos 7 días
+    const users = await User.find({
+      createdAt: { $gte: sevenDaysAgo }
+    })
+    .select('-password -resetPasswordToken -resetPasswordExpires -__v')
+    .sort({ createdAt: -1 })
+    .limit(100);
+    
+    console.log(`📊 Usuarios encontrados (últimos 7 días): ${users.length}`);
+    
+    res.json({
+      success: true,
+      data: users
+    });
+    
+  } catch (error) {
+    console.error("❌ Error en getNewUsers:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Error al obtener usuarios",
+      message: error.message 
+    });
+  }
+};
 
-
-// export const getNewUsers = async (req, res) => {
-//   try {
-//     console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
+// OBTENER ESTADÍSTICAS DE ADMINISTRADOR
+export const getAdminStats = async (req, res) => {
+  try {
+    console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
     
-//     // Verificar que el usuario sea admin (ya lo hace el middleware, pero por seguridad)
-//     if (req.user.role !== 'admin') {
-//       return res.status(403).json({ 
-//         success: false, 
-//         error: "Acceso denegado. Solo administradores" 
-//       });
-//     }
+    // Verificar que el usuario sea admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        error: "Acceso denegado. Solo administradores" 
+      });
+    }
     
-//     // Calcular fecha de hace 7 días
-//     const sevenDaysAgo = new Date();
-//     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Calcular fechas
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-//     // Buscar usuarios registrados en los últimos 7 días
-//     // Excluir password y otros datos sensibles
-//     const users = await User.find({
-//       createdAt: { $gte: sevenDaysAgo }
-//     })
-//     .select('-password -resetPasswordToken -resetPasswordExpires -__v')
-//     .sort({ createdAt: -1 }) // Más recientes primero
-//     .limit(100); 
-    
-//     console.log(`📊 Usuarios encontrados (últimos 7 días): ${users.length}`);
-    
-//     res.json({
-//       success: true,
-//       data: users
-//     });
-    
-//   } catch (error) {
-//     console.error("❌ Error en getNewUsers:", error);
-//     res.status(500).json({ 
-//       success: false,
-//       error: "Error al obtener usuarios",
-//       message: error.message 
-//     });
-//   }
-// };
-
-
-// export const getAdminStats = async (req, res) => {
-//   try {
-//     console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
-    
-//     // Verificar que el usuario sea admin
-//     if (req.user.role !== 'admin') {
-//       return res.status(403).json({ 
-//         success: false, 
-//         error: "Acceso denegado. Solo administradores" 
-//       });
-//     }
-    
-//     // Calcular fechas
-//     const sevenDaysAgo = new Date();
-//     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-//     // Obtener estadísticas en paralelo
-//     const [
-//       totalUsers,
-//       newUsersLast7Days,
-//       usersByRoleResult
-//     ] = await Promise.all([
-//       // Total de usuarios
-//       User.countDocuments(),
+    // Obtener estadísticas en paralelo
+    const [
+      totalUsers,
+      newUsersLast7Days,
+      usersByRoleResult
+    ] = await Promise.all([
+      // Total de usuarios
+      User.countDocuments(),
       
-//       // Usuarios nuevos en últimos 7 días
-//       User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      // Usuarios nuevos en últimos 7 días
+      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
       
-//       // Contar usuarios por rol
-//       User.aggregate([
-//         {
-//           $group: {
-//             _id: "$role",
-//             count: { $sum: 1 }
-//           }
-//         }
-//       ])
-//     ]);
+      // Contar usuarios por rol
+      User.aggregate([
+        {
+          $group: {
+            _id: "$role",
+            count: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
     
-//     // Convertir array de roles a objeto
-//     const byRole = {};
-//     usersByRoleResult.forEach(item => {
-//       byRole[item._id] = item.count;//Crea propiedad dinámica
-//     });
+    // Convertir array de roles a objeto
+    const byRole = {};
+    usersByRoleResult.forEach(item => {
+      byRole[item._id] = item.count;
+    });
     
-//     // Calcular porcentaje de crecimiento (últimos 7 días vs total)
-//     const growthPercentage = totalUsers > 0 
-//       ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
-//       : 0;
+    // Calcular porcentaje de crecimiento
+    const growthPercentage = totalUsers > 0 
+      ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
+      : 0;
     
-//     const stats = {
-//       success: true,
-//       data: {
-//         totalUsers,
-//         newUsersLast7Days,
-//         growthPercentage,
-//         byRole: {
-//           admin: byRole.admin || 0,
-//           client: byRole.client || 0,
-//           employee: byRole.employee || 0
-//         }
-//       }
-//     };
+    const stats = {
+      success: true,
+      data: {
+        totalUsers,
+        newUsersLast7Days,
+        growthPercentage: parseFloat(growthPercentage),
+        byRole: {
+          admin: byRole.admin || 0,
+          client: byRole.client || 0,
+          veterinarian: byRole.veterinarian || 0,
+          assistant: byRole.assistant || 0
+        }
+      }
+    };
     
-//     console.log("📈 Estadísticas calculadas:", stats);
+    console.log("📈 Estadísticas calculadas:", stats);
     
-//     res.json(stats);
+    res.json(stats);
     
-//   } catch (error) {
-//     console.error("❌ Error en getAdminStats:", error);
-//     res.status(500).json({ 
-//       success: false,
-//       error: "Error al obtener estadísticas",
-//       message: error.message 
-//     });
-//   }
-// }; */
+  } catch (error) {
+    console.error("❌ Error en getAdminStats:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Error al obtener estadísticas",
+      message: error.message 
+    });
+  }
+};

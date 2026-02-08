@@ -1,19 +1,36 @@
-import {Router} from 'express'
-import { login, register, logout, profile, verifyToken, forgotPassword, resetPassword} from '../controllers/auth.controller.js'
-import { validateToken } from "../middlewares/validateToken.js";
-import  { validateSchema} from '../middlewares/validator.middleware.js'
-import {registerSchema, loginSchema} from '../schemas/auth.schema.js'
+// backend/src/routes/auth.routes.js
+import { Router } from 'express';
+import { 
+  register, 
+  login, 
+  logout, 
+  profile, 
+  verifyToken,
+  forgotPassword,
+  resetPassword,
+  createUserByAdmin,
+  getUsers,
+  updateUser
+} from '../controllers/auth.controller.js';
+import { validateToken } from '../middlewares/validateToken.js';
+import { requireRole } from '../middlewares/requireRole.js';
 
-const router = Router()
+const router = Router();
 
-router.post('/register',validateSchema(registerSchema), register);
-router.post('/login', validateSchema(loginSchema), login);
+// Rutas públicas
+router.post('/register', register);
+router.post('/login', login);
 router.post('/logout', logout);
-router.get('/profile', validateToken, profile)
-router.get('/verify', validateToken, verifyToken)
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.get('/verify', verifyToken);
 
+// Rutas protegidas (requieren autenticación)
+router.get('/profile', validateToken, profile);
 
+// Rutas de administrador (requieren rol admin)
+router.post('/admin/users', validateToken, requireRole('admin'), createUserByAdmin);
+router.get('/admin/users', validateToken, requireRole('admin'), getUsers);
+router.put('/admin/users/:id', validateToken, requireRole('admin'), updateUser);
 
 export default router;
