@@ -59,19 +59,47 @@ const userSchema = new mongoose.Schema(
         },
         // Disponibilidad por defecto (lunes a viernes 9am-5pm)
         defaultAvailability: {
-            monday: { start: "09:00", end: "17:00", available: true },
-            tuesday: { start: "09:00", end: "17:00", available: true },
-            wednesday: { start: "09:00", end: "17:00", available: true },
-            thursday: { start: "09:00", end: "17:00", available: true },
-            friday: { start: "09:00", end: "17:00", available: true },
-            saturday: { start: "09:00", end: "13:00", available: false },
-            sunday: { start: "09:00", end: "13:00", available: false }
+            monday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "17:00" }, 
+                available: { type: Boolean, default: true } 
+            },
+            tuesday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "17:00" }, 
+                available: { type: Boolean, default: true } 
+            },
+            wednesday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "17:00" }, 
+                available: { type: Boolean, default: true } 
+            },
+            thursday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "17:00" }, 
+                available: { type: Boolean, default: true } 
+            },
+            friday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "17:00" }, 
+                available: { type: Boolean, default: true } 
+            },
+            saturday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "13:00" }, 
+                available: { type: Boolean, default: false } 
+            },
+            sunday: { 
+                start: { type: String, default: "09:00" }, 
+                end: { type: String, default: "13:00" }, 
+                available: { type: Boolean, default: false } 
+            }
         },
         // Excepciones (vacaciones, días libres)
         exceptions: [{
-            date: Date,
-            reason: String,
-            available: Boolean
+            date: { type: Date },
+            reason: { type: String },
+            available: { type: Boolean }
         }],
         // Duración de citas por defecto (en minutos)
         appointmentDuration: {
