@@ -9,6 +9,7 @@ import tasksRoutes from './routes/tasks.routes.js'
 import appointmentRoutes from './routes/appointment.routes.js'
 import ownerRoutes from './routes/owner.routes.js'
 import petRoutes from './routes/pet.routes.js'
+import availabilityRoutes from './routes/availability.routes.js';
 
 import { ALLOWED_ORIGINS } from "./config.js";
 
@@ -64,7 +65,7 @@ app.use("/api", tasksRoutes);
 app.use("/api", appointmentRoutes);
 app.use("/api", ownerRoutes);
 app.use("/api", petRoutes);
-
+app.use("/api", availabilityRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
