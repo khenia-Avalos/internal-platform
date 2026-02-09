@@ -249,12 +249,12 @@ export const getVeterinarianAvailability = async (req, res) => {
     }
     
     // Obtener citas existentes
-    const existingAppointments = await Appointment.find({
-      veterinarian: veterinarianId,
-      appointmentDate: new Date(date),
-      status: { $in: ['scheduled', 'confirmed', 'in-progress'] }
-    });
-    
+   const existingAppointments = await Appointment.find({
+  veterinarian: vet._id,
+  appointmentDate: appointmentDate,
+  status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
+  userId: userId  // <- AGREGAR ESTA LÍNEA
+});
     // Obtener slots disponibles
     const availableSlots = getAvailableTimeSlots(veterinarian, date, existingAppointments);
     
