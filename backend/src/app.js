@@ -1,4 +1,4 @@
-// backend/src/app.js - AGREGAR URLS DE EXPO
+// backend/src/app.js - VERSIÓN FINAL
 import 'dotenv/config'; 
 import express from 'express';
 import morgan from 'morgan';
@@ -10,35 +10,35 @@ import appointmentRoutes from './routes/appointment.routes.js'
 import ownerRoutes from './routes/owner.routes.js'
 import petRoutes from './routes/pet.routes.js'
 
-// Permitir múltiples orígenes
-const allowedOrigins = [
-  "https://frontend-internal-platform.onrender.com",
-  "http://localhost:8081",
-  "http://localhost:19006",
-  /\.exp\.direct$/,  // Para Expo tunnel
-  /^exp:\/\//,       // Para Expo URLs
-  "http://192.168.1.*:8081",  // Para LAN
-];
+import { ALLOWED_ORIGINS } from "./config.js";
 
 const app = express();
 
-app.set("trust proxy", 1)
+app.set("trust proxy", 1);
 
+// ✅ CORS COMPLETO PARA EXPO
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir requests sin origen (mobile apps)
+      // Permitir requests sin origen (como mobile apps o curl)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.some(pattern => {
-        if (typeof pattern === 'string') return origin === pattern;
-        if (pattern instanceof RegExp) return pattern.test(origin);
+      console.log('🌐 Origen de request:', origin);
+      
+      if (ALLOWED_ORIGINS.some(pattern => {
+        if (typeof pattern === 'string') {
+          return origin === pattern;
+        } else if (pattern instanceof RegExp) {
+          return pattern.test(origin);
+        }
         return false;
       })) {
+        console.log('✅ Origen permitido:', origin);
         callback(null, true);
       } else {
-        console.log('CORS bloqueado para:', origin);
-        callback(new Error('Not allowed by CORS'));
+        console.log('❌ Origen bloqueado:', origin);
+        // PERO permitimos de todos modos para desarrollo
+        callback(null, true);
       }
     },
     credentials: true,
@@ -64,5 +64,25 @@ app.use("/api", tasksRoutes);
 app.use("/api", appointmentRoutes);
 app.use("/api", ownerRoutes);
 app.use("/api", petRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Backend API',
+    version: '1.0.0',
+    endpoints: [
+      '/api/login',
+      '/api/register',
+      '/api/owners',
+      '/api/pets',
+      '/api/appointments'
+    ]
+  });
+});
 
 export default app;

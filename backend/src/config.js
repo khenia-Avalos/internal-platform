@@ -1,3 +1,4 @@
+// backend/src/config.js - VERSIÓN CORREGIDA
 console.log('🔧 Cargando config.js...');
 
 const NODE_ENV_VALUE = process.env.NODE_ENV || 'development';
@@ -19,22 +20,28 @@ export const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || '';
 
 // Configuración general
 export const NODE_ENV = NODE_ENV_VALUE;
+
+// ✅ PERMITIR MÚLTIPLES ORÍGENES
+export const ALLOWED_ORIGINS = [
+  'https://frontend-internal-platform.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:8081',
+  'http://localhost:19006',
+  /\.exp\.direct$/,  // Para Expo tunnel
+  /^exp:\/\//,       // Para Expo URLs
+  /^http:\/\/192\.168\.\d+\.\d+:\d+$/, // Para LAN
+];
+
 export const FRONTEND_URL = IS_PRODUCTION
   ? 'https://frontend-internal-platform.onrender.com'
   : process.env.FRONTEND_URL || 'http://localhost:5173';
+
 export const TOKEN_SECRET = process.env.TOKEN_SECRET;
 export const DB_URL = process.env.DB_URL;
 export const PORT = process.env.PORT || 3000;
 
 // Verificar configuraciones
 console.log('🔧 Configuración cargada:');
-console.log('   - FRONTEND_URL:', FRONTEND_URL);
+console.log('   - NODE_ENV:', NODE_ENV);
+console.log('   - ALLOWED_ORIGINS:', ALLOWED_ORIGINS.length, 'orígenes configurados');
 console.log('   - EMAIL_SERVICE:', EMAIL_SERVICE);
-
-if (EMAIL_SERVICE === 'sendgrid') {
-    console.log('   - SENDGRID_API_KEY:', SENDGRID_API_KEY ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO');
-    console.log('   - SENDGRID_FROM_EMAIL:', SENDGRID_FROM_EMAIL || '❌ NO CONFIGURADO');
-} else if (EMAIL_SERVICE === 'gmail') {
-    console.log('   - EMAIL_USER:', EMAIL_USER || '❌ NO CONFIGURADO');
-    console.log('   - EMAIL_PASS:', EMAIL_PASS ? `✅ CONFIGURADO (${EMAIL_PASS.length} chars)` : '❌ NO CONFIGURADO');
-}
