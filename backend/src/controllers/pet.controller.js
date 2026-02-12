@@ -1,7 +1,7 @@
-// backend/src/controllers/pet.controller.js - VERSIÓN COMPLETA CORREGIDA
+// backend/src/controllers/pet.controller.js
 import Pet from '../models/pet.model.js';
 import Owner from '../models/owner.model.js';
-import Appointment from '../models/appointment.model.js'; // ✅ IMPORTAR APPOINTMENT
+import Appointment from '../models/appointment.model.js';
 
 export const getPets = async (req, res) => {
   try {
@@ -50,7 +50,7 @@ export const getPets = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting pets:', error);
+    console.error('❌ Error getting pets:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener mascotas' 
@@ -79,7 +79,7 @@ export const getPet = async (req, res) => {
       pet
     });
   } catch (error) {
-    console.error('Error getting pet:', error);
+    console.error('❌ Error getting pet:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener mascota' 
@@ -90,6 +90,16 @@ export const getPet = async (req, res) => {
 export const createPet = async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    console.log('📦 Datos recibidos en backend:', JSON.stringify(req.body, null, 2));
+    
+    // ✅ VERIFICAR QUE EL OWNER EXISTE
+    if (!req.body.owner) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El dueño es requerido' 
+      });
+    }
     
     const owner = await Owner.findOne({ 
       _id: req.body.owner, 
@@ -103,18 +113,38 @@ export const createPet = async (req, res) => {
       });
     }
     
+    // ✅ PREPARAR DATOS - SIN CAMPO vaccinations
     const petData = {
-      ...req.body,
-      userId,
-      lastVisit: new Date(),
-      status: 'active'
+      name: req.body.name,
+      species: req.body.species || 'Perro',
+      breed: req.body.breed || '',
+      color: req.body.color || '',
+      gender: req.body.gender || 'Desconocido',
+      birthDate: req.body.birthDate || null,
+      weight: req.body.weight || null,
+      weightUnit: req.body.weightUnit || 'kg',
+      chipNumber: req.body.chipNumber || '',
+      allergies: req.body.allergies || [],
+      medications: req.body.medications || [],
+      specialConditions: req.body.specialConditions || '',
+      notes: req.body.notes || '',
+      sterilized: req.body.sterilized || false,
+      owner: req.body.owner,
+      userId: userId,
+      status: 'active',
+      lastVisit: new Date()
     };
+    
+    console.log('💾 Guardando mascota:', JSON.stringify(petData, null, 2));
     
     const newPet = new Pet(petData);
     const savedPet = await newPet.save();
     
+    // ✅ POBLAR DATOS DEL DUEÑO
     const populatedPet = await Pet.findById(savedPet._id)
       .populate('owner', 'firstName lastName phone');
+    
+    console.log('✅ Mascota creada ID:', savedPet._id);
     
     res.status(201).json({
       success: true,
@@ -122,10 +152,30 @@ export const createPet = async (req, res) => {
       pet: populatedPet
     });
   } catch (error) {
-    console.error('Error creating pet:', error);
+    console.error('❌ Error creating pet:', error);
+    console.error('❌ Stack:', error.stack);
+    
+    // ✅ ERRORES DE VALIDACIÓN DE MONGOOSE
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: messages.join(', ') 
+      });
+    }
+    
+    // ✅ ERROR DE CAMPO REQUERIDO
+    if (error.message.includes('required')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
-      message: 'Error al crear mascota' 
+      message: 'Error al crear mascota',
+      error: error.message 
     });
   }
 };
@@ -155,7 +205,7 @@ export const updatePet = async (req, res) => {
       pet: updatedPet
     });
   } catch (error) {
-    console.error('Error updating pet:', error);
+    console.error('❌ Error updating pet:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al actualizar mascota' 
@@ -168,9 +218,8 @@ export const deletePet = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     
-    console.log(`🗑️ ELIMINANDO FÍSICAMENTE mascota ${id} para userId: ${userId}`);
+    console.log(`🗑️ ELIMINANDO FÍSICAMENTE mascota ${id}`);
     
-    // Verificar que la mascota existe
     const pet = await Pet.findOne({ _id: id, userId });
     if (!pet) {
       return res.status(404).json({ 
@@ -179,18 +228,17 @@ export const deletePet = async (req, res) => {
       });
     }
     
-    // ✅ ELIMINAR FÍSICAMENTE TODAS LAS CITAS ASOCIADAS
+    // ✅ ELIMINAR CITAS ASOCIADAS
     await Appointment.deleteMany({ pet: id, userId });
     
-    // ✅ ELIMINAR FÍSICAMENTE LA MASCOTA
+    // ✅ ELIMINAR MASCOTA
     await Pet.findByIdAndDelete(id);
     
-    console.log('✅ Mascota ELIMINADA FÍSICAMENTE:', id);
-    console.log('✅ Citas asociadas también eliminadas');
+    console.log('✅ Mascota eliminada:', id);
     
     res.json({
       success: true,
-      message: 'Mascota eliminada permanentemente de la base de datos'
+      message: 'Mascota eliminada permanentemente'
     });
   } catch (error) {
     console.error('❌ Error deleting pet:', error);
@@ -222,6 +270,10 @@ export const addVaccination = async (req, res) => {
       });
     }
     
+    if (!pet.vaccinations) {
+      pet.vaccinations = [];
+    }
+    
     pet.vaccinations.push({
       ...vaccination,
       date: vaccination.date || new Date()
@@ -235,7 +287,7 @@ export const addVaccination = async (req, res) => {
       vaccinations: pet.vaccinations
     });
   } catch (error) {
-    console.error('Error adding vaccination:', error);
+    console.error('❌ Error adding vaccination:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al agregar vacunación' 
