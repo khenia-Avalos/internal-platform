@@ -1,7 +1,7 @@
+// backend/src/models/Owner.js
 import mongoose from 'mongoose';
 
 const ownerSchema = new mongoose.Schema({
-  // Información personal
   firstName: {
     type: String,
     required: [true, 'El nombre es requerido'],
@@ -26,22 +26,19 @@ const ownerSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   dni: {
     type: String,
     trim: true,
-    default: ''  // Cambiado: sin unique, valor por defecto vacío
+    default: ''
   },
-  
-  // Relaciones
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  
-  // Metadata
   emergencyContact: {
     name: { type: String, default: '' },
     phone: { type: String, default: '' },
@@ -54,7 +51,7 @@ const ownerSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'archived'],
+    enum: ['active', 'inactive'],
     default: 'active'
   }
 }, {
@@ -67,5 +64,6 @@ ownerSchema.index({ firstName: 1, lastName: 1 });
 ownerSchema.index({ email: 1 });
 ownerSchema.index({ phone: 1 });
 ownerSchema.index({ userId: 1 });
+ownerSchema.index({ status: 1 });
 
 export default mongoose.model('Owner', ownerSchema);

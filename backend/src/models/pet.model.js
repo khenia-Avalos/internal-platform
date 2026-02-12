@@ -1,7 +1,7 @@
+// backend/src/models/Pet.js
 import mongoose from 'mongoose';
 
 const petSchema = new mongoose.Schema({
-  // Información básica
   name: {
     type: String,
     required: true,
@@ -15,19 +15,19 @@ const petSchema = new mongoose.Schema({
   },
   breed: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   color: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   gender: {
     type: String,
     enum: ['Macho', 'Hembra', 'Desconocido'],
     default: 'Desconocido'
   },
-  
-  // Información médica básica
   birthDate: {
     type: Date
   },
@@ -43,19 +43,15 @@ const petSchema = new mongoose.Schema({
   chipNumber: {
     type: String,
     trim: true,
-    unique: true,
     sparse: true
   },
-  
-  // Información médica
   allergies: [String],
   medications: [String],
   specialConditions: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
-  
-  // Relaciones
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Owner',
@@ -66,19 +62,16 @@ const petSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  
-  // Metadata
   notes: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   status: {
     type: String,
-    enum: ['active', 'deceased', 'transferred', 'archived'],
+    enum: ['active', 'inactive'],
     default: 'active'
   },
-  
-  // Características físicas
   sterilized: {
     type: Boolean,
     default: false
@@ -96,5 +89,6 @@ petSchema.index({ name: 1 });
 petSchema.index({ species: 1 });
 petSchema.index({ owner: 1 });
 petSchema.index({ userId: 1 });
+petSchema.index({ status: 1 });
 
 export default mongoose.model('Pet', petSchema);

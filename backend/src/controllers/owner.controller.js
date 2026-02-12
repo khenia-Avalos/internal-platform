@@ -1,5 +1,7 @@
+// backend/src/controllers/owner.controller.js
 import Owner from '../models/owner.model.js';
 import Pet from '../models/pet.model.js';
+import Appointment from '../models/appointment.model.js';
 
 export const getOwners = async (req, res) => {
   try {
@@ -8,7 +10,8 @@ export const getOwners = async (req, res) => {
     
     console.log('🔍 Buscando owners para userId:', userId);
     
-    const filter = { userId };
+    // 👇 CAMBIADO: Solo mostrar active, no archived
+    const filter = { userId, status: 'active' };
     
     if (search) {
       filter.$or = [
@@ -34,7 +37,8 @@ export const getOwners = async (req, res) => {
       owners.map(async (owner) => {
         const petCount = await Pet.countDocuments({ 
           owner: owner._id, 
-          userId 
+          userId,
+          status: 'active' 
         });
         return {
           ...owner.toObject(),
@@ -74,7 +78,8 @@ export const getOwner = async (req, res) => {
     
     console.log(`🔍 Buscando owner ${id} para userId: ${userId}`);
     
-    const owner = await Owner.findOne({ _id: id, userId });
+    // 👇 CAMBIADO: Solo active
+    const owner = await Owner.findOne({ _id: id, userId, status: 'active' });
     
     if (!owner) {
       console.log(`❌ Owner ${id} no encontrado`);
@@ -84,8 +89,8 @@ export const getOwner = async (req, res) => {
       });
     }
     
-    // Obtener mascotas de este dueño
-    const pets = await Pet.find({ owner: id, userId })
+    // Obtener mascotas activas de este dueño
+    const pets = await Pet.find({ owner: id, userId, status: 'active' })
       .select('name species breed gender birthDate weight status')
       .sort({ name: 1 });
     
@@ -123,10 +128,11 @@ export const createOwner = async (req, res) => {
       });
     }
     
-    // Verificar si email ya existe
+    // Verificar si email ya existe (solo activos)
     const existingOwner = await Owner.findOne({ 
       email: email.trim().toLowerCase(),
-      userId 
+      userId,
+      status: 'active'
     });
     
     if (existingOwner) {
@@ -141,7 +147,7 @@ export const createOwner = async (req, res) => {
       ...req.body,
       email: email.trim().toLowerCase(),
       userId,
-      // Asegurar que campos opcionales tengan valores por defecto
+      status: 'active', // 👈 EXPLÍCITO
       dni: req.body.dni || '',
       address: req.body.address || '',
       emergencyContact: req.body.emergencyContact || {
@@ -198,8 +204,8 @@ export const updateOwner = async (req, res) => {
     
     console.log(`✏️ Actualizando owner ${id} para userId: ${userId}`);
     
-    // Verificar que el dueño existe y pertenece al usuario
-    const owner = await Owner.findOne({ _id: id, userId });
+    // Verificar que el dueño existe y pertenece al usuario (solo active)
+    const owner = await Owner.findOne({ _id: id, userId, status: 'active' });
     if (!owner) {
       return res.status(404).json({ 
         success: false, 
@@ -207,11 +213,12 @@ export const updateOwner = async (req, res) => {
       });
     }
     
-    // Si se actualiza email, verificar que no exista otro con ese email
+    // Si se actualiza email, verificar que no exista otro con ese email (solo active)
     if (req.body.email && req.body.email !== owner.email) {
       const existingOwner = await Owner.findOne({ 
         email: req.body.email.trim().toLowerCase(),
         userId,
+        status: 'active',
         _id: { $ne: id }
       });
       
@@ -262,7 +269,7 @@ export const deleteOwner = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     
-    console.log(`🗑️ Eliminando owner ${id} para userId: ${userId}`);
+    console.log(`🗑️ ELIMINANDO FÍSICAMENTE owner ${id} para userId: ${userId}`);
     
     // Verificar que el dueño existe
     const owner = await Owner.findOne({ _id: id, userId });
@@ -273,7 +280,7 @@ export const deleteOwner = async (req, res) => {
       });
     }
     
-    // Verificar que no tenga mascotas activas
+    // ✅ VERIFICAR SI TIENE MASCOTAS ACTIVAS
     const activePets = await Pet.countDocuments({ 
       owner: id, 
       userId,
@@ -283,21 +290,25 @@ export const deleteOwner = async (req, res) => {
     if (activePets > 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'No se puede eliminar cliente con mascotas activas' 
+        message: 'No se puede eliminar el cliente porque tiene mascotas activas. Debes eliminar o archivar las mascotas primero.' 
       });
     }
     
-    // Cambiar estado a archived en lugar de eliminar
-    await Owner.findByIdAndUpdate(id, { 
-      status: 'archived',
-      archivedAt: new Date()
-    });
+    // ✅ ELIMINAR FÍSICAMENTE TODAS LAS MASCOTAS ARCHIVADAS/INACTIVAS
+    await Pet.deleteMany({ owner: id, userId });
     
-    console.log('✅ Owner archivado:', id);
+    // ✅ ELIMINAR FÍSICAMENTE TODAS LAS CITAS
+    await Appointment.deleteMany({ owner: id, userId });
+    
+    // ✅ ELIMINAR FÍSICAMENTE EL CLIENTE
+    await Owner.findByIdAndDelete(id);
+    
+    console.log('✅ Owner ELIMINADO FÍSICAMENTE:', id);
+    console.log('✅ Mascotas y citas asociadas también eliminadas');
     
     res.json({
       success: true,
-      message: 'Cliente archivado exitosamente'
+      message: 'Cliente eliminado permanentemente de la base de datos'
     });
   } catch (error) {
     console.error('❌ Error deleting owner:', error);
