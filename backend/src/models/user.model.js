@@ -5,23 +5,11 @@ import mongoose from 'mongoose';
 const timeSlotSchema = new mongoose.Schema({
   start: { 
     type: String, 
-    default: '08:00',
-    validate: {
-      validator: function(v) {
-        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-      },
-      message: props => `${props.value} no es un formato de hora válido (HH:MM)`
-    }
+    default: '08:00'
   },
   end: { 
     type: String, 
-    default: '17:00',
-    validate: {
-      validator: function(v) {
-        return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-      },
-      message: props => `${props.value} no es un formato de hora válido (HH:MM)`
-    }
+    default: '17:00'
   },
   available: { 
     type: Boolean, 
@@ -31,13 +19,13 @@ const timeSlotSchema = new mongoose.Schema({
 
 // Schema para disponibilidad semanal
 const availabilitySchema = new mongoose.Schema({
-  monday: { type: timeSlotSchema, default: () => ({ start: '08:00', end: '17:00', available: true }) },
-  tuesday: { type: timeSlotSchema, default: () => ({ start: '08:00', end: '17:00', available: true }) },
-  wednesday: { type: timeSlotSchema, default: () => ({ start: '08:00', end: '17:00', available: true }) },
-  thursday: { type: timeSlotSchema, default: () => ({ start: '08:00', end: '17:00', available: true }) },
-  friday: { type: timeSlotSchema, default: () => ({ start: '08:00', end: '17:00', available: true }) },
-  saturday: { type: timeSlotSchema, default: () => ({ start: '09:00', end: '13:00', available: false }) },
-  sunday: { type: timeSlotSchema, default: () => ({ start: '09:00', end: '13:00', available: false }) }
+  monday: { type: timeSlotSchema, default: () => ({}) },
+  tuesday: { type: timeSlotSchema, default: () => ({}) },
+  wednesday: { type: timeSlotSchema, default: () => ({}) },
+  thursday: { type: timeSlotSchema, default: () => ({}) },
+  friday: { type: timeSlotSchema, default: () => ({}) },
+  saturday: { type: timeSlotSchema, default: () => ({}) },
+  sunday: { type: timeSlotSchema, default: () => ({}) }
 }, { _id: false });
 
 const userSchema = new mongoose.Schema(
@@ -51,20 +39,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      unique: true,
-      lowercase: true
+      unique: true
     },
     phoneNumber: {
       type: String,
       required: true,
-      trim: true,
-      validate: {
-        validator: function(v) {
-          const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
-          return phoneRegex.test(v);
-        },
-        message: "Formato inválido. Usa +50670983832 o +506 7098 3832"
-      }
+      trim: true
     },
     lastname: {
       type: String,
@@ -100,10 +80,9 @@ const userSchema = new mongoose.Schema(
     },
     licenseNumber: {
       type: String,
-      trim: true,
-      default: null
+      trim: true
     },
-    // ⚠️ CAMPO NUEVO: Disponibilidad por defecto para veterinarios
+    // ⚠️ SOLO AGREGAR ESTOS DOS CAMPOS NUEVOS:
     defaultAvailability: {
       type: availabilitySchema,
       default: () => ({
@@ -116,7 +95,6 @@ const userSchema = new mongoose.Schema(
         sunday: { start: '09:00', end: '13:00', available: false }
       })
     },
-    // ⚠️ CAMPO NUEVO: Duración de citas para veterinarios
     appointmentDuration: {
       type: Number,
       default: 30,
@@ -124,13 +102,7 @@ const userSchema = new mongoose.Schema(
       max: 120
     }
   },
-  { 
-    timestamps: true 
-  }
+  { timestamps: true }
 );
-
-// Índices para mejorar búsquedas
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
 
 export default mongoose.model('User', userSchema);
