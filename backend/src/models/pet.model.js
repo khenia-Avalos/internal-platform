@@ -1,4 +1,3 @@
-// backend/src/models/Pet.js
 import mongoose from 'mongoose';
 
 const petSchema = new mongoose.Schema({
@@ -44,6 +43,7 @@ const petSchema = new mongoose.Schema({
     type: String,
     trim: true,
     sparse: true
+    // ✅ unique: true ELIMINADO
   },
   allergies: [String],
   medications: [String],
@@ -78,7 +78,13 @@ const petSchema = new mongoose.Schema({
   },
   lastVisit: {
     type: Date
-  }
+  },
+  vaccinations: [{
+    name: String,
+    date: Date,
+    nextDate: Date,
+    notes: String
+  }]
 }, {
   timestamps: true,
   versionKey: false

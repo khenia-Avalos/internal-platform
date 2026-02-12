@@ -1,5 +1,7 @@
+// backend/src/controllers/pet.controller.js - VERSIÓN COMPLETA CORREGIDA
 import Pet from '../models/pet.model.js';
 import Owner from '../models/owner.model.js';
+import Appointment from '../models/appointment.model.js'; // ✅ IMPORTAR APPOINTMENT
 
 export const getPets = async (req, res) => {
   try {
@@ -89,7 +91,6 @@ export const createPet = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Verificar que el dueño existe y pertenece al usuario
     const owner = await Owner.findOne({ 
       _id: req.body.owner, 
       userId 
@@ -102,31 +103,16 @@ export const createPet = async (req, res) => {
       });
     }
     
-    // Verificar número de chip único si se proporciona
-    if (req.body.chipNumber) {
-      const existingPet = await Pet.findOne({ 
-        chipNumber: req.body.chipNumber,
-        userId 
-      });
-      
-      if (existingPet) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Ya existe una mascota con este número de chip' 
-        });
-      }
-    }
-    
     const petData = {
       ...req.body,
       userId,
-      lastVisit: new Date()
+      lastVisit: new Date(),
+      status: 'active'
     };
     
     const newPet = new Pet(petData);
     const savedPet = await newPet.save();
     
-    // Poblar datos del dueño para la respuesta
     const populatedPet = await Pet.findById(savedPet._id)
       .populate('owner', 'firstName lastName phone');
     
@@ -137,14 +123,6 @@ export const createPet = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating pet:', error);
-    
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Número de chip ya registrado' 
-      });
-    }
-    
     res.status(500).json({ 
       success: false, 
       message: 'Error al crear mascota' 
@@ -157,29 +135,12 @@ export const updatePet = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     
-    // Verificar que la mascota existe
     const pet = await Pet.findOne({ _id: id, userId });
     if (!pet) {
       return res.status(404).json({ 
         success: false, 
         message: 'Mascota no encontrada' 
       });
-    }
-    
-    // Si se actualiza chip, verificar que no exista otro
-    if (req.body.chipNumber && req.body.chipNumber !== pet.chipNumber) {
-      const existingPet = await Pet.findOne({ 
-        chipNumber: req.body.chipNumber,
-        userId,
-        _id: { $ne: id }
-      });
-      
-      if (existingPet) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Ya existe otra mascota con este número de chip' 
-        });
-      }
     }
     
     const updatedPet = await Pet.findByIdAndUpdate(
@@ -195,14 +156,6 @@ export const updatePet = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating pet:', error);
-    
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Número de chip ya registrado' 
-      });
-    }
-    
     res.status(500).json({ 
       success: false, 
       message: 'Error al actualizar mascota' 
@@ -215,6 +168,8 @@ export const deletePet = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
     
+    console.log(`🗑️ ELIMINANDO FÍSICAMENTE mascota ${id} para userId: ${userId}`);
+    
     // Verificar que la mascota existe
     const pet = await Pet.findOne({ _id: id, userId });
     if (!pet) {
@@ -224,18 +179,21 @@ export const deletePet = async (req, res) => {
       });
     }
     
-    // Cambiar estado a archived en lugar de eliminar
-    await Pet.findByIdAndUpdate(id, { 
-      status: 'archived',
-      archivedAt: new Date()
-    });
+    // ✅ ELIMINAR FÍSICAMENTE TODAS LAS CITAS ASOCIADAS
+    await Appointment.deleteMany({ pet: id, userId });
+    
+    // ✅ ELIMINAR FÍSICAMENTE LA MASCOTA
+    await Pet.findByIdAndDelete(id);
+    
+    console.log('✅ Mascota ELIMINADA FÍSICAMENTE:', id);
+    console.log('✅ Citas asociadas también eliminadas');
     
     res.json({
       success: true,
-      message: 'Mascota archivada exitosamente'
+      message: 'Mascota eliminada permanentemente de la base de datos'
     });
   } catch (error) {
-    console.error('Error deleting pet:', error);
+    console.error('❌ Error deleting pet:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al eliminar mascota' 
