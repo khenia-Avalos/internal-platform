@@ -27,6 +27,8 @@ router.get('/verify', verifyToken);
 
 // Rutas protegidas (requieren autenticación)
 router.get('/profile', validateToken, profile);
+router.put('/profile', validateToken, updateProfile); // NUEVA RUTA PARA ACTUALIZAR PERFIL
+
 
 // Rutas de administrador (requieren rol admin)
 router.post('/admin/users', validateToken, requireRole('admin'), createUserByAdmin);

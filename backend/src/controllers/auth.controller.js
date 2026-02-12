@@ -35,9 +35,7 @@ export const register = async (req, res) => {
     if (userFound)
       return res.status(400).json(["the email is already in use"]);
 
-    // IMPORTANTE: Solo permitir crear usuarios con rol 'client' desde registro público
-    // Para crear admin/veterinarian/assistant, se debe hacer desde panel admin
-    const allowedRole = 'client'; // Siempre 'client' para registro público
+    const allowedRole = 'client';
     
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -47,7 +45,7 @@ export const register = async (req, res) => {
       lastname,
       phoneNumber,
       password: passwordHash,
-      role: allowedRole, // Forzar rol client
+      role: allowedRole,
     });
     
     const userSaved = await newUser.save();
@@ -88,7 +86,6 @@ export const login = async (req, res) => {
 
     if (!userFound) return res.status(400).json(["invalid email or password"]);
 
-    // Verificar si el usuario está activo
     if (userFound.active === false) {
       return res.status(403).json(["Usuario inactivo. Contacte al administrador"]);
     }
@@ -153,6 +150,64 @@ export const profile = async (req, res) => {
   }
 };
 
+// ============ NUEVO ENDPOINT PARA ACTUALIZAR PERFIL ============
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updates = req.body;
+
+    console.log(`📝 Actualizando perfil del usuario: ${userId}`);
+    console.log('📦 Datos a actualizar:', updates);
+
+    // NO permitir actualizar campos sensibles
+    delete updates.password;
+    delete updates.role;
+    delete updates._id;
+    delete updates.id;
+    delete updates.accessToken;
+    delete updates.active;
+
+    // Buscar y actualizar el usuario
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { 
+        new: true,
+        runValidators: true
+      }
+    ).select('-password -resetPasswordToken -resetPasswordExpires -__v');
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Usuario no encontrado" 
+      });
+    }
+
+    console.log(`✅ Perfil actualizado: ${user.username}`);
+
+    res.json({
+      success: true,
+      message: "Perfil actualizado correctamente",
+      id: user._id,
+      username: user.username,
+      lastname: user.lastname,
+      phoneNumber: user.phoneNumber,
+      email: user.email,
+      role: user.role,
+      specialty: user.specialty,
+      updatedAt: user.updatedAt
+    });
+
+  } catch (error) {
+    console.error("❌ Error actualizando perfil:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
 export const verifyToken = async (req, res) => {
   let token = req.cookies.token;
 
@@ -186,10 +241,8 @@ export const verifyToken = async (req, res) => {
   }
 };
 
-// ADMIN FUNCTIONS - Solo accesibles por usuarios admin
 export const createUserByAdmin = async (req, res) => {
   try {
-    // Verificar que el usuario que hace la petición sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json(["Acceso denegado. Solo administradores"]);
     }
@@ -208,7 +261,6 @@ export const createUserByAdmin = async (req, res) => {
       return res.status(400).json(errors);
     }
 
-    // Validar rol
     const validRoles = ['admin', 'veterinarian', 'assistant', 'client'];
     if (!validRoles.includes(role)) {
       return res.status(400).json(["Rol inválido"]);
@@ -254,7 +306,6 @@ export const createUserByAdmin = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    // Verificar que el usuario que hace la petición sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json(["Acceso denegado. Solo administradores"]);
     }
@@ -274,7 +325,6 @@ export const getUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    // Verificar que el usuario que hace la petición sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json(["Acceso denegado. Solo administradores"]);
     }
@@ -282,7 +332,6 @@ export const updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // No permitir actualizar password desde aquí
     if (updates.password) {
       delete updates.password;
     }
@@ -307,10 +356,6 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// Las funciones forgotPassword y resetPassword se mantienen igual
-// ...
-
-// RECUPERAR CONTRASEÑA
 export const forgotPassword = async (req, res) => {
   console.log("📧 Forgot password request:", req.body.email);
   const { email } = req.body;
@@ -356,7 +401,6 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// RESETEAR CONTRASEÑA
 export const resetPassword = async (req, res) => {
   const { token, password } = req.body;
 
@@ -397,14 +441,10 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-
-
-// OBTENER USUARIOS NUEVOS (ÚLTIMOS 7 DÍAS)
 export const getNewUsers = async (req, res) => {
   try {
     console.log("🔄 GET /api/admin/new-users - Solicitado por:", req.user.id);
     
-    // Verificar que el usuario sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json({ 
         success: false, 
@@ -412,11 +452,9 @@ export const getNewUsers = async (req, res) => {
       });
     }
     
-    // Calcular fecha de hace 7 días
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Buscar usuarios registrados en los últimos 7 días
     const users = await User.find({
       createdAt: { $gte: sevenDaysAgo }
     })
@@ -441,12 +479,10 @@ export const getNewUsers = async (req, res) => {
   }
 };
 
-// OBTENER ESTADÍSTICAS DE ADMINISTRADOR
 export const getAdminStats = async (req, res) => {
   try {
     console.log("📊 GET /api/admin/stats - Solicitado por:", req.user.id);
     
-    // Verificar que el usuario sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json({ 
         success: false, 
@@ -454,23 +490,16 @@ export const getAdminStats = async (req, res) => {
       });
     }
     
-    // Calcular fechas
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Obtener estadísticas en paralelo
     const [
       totalUsers,
       newUsersLast7Days,
       usersByRoleResult
     ] = await Promise.all([
-      // Total de usuarios
       User.countDocuments(),
-      
-      // Usuarios nuevos en últimos 7 días
       User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
-      
-      // Contar usuarios por rol
       User.aggregate([
         {
           $group: {
@@ -481,13 +510,11 @@ export const getAdminStats = async (req, res) => {
       ])
     ]);
     
-    // Convertir array de roles a objeto
     const byRole = {};
     usersByRoleResult.forEach(item => {
       byRole[item._id] = item.count;
     });
     
-    // Calcular porcentaje de crecimiento
     const growthPercentage = totalUsers > 0 
       ? ((newUsersLast7Days / totalUsers) * 100).toFixed(1)
       : 0;
