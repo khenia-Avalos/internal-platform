@@ -8,6 +8,7 @@ import {
   verifyToken,
   forgotPassword,
   resetPassword,
+    updateProfile,
   createUserByAdmin,
   getUsers,
   updateUser
