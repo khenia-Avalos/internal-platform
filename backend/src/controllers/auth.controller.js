@@ -241,15 +241,37 @@ export const verifyToken = async (req, res) => {
   }
 };
 
+// backend/src/controllers/auth.controller.js
+// Reemplaza la función createUserByAdmin con esta versión mejorada:
+
 export const createUserByAdmin = async (req, res) => {
   try {
+    // Verificar que el usuario que hace la petición sea admin
     if (req.user.role !== 'admin') {
       return res.status(403).json(["Acceso denegado. Solo administradores"]);
     }
 
-    const { email, password, username, lastname, phoneNumber, role, specialty } = req.body;
-    const errors = [];
+    const { 
+      email, 
+      password, 
+      username, 
+      lastname, 
+      phoneNumber, 
+      role, 
+      specialty, 
+      defaultAvailability,
+      appointmentDuration 
+    } = req.body;
     
+    console.log('📝 Creando usuario por admin:', { 
+      email, 
+      username, 
+      role,
+      specialty: role === 'veterinarian' ? specialty : 'N/A',
+      appointmentDuration: role === 'veterinarian' ? appointmentDuration : 'N/A'
+    });
+    
+    const errors = [];
     if (!username) errors.push("Username is required");
     if (!lastname) errors.push("Last name is required");
     if (!phoneNumber) errors.push("Phone number is required");
@@ -261,29 +283,49 @@ export const createUserByAdmin = async (req, res) => {
       return res.status(400).json(errors);
     }
 
+    // Validar rol
     const validRoles = ['admin', 'veterinarian', 'assistant', 'client'];
     if (!validRoles.includes(role)) {
       return res.status(400).json(["Rol inválido"]);
     }
 
     const userFound = await User.findOne({ email });
-    if (userFound)
+    if (userFound) {
       return res.status(400).json(["El email ya está en uso"]);
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    // Construir objeto de usuario
+    const newUserData = {
       username,
       email,
       lastname,
       phoneNumber,
       password: passwordHash,
       role,
-      specialty: role === 'veterinarian' ? specialty : undefined,
       active: true,
-    });
-    
+    };
+
+    // Agregar campos específicos para veterinarios
+    if (role === 'veterinarian') {
+      newUserData.specialty = specialty || 'Medicina General';
+      newUserData.defaultAvailability = defaultAvailability || {
+        monday: { start: '08:00', end: '17:00', available: true },
+        tuesday: { start: '08:00', end: '17:00', available: true },
+        wednesday: { start: '08:00', end: '17:00', available: true },
+        thursday: { start: '08:00', end: '17:00', available: true },
+        friday: { start: '08:00', end: '17:00', available: true },
+        saturday: { start: '09:00', end: '13:00', available: false },
+        sunday: { start: '09:00', end: '13:00', available: false }
+      };
+      newUserData.appointmentDuration = appointmentDuration || 30;
+    }
+
+    const newUser = new User(newUserData);
     const userSaved = await newUser.save();
+
+    console.log(`✅ Usuario creado por admin: ${userSaved.username} (${userSaved.role})`);
 
     res.status(201).json({
       success: true,
@@ -297,12 +339,17 @@ export const createUserByAdmin = async (req, res) => {
         role: userSaved.role,
         specialty: userSaved.specialty,
         active: userSaved.active,
+        createdAt: userSaved.createdAt
       }
     });
+    
   } catch (error) {
+    console.error("❌ Error creando usuario por admin:", error);
     res.status(500).json({ message: error.message });
   }
 };
+    
+  
 
 export const getUsers = async (req, res) => {
   try {
