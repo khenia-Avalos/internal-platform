@@ -39,12 +39,7 @@ const petSchema = new mongoose.Schema({
     enum: ['kg', 'g', 'lb'],
     default: 'kg'
   },
-  chipNumber: {
-    type: String,
-    trim: true,
-    sparse: true
-    // ✅ unique: true ELIMINADO
-  },
+  
   allergies: [String],
   medications: [String],
   specialConditions: {
