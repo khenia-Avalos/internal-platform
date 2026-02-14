@@ -343,79 +343,121 @@ export const getVeterinarianAvailability = async (req, res) => {
   }
 };
 
-// Crear cita (actualizado para Mongo Atlas)
+// backend/src/controllers/appointment.controller.js
+// REEMPLAZA SOLO LA FUNCIÓN createAppointment (el resto del archivo se mantiene igual)
+
+// Crear cita - VERSIÓN CORREGIDA CON VALIDACIÓN ESTRICTA
 export const createAppointment = async (req, res) => {
   try {
     const userId = req.user.id;
     const { pet: petId, veterinarian: veterinarianId, appointmentDate, startTime, endTime } = req.body;
     
     console.log('='.repeat(60));
-    console.log('📅 CREATE APPOINTMENT REQUEST');
-    console.log('👤 User ID:', userId);
-    console.log('🐕 Pet ID:', petId);
-    console.log('👨‍⚕️ Veterinarian ID:', veterinarianId);
-    console.log('📅 Date:', appointmentDate);
-    console.log('⏰ Time:', startTime, '-', endTime);
+    console.log('📅 CREATE APPOINTMENT - VALIDACIÓN ESTRICTA');
+    console.log('👨‍⚕️ Veterinario ID:', veterinarianId);
+    console.log('📅 Fecha:', appointmentDate);
+    console.log('⏰ Hora:', startTime, '-', endTime);
     
-    // Verificar que el veterinario existe (sin filtrar por active)
+    // 1. Verificar veterinario
     const veterinarian = await User.findOne({
       _id: veterinarianId,
       role: 'veterinarian'
     });
     
     if (!veterinarian) {
-      console.log('❌ Veterinario no encontrado:', veterinarianId);
       return res.status(404).json({
         success: false,
-        message: 'Veterinario no disponible'
+        message: 'Veterinario no encontrado'
       });
     }
     
-    // Verificar que la mascota existe
+    // 2. Verificar mascota
     const pet = await Pet.findOne({ _id: petId, userId })
       .populate('owner');
     
     if (!pet) {
-      console.log('❌ Mascota no encontrada:', petId);
       return res.status(404).json({
         success: false,
         message: 'Mascota no encontrada'
       });
     }
     
-    // Verificar disponibilidad del veterinario
-    const existingAppointment = await Appointment.findOne({
+    // 3. VERIFICACIÓN DE DISPONIBILIDAD - LA MÁS ESTRICTA POSIBLE
+    const appointmentDateTime = new Date(appointmentDate);
+    const startOfDay = new Date(appointmentDateTime);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(appointmentDateTime);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+    
+    // Buscar TODAS las citas del mismo veterinario en la misma fecha
+    const existingAppointments = await Appointment.find({
       veterinarian: veterinarianId,
-      appointmentDate: new Date(appointmentDate),
-      $or: [
-        { startTime: { $lt: endTime, $gte: startTime } },
-        { endTime: { $gt: startTime, $lte: endTime } },
-        { startTime: { $lte: startTime }, endTime: { $gte: endTime } }
-      ],
-      status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
-      userId: userId
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      },
+      status: { $in: ['scheduled', 'confirmed', 'in-progress'] }
     });
     
-    if (existingAppointment) {
-      console.log('❌ Conflicto de horario con cita:', existingAppointment._id);
+    console.log(`   📊 Citas existentes en esta fecha: ${existingAppointments.length}`);
+    
+    // Convertir hora solicitada a minutos
+    const newStart = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
+    const newEnd = parseInt(endTime.split(':')[0]) * 60 + parseInt(endTime.split(':')[1]);
+    
+    console.log(`   ⏰ Nueva cita: ${startTime} (${newStart}min) - ${endTime} (${newEnd}min)`);
+    
+    // Verificar conflicto con CADA cita existente
+    let hasConflict = false;
+    let conflictingApt = null;
+    
+    for (const apt of existingAppointments) {
+      const aptStart = parseInt(apt.startTime.split(':')[0]) * 60 + parseInt(apt.startTime.split(':')[1]);
+      const aptEnd = parseInt(apt.endTime.split(':')[0]) * 60 + parseInt(apt.endTime.split(':')[1]);
+      
+      console.log(`      Comparando con cita ${apt._id}: ${apt.startTime}(${aptStart})-${apt.endTime}(${aptEnd})`);
+      
+      // DETECTAR CUALQUIER SOLAPAMIENTO
+      // Caso 1: Nueva cita empieza durante una existente
+      // Caso 2: Nueva cita termina durante una existente
+      // Caso 3: Nueva cita cubre completamente una existente
+      // Caso 4: Existente cubre completamente la nueva
+      
+      const overlaps = (
+        (newStart >= aptStart && newStart < aptEnd) || // empieza durante
+        (newEnd > aptStart && newEnd <= aptEnd) ||     // termina durante
+        (newStart <= aptStart && newEnd >= aptEnd) ||  // cubre existente
+        (aptStart <= newStart && aptEnd >= newEnd)      // existente cubre nueva
+      );
+      
+      if (overlaps) {
+        hasConflict = true;
+        conflictingApt = apt;
+        console.log(`      ⚠️ CONFLICTO DETECTADO con cita ${apt._id}`);
+        break;
+      }
+    }
+    
+    if (hasConflict) {
+      console.log('❌ CONFLICTO: No se puede crear la cita');
       return res.status(400).json({
         success: false,
-        message: 'El veterinario no está disponible en este horario',
-        conflictingAppointment: {
-          id: existingAppointment._id,
-          startTime: existingAppointment.startTime,
-          endTime: existingAppointment.endTime
+        message: 'El veterinario ya tiene una cita en este horario',
+        conflict: {
+          id: conflictingApt._id,
+          startTime: conflictingApt.startTime,
+          endTime: conflictingApt.endTime,
+          title: conflictingApt.title
         }
       });
     }
     
-    // Verificar que el veterinario trabaja ese día y hora
-    const appointmentDateTime = new Date(appointmentDate);
+    // 4. Verificar horario laboral del veterinario
     const dayOfWeek = appointmentDateTime.getDay();
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = days[dayOfWeek];
     
-    // Obtener disponibilidad del día
     let availability;
     if (!veterinarian.defaultAvailability) {
       // Horario por defecto
@@ -425,7 +467,7 @@ export const createAppointment = async (req, res) => {
         wednesday: { start: "08:00", end: "17:00", available: true },
         thursday: { start: "08:00", end: "17:00", available: true },
         friday: { start: "08:00", end: "17:00", available: true },
-        saturday: { start: "09:00", end: "13:00", available: false },
+        saturday: { start: "09:00", end: "13:00", available: true }, // ✅ SÁBADOS DISPONIBLES
         sunday: { start: "09:00", end: "13:00", available: false }
       };
       availability = defaultSchedule[dayName] || { available: false };
@@ -433,23 +475,29 @@ export const createAppointment = async (req, res) => {
       availability = veterinarian.defaultAvailability[dayName] || { available: false };
     }
     
-    const [startHour, startMinute] = availability.start.split(':').map(Number);
-    const [endHour, endMinute] = availability.end.split(':').map(Number);
+    console.log(`   📅 Día: ${dayName}, Disponible: ${availability.available}`);
     
-    const slotStartTime = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
-    const slotEndTime = parseInt(endTime.split(':')[0]) * 60 + parseInt(endTime.split(':')[1]);
-    const vetStartTime = startHour * 60 + startMinute;
-    const vetEndTime = endHour * 60 + endMinute;
-    
-    if (!availability.available || slotStartTime < vetStartTime || slotEndTime > vetEndTime) {
-      console.log('❌ Veterinario no disponible en este horario');
+    if (!availability.available) {
       return res.status(400).json({
         success: false,
-        message: 'El veterinario no trabaja en este horario'
+        message: `El veterinario no trabaja los ${dayName}s`
       });
     }
     
-    // Verificar que el dueño existe
+    const [startHour, startMinute] = availability.start.split(':').map(Number);
+    const [endHour, endMinute] = availability.end.split(':').map(Number);
+    
+    const vetStartTime = startHour * 60 + startMinute;
+    const vetEndTime = endHour * 60 + endMinute;
+    
+    if (newStart < vetStartTime || newEnd > vetEndTime) {
+      return res.status(400).json({
+        success: false,
+        message: `El horario debe estar entre ${availability.start} y ${availability.end}`
+      });
+    }
+    
+    // 5. Verificar dueño
     const owner = await Owner.findOne({ 
       _id: pet.owner._id, 
       userId 
@@ -462,7 +510,7 @@ export const createAppointment = async (req, res) => {
       });
     }
     
-    // Crear cita
+    // 6. Crear cita
     const appointmentData = {
       ...req.body,
       owner: pet.owner._id,
@@ -479,14 +527,13 @@ export const createAppointment = async (req, res) => {
       lastVisit: appointmentDateTime
     });
     
-    // Poblar datos para respuesta
+    // Poblar datos
     const populatedAppointment = await Appointment.findById(savedAppointment._id)
       .populate('pet', 'name species breed')
       .populate('owner', 'firstName lastName phone')
       .populate('veterinarian', 'username email');
     
-    console.log('✅ Cita creada:', savedAppointment._id);
-    console.log('='.repeat(60));
+    console.log('✅ Cita creada exitosamente:', savedAppointment._id);
     
     res.status(201).json({
       success: true,
@@ -495,6 +542,15 @@ export const createAppointment = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error creating appointment:', error);
+    
+    // Error de índice único
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ya existe una cita para este horario (índice único)'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Error al crear cita',
@@ -547,6 +603,10 @@ export const getVeterinarianAppointments = async (req, res) => {
 };
 
 // Obtener todas las citas
+// backend/src/controllers/appointment.controller.js
+// REEMPLAZA SOLO LA FUNCIÓN getAppointments (el resto del archivo se mantiene igual)
+
+// Obtener todas las citas - VERSIÓN CORREGIDA
 export const getAppointments = async (req, res) => {
   try {
     const { 
@@ -555,42 +615,64 @@ export const getAppointments = async (req, res) => {
       type, 
       petId, 
       ownerId,
+      veterinarianId,
       startDate,
       endDate,
       page = 1, 
-      limit = 50 
+      limit = 50,
+      showPast = 'false'
     } = req.query;
     
     const userId = req.user.id;
-    
     const filter = { userId };
     
-    // Filtro por fecha específica
+    console.log('='.repeat(60));
+    console.log('📅 GET APPOINTMENTS - Filtros:');
+    console.log('   date:', date);
+    console.log('   showPast:', showPast);
+    console.log('   status:', status);
+    
+    // CASO 1: Fecha específica (ej: "2026-02-14")
     if (date) {
       const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
+      startOfDay.setUTCHours(0, 0, 0, 0);
       
       const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      endOfDay.setUTCHours(23, 59, 59, 999);
       
       filter.appointmentDate = {
         $gte: startOfDay,
         $lte: endOfDay
       };
+      
+      console.log('   📅 Filtrando por fecha exacta:', date);
+      console.log('   📅 Desde:', startOfDay.toISOString());
+      console.log('   📅 Hasta:', endOfDay.toISOString());
     }
-    
-    // Filtro por rango de fechas
-    if (startDate && endDate) {
+    // CASO 2: Rango de fechas
+    else if (startDate && endDate) {
       filter.appointmentDate = {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       };
     }
+    // CASO 3: Por defecto - solo citas desde hoy (NO mostrar pasadas)
+    else if (showPast === 'false') {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      
+      filter.appointmentDate = { $gte: today };
+      console.log('   📅 Filtrando desde hoy:', today.toISOString().split('T')[0]);
+    }
     
+    // Filtros adicionales
     if (status) filter.status = status;
     if (type) filter.type = type;
     if (petId) filter.pet = petId;
     if (ownerId) filter.owner = ownerId;
+    if (veterinarianId) filter.veterinarian = veterinarianId;
+    
+    console.log('   🔍 Query MongoDB:', JSON.stringify(filter, null, 2));
     
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
@@ -602,11 +684,23 @@ export const getAppointments = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
     
+    // Log de citas encontradas
+    console.log(`   ✅ Citas encontradas: ${appointments.length}`);
+    appointments.forEach(apt => {
+      const aptDate = new Date(apt.appointmentDate).toISOString().split('T')[0];
+      console.log(`      - ${aptDate} ${apt.startTime}: ${apt.title} (${apt.status})`);
+    });
+    
     const total = await Appointment.countDocuments(filter);
     
     res.json({
       success: true,
       appointments,
+      filters: {
+        date: date || null,
+        showPast,
+        total
+      },
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -615,7 +709,7 @@ export const getAppointments = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting appointments:', error);
+    console.error('❌ Error getting appointments:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener citas' 

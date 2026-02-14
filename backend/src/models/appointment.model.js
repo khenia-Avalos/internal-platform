@@ -106,11 +106,26 @@ const appointmentSchema = new mongoose.Schema({
 
 // Índices para búsqueda rápida
 appointmentSchema.index({ appointmentDate: 1, startTime: 1 });
-appointmentSchema.index({ veterinarian: 1, appointmentDate: 1, startTime: 1 }); // Nuevo índice
+appointmentSchema.index({ veterinarian: 1, appointmentDate: 1, startTime: 1 });
 appointmentSchema.index({ status: 1 });
 appointmentSchema.index({ pet: 1 });
 appointmentSchema.index({ owner: 1 });
 appointmentSchema.index({ userId: 1 });
+
+// Índice único compuesto condicional (corregido)
+appointmentSchema.index(
+  { 
+    veterinarian: 1, 
+    appointmentDate: 1, 
+    startTime: 1 
+  },
+  { 
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: ['scheduled', 'confirmed', 'in-progress'] }
+    }
+  }
+);
 
 // Middleware para calcular duración
 appointmentSchema.pre('save', function(next) {
@@ -128,11 +143,18 @@ appointmentSchema.pre('save', function(next) {
 
 // Método estático para verificar disponibilidad
 appointmentSchema.statics.checkAvailability = async function(veterinarianId, date, startTime, endTime, excludeId = null) {
-  const appointmentDate = new Date(date);
+  const startDate = new Date(date);
+  startDate.setHours(0, 0, 0, 0);
+  
+  const endDate = new Date(date);
+  endDate.setHours(23, 59, 59, 999);
   
   const query = {
     veterinarian: veterinarianId,
-    appointmentDate: appointmentDate,
+    appointmentDate: {
+      $gte: startDate,
+      $lte: endDate
+    },
     status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
     $or: [
       {
@@ -153,5 +175,21 @@ appointmentSchema.statics.checkAvailability = async function(veterinarianId, dat
     conflictingAppointment
   };
 };
+
+// Validación personalizada para asegurar que endTime sea después de startTime
+appointmentSchema.pre('validate', function(next) {
+  if (this.startTime && this.endTime) {
+    const [startHours, startMinutes] = this.startTime.split(':').map(Number);
+    const [endHours, endMinutes] = this.endTime.split(':').map(Number);
+    
+    const startTotal = startHours * 60 + startMinutes;
+    const endTotal = endHours * 60 + endMinutes;
+    
+    if (endTotal <= startTotal) {
+      next(new Error('La hora de finalización debe ser posterior a la hora de inicio'));
+    }
+  }
+  next();
+});
 
 export default mongoose.model('Appointment', appointmentSchema);
