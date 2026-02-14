@@ -91,8 +91,8 @@ const userSchema = new mongoose.Schema(
         wednesday: { start: '08:00', end: '17:00', available: true },
         thursday: { start: '08:00', end: '17:00', available: true },
         friday: { start: '08:00', end: '17:00', available: true },
-        saturday: { start: '09:00', end: '13:00', available: false },
-        sunday: { start: '09:00', end: '13:00', available: false }
+        saturday: { start: '09:00', end: '13:00', available: true },
+        sunday: { start: '09:00', end: '13:00', available: true }
       })
     },
     appointmentDuration: {
