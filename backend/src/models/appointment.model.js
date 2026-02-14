@@ -37,7 +37,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show'],
+    enum: ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show', 'rescheduled'], // ✅ AGREGADO 'rescheduled'
     default: 'scheduled'
   },
   type: {
@@ -112,7 +112,7 @@ appointmentSchema.index({ pet: 1 });
 appointmentSchema.index({ owner: 1 });
 appointmentSchema.index({ userId: 1 });
 
-// Índice único compuesto condicional (corregido)
+// Índice único compuesto condicional
 appointmentSchema.index(
   { 
     veterinarian: 1, 
