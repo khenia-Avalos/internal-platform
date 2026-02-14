@@ -20,8 +20,8 @@ const migrateVeterinarians = async () => {
         wednesday: { active: true, startTime: '08:00', endTime: '17:00' },
         thursday: { active: true, startTime: '08:00', endTime: '17:00' },
         friday: { active: true, startTime: '08:00', endTime: '17:00' },
-        saturday: { active: false, startTime: '09:00', endTime: '13:00' },
-        sunday: { active: false, startTime: '09:00', endTime: '13:00' }
+        saturday: { active: true, startTime: '09:00', endTime: '13:00' },
+        sunday: { active: true, startTime: '09:00', endTime: '13:00' }
       },
       isActive: vet.active !== false
     });
