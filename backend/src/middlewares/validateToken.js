@@ -1,4 +1,4 @@
-// backend/src/middlewares/validateToken.js - VERSIÓN CORREGIDA
+// backend/src/middlewares/validateToken.js
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 import { promisify } from "util";
@@ -39,21 +39,31 @@ export const validateToken = async (req, res, next) => {
     console.log('✅ Token válido, decoded:', { id: decoded.id });
     
     // Buscar usuario en BD
-    const userFound = await User.findById(decoded.id).select('_id username email role');
+    const userFound = await User.findById(decoded.id).select('-password -resetPasswordToken -resetPasswordExpires');
     if (!userFound) {
       console.log('❌ ERROR: Usuario no encontrado en BD');
       return res.status(401).json(["Usuario no encontrado"]);
     }
     
-    // Asignar usuario a req.user
+    // Asignar usuario a req.user (incluyendo TODOS los campos necesarios)
     req.user = {
       id: userFound._id.toString(),
+      _id: userFound._id.toString(),
       username: userFound.username,
       email: userFound.email,
-      role: userFound.role
+      role: userFound.role,
+      lastname: userFound.lastname,
+      phoneNumber: userFound.phoneNumber,
+      specialty: userFound.specialty,
+      active: userFound.active
     };
     
-    console.log('✅ Usuario asignado a req.user:', req.user);
+    console.log('✅ Usuario asignado a req.user:', {
+      id: req.user.id,
+      _id: req.user._id,
+      username: req.user.username,
+      role: req.user.role
+    });
     console.log('🔐 VALIDATE TOKEN COMPLETADO EXITOSAMENTE');
     
     next();

@@ -606,7 +606,7 @@ export const getVeterinarianAppointments = async (req, res) => {
 // backend/src/controllers/appointment.controller.js
 // REEMPLAZA SOLO LA FUNCIÓN getAppointments (el resto del archivo se mantiene igual)
 
-// Obtener todas las citas - VERSIÓN CORREGIDA
+// Obtener todas las citas - VERSIÓN CORREGIDA PARA VETERINARIOS
 export const getAppointments = async (req, res) => {
   try {
     const { 
@@ -624,15 +624,29 @@ export const getAppointments = async (req, res) => {
     } = req.query;
     
     const userId = req.user.id;
-    const filter = { userId };
+    const userRole = req.user.role;
     
     console.log('='.repeat(60));
     console.log('📅 GET APPOINTMENTS - Filtros:');
-    console.log('   date:', date);
-    console.log('   showPast:', showPast);
-    console.log('   status:', status);
+    console.log('   👤 Usuario ID:', userId);
+    console.log('   👤 Rol:', userRole);
+    console.log('   📅 date:', date);
+    console.log('   🩺 veterinarianId:', veterinarianId);
     
-    // CASO 1: Fecha específica (ej: "2026-02-14")
+    // ✅ IMPORTANTE: Diferente filtro según el rol
+    let filter = {};
+    
+    // Si es veterinario, buscar citas donde él sea el veterinario
+    if (userRole === 'veterinarian') {
+      filter.veterinarian = userId;
+      console.log('   🔍 Es veterinario, filtrando por veterinarian:', userId);
+    } else {
+      // Si es admin/assistant, filtrar por userId (dueño de la clínica)
+      filter.userId = userId;
+      console.log('   🔍 Es admin/assistant, filtrando por userId:', userId);
+    }
+    
+    // CASO 1: Fecha específica
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setUTCHours(0, 0, 0, 0);
@@ -646,8 +660,6 @@ export const getAppointments = async (req, res) => {
       };
       
       console.log('   📅 Filtrando por fecha exacta:', date);
-      console.log('   📅 Desde:', startOfDay.toISOString());
-      console.log('   📅 Hasta:', endOfDay.toISOString());
     }
     // CASO 2: Rango de fechas
     else if (startDate && endDate) {
@@ -656,7 +668,7 @@ export const getAppointments = async (req, res) => {
         $lte: new Date(endDate)
       };
     }
-    // CASO 3: Por defecto - solo citas desde hoy (NO mostrar pasadas)
+    // CASO 3: Por defecto - solo citas desde hoy
     else if (showPast === 'false') {
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);
@@ -670,7 +682,10 @@ export const getAppointments = async (req, res) => {
     if (type) filter.type = type;
     if (petId) filter.pet = petId;
     if (ownerId) filter.owner = ownerId;
-    if (veterinarianId) filter.veterinarian = veterinarianId;
+    // Si se proporciona veterinarianId explícitamente, usarlo (para admins)
+    if (veterinarianId && userRole !== 'veterinarian') {
+      filter.veterinarian = veterinarianId;
+    }
     
     console.log('   🔍 Query MongoDB:', JSON.stringify(filter, null, 2));
     
@@ -684,11 +699,10 @@ export const getAppointments = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
     
-    // Log de citas encontradas
     console.log(`   ✅ Citas encontradas: ${appointments.length}`);
     appointments.forEach(apt => {
       const aptDate = new Date(apt.appointmentDate).toISOString().split('T')[0];
-      console.log(`      - ${aptDate} ${apt.startTime}: ${apt.title} (${apt.status})`);
+      console.log(`      - ${aptDate} ${apt.startTime}: ${apt.title} (${apt.status}) - Vet: ${apt.veterinarian?.username}`);
     });
     
     const total = await Appointment.countDocuments(filter);
@@ -716,7 +730,6 @@ export const getAppointments = async (req, res) => {
     });
   }
 };
-
 // Obtener una cita específica
 export const getAppointment = async (req, res) => {
   try {
