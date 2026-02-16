@@ -62,12 +62,7 @@ const handleSubmit = async (data) => {
           <p className="text-green-700 mb-6">
             Tu contraseña ha sido actualizada exitosamente.
           </p>
-          <button
-            onClick={goToLogin}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            Ir al Login
-          </button>
+        
         </div>
       </div>
     );
