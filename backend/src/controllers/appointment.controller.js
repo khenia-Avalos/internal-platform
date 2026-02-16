@@ -761,14 +761,32 @@ export const getAppointment = async (req, res) => {
   }
 };
 
-// Actualizar una cita
+// Actualizar una cita - VERSIÓN CORREGIDA
 export const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
     
-    // Verificar que la cita existe
-    const appointment = await Appointment.findOne({ _id: id, userId });
+    console.log('🔄 UPDATE APPOINTMENT:');
+    console.log('   ID:', id);
+    console.log('   User Role:', userRole);
+    
+    // Verificar que la cita existe según el rol
+    let appointment;
+    
+    if (userRole === 'veterinarian') {
+      appointment = await Appointment.findOne({ 
+        _id: id, 
+        veterinarian: userId 
+      });
+    } else {
+      appointment = await Appointment.findOne({ 
+        _id: id, 
+        userId: userId 
+      });
+    }
+    
     if (!appointment) {
       return res.status(404).json({ 
         success: false, 
@@ -799,8 +817,7 @@ export const updateAppointment = async (req, res) => {
             { endTime: { $gt: startTime, $lte: endTime } },
             { startTime: { $lte: startTime }, endTime: { $gte: endTime } }
           ],
-          status: { $in: ['scheduled', 'confirmed', 'in-progress'] },
-          userId: userId
+          status: { $in: ['scheduled', 'confirmed', 'in-progress'] }
         });
         
         if (conflictingAppointment) {
@@ -833,20 +850,19 @@ export const updateAppointment = async (req, res) => {
       appointment: updatedAppointment
     });
   } catch (error) {
-    console.error('Error updating appointment:', error);
+    console.error('❌ Error updating appointment:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al actualizar cita' 
     });
   }
 };
-
-// Actualizar estado de una cita
 export const updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     const userId = req.user.id;
+    const userRole = req.user.role;
     
     if (!status) {
       return res.status(400).json({ 
@@ -855,13 +871,45 @@ export const updateAppointmentStatus = async (req, res) => {
       });
     }
     
-    const appointment = await Appointment.findOne({ _id: id, userId });
+    console.log('🔄 UPDATE APPOINTMENT STATUS:');
+    console.log('   ID:', id);
+    console.log('   Status:', status);
+    console.log('   User ID:', userId);
+    console.log('   User Role:', userRole);
+    
+    // ✅ IMPORTANTE: Buscar la cita según el rol
+    let appointment;
+    
+    if (userRole === 'veterinarian') {
+      // Si es veterinario, buscar por veterinarian (sus propias citas)
+      appointment = await Appointment.findOne({ 
+        _id: id, 
+        veterinarian: userId 
+      });
+      console.log('   Buscando por veterinarian:', userId);
+    } else {
+      // Si es admin/assistant, buscar por userId
+      appointment = await Appointment.findOne({ 
+        _id: id, 
+        userId: userId 
+      });
+      console.log('   Buscando por userId:', userId);
+    }
+    
     if (!appointment) {
+      console.log('❌ Cita no encontrada');
       return res.status(404).json({ 
         success: false, 
         message: 'Cita no encontrada' 
       });
     }
+    
+    console.log('✅ Cita encontrada:', {
+      id: appointment._id,
+      statusActual: appointment.status,
+      veterinario: appointment.veterinarian,
+      userId: appointment.userId
+    });
     
     // Si se completa la cita, registrar check-out
     let updateData = { status };
@@ -882,20 +930,21 @@ export const updateAppointmentStatus = async (req, res) => {
     .populate('pet', 'name species breed')
     .populate('owner', 'firstName lastName phone');
     
+    console.log('✅ Estado actualizado exitosamente');
+    
     res.json({
       success: true,
       message: `Cita ${getStatusText(status)}`,
       appointment: updatedAppointment
     });
   } catch (error) {
-    console.error('Error updating appointment status:', error);
+    console.error('❌ Error updating appointment status:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error al actualizar estado' 
     });
   }
 };
-
 // Eliminar una cita
 export const deleteAppointment = async (req, res) => {
   try {
