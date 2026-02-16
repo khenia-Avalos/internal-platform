@@ -31,9 +31,6 @@ function ResetPassword() {
     }
   }, [location.search]);
 
-  const goToLogin = () => {
-    navigate("/login");
-  };
 
  
 const handleSubmit = async (data) => {
