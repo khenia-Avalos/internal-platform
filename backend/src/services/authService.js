@@ -217,4 +217,40 @@ export const checkEmailConfig = async () => {//codigo para debug
       error: error.message,
     };
   }
+  
+};
+// Agrega esto al final del archivo para probar
+export const testSendGridConnection = async () => {
+  try {
+    console.log('🔍 Probando conexión con SendGrid...');
+    console.log('📧 API Key configurada:', !!SENDGRID_API_KEY);
+    console.log('📧 From Email:', SENDGRID_FROM_EMAIL);
+    
+    // Intenta enviar un email de prueba
+    const msg = {
+      to: SENDGRID_FROM_EMAIL, // Envía a ti mismo
+      from: {
+        email: SENDGRID_FROM_EMAIL,
+        name: "Test Clínica",
+      },
+      subject: "Test de conexión SendGrid",
+      text: "Si recibes esto, SendGrid funciona correctamente.",
+      html: "<p>Si recibes esto, SendGrid funciona correctamente.</p>",
+    };
+    
+    const response = await sgMail.send(msg);
+    console.log('✅ Email de prueba enviado:', response[0]?.statusCode);
+    return { success: true, message: "SendGrid funciona correctamente" };
+  } catch (error) {
+    console.error('❌ Error de SendGrid:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.body
+    });
+    return { 
+      success: false, 
+      error: error.message,
+      details: error.response?.body 
+    };
+  }
 };
