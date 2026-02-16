@@ -191,17 +191,9 @@ export const formConfig = {
             value === allValues.password || "Las contraseñas no coinciden"
         }
       }
-    ],
-     redirect: {  // ← AÑADE AQUÍ para resetPassword
-      text: "regresar al login",
-      links: [
-        {
-          linkText: "login",
-          to: "/login",
-          className: "text-sm text-gray-600 hover:text-gray-800 underline"
-        }
-      ]
+    ]
+      ,
     },
         submitLabel:"enviar"
   }
-};
+;
