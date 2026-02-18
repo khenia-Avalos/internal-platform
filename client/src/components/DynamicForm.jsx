@@ -76,12 +76,9 @@ export const DynamicForm = ({
         )}
         
 
-        <Link
-          to="/"
-          className="text-2xl font-bold text-cyan-600 text-center mb-6 block"
-        >
-          {title}
-        </Link>
+       <h1 className="text-2xl font-bold text-cyan-600 text-center mb-6 block">
+  {title}
+</h1>
 
         <form onSubmit={handleFormSubmit}>
           {fields.map((field) => (
