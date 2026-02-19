@@ -20,7 +20,7 @@ export const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || '';
 // Configuración general
 export const NODE_ENV = NODE_ENV_VALUE;
 export const FRONTEND_URL = IS_PRODUCTION
-  ? 'https://el-exito-internal-platform.onrender.com'
+  ? 'https://internal-platform.onrender.com'
   : process.env.FRONTEND_URL || 'http://localhost:5173';
 export const TOKEN_SECRET = process.env.TOKEN_SECRET;
 export const DB_URL = process.env.DB_URL;
