@@ -4,7 +4,6 @@ import { AuthPage } from "./pages/AuthPage";
 
 import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
-import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
 
 
@@ -41,7 +40,6 @@ function App() {
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
                   </Route>
                   
                   
