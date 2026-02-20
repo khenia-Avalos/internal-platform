@@ -32,7 +32,7 @@ useEffect(() => {
   
   if (isAuthenticated) {
  
-    navigate("/tasks"); 
+    navigate("/dashboard"); 
   }
 }, [isAuthenticated, navigate]); 
 

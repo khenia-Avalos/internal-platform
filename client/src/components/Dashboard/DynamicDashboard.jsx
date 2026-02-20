@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import {useAuth} from "../../context/AuthContext";
 import {Sidebar} from "./Sidebar";
 
 export const DynamicDashboard = ({
