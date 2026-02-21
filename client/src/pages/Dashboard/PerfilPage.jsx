@@ -1,6 +1,6 @@
-function ProfilePage(){
+function PerfilPage(){
     return (
-        <div>TaskFormPAGE</div>
+        <div>perfilPAGE</div>
     )
 }
-export default ProfilePage
+export default PerfilPage

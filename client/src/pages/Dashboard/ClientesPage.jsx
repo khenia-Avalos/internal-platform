@@ -1,6 +1,6 @@
-function ProfilePage(){
+function ClientesPage(){
     return (
         <div>clientesPAGE</div>
     )
 }
-export default ProfilePage
+export default ClientesPage
