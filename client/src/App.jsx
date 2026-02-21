@@ -5,8 +5,7 @@ import { AuthPage } from "./pages/AuthPage";
 import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
 import HomePage from "./pages/HomePage";
-import Dashboard from "./pages/Dashboard"; // ← IMPORTACIÓN AGREGADA
-
+import { Dashboard } from "./pages/Dashboard";  // ← CORRECTO (importación con nombre)
 import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
 import Navbar from "./components/Navbar";
