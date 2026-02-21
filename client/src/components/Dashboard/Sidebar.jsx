@@ -1,5 +1,6 @@
 import React from "react";
 import {Dashboardconfig} from "../../pages/Dashboard/DashboardConfig";
+import logo from '../assets/logo.jpg'; // Ajusta el nombre exacto del archivo
 
 
 
