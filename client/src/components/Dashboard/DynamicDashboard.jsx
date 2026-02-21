@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import {Sidebar} from "./Sidebar";
+import Sidebar from "./Sidebar";
 
 export const DynamicDashboard = ({
 modules = [],
