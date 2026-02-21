@@ -23,7 +23,7 @@ return (
 >
   {module.name}
 </li>
-))}
+))} 
 </ul>
     </div>
 )

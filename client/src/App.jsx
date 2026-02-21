@@ -5,7 +5,7 @@ import { AuthPage } from "./pages/AuthPage";
 import TasksPage from "./pages/TasksPage";
 import TaskFormPage from "./pages/TaskFormPage";
 import HomePage from "./pages/HomePage";
-
+import Dashboard from "./pages/Dashboard"; // ← IMPORTACIÓN AGREGADA
 
 import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
@@ -35,13 +35,15 @@ function App() {
                 <Route element={<LayoutWithNavbar />}>
                   <Route path="/" element={<HomePage />} />
                   
+                  {/* 👇 NUEVA RUTA DASHBOARD CON NAVBAR */}
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  
                   {/* Rutas protegidas para usuarios autenticados */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
                   </Route>
-                  
                   
                 </Route>
                 
