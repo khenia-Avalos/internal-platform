@@ -203,5 +203,55 @@ export const formConfig = {
       ]
     },
         submitLabel:"enviar"
+  },
+
+  perfil: {
+    title: "Editar Perfil",
+    fields: [
+      {
+        name: "username",
+        type: "text",
+        label: "Nombre",
+        placeholder: "Tu nombre",
+        validation: { required: "El nombre es requerido" }
+      },
+      {
+        name: "lastname",
+        type: "text",
+        label: "Apellido",
+        placeholder: "Tu apellido",
+        validation: { required: "El apellido es requerido" }
+      },
+      {
+        name: "phoneNumber",
+        type: "tel",
+        label: "Teléfono",
+        placeholder: "+506 7098 3832",
+        validation: { required: "El teléfono es requerido" }
+      },
+      {
+        name: "email",
+        type: "email",
+        label: "Email",
+        placeholder: "tu@email.com",
+        validation: { 
+          required: "El email es requerido",
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: "Email inválido"
+          }
+        }
+      }
+    ],
+    submitLabel: "Guardar Cambios",
+    redirect: {
+      links: [
+        {
+          linkText: "Cancelar",
+          to: "#",
+          className: "text-gray-600 hover:text-gray-800 underline"
+        }
+      ]
+    }
   }
 };
