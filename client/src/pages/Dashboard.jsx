@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import DynamicDashboard from "../components/Dashboard/DynamicDashboard";
-
+import { DynamicDashboard } from "../components/Dashboard/DynamicDashboard";  
 import { ROLES,dashboardModules } from "./Dashboard/DashboardConfig";  
 import { useAuth } from "../hooks/useAuth";//este creo que usare pero mas adelante cuando las pages ya tengan funciones de crear , editar , eliminar tareas etc
 
