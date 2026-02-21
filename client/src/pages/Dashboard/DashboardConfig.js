@@ -8,7 +8,7 @@ import PerfilPage from "./PerfilPage";
 export const ROLES = {
   ADMIN: 'admin',
   DOCTOR: 'doctor', 
-  CLIENTE: 'cliente'
+  CLIENTE: 'client'
 };
 
 // 2. Definimos los módulos para cada rol
