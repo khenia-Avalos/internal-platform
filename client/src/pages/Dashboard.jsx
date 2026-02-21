@@ -13,7 +13,9 @@ const modules = user ? dashboardModules[user.role] : [];
 //                ↑            ↑                      ↑
 //           Si user existe   entonces usa los     si no, 
 //                            módulos de su rol    array vacío
-
+console.log("dashboardModules completo:", dashboardModules);
+console.log("Buscando clave:", user?.role);
+console.log("Valor encontrado:", dashboardModules[user?.role]);
 useEffect(() => {
   
   if (!isAuthenticated) {
