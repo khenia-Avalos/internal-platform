@@ -10,7 +10,8 @@ export const DynamicForm = ({
    successMessage = "",
   submitLabel = "Enviar",    
   redirect = {}, 
-   isLoading = false
+   isLoading = false,
+   defaultValues = {}
 
 }) => {
 
@@ -27,7 +28,7 @@ export const DynamicForm = ({
     register, 
     handleSubmit, 
     formState: { errors: formErrors },
-  } = useForm();
+  } = useForm({defaultValues}); //inicializa el formulario con valores predeterminados si se proporcionan
 
   const handleFormSubmit = handleSubmit(async (data) => {
       await onSubmit(data);//solo ejecuta onSubmit , el padre maneja todo en context
