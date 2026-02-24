@@ -23,7 +23,14 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
         <button onClick={() => setIsEditing(!isEditing)}className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
           Cancelar
         </button>
-        <DynamicForm {...formConfig.perfil} errors={errors} successMessage={successMessage} onSubmit={handlesubmit}  />//toma las propiedades de formconfig y las pasa como props , igual pasa errors y successMessage para mostrar mensajes de error o éxito
+        <DynamicForm {...formConfig.perfil}
+          defaultValues={{          // con valores inicialea
+    username: user?.username,
+    lastname: user?.lastname,
+    email: user?.email,
+    phoneNumber: user?.phoneNumber
+  }}
+   errors={errors} successMessage={successMessage} onSubmit={handlesubmit}  /> //toma las propiedades de formconfig y las pasa como props , igual pasa errors y successMessage para mostrar mensajes de error o éxito
       </>
     ) : (
 
