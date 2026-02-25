@@ -2,8 +2,8 @@ import React from "react";
 import { useState, useEffect } from "react";
 import {DynamicForm} from "../../components/DynamicForm";
 import { formConfig } from "../formConfig";
-import { getDoctoresRequest } from "../api/doctores";
-import { createDoctorRequest } from "../api/doctores";
+import { getDoctoresRequest } from "/src/api/doctores";
+import { createDoctorRequest } from "/src/api/doctores"
 
 function DoctoresPage(){
 
