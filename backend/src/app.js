@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import authRoutes from './routes/auth.routes.js'
 import tasksRoutes from './routes/tasks.routes.js'
+import doctorRoutes from './routes/doctor.routes.js';
 
 import { FRONTEND_URL } from "./config.js";
 
@@ -35,6 +36,7 @@ app.use(cookieParser());
 
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
+app.use("/api", doctorRoutes);
 
 
 export default app;
