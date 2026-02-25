@@ -46,11 +46,7 @@ function Navbar() {
                 Login
               </Link>
             </li>
-            <li>
-              <Link to="/register" className="text-cyan-600 hover:text-cyan-700 transition">
-                Register
-              </Link>
-            </li>
+           
           </>
         )}
       </ul>
