@@ -316,13 +316,13 @@ export const formConfig = {
           required: "La contraseña es requerida"
         }
       },
-    {
-      name: "especialidad",
-      type: "select",
-      label: "Especialidad",
-      options: ["Medicina General", "Groomer", "Cirugía"],
-      validation: { required: "La especialidad es requerida" }
-    }
+  {
+  name: "especialidad",
+  type: "select",
+  label: "Especialidad",
+  options: ["Medicina General", "Groomer", "Cirugía"],
+  validation: { required: "La especialidad es requerida" }
+}
   ],
   submitLabel: "Crear Doctor",
   redirect: {}  
