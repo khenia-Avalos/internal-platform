@@ -28,6 +28,9 @@ export const createDoctor = async (req, res) => {
     const savedDoctor = await newDoctor.save();
     res.status(201).json(savedDoctor);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+console.log("ERROR COMPLETO:", error);
+res.status(500).json({ 
+  message: error.message,
+  stack: error.stack 
+});  }
 };
