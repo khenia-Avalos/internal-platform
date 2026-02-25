@@ -50,6 +50,13 @@ phoneNumber: {
             enum: ['admin', 'employee', 'client'],
             default: 'client' 
         },
+        especialidad: {
+  type: String,
+  enum: ['Medicina General', 'Groomer', 'Cirugía'],
+  required: function() { 
+    return this.role === 'doctor'; 
+  }
+}
     }, {
         timestamps: true
     }
