@@ -47,7 +47,7 @@ phoneNumber: {
         },
           role: {
             type: String,
-            enum: ['admin', 'employee', 'client'],
+            enum: ['admin', 'employee', 'client', 'doctor'],
             default: 'client' 
         },
         especialidad: {
