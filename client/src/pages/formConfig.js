@@ -112,22 +112,16 @@ export const formConfig = {
         }
       }
     ],
-     redirect: {  // ← AÑADE AQUÍ para login
-      text: "¿No tienes una cuenta?",
-      links: [
-        {
-          linkText: "Regístrate",
-          to: "/register",
-          className: "inline-block bg-white text-cyan-600 border border-cyan-600 px-4 py-1 rounded-md hover:bg-cyan-50 transition"
-        },
-        { separator: true },
-        {
-          linkText: "¿Olvidaste tu contraseña?",
-          to: "/forgot-password",
-          className: "text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200 underline"
-        }
-      ]
-    },
+     redirect: {  
+        text: "¿Olvidaste tu contraseña?",
+        links: [
+          {
+            linkText: "Recuperar contraseña",
+            to: "/forgot-password",
+            className: "text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200 underline"
+          }
+        ]
+      },
         submitLabel:"Iniciar sesion"
   },
   
