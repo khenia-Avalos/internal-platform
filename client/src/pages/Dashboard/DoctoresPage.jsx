@@ -115,8 +115,8 @@ const {
           <DynamicForm
             {...editConfig.editDoctor}
             defaultValues={doctorSeleccionado}
-            errors={editErrors}
-            successMessage={editSuccessMessage}
+            errors={errors}
+            successMessage={successMessage}
             onSubmit={handleUpdate}
           />
           <button
