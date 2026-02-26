@@ -1,5 +1,5 @@
 import {useAuth} from '../../hooks/useAuth'
-import { formConfig } from '../formConfig';
+import { formConfig } from '../config/formConfig';
 import { useState } from 'react';
 import { DynamicForm } from '../../components/DynamicForm';
 

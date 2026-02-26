@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
-import { formConfig } from "../formConfig";
+import { formConfig } from "../config/formConfig";
 import { 
   getDoctoresRequest, 
   createDoctorRequest, 
@@ -90,7 +90,7 @@ function DoctoresPage() {
       {showEditForm && (
         <div className="mb-6">
           <DynamicForm
-            {...formConfig.registerDoctor}
+            {...editConfig.editDoctor}
             defaultValues={doctorSeleccionado}
             errors={editErrors}
             successMessage={editSuccessMessage}

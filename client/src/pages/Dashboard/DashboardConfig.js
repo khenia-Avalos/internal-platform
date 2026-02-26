@@ -1,9 +1,9 @@
-import ClientesPage from "./ClientesPage";
+import ClientesPage from "../Dashboard/ClientesPage";
 
-import DoctoresPage from "./DoctoresPage"; 
-import CitasPage from "./CitasPage";      
-import PacientesPage from "./PacientesPage";
-import PerfilPage from "./PerfilPage";    
+import DoctoresPage from "../Dashboard/DoctoresPage"; 
+import CitasPage from "../Dashboard/CitasPage";      
+import PacientesPage from "../Dashboard/PacientesPage";
+import PerfilPage from "../Dashboard/PerfilPage";    
 // 1. Definimos los roles como constantes
 export const ROLES = {
   ADMIN: 'admin',
