@@ -33,4 +33,31 @@ res.status(500).json({
   message: error.message,
   stack: error.stack 
 });  }
+
+};
+export const updateDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    
+    const doctorActualizado = await User.findByIdAndUpdate(id, data, { new: true });
+    res.json(doctorActualizado);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const deleteDoctor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const doctorEliminado = await User.findByIdAndDelete(id);
+    
+    if (!doctorEliminado) {
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    
+    res.json({ message: "Doctor eliminado correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
