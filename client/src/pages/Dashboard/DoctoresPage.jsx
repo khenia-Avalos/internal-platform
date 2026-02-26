@@ -23,6 +23,8 @@ function DoctoresPage() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);//controla la visibilidad del formulario de creación
   const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);//almacena el doctor seleccionado para edición
   const [busqueda, setBusqueda] = useState("");//estado para el término de búsqueda
+const [errors, setErrors] = useState([]);
+const [successMessage, setSuccessMessage] = useState(""); 
 
   const handleCreateDoctor = async (data) => {
     try {
