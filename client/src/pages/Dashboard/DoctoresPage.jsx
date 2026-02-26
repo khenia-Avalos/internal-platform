@@ -4,7 +4,7 @@ import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
-
+import { handleDuplicateError } from "../utils/errorHandler";
 import { SearchBar } from "../../components/SearchBar";
 
 
@@ -31,7 +31,11 @@ function DoctoresPage() {
       const response = await getDoctoresRequest();
       setDoctores(response.data);
     } catch (error) {
-      console.error("Error al crear doctor:", error);
+      // Si no es error de duplicado, muestra error genérico
+    if (!handleDuplicateError(error, setErrors)) {
+      setErrors(["Error al crear doctor. Intenta de nuevo."]);
+    }
+    console.error("Error al crear doctor:", error);
     }
   };
 
