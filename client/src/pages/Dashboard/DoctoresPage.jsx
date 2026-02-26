@@ -48,24 +48,20 @@ function DoctoresPage() {
     getDoctoresRequest,
     setDoctores
   );
-
-  const {
-    showForm: showEditForm,
-    errors: editErrors,
-    successMessage: editSuccessMessage,
-    handleEdit,
-    handleUpdate,
-    handleCancel
-  } = useEdit({
-    itemToEdit: doctorSeleccionado,
-    config: formConfig.registerDoctor,
-    updateRequest: updateDoctorRequest,
-    onSuccess: async () => {
-      const response = await getDoctoresRequest();
-      setDoctores(response.data);
-    },
-    successMessageText: "Doctor actualizado correctamente"
-  });
+const {
+  showForm: showEditForm,
+  errors: editErrors,
+  successMessage: editSuccessMessage,
+  handleEdit,
+  handleUpdate,
+  handleCancel
+} = useEdit(
+  updateDoctorRequest,  // ← 1. updateRequest
+  getDoctoresRequest,   // ← 2. getRequest
+  setDoctores,          // ← 3. setData
+  editConfig.doctor,    // ← 4. formConfig
+  null                  // ← 5. resetForm (opcional)
+);
 
   return (
     <div className="p-6">
