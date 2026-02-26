@@ -8,7 +8,7 @@ import {
   updateDoctorRequest, 
   deleteDoctorRequest 
 } from "/src/api/doctores";
-import { DataTable } from "../../components/common/DataTable";
+import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
