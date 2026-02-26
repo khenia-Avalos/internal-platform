@@ -26,7 +26,8 @@ export const useEdit = (updateRequest, getRequest, setData, formConfig, resetFor
       }, 2000);
       
     } catch (error) {
-      setErrors(["Error al actualizar"]);
+  console.error("Error DETALLADO:", error.response?.data || error);
+  setErrors(["Error al actualizar"]);
     }
   };
 
