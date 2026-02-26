@@ -105,6 +105,8 @@ const {
           <DynamicForm
             {...createConfig.registerDoctor}
             onSubmit={handleCreateDoctor}
+             errors={errors}  // ← viene del useState local
+  successMessage={successMessage}
           />
         </div>
       )}
@@ -115,8 +117,8 @@ const {
           <DynamicForm
             {...editConfig.editDoctor}
             defaultValues={doctorSeleccionado}
-            errors={errors}
-            successMessage={successMessage}
+            errors={editErrors}
+            successMessage={editSuccessMessage}
             onSubmit={handleUpdate}
           />
           <button
