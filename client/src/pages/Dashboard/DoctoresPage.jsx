@@ -37,8 +37,8 @@ const [successMessage, setSuccessMessage] = useState("");
     if (!handleDuplicateError(error, setErrors)) {
       setErrors(["Error al crear doctor. Intenta de nuevo."]);
     }
-    console.error("Error al crear doctor:", error);
-    }
+    console.log("🔥 ERROR COMPLETO:", error);
+    console.log("🔥 RESPUESTA DEL BACKEND:", error.response?.data);    }
   };
 
   useEffect(() => {
