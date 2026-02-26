@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
+import { SearchBar } from "../../components/SearchBar";
 
 
 import { 
@@ -19,6 +20,7 @@ function DoctoresPage() {
   const [doctores, setDoctores] = useState([]);//lista de doctores obtenida del backend
   const [mostrarFormulario, setMostrarFormulario] = useState(false);//controla la visibilidad del formulario de creación
   const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);//almacena el doctor seleccionado para edición
+  const [busqueda, setBusqueda] = useState("");//estado para el término de búsqueda
 
   const handleCreateDoctor = async (data) => {
     try {
@@ -42,7 +44,16 @@ function DoctoresPage() {
     };
     obtenerDoctores();
   }, []);
-
+const doctoresFiltrados = doctores.filter(doctor => {
+  const texto = busqueda.toLowerCase();
+  return (
+    doctor.username?.toLowerCase().includes(texto) ||
+    doctor.lastname?.toLowerCase().includes(texto) ||
+    doctor.email?.toLowerCase().includes(texto) ||
+    doctor.phoneNumber?.toLowerCase().includes(texto) ||
+    doctor.especialidad?.toLowerCase().includes(texto)
+  );
+});
   const { handleDelete: handleDeleteDoctor } = useDelete(
     deleteDoctorRequest,
     getDoctoresRequest,
@@ -73,6 +84,11 @@ const {
         >
           + Nuevo Doctor
         </button>
+        <SearchBar 
+  value={busqueda}
+  onChange={setBusqueda}
+  placeholder="Buscar doctor..."
+/>
       </div>
 
       {/* Formulario de creación */}
@@ -115,7 +131,7 @@ const {
             { header: "Teléfono", accessor: "phoneNumber" },
             { header: "Especialidad", accessor: "especialidad" }
           ]}
-          data={doctores}
+          data={doctoresFiltrados}
           onEdit={(doctor) => {
             setDoctorSeleccionado(doctor);
             handleEdit(doctor);
