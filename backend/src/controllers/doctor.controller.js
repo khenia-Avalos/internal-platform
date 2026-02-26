@@ -40,10 +40,22 @@ export const updateDoctor = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     
+    console.log("ID recibido:", id);
+    console.log("Datos recibidos:", data);
+    
     const doctorActualizado = await User.findByIdAndUpdate(id, data, { new: true });
+    
+    if (!doctorActualizado) {
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    
     res.json(doctorActualizado);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("ERROR COMPLETO EN UPDATE:", error);
+    res.status(500).json({ 
+      message: error.message,
+      stack: error.stack 
+    });
   }
 };
 export const deleteDoctor = async (req, res) => {
