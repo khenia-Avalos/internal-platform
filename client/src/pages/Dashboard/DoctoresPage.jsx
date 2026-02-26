@@ -1,7 +1,10 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
-import { formConfig } from "../config/formConfig";
+import { formConfig } from "./config/formConfig"
+import { editConfig } from "./config/editConfig"
+
+
 import { 
   getDoctoresRequest, 
   createDoctorRequest, 
