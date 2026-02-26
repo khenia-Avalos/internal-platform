@@ -95,7 +95,7 @@ const {
       {mostrarFormulario && (
         <div className="mb-6">
           <DynamicForm
-            {...formConfig.registerDoctor}
+            {...createConfig.registerDoctor}
             onSubmit={handleCreateDoctor}
           />
         </div>
