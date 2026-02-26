@@ -2,7 +2,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { DynamicForm } from "../components/DynamicForm";
-import { formConfig } from "../formConfig";
+import { formConfig } from "../config/formConfig";
 
 
  export const AuthPage = () => {
