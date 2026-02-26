@@ -1,6 +1,6 @@
 import { DynamicForm } from "../components/DynamicForm";
 import { usePassword } from "../hooks/usePassword";
-import { formConfig } from "../config/formConfig";
+import { formConfig } from ".../config/formConfig";
 
 function ForgotPassword() {
 const { forgotPassword, message, error, loading } = usePassword();

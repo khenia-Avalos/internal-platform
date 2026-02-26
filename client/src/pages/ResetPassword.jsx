@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { usePassword } from "../hooks/usePassword";
 import { DynamicForm } from "../components/DynamicForm";
-import { formConfig } from "../config/formConfig";
+import { formConfig } from ".../config/formConfig";
 
 function ResetPassword() {
   const [resetToken, setResetToken] = useState("");
