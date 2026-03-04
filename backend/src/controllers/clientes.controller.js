@@ -21,7 +21,7 @@ export const createCliente = async (req, res) => {
       email,
       password,
       phoneNumber,
-      role: "cliente",
+      role: "client",
       cedula,
       direccion
     });
