@@ -79,10 +79,10 @@ function ClientesPage() {
     handleUpdate,
     handleCancel
   } = useEdit(
-    updateDoctorRequest,
-    getDoctoresRequest,
-    setDoctores,
-    editConfig.doctor,
+    updateClienteRequest,
+    getClientesRequest,
+    setClientes,
+    editConfig.cliente,
     null
   );
 
@@ -183,8 +183,8 @@ function ClientesPage() {
               { header: "Apellido", accessor: "lastname" },
               { header: "Email", accessor: "email" },
               { header: "Teléfono", accessor: "phoneNumber" },
-              { header: "Especialidad", accessor: "especialidad" }
-            ]}
+              { header: "Cedula", accessor: "cedula" },
+              { header: "Dirección", accessor: "direccion" }]}
             data={doctoresFiltrados}
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
