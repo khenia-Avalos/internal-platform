@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getClientes, createCliente,updateCliente,deleteCliente } from '../controllers/clientes.controller.js';
+import { getClientes, createCliente,updateCliente,deleteCliente } from '../controllers/owner.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
 const router = Router();

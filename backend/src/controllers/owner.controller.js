@@ -1,9 +1,10 @@
-import User from '../models/user.model.js';
+import Owner from '../models/owner.model.js';
+import bcrypt from 'bcryptjs';  // ← IMPORTAR bcrypt
 
-// Obtener todos los clientes (usuarios con rol "cliente")
+// Obtener todos los clientes
 export const getClientes = async (req, res) => {
   try {
-    const clientes = await User.find({ role: "client" }).select('-password');
+    const clientes = await Owner.find().select('-password');
     res.json(clientes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -15,27 +16,44 @@ export const createCliente = async (req, res) => {
   try {
     const { username, lastname, email, password, phoneNumber, cedula, direccion } = req.body;
 
-    const newCliente = new User({
+    // Verificar si ya existe el email
+    const existeCliente = await Owner.findOne({ email });
+    if (existeCliente) {
+      return res.status(400).json({ message: "El email ya está registrado" });
+    }
+
+    // Encriptar password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newCliente = new Owner({
       username,
       lastname,
       email,
-      password,
+      password: hashedPassword,  // ← Guardar encriptada
       phoneNumber,
-      role: "client",
+      // role: "client" ← ELIMINADO (no existe en Owner)
       cedula,
       direccion
     });
 
     const savedCliente = await newCliente.save();
-    res.status(201).json(savedCliente);
+    
+    // No enviar password en la respuesta
+    const clienteResponse = savedCliente.toObject();
+    delete clienteResponse.password;
+    
+    res.status(201).json(clienteResponse);
   } catch (error) {
-console.log("ERROR COMPLETO:", error);
-res.status(500).json({ 
-  message: error.message,
-  stack: error.stack 
-});  }
-
+    console.log("ERROR COMPLETO:", error);
+    res.status(500).json({ 
+      message: error.message,
+      stack: error.stack 
+    });
+  }
 };
+
+// Actualizar cliente
 export const updateCliente = async (req, res) => {
   try {
     const { id } = req.params;
@@ -44,7 +62,13 @@ export const updateCliente = async (req, res) => {
     console.log("ID recibido:", id);
     console.log("Datos recibidos:", data);
     
-    const clienteActualizado = await User.findByIdAndUpdate(id, data, { new: true });
+    // Si viene password, encriptarlo
+    if (data.password) {
+      const salt = await bcrypt.genSalt(10);
+      data.password = await bcrypt.hash(data.password, salt);
+    }
+    
+    const clienteActualizado = await Owner.findByIdAndUpdate(id, data, { new: true }).select('-password');
     
     if (!clienteActualizado) {
       return res.status(404).json({ message: "Cliente no encontrado" });
@@ -59,11 +83,13 @@ export const updateCliente = async (req, res) => {
     });
   }
 };
+
+// Eliminar cliente
 export const deleteCliente = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const clienteEliminado = await User.findByIdAndDelete(id);
+    const clienteEliminado = await Owner.findByIdAndDelete(id);
     
     if (!clienteEliminado) {
       return res.status(404).json({ message: "Cliente no encontrado" });
