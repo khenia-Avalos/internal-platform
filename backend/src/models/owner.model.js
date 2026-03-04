@@ -1,0 +1,79 @@
+import mongoose from 'mongoose'
+
+const userSchema = new mongoose.Schema(
+    {
+        username: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        email: {
+            type: String,
+            required: true,
+            trim: true,
+            unique: true
+        },
+
+phoneNumber: {
+  type: String,
+  required: true,
+  trim: true,
+  validate: {
+    validator: function(v) {
+      const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
+      return phoneRegex.test(v);
+    },
+    message: "Invalid phone format. Use +50670983832 or +506 7098 3832"
+  }
+},
+        lastname: {
+            type: String,
+            required: true,
+            trim: true,
+          
+        },
+        password: {
+            type: String,
+            required: true,
+        },
+       
+        resetPasswordToken: {
+            type: String,
+            default: null
+        },
+        resetPasswordExpires: {
+            type: Date,
+            default: null
+        },
+          role: {
+            type: String,
+            enum: ['admin', 'employee', 'client', 'doctor'],
+            default: 'client' 
+        },
+        especialidad: {
+  type: String,
+  enum: ['Medicina General', 'Groomer', 'Cirugía'],
+  required: function() { 
+    return this.role === 'doctor'; 
+  }
+},
+cedula: {
+  type: String,
+  required: function() { 
+    return this.role === 'client'; 
+  },
+  unique: true,
+  sparse: true // Permite null/undefined para otros roles
+},
+direccion: {
+  type: String,
+  required: function() { 
+    return this.role === 'client'; 
+  }
+}
+    }, {
+        timestamps: true
+    }
+)
+
+export default mongoose.model('User', userSchema)
