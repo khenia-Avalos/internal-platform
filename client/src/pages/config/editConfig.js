@@ -68,7 +68,7 @@ editDoctor: {
   ],
   submitLabel: "Actualizar Doctor" 
 },
-cliente: {
+editcliente: {
   title: "Editar Cliente",
   fields: [
     // Mismos campos, SIN password
