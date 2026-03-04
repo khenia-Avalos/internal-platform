@@ -1,3 +1,5 @@
+
+//valida los datos de registro y login usando zod antes de enviarlos al backend
 import { z } from 'zod';
 
 
