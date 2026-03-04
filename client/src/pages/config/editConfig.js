@@ -67,5 +67,48 @@ editDoctor: {
 }
   ],
   submitLabel: "Actualizar Doctor" 
+},
+cliente: {
+  title: "Editar Cliente",
+  fields: [
+    // Mismos campos, SIN password
+    {
+      name: "username",
+      type: "text",
+      label: "Nombre",
+      validation: { required: "El nombre es requerido" }
+    },
+    {
+      name: "lastname",
+      type: "text",
+      label: "Apellido",
+      validation: { required: "El apellido es requerido" }
+    },
+    {
+      name: "email",
+      type: "email",
+      label: "Correo electrónico",
+      validation: { required: "El email es requerido" }
+    },
+    {
+      name: "phoneNumber",
+      type: "tel",
+      label: "Teléfono",
+      validation: { required: "El teléfono es requerido" }
+    },
+    {
+      name: "cedula",
+      type: "text",
+      label: "Cédula",
+      validation: { required: "La cédula es requerida" }
+    },
+    {
+      name: "direccion",
+      type: "text",
+      label: "Dirección",
+      validation: { required: "La dirección es requerida" }
+    }
+  ],
+  submitLabel: "Actualizar Cliente"
 }
 };
