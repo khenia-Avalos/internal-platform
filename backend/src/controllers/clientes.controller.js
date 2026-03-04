@@ -3,7 +3,7 @@ import User from '../models/user.model.js';
 // Obtener todos los clientes (usuarios con rol "cliente")
 export const getClientes = async (req, res) => {
   try {
-    const clientes = await User.find({ role: "cliente" }).select('-password');
+    const clientes = await User.find({ role: "client" }).select('-password');
     res.json(clientes);
   } catch (error) {
     res.status(500).json({ message: error.message });
