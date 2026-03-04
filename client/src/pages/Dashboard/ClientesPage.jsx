@@ -160,13 +160,13 @@ function ClientesPage() {
 
       {/* Tabla de clientes */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
-        {doctores.length === 0 ? (
+        {clientes.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay clientes registrados</p>
             <p className="text-gray-400 mt-2">Haz clic en "Nuevo Cliente" para comenzar</p>
           </div>
-        ) : doctoresFiltrados.length === 0 ? (
+        ) : clientesFiltrados.length === 0 ? (
           <div className="text-center py-16 px-4">
             <p className="text-gray-500 text-lg">No se encontraron resultados para "{busqueda}"</p>
             <button
@@ -185,7 +185,7 @@ function ClientesPage() {
               { header: "Teléfono", accessor: "phoneNumber" },
               { header: "Cedula", accessor: "cedula" },
               { header: "Dirección", accessor: "direccion" }]}
-            data={doctoresFiltrados}
+            data={clientesFiltrados}
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
               handleEdit(cliente);
