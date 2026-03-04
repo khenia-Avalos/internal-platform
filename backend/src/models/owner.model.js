@@ -76,4 +76,4 @@ direccion: {
     }
 )
 
-export default mongoose.model('User', userSchema)
+export default mongoose.model('Owner', userSchema)
