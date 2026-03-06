@@ -1,5 +1,5 @@
 import Owner from '../models/owner.model.js';
-import bcrypt from 'bcryptjs';  // ← IMPORTAR bcrypt
+import bcrypt from 'bcryptjs'; 
 
 // Obtener todos los clientes
 export const getClientes = async (req, res) => {
