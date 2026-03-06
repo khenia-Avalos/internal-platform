@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes.js'
 import tasksRoutes from './routes/tasks.routes.js'
 import doctorRoutes from './routes/doctor.routes.js';
 import clientesRoutes from './routes/clientes.routes.js';
+import pacientesRoutes from './routes/pacientes.routes.js';
 
 import { FRONTEND_URL } from "./config.js";
 
@@ -39,6 +40,7 @@ app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
 app.use("/api", clientesRoutes);
+app.use("/api", pacientesRoutes);
 
 
 export default app;
