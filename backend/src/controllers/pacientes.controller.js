@@ -3,7 +3,8 @@ import Paciente from '../models/pacientes.model.js';
 // Obtener todos los pacientes
 export const getPaciente = async (req, res) => {
   try {
-    const pacientes = await Paciente.find();
+    const pacientes = await Paciente.find().populate('ownerId', 'nombre apellido email telefono'); 
+
     res.json(pacientes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -56,7 +57,7 @@ export const updatePaciente = async (req, res) => {
     console.log("Datos recibidos:", data);
     
     // 1. Buscar y actualizar
-    const pacienteActualizado = await Paciente.findByIdAndUpdate(id, data, { new: true });
+    const pacienteActualizado = await Paciente.findByIdAndUpdate(id, data, { new: true })   .populate('ownerId', 'nombre apellido email telefono');
     
     // 2. Verificar si existe
     if (!pacienteActualizado) {
