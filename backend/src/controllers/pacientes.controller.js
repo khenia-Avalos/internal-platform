@@ -4,6 +4,7 @@ import Paciente from '../models/pacientes.model.js';
 export const getPaciente = async (req, res) => {
   try {
     const pacientes = await Paciente.find().populate('ownerId', 'username lastname email phoneNumber'); 
+    console.log("PRIMER PACIENTE CON POPULATE:", JSON.stringify(pacientes[0], null, 2));
 
     res.json(pacientes);
   } catch (error) {
