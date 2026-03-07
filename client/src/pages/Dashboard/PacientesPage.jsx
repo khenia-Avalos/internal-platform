@@ -39,7 +39,7 @@ function PacientesPage() {
         // Transformar los dueños al formato que espera react-select { value, label }
         const clientesOptions = response.data.map(cliente => ({
           value: cliente._id,
-          label: `${cliente.nombre} ${cliente.apellido} (${cliente.email})` // ← Se muestra en el select
+          label: `${cliente.username} ${cliente.lastname} (${cliente.email})` // ← Se muestra en el select
         }));
         setClientes(clientesOptions);
       } catch (error) {
