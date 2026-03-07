@@ -97,3 +97,15 @@ export const deletePaciente = async (req, res) => {
     });
   }
 }
+
+
+// Obtener mascotas por ID del dueño
+export const getPacienteByOwner = async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+    const mascotas = await Paciente.find({ ownerId });
+    res.json(mascotas);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
