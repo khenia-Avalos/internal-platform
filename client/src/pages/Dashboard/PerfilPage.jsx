@@ -32,7 +32,7 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
     email: user?.email,
     phoneNumber: user?.phoneNumber
   }}
-   errors={errors} successMessage={successMessage} onSubmit={handlesubmit}  /> //toma las propiedades de formconfig y las pasa como props , igual pasa errors y successMessage para mostrar mensajes de error o éxito
+   errors={errors} successMessage={successMessage} onSubmit={handlesubmit}  /> {/* toma las propiedades de formconfig y las pasa como props , igual pasa errors y successMessage para mostrar mensajes de error o éxito*/}
       </>
     ) : (
 
