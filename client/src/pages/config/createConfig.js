@@ -165,5 +165,107 @@ registerCliente: {
   ],
   submitLabel: "Crear Cliente",
   redirect: {}
+},
+
+
+
+
+registerPaciente: {
+  title: "Nuevo Paciente",
+  fields: [
+   {
+        name: "nombre",
+        type: "text",
+        label: "Nombre",
+        placeholder: "Tu nombre",
+        validation: {
+          required: "El nombre es requerido"
+        }
+      },
+      {
+        name: "especie",
+        type: "text",
+        label: "Especie",
+        placeholder: "Especie del paciente",
+        validation: {
+          required: "La especie es requerida"
+        }
+      },
+      {
+        name: "raza",
+        type: "text",
+        label: "Raza",
+        placeholder: "Raza del paciente",
+        validation: {
+          required: "La raza es requerida"
+        }
+      },
+      {
+        name: "edad",
+        type: "number",
+        label: "Edad",
+        placeholder: "Edad del paciente",
+        validation: {
+          required: "La edad es requerida"
+        }
+      },
+      {
+        name: "sexo",
+        type: "select",
+        label: "Sexo",
+        options: ["Macho", "Hembra"],
+        validation: {
+          required: "El sexo es requerido"
+        }
+      },
+      {
+        name: "colorPelaje",
+        type: "text",
+        label: "Color de pelaje",
+        placeholder: "Color de pelaje del paciente",
+        validation: {
+          required: "El color de pelaje es requerido"
+        }
+      },
+      {
+        name: "peso",
+        type: "number",
+        label: "Peso",
+        placeholder: "Peso del paciente",
+        validation: {
+          required: "El peso es requerido"
+        }
+      },
+      {
+        name: "temperatura",
+        type: "number",
+        label: "Temperatura",
+        placeholder: "Temperatura del paciente",
+        validation: {
+          required: "La temperatura es requerida"
+        }
+      },
+      {
+        name: "antecedentesMedicos",
+        type: "textarea",
+        label: "Antecedentes Médicos",
+        placeholder: "Antecedentes médicos del paciente",
+        validation: {
+          required: "Los antecedentes médicos son requeridos"
+        }
+      },
+      {
+  name: "ownerId",
+  type: "select",
+  label: "Dueño",
+  isSearchable: true,  
+  options: [],  // ← Se llenará desde la BD
+  validation: { required: "El dueño es requerido" }
+}
+           
+    
+  ],
+  submitLabel: "Crear Cliente",
+  redirect: {}
 }
 };

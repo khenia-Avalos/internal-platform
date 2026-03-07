@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
+import Select from 'react-select'; 
 
 export const DynamicForm = ({
   title = "AgendaPro",
@@ -27,6 +28,8 @@ export const DynamicForm = ({
   const {
     register, 
     handleSubmit, 
+    watch,
+    setValue,
     formState: { errors: formErrors },
   } = useForm({defaultValues}); //inicializa el formulario con valores predeterminados si se proporcionan
 
@@ -95,7 +98,17 @@ export const DynamicForm = ({
               )}
 
               <div className="relative">
-                {field.type === "select" ? (
+                {field.type === "select" && field.isSearchable ? (
+    // Aquí irá react-select
+    <Select
+      options={field.options}  // ← temporalmente, después serán customProps
+      value={field.options?.find(opt => opt.value === watch(field.name))}
+      onChange={(selected) => setValue(field.name, selected.value)}
+      placeholder={`Selecciona ${field.label}`}
+      isSearchable={true}
+      className="my-2"
+    />
+  ) : field.type === "select" ? (
                   <select
                     className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
                     disabled={isLoading}
