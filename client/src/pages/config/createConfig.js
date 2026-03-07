@@ -197,7 +197,6 @@ registerPaciente: {
         label: "Raza",
         placeholder: "Raza del paciente",
         validation: {
-          required: "La raza es requerida"
         }
       },
       {
@@ -224,7 +223,6 @@ registerPaciente: {
         label: "Color de pelaje",
         placeholder: "Color de pelaje del paciente",
         validation: {
-          required: "El color de pelaje es requerido"
         }
       },
       {
@@ -233,7 +231,6 @@ registerPaciente: {
         label: "Peso",
         placeholder: "Peso del paciente",
         validation: {
-          required: "El peso es requerido"
         }
       },
       {
@@ -242,7 +239,6 @@ registerPaciente: {
         label: "Temperatura",
         placeholder: "Temperatura del paciente",
         validation: {
-          required: "La temperatura es requerida"
         }
       },
       {
@@ -251,7 +247,7 @@ registerPaciente: {
         label: "Antecedentes Médicos",
         placeholder: "Antecedentes médicos del paciente",
         validation: {
-          required: "Los antecedentes médicos son requeridos"
+        
         }
       },
       {
