@@ -12,11 +12,16 @@ export const DataTable = ({ columns, data, onEdit, onDelete }) => {
         </tr>
       </thead>
       <tbody>
-        {data.map((item) => (
-          <tr key={item._id} className="border-t hover:bg-gray-50">
+        {data.map((item) => (//crea una fila por cada item
+ <tr 
+      key={item._id} //key unicdoi para cada fila
+      className="border-t hover:bg-gray-50 cursor-pointer"
+      onClick={() => onRowClick?.(item)} //para toda la fila
+    >
+
             {columns.map((col) => (
               <td key={col.accessor} className="px-4 py-2">
-                {item[col.accessor]}
+    {col.render ? col.render(item) : item[col.accessor]}
               </td>
             ))}
             <td className="px-4 py-2">

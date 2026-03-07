@@ -190,6 +190,8 @@ function ClientesPage() {
               { header: "Cedula", accessor: "cedula" },
               { header: "Dirección", accessor: "direccion" }]}
             data={clientesFiltrados}
+              onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)} // ← NUEVO
+
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
               handleEdit(cliente);
