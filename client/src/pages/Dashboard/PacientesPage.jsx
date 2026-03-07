@@ -152,6 +152,7 @@ function PacientesPage() {
             </div>
             <DynamicForm
               {...createConfig.registerPaciente}
+                layout="grid"
               // PASO 5: Pasar las opciones de dueños como customProps
               customProps={{ ownerOptions: clientes }} // ← NUEVO
               onSubmit={handleCreatePaciente}
@@ -176,6 +177,7 @@ function PacientesPage() {
             </div>
             <DynamicForm
               {...editConfig.editPaciente}
+                layout="grid"
               defaultValues={pacienteSeleccionado}
               // También pasar customProps al formulario de edición
               customProps={{ ownerOptions: clientes }} // ← NUEVO (opcional, si editar también necesita el select)

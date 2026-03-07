@@ -13,7 +13,8 @@ export const DynamicForm = ({
   redirect = {}, 
    isLoading = false,
    defaultValues = {},
-     customProps = {}  
+     customProps = {}  ,
+     layout = "centered"  // ← NUEVA PROP con valor por defecto
 
 }) => {
 
@@ -60,7 +61,9 @@ export const DynamicForm = ({
   }
 
   return (
-    <div className="w-full"> {/* CAMBIO: eliminé max-w-md y p-10, dejé solo w-full */}
+    <div className={layout === "centered" ? "flex h-[calc(100vh-100px)] items-center justify-center" : "w-full"}> {/* CAMBIO: condicional según layout */}
+      
+      <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}> {/* CAMBIO: condicional según layout */}
       
       {errors.map((error, i) => (
         <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> {/* CAMBIO: agregué rounded-lg */}
@@ -87,10 +90,10 @@ export const DynamicForm = ({
           {title}
         </Link>
 
-        {/* CAMBIO IMPORTANTE: grid responsivo en lugar de space-y-4 */}
-        <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* CAMBIO IMPORTANTE: grid responsivo condicional según layout */}
+        <form onSubmit={handleFormSubmit} className={layout === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
           {fields.map((field) => (
-            <div key={field.name} className="w-full"> {/* Cada campo ocupa el ancho de su columna */}
+            <div key={field.name} className={layout === "grid" ? "w-full" : ""}> {/* Cada campo ocupa el ancho de su columna si es grid */}
               
               {field.label && (
                 <h1 className="text-sm font-semibold text-black text-left mb-2">
@@ -195,8 +198,8 @@ export const DynamicForm = ({
 
        <button
             type="submit"     
-            className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed col-span-full" // CAMBIO: col-span-full para que el botón ocupe todo el ancho
-            disabled={isLoading}  // ← ✅ isLoading prop
+            className={`w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed ${layout === "grid" ? "col-span-full" : ""}`} // CAMBIO: col-span-full solo para grid
+            disabled={isLoading}  
           >
             {isLoading ? "Processing..." : submitLabel} 
           </button>
@@ -216,6 +219,7 @@ export const DynamicForm = ({
           ))}
         </div>
         
+      </div>
       </div>
   );
 };
