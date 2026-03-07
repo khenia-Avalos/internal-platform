@@ -1,4 +1,3 @@
-// components/common/DataTable.jsx
 export const DataTable = ({ columns, data, onEdit, onDelete }) => {
   return (
     <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">

@@ -210,7 +210,7 @@ function PacientesPage() {
               { header: "Edad", accessor: "edad" },
               { header: "Sexo", accessor: "sexo" },
               { header: "Antecedentes Médicos", accessor: "antecedentesMedicos" },
-              { header: "Dueño", accessor: "ownerId.nombre" }, // ← Muestra el nombre del dueño (si populate funciona)
+              { header: "Dueño", accessor: "ownerId.username" }, // ← Muestra el nombre del dueño (si populate funciona)
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
             data={pacientesFiltrados}
