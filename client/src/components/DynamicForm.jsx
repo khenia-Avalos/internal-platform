@@ -87,9 +87,10 @@ export const DynamicForm = ({
           {title}
         </Link>
 
-        <form onSubmit={handleFormSubmit} className="space-y-4"> {/* CAMBIO: agregué space-y-4 para espaciado consistente */}
+        {/* CAMBIO IMPORTANTE: grid responsivo en lugar de space-y-4 */}
+        <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {fields.map((field) => (
-            <div key={field.name} className="mb-4">
+            <div key={field.name} className="w-full"> {/* Cada campo ocupa el ancho de su columna */}
               
               {field.label && (
                 <h1 className="text-sm font-semibold text-black text-left mb-2">
@@ -194,7 +195,7 @@ export const DynamicForm = ({
 
        <button
             type="submit"     
-            className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed" // CAMBIO: py-2.5 para consistencia
+            className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed col-span-full" // CAMBIO: col-span-full para que el botón ocupe todo el ancho
             disabled={isLoading}  // ← ✅ isLoading prop
           >
             {isLoading ? "Processing..." : submitLabel} 
