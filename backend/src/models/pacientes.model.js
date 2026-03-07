@@ -27,7 +27,7 @@ const pacienteSchema = new mongoose.Schema(
         },
          sexo: {
             type: String,
-            enum: ['macho', 'hembra'],
+            enum: ['Macho', 'Hembra'],
             trim: true
         },
             
