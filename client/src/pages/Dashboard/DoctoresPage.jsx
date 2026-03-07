@@ -127,6 +127,8 @@ function DoctoresPage() {
             </div>
             <DynamicForm
               {...createConfig.registerDoctor}
+                              layout="grid"
+
               onSubmit={handleCreateDoctor}
               errors={errors}
               successMessage={successMessage}
@@ -149,6 +151,8 @@ function DoctoresPage() {
             </div>
             <DynamicForm
               {...editConfig.editDoctor}
+                              layout="grid"
+
               defaultValues={doctorSeleccionado}
               errors={editErrors}
               successMessage={editSuccessMessage}

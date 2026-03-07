@@ -24,6 +24,8 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
           Cancelar
         </button>
         <DynamicForm {...formConfig.perfil}
+                        layout="grid"
+
           defaultValues={{          // con valores inicialea
     username: user?.username,
     lastname: user?.lastname,

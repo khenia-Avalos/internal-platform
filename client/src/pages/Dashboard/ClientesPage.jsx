@@ -127,6 +127,8 @@ function ClientesPage() {
             </div>
             <DynamicForm
               {...createConfig.registerCliente}
+                              layout="grid"
+
               onSubmit={handleCreateCliente}
               errors={errors}
               successMessage={successMessage}
@@ -149,6 +151,8 @@ function ClientesPage() {
             </div>
             <DynamicForm
               {...editConfig.editCliente}
+                              layout="grid"
+
               defaultValues={clienteSeleccionado}
               errors={editErrors}
               successMessage={editSuccessMessage}
