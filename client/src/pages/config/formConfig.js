@@ -241,9 +241,7 @@ export const formConfig = {
     redirect: {
       links: [
         {
-          linkText: "Cancelar",
-          to: "#",
-          className: "text-gray-600 hover:text-gray-800 underline"
+        
         }
       ]
     }
