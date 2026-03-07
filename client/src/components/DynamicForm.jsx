@@ -60,14 +60,13 @@ export const DynamicForm = ({
   }
 
   return (
-    <div className="flex h-[calc(100vh-100px)] items-center justify-center">
-      <div className="bg-white max-w-md w-full p-10 rounded-md shadow-md">
-        
-        {errors.map((error, i) => (
-          <div className="bg-red-500 p-2 text-white text-center mb-2" key={i}>
-            {error}
-          </div>
-        ))}
+    <div className="w-full"> {/* CAMBIO: eliminé max-w-md y p-10, dejé solo w-full */}
+      
+      {errors.map((error, i) => (
+        <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> {/* CAMBIO: agregué rounded-lg */}
+          {error}
+        </div>
+      ))}
            {successMessage && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center">
@@ -88,7 +87,7 @@ export const DynamicForm = ({
           {title}
         </Link>
 
-        <form onSubmit={handleFormSubmit}>
+        <form onSubmit={handleFormSubmit} className="space-y-4"> {/* CAMBIO: agregué space-y-4 para espaciado consistente */}
           {fields.map((field) => (
             <div key={field.name} className="mb-4">
               
@@ -102,16 +101,25 @@ export const DynamicForm = ({
                 {field.type === "select" && field.isSearchable ? (
     // Aquí irá react-select
     <Select
-    options={customProps?.ownerOptions || []}  // ← USA LAS OPCIONES QUE VIENEN DEL PADRE
+      options={customProps?.ownerOptions || []}
       value={field.options?.find(opt => opt.value === watch(field.name))}
       onChange={(selected) => setValue(field.name, selected.value)}
       placeholder={`Selecciona ${field.label}`}
       isSearchable={true}
       className="my-2"
+      styles={{
+        control: (base) => ({
+          ...base,
+          borderColor: '#22d3ee',
+          '&:hover': { borderColor: '#22d3ee' },
+          boxShadow: 'none',
+          minHeight: '42px' // CAMBIO: altura consistente con inputs
+        })
+      }}
     />
   ) : field.type === "select" ? (
                   <select
-                    className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+                    className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" // CAMBIO: py-2.5 y focus ring
                     disabled={isLoading}
                     {...register(field.name, field.validation)}
                   >
@@ -126,7 +134,7 @@ export const DynamicForm = ({
                   <>
                     <input
                       type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
-                      className="w-full bg-white text-zinc-700 px-4 py-2 rounded-md my-2 border border-cyan-400"
+                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" // CAMBIO: py-2.5 y focus ring
                       placeholder={field.placeholder}
                       disabled={isLoading}
                       {...register(field.name, field.validation)}
@@ -184,10 +192,10 @@ export const DynamicForm = ({
             </div>
           ))}
 
-          <button
+       <button
             type="submit"     
-            className="w-full bg-cyan-600 text-white py-2 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading}
+            className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed" // CAMBIO: py-2.5 para consistencia
+            disabled={isLoading}  // ← ✅ isLoading prop
           >
             {isLoading ? "Processing..." : submitLabel} 
           </button>
@@ -208,6 +216,5 @@ export const DynamicForm = ({
         </div>
         
       </div>
-    </div>
   );
 };
