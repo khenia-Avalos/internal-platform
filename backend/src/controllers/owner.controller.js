@@ -105,7 +105,7 @@ export const deleteCliente = async (req, res) => {
 export const getClienteById = async (req, res) => {
   try {
     const { id } = req.params;
-    const cliente = await User.findById(id).select('-password');
+    const cliente = await Owner.findById(id).select('-password');
     
     if (!cliente) {
       return res.status(404).json({ message: "Cliente no encontrado" });
