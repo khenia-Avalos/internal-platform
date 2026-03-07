@@ -217,7 +217,7 @@ function PacientesPage() {
 { header: "Dueño", accessor: "nombreDueño" },
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
-            data={pacientesFiltrados}
+data={pacientesConDueño}
             onEdit={(paciente) => {
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
