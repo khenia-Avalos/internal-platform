@@ -3,7 +3,7 @@ import Paciente from '../models/pacientes.model.js';
 // Obtener todos los pacientes
 export const getPaciente = async (req, res) => {
   try {
-    const pacientes = await Paciente.find().populate('ownerId', 'nombre apellido email telefono'); 
+    const pacientes = await Paciente.find().populate('ownerId', 'username lastname email phoneNumber'); 
 
     res.json(pacientes);
   } catch (error) {
