@@ -40,13 +40,19 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
     ) : (
 
       <>
-       <div className="flex justify-between items-center mb-6">
+    <div className="flex justify-between items-center mb-6">
   <h1 className="text-2xl font-bold text-gray-800">Mi Perfil</h1>
   <div className="flex gap-2"> {/* ← Agrupa los botones */}
-    <button onClick={() => setIsEditing(!isEditing)} className="...">
+    <button
+      onClick={() => setIsEditing(!isEditing)}
+      className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
+    >
       Editar Perfil
     </button>
-    <button onClick={() => navigate('/forgot-password')} className="...">
+    <button
+      onClick={() => navigate('/forgot-password')}
+      className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
+    >
       Cambiar contraseña
     </button>
   </div>
