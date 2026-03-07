@@ -37,16 +37,16 @@ function PacientesPage() {
       try {
         const response = await getClientesRequest();
         // Transformar los dueños al formato que espera react-select { value, label }
-        const ownerOptions = response.data.map(owner => ({
-          value: owner._id,
-          label: `${owner.nombre} ${owner.apellido} (${owner.email})` // ← Se muestra en el select
+        const clientesOptions = response.data.map(cliente => ({
+          value: cliente._id,
+          label: `${cliente.nombre} ${cliente.apellido} (${cliente.email})` // ← Se muestra en el select
         }));
-        setOwners(ownerOptions);
+        setClientes(clientesOptions);
       } catch (error) {
-        console.error("Error al cargar dueños:", error);
+        console.error("Error al cargar clientes:", error);
       }
     };
-    fetchOwners();
+    obtenerClientes();
   }, []); // Se ejecuta solo una vez al montar el componente
 
   const handleCreatePaciente = async (data) => {
