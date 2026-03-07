@@ -6,6 +6,8 @@ import ForgotPassword from '../ForgotPassword';
 import { useNavigate } from 'react-router';
 
 
+
+
 function PerfilPage(){
   const navigate = useNavigate();
     const {user} = useAuth();
