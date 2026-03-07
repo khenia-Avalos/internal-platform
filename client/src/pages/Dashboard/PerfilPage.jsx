@@ -2,6 +2,8 @@ import {useAuth} from '../../hooks/useAuth'
 import { formConfig } from '../config/formConfig';
 import { useState } from 'react';
 import { DynamicForm } from '../../components/DynamicForm';
+import ForgotPassword from '../ForgotPassword';
+import { useNavigate } from 'react-router';
 
 
 function PerfilPage(){
@@ -42,6 +44,12 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
           <button onClick={() => setIsEditing(!isEditing)} className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">
             Editar Perfil
           </button>
+         <button 
+  onClick={() => navigate('/forgot-password')} 
+  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
+>
+  Cambiar contraseña
+</button>
         </div>
         <div className="space-y-4">
 <div>
