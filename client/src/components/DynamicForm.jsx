@@ -12,7 +12,8 @@ export const DynamicForm = ({
   submitLabel = "Enviar",    
   redirect = {}, 
    isLoading = false,
-   defaultValues = {}
+   defaultValues = {},
+     customProps = {}  
 
 }) => {
 
