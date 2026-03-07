@@ -101,7 +101,7 @@ export const DynamicForm = ({
                 {field.type === "select" && field.isSearchable ? (
     // Aquí irá react-select
     <Select
-      options={field.options}  // ← temporalmente, después serán customProps
+    options={customProps?.ownerOptions || []}  // ← USA LAS OPCIONES QUE VIENEN DEL PADRE
       value={field.options?.find(opt => opt.value === watch(field.name))}
       onChange={(selected) => setValue(field.name, selected.value)}
       placeholder={`Selecciona ${field.label}`}
