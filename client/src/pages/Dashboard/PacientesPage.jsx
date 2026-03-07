@@ -86,6 +86,10 @@ function PacientesPage() {
       paciente.ownerId?.toLowerCase().includes(texto) 
     );
   });
+  const pacientesConDueño = pacientesFiltrados.map(paciente => ({
+  ...paciente,
+  nombreDueño: paciente.ownerId?.username || "Sin dueño"
+}));
 
   const { handleDelete: handleDeletePaciente } = useDelete(
     deletePacienteRequest,
@@ -210,7 +214,7 @@ function PacientesPage() {
               { header: "Edad", accessor: "edad" },
               { header: "Sexo", accessor: "sexo" },
               { header: "Antecedentes Médicos", accessor: "antecedentesMedicos" },
-              { header: "Dueño", accessor: "ownerId.username" }, // ← Muestra el nombre del dueño (si populate funciona)
+{ header: "Dueño", accessor: "nombreDueño" },
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
             data={pacientesFiltrados}
