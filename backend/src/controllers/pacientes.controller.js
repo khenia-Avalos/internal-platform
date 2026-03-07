@@ -57,7 +57,7 @@ export const updatePaciente = async (req, res) => {
     console.log("Datos recibidos:", data);
     
     // 1. Buscar y actualizar
-    const pacienteActualizado = await Paciente.findByIdAndUpdate(id, data, { new: true })   .populate('ownerId', 'nombre apellido email telefono');
+    const pacienteActualizado = await Paciente.findByIdAndUpdate(id, data, { new: true })   .populate('ownerId', 'username lastname email phoneNumber');
     
     // 2. Verificar si existe
     if (!pacienteActualizado) {
