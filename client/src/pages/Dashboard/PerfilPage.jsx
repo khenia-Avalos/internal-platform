@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router';
 
 
 function PerfilPage(){
+  const navigate = useNavigate();
     const {user} = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [errors,setErrors]= useState([]);
@@ -39,18 +40,17 @@ const handlesubmit= (data) => {// data es el objeto con los datos del formulario
     ) : (
 
       <>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Mi Perfil</h1>
-          <button onClick={() => setIsEditing(!isEditing)} className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">
-            Editar Perfil
-          </button>
-         <button 
-  onClick={() => navigate('/forgot-password')} 
-  className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
->
-  Cambiar contraseña
-</button>
-        </div>
+       <div className="flex justify-between items-center mb-6">
+  <h1 className="text-2xl font-bold text-gray-800">Mi Perfil</h1>
+  <div className="flex gap-2"> {/* ← Agrupa los botones */}
+    <button onClick={() => setIsEditing(!isEditing)} className="...">
+      Editar Perfil
+    </button>
+    <button onClick={() => navigate('/forgot-password')} className="...">
+      Cambiar contraseña
+    </button>
+  </div>
+</div>
         <div className="space-y-4">
 <div>
   <label className="block text-sm font-medium text-gray-600">Nombre</label>
