@@ -1,4 +1,4 @@
-export const DataTable = ({ columns, data, onEdit, onDelete }) => {
+export const DataTable = ({ columns, data, onEdit, onDelete, onRowClick  }) => {
   return (
     <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
       <thead className="bg-gray-100">
