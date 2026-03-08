@@ -42,6 +42,8 @@ function App() {
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
+                      <Route path="/clientes/:id" element={<ClienteDetallePage />} /> 
+
                   </Route>
                   
                 </Route>

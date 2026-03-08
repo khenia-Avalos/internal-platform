@@ -168,3 +168,5 @@ function ClienteDetallePage() {
     </div>
   );
 }
+
+export default ClienteDetallePage;
