@@ -99,13 +99,27 @@ export const deletePaciente = async (req, res) => {
 }
 
 
-// Obtener mascotas por ID del dueño
 export const getPacienteByOwner = async (req, res) => {
   try {
     const { ownerId } = req.params;
+    
+    console.log("🔍 PARÁMETRO RECIBIDO:", ownerId);
+    console.log("🔍 TIPO:", typeof ownerId);
+    
+    // Buscar TODAS las mascotas para comparar
+    const todas = await Paciente.find();
+    console.log("📊 TODAS las mascotas:", todas.map(m => ({
+      id: m._id,
+      nombre: m.nombre,
+      ownerId: m.ownerId
+    })));
+    
     const mascotas = await Paciente.find({ ownerId });
+    console.log("✅ RESULTADO FILTRADO:", mascotas.length);
+    
     res.json(mascotas);
   } catch (error) {
+    console.error("❌ ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
