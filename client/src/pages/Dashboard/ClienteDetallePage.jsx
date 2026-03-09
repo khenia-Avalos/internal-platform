@@ -1,18 +1,13 @@
 import { useParams, useNavigate, Link  } from 'react-router';
 import { useState, useEffect } from 'react';
 import { 
-  getClientesRequest, 
+
   getClienteByIdRequest,
-  createClienteRequest, 
-  updateClienteRequest, 
-  deleteClienteRequest 
+
 } from "/src/api/clientes";
 import { 
-  getPacienteRequest, 
   getPacienteByOwnerRequest,
-  createPacienteRequest, 
-  updatePacienteRequest, 
-  deletePacienteRequest 
+
 } from "/src/api/pacientes";
 
 function ClienteDetallePage() {
@@ -33,7 +28,7 @@ function ClienteDetallePage() {
       setCliente(clienteRes.data);
       
       // 2. Obtener mascotas de este cliente
-      const mascotasRes = await getPacienteByOwnerRequest(id);
+      const mascotasRes = await getPacienteByOwnerRequest(ownerId);
       setMascotas(mascotasRes.data);
       
     } catch (error) {
