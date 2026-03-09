@@ -176,7 +176,7 @@ function PacientesPage() {
               </button>
             </div>
             <DynamicForm
-              {...editConfig.editPaciente}
+              {...editConfig.editpaciente}
                 layout="grid"
               defaultValues={pacienteSeleccionado}
               // También pasar customProps al formulario de edición

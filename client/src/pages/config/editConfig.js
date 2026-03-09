@@ -110,5 +110,100 @@ editCliente: {
     }
   ],
   submitLabel: "Actualizar Cliente"
+},
+
+
+
+
+editpaciente: {
+  title: "Editar Paciente",
+  fields: [
+    {
+        name: "nombre",
+        type: "text",
+        label: "Nombre",
+        placeholder: "Tu nombre",
+        validation: {
+          required: "El nombre es requerido"
+        }
+      },
+      {
+        name: "especie",
+        type: "text",
+        label: "Especie",
+        placeholder: "Especie del paciente",
+        validation: {
+          required: "La especie es requerida"
+        }
+      },
+      {
+        name: "raza",
+        type: "text",
+        label: "Raza",
+        placeholder: "Raza del paciente",
+        validation: {
+        }
+      },
+      {
+        name: "edad",
+        type: "number",
+        label: "Edad",
+        placeholder: "Edad del paciente",
+        validation: {
+          required: "La edad es requerida"
+        }
+      },
+      {
+        name: "sexo",
+        type: "select",
+        label: "Sexo",
+        options: ["Macho", "Hembra"],
+        validation: {
+          required: "El sexo es requerido"
+        }
+      },
+      {
+        name: "colorPelaje",
+        type: "text",
+        label: "Color de pelaje",
+        placeholder: "Color de pelaje del paciente",
+        validation: {
+        }
+      },
+      {
+        name: "peso",
+        type: "number",
+        label: "Peso",
+        placeholder: "Peso del paciente",
+        validation: {
+        }
+      },
+      {
+        name: "temperatura",
+        type: "number",
+        label: "Temperatura",
+        placeholder: "Temperatura del paciente",
+        validation: {
+        }
+      },
+      {
+        name: "antecedentesMedicos",
+        type: "textarea",
+        label: "Antecedentes Médicos",
+        placeholder: "Antecedentes médicos del paciente",
+        validation: {
+        
+        }
+      },
+      {
+  name: "ownerId",
+  type: "select",
+  label: "Dueño",
+  isSearchable: true,  
+  options: [],  // ← Se llenará desde la BD
+  validation: { required: "El dueño es requerido" }
+}
+  ],
+  submitLabel: "Actualizar Paciente"
 }
 };
