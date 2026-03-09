@@ -1,4 +1,4 @@
-// backend/src/models/Owner.js
+/* // backend/src/models/Owner.js
 import mongoose from 'mongoose';
 
 const ownerSchema = new mongoose.Schema({
@@ -66,4 +66,4 @@ ownerSchema.index({ phone: 1 });
 ownerSchema.index({ userId: 1 });
 ownerSchema.index({ status: 1 });
 
-export default mongoose.model('Owner', ownerSchema);
+export default mongoose.model('Owner', ownerSchema); */
