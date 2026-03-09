@@ -24,7 +24,7 @@ export const DataTable = ({ columns, data, onEdit, onDelete, onRowClick  }) => {
     {col.render ? col.render(item) : item[col.accessor]}
               </td>
             ))}
-            <td className="px-4 py-2">
+            <td className="px-4 py-2"  onClick={(e) => e.stopPropagation()}>
               <button onClick={() => onEdit(item)} className="text-blue-600 hover:text-blue-800 mr-2">
                 Editar
               </button>
