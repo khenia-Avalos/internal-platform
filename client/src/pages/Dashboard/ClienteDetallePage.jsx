@@ -28,7 +28,7 @@ function ClienteDetallePage() {
       setCliente(clienteRes.data);
       
       // 2. Obtener mascotas de este cliente
-      const mascotasRes = await getPacienteByOwnerRequest(cliente._id);
+      const mascotasRes = await getPacienteByOwnerRequest(id);
       setMascotas(mascotasRes.data);
       
     } catch (error) {
