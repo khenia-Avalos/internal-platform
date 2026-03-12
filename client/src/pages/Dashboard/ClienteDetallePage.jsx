@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link  } from 'react-router';
 import { useState, useEffect } from 'react';
+import Modal from '../../components/Modal';
 import { 
 
   getClienteByIdRequest,
@@ -17,6 +18,7 @@ function ClienteDetallePage() {
   const [cliente, setCliente] = useState(null);
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
 
   useEffect(() => {
@@ -109,12 +111,13 @@ function ClienteDetallePage() {
               </div>
               
               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition">
-                  Editar Cliente
-                </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                  + Agregar Mascota
-                </button>
+                
+            <button 
+  onClick={() => setModalAbierto(true)}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+>
+  + Agregar Mascota
+</button>
               </div>
             </div>
           </div>
@@ -160,6 +163,13 @@ function ClienteDetallePage() {
           </div>
         </>
       )}
+      <Modal 
+  isOpen={modalAbierto}
+  onClose={() => setModalAbierto(false)}
+  title="Agregar Nueva Mascota"
+>
+  <p>¡El modal funciona! 🎉</p>
+</Modal>
     </div>
   );
 }
