@@ -1,6 +1,14 @@
 import { useParams, useNavigate, Link  } from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
+import { DynamicForm } from "../../components/DynamicForm";
+import { createConfig } from "../config/createConfig"
+
+import { 
+
+  createPacienteRequest, 
+
+} from "/src/api/pacientes";
 import { 
 
   getClienteByIdRequest,
@@ -44,6 +52,18 @@ function ClienteDetallePage() {
     cargarDatos();
   }
 }, [id]);
+
+const handleSubmitMascota = async (data) => {
+  try {
+    await createPacienteRequest(data);
+    setModalAbierto(false);
+    // Recargar la lista de mascotas
+    const mascotasRes = await getPacienteByOwnerRequest(id);
+    setMascotas(mascotasRes.data);
+  } catch (error) {
+    console.error("Error al crear mascota:", error);
+  }
+};
  return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Botón volver */}
@@ -163,12 +183,17 @@ function ClienteDetallePage() {
           </div>
         </>
       )}
-      <Modal 
+<Modal 
   isOpen={modalAbierto}
   onClose={() => setModalAbierto(false)}
   title="Agregar Nueva Mascota"
 >
-  <p>¡El modal funciona! 🎉</p>
+  <DynamicForm
+    {...createConfig.registerPaciente}
+    defaultValues={{ ownerId: id }}
+    customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
+    onSubmit={handleSubmitMascota}
+  />
 </Modal>
     </div>
   );
