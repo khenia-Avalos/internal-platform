@@ -4,8 +4,8 @@ function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null; // Si no está abierto, no renderiza nada
 
   return (
-<div className="fixed inset-0 bg-black bg-opacity-10 z-50 flex items-center justify-center">
-  <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+<div className="fixed inset-0 bg-black bg-opacity-0 z-50 flex items-center justify-center">
+  <div className="bg-white rounded-lg p-6 max-w-lg w-full relative">
     <button onClick={onClose} className="absolute top-4 right-4">
       ✕
     </button>
