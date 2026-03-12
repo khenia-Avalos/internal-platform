@@ -190,6 +190,8 @@ const handleSubmitMascota = async (data) => {
 >
   <DynamicForm
     {...createConfig.registerPaciente}
+                    layout="grid"
+
     defaultValues={{ ownerId: id }}
     customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
     onSubmit={handleSubmitMascota}
