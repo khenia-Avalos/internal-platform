@@ -4,8 +4,10 @@ import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
-import { handleDuplicateError } from "../../utils/errorHandler";
+import { handleDuplicateError } from "../../utils/errorHandler";  
 import { SearchBar } from "../../components/SearchBar";
+import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+
 
 import { 
   getPacienteRequest, 
@@ -43,8 +45,7 @@ function PacientesPage() {
         }));
         setClientes(clientesOptions);
       } catch (error) {
-        console.error("Error al cargar clientes:", error);
-      }
+   manejarErrorResponse(error, setErrors, setSuccessMessage);      }
     };
     obtenerClientes();
   }, []); // Se ejecuta solo una vez al montar el componente
@@ -58,11 +59,8 @@ function PacientesPage() {
       setSuccessMessage("Paciente creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      if (!handleDuplicateError(error, setErrors)) {
-        setErrors(["Error al crear paciente. Intenta de nuevo."]);
-      }
-      console.error("Error al crear paciente:", error);
-    }
+     
+   manejarErrorResponse(error, setErrors, setSuccessMessage);    }
   };
 
   useEffect(() => {
@@ -71,7 +69,8 @@ function PacientesPage() {
         const response = await getPacienteRequest();
         setPacientes(response.data);
       } catch (error) {
-        console.error("Error al obtener pacientes:", error);
+          manejarErrorResponse(error, setErrors, setSuccessMessage);
+
       }
     };
     obtenerPacientes();

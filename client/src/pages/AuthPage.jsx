@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router";
 import { DynamicForm } from "../components/DynamicForm";
 import { formConfig } from "./config/formConfig"
 
+
  export const AuthPage = () => {
     const location = useLocation();
     const navigate =useNavigate ();

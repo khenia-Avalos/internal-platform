@@ -6,6 +6,8 @@ import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { handleDuplicateError } from "../../utils/errorHandler";
 import { SearchBar } from "../../components/SearchBar";
+import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+
 
 
 import { 
@@ -35,10 +37,8 @@ function DoctoresPage() {
       setSuccessMessage("Doctor creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      if (!handleDuplicateError(error, setErrors)) {
-        setErrors(["Error al crear doctor. Intenta de nuevo."]);
-      }
-      console.error("Error al crear doctor:", error);
+       manejarErrorResponse(error, setErrors, setSuccessMessage);
+
     }
   };
 
@@ -48,7 +48,7 @@ function DoctoresPage() {
         const response = await getDoctoresRequest();
         setDoctores(response.data);
       } catch (error) {
-        console.error("Error al obtener doctores:", error);
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
     };
     obtenerDoctores();

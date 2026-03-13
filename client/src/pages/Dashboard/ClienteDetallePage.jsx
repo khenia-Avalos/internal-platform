@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { createConfig } from "../config/createConfig"
+import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 import { 
 
@@ -44,7 +45,7 @@ const [successMessage, setSuccessMessage] = useState("");
       setMascotas(mascotasRes.data);
       
     } catch (error) {
-      console.error("Error al cargar datos:", error);
+  manejarErrorResponse(error, setErrors, setSuccessMessage);
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ const handleSubmitMascota = async (data) => {
     const mascotasRes = await getPacienteByOwnerRequest(id);
     setMascotas(mascotasRes.data);
   } catch (error) {
-    console.error("Error al crear mascota:", error);
+    manejarErrorResponse(error, setErrors, setSuccessMessage);
 
      // Extraer mensaje de error del backend
     const errorMsg = error.response?.data?.message || 

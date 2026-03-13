@@ -8,7 +8,7 @@ import { handleDuplicateError } from "../../utils/errorHandler";
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
 import ClienteDetallePage from "./ClienteDetallePage";
-
+import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 import { 
   getClientesRequest, 
@@ -38,10 +38,8 @@ function ClientesPage() {
       setSuccessMessage("Cliente creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      if (!handleDuplicateError(error, setErrors)) {
-        setErrors(["Error al crear cliente. Intenta de nuevo."]);
-      }
-      console.error("Error al crear cliente:", error);
+      
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
 
@@ -51,7 +49,7 @@ function ClientesPage() {
         const response = await getClientesRequest();
         setClientes(response.data);
       } catch (error) {
-        console.error("Error al obtener clientes:", error);
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
     };
     obtenerClientes();
