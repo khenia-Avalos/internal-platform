@@ -227,9 +227,18 @@ registerPaciente: {
       },
       {
         name: "peso",
-        type: "number",
+        type: "text",
         label: "Peso",
         placeholder: "Peso del paciente",
+        validation: {
+        }
+      },
+           {
+        name: "pesoUnidad",
+        type: "select",
+        label: "Peso",
+        placeholder: "Peso del paciente",
+        options: ["kg", "lb", "g"],
         validation: {
         }
       },

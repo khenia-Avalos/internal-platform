@@ -27,6 +27,8 @@ function ClienteDetallePage() {
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [errors, setErrors] = useState([]);
+const [successMessage, setSuccessMessage] = useState("");
 
 
   useEffect(() => {
@@ -62,6 +64,12 @@ const handleSubmitMascota = async (data) => {
     setMascotas(mascotasRes.data);
   } catch (error) {
     console.error("Error al crear mascota:", error);
+
+     // Extraer mensaje de error del backend
+    const errorMsg = error.response?.data?.message || 
+                     error.response?.data?.[0] || 
+                     "Error al crear mascota";
+    setErrors([errorMsg]);
   }
 };
  return (
@@ -133,7 +141,12 @@ const handleSubmitMascota = async (data) => {
               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
                 
             <button 
-  onClick={() => setModalAbierto(true)}
+  onClick={() => 
+    
+ {
+    setErrors([]);  // Limpiar errores al abrir
+    setModalAbierto(true);
+  }}
   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
 >
   + Agregar Mascota
@@ -195,6 +208,8 @@ const handleSubmitMascota = async (data) => {
     defaultValues={{ ownerId: id }}
     customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
     onSubmit={handleSubmitMascota}
+     errors={errors}           
+  successMessage={successMessage} 
   />
 </Modal>
     </div>
