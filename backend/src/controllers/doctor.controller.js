@@ -1,5 +1,7 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
+import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
+
 
 // Obtener todos los doctores
 export const getDoctores = async (req, res) => {
@@ -7,8 +9,10 @@ export const getDoctores = async (req, res) => {
     const doctores = await User.find({ role: "doctor" }).select('-password');
     res.json(doctores);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 // Crear un nuevo doctor
@@ -17,10 +21,12 @@ export const createDoctor = async (req, res) => {
     const { username, lastname, email, password, phoneNumber, especialidad } = req.body;
 
     // Verificar si ya existe el email
-    const existeDoctor = await User.findOne({ email });
     if (existeDoctor) {
-      return res.status(400).json({ message: "El email ya está registrado" });
-    }
+  const error = new Error("El email ya está registrado");
+  error.name = 'CustomError';
+  error.status = 400;
+  throw error;
+}
 
     // Encriptar password
     const salt = await bcrypt.genSalt(10);
@@ -44,11 +50,10 @@ export const createDoctor = async (req, res) => {
     
     res.status(201).json(doctorResponse);
   } catch (error) {
-    console.log("ERROR COMPLETO:", error);
-    res.status(500).json({ 
-      message: error.message,
-      stack: error.stack 
-    });
+   const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -76,11 +81,10 @@ export const updateDoctor = async (req, res) => {
     
     res.json(doctorActualizado);
   } catch (error) {
-    console.error("ERROR COMPLETO EN UPDATE:", error);
-    res.status(500).json({ 
-      message: error.message,
-      stack: error.stack 
-    });
+    const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -97,6 +101,8 @@ export const deleteDoctor = async (req, res) => {
     
     res.json({ message: "Doctor eliminado correctamente" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };

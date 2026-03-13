@@ -4,6 +4,7 @@ import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
 import { NODE_ENV, TOKEN_SECRET } from "../config.js";
 import { sendResetPasswordEmail } from "../services/authService.js";
+import { manejarError } from '../utils/errorHandler.js';
 //ESTE ARCHIVO CONTIENE TODAS LAS FUNCIONES RELACIONADAS CON AUTENTICACIÓN Y USUARIOS
 
 const isProduction = NODE_ENV === "production";
@@ -61,7 +62,9 @@ export const register = async (req, res) => {
   accessToken: token,  
 });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+      const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message });
   }
 };
 
@@ -101,8 +104,10 @@ res.json({
   accessToken: token,  
 });
   } catch (error) {
-    res.status(500).json([error.message]);
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 export const logout = (req, res) => {
@@ -126,8 +131,10 @@ export const profile = async (req, res) => {
       updatedAt: userFound.updatedAt,
     });
   } catch (error) {
-    res.status(500).json([error.message]);
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 //ESTUDIAR ESTA PARTE DONDE EL TOKEN DEBE SER VERIFCADO PARA OBTENER LOS DATOS DEL USUARIO Y MOSTRARLOS EN EL PERFIL, ASÍ COMO PARA PROTEGER RUTAS QUE REQUIERAN AUTENTICACIÓN Y 
@@ -162,8 +169,10 @@ export const verifyToken = async (req, res) => {
 
 });
   } catch (error) {
-    return res.status(403).json(["Invalid token"]);
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 export const forgotPassword = async (req, res) => {
@@ -207,14 +216,11 @@ export const forgotPassword = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("❌ Error in forgot password:", error);
-
-  
-    return res.status(200).json({
-      success: true,
-      message:
-        "If an account exists with this email, you will receive password reset instructions.",
-    });
+      const errorResponse = manejarError(error);
+  return res.status(200).json({
+    success: true,
+    message: "If an account exists with this email, you will receive password reset instructions.",
+  });
   }
 };
 
@@ -255,8 +261,10 @@ export const resetPassword = async (req, res) => {
 
     return res.status(200).json(["Password reset successfully"]);
   } catch (error) {
-    console.error("Error in reset password:", error);
-    return res.status(500).json(["invalid or expired token"]);
+      const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 

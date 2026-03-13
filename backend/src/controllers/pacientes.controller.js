@@ -1,4 +1,5 @@
 import Paciente from '../models/pacientes.model.js';
+import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
 
 // Obtener todos los pacientes
 export const getPaciente = async (req, res) => {
@@ -8,8 +9,10 @@ export const getPaciente = async (req, res) => {
 
     res.json(pacientes);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 
@@ -42,20 +45,13 @@ export const createPaciente = async (req, res) => {
     
 
 res.status(201).json(savedPaciente);
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        message: "Ya existe una mascota con ese nombre para este dueño" 
-      });
-    }
-    console.error("ERROR COMPLETO:", error);
-    res.status(500).json({      
-      message: error.message,
-      stack: error.stack 
+ } catch (error) {
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
     });
   }
 };
-
 
 export const updatePaciente = async (req, res) => {
   try {
@@ -70,17 +66,19 @@ export const updatePaciente = async (req, res) => {
     
     // 2. Verificar si existe
     if (!pacienteActualizado) {
-      return res.status(404).json({ message: "Paciente no encontrado" });
-    }
+  const error = new Error("Paciente no encontrado");
+  error.name = 'CustomError';
+  error.status = 404;
+  throw error;
+}
     
     // 3. Responder
     res.json(pacienteActualizado);
   } catch (error) {
-    console.error("ERROR COMPLETO EN UPDATE:", error);
-    res.status(500).json({ 
-      message: error.message,
-      stack: error.stack 
-    });
+     const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -91,18 +89,19 @@ export const deletePaciente = async (req, res) => {
     
     const pacienteEliminado = await Paciente.findByIdAndDelete(id);
     
-    if (!pacienteEliminado) {
-      return res.status(404).json({ message: "Paciente no encontrado" });
-    }
+   if (!pacienteActualizado) {
+  const error = new Error("Paciente no encontrado");
+  error.name = 'CustomError';
+  error.status = 404;
+  throw error;
+}
     
     res.json({ message: "Paciente eliminado correctamente" });
   } catch (error) {
-    console.error("ERROR COMPLETO EN DELETE:", error);
-    res.status(500).json({ 
-      message: error.message,
-        stack: error.stack
-   
-    });
+    const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 }
 
@@ -125,7 +124,9 @@ export const getPacienteByOwner = async (req, res) => {
     
     res.json(mascotas);
   } catch (error) {
-    console.error("ERROR:", error);
-    res.status(500).json({ message: error.message });
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };

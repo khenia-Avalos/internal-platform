@@ -1,5 +1,7 @@
 import Owner from '../models/owner.model.js';
 import bcrypt from 'bcryptjs'; 
+import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
+
 
 // Obtener todos los clientes
 export const getClientes = async (req, res) => {
@@ -7,8 +9,10 @@ export const getClientes = async (req, res) => {
     const clientes = await Owner.find().select('-password');
     res.json(clientes);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });  }
 };
 
 // Crear un nuevo cliente
@@ -45,11 +49,10 @@ export const createCliente = async (req, res) => {
     
     res.status(201).json(clienteResponse);
   } catch (error) {
-    console.log("ERROR COMPLETO:", error);
-    res.status(500).json({ 
-      message: error.message,
-      stack: error.stack 
-    });
+     const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -76,11 +79,10 @@ export const updateCliente = async (req, res) => {
     
     res.json(clienteActualizado);
   } catch (error) {
-    console.error("ERROR COMPLETO EN UPDATE:", error);
-    res.status(500).json({ 
-      message: error.message,
-      stack: error.stack 
-    });
+    const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -97,7 +99,10 @@ export const deleteCliente = async (req, res) => {
     
     res.json({ message: "Cliente eliminado correctamente" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const errorResponse = manejarError(error);
+  res.status(errorResponse.status).json({ 
+    message: errorResponse.message 
+  });
   }
 };
 
@@ -113,6 +118,9 @@ export const getClienteById = async (req, res) => {
     
     res.json(cliente);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
