@@ -32,7 +32,7 @@ export const DataTable = ({ columns, data, onEdit, onDelete, onRowClick  }) => {
                 Editar
               </button>
               <button 
-                onClick={() => onDelete(item._id)} 
+                onClick={() => onDelete(item)} 
                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow"
               >
                 Eliminar
