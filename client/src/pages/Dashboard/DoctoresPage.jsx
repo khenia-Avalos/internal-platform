@@ -89,7 +89,7 @@ function DoctoresPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       {/* Cabecera - Versión móvil primero */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">👨‍⚕️ Gestión de Doctores</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4"> Gestión de Doctores</h1>
         
         {/* Barra de búsqueda y botón - Apilados en móvil, fila en desktop */}
         <div className="flex flex-col sm:flex-row gap-3">
@@ -115,7 +115,7 @@ function DoctoresPage() {
         {mostrarFormulario && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700">📋 Crear Nuevo Doctor</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
               <button
                 onClick={() => setMostrarFormulario(false)}
                 className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -165,7 +165,7 @@ function DoctoresPage() {
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
         {doctores.length === 0 ? (
           <div className="text-center py-16 px-4">
-            <div className="text-6xl mb-4">👨‍⚕️</div>
+            <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay doctores registrados</p>
             <p className="text-gray-400 mt-2">Haz clic en "Nuevo Doctor" para comenzar</p>
           </div>
@@ -193,8 +193,7 @@ function DoctoresPage() {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
             }}
-            onDelete={handleDeleteDoctor}
-          />
+onDelete={(doctor) => handleDeleteDoctor(doctor._id, doctor.username)}          />
         )}
       </div>
     </div>
