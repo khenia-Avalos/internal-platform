@@ -193,7 +193,11 @@ function DoctoresPage() {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
             }}
-onDelete={(User) => handleDeleteDoctor(User._id, User.username)}          />
+onDelete={(doctor) => {
+  console.log("🔥 Doctor completo:", doctor);  // ← MIRA ESTO
+  console.log("🔥 username:", doctor.username);  // ← Y ESTO
+  handleDeleteDoctor(doctor._id, doctor.username);
+}}    />
         )}
       </div>
     </div>
