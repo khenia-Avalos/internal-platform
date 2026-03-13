@@ -28,8 +28,8 @@ const activeModuleObj = modules.find(m => m.id === activeModule);//busca el modu
       </div>
     );
   }
-  console.log("🚀 Módulos recibidos en DynamicDashboard:", modules);
-console.log("🎯 userRole recibido:", userRole);
+  console.log(" Módulos recibidos en DynamicDashboard:", modules);
+console.log(" userRole recibido:", userRole);
   return(
   <div className="flex h-screen bg-gray-100">
 

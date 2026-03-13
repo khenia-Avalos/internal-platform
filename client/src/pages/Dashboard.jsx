@@ -23,8 +23,8 @@ useEffect(() => {
     navigate("/login"); 
   }
 }, [isAuthenticated, navigate]); 
-console.log("👤 Usuario:", user);
-console.log("📦 Módulos para este rol:", modules);
+console.log(" Usuario:", user);
+console.log(" Módulos para este rol:", modules);
 
 return (
 <DynamicDashboard 
