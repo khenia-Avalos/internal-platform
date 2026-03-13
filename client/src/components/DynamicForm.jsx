@@ -103,7 +103,6 @@ export const DynamicForm = ({
 
               <div className="relative">
                 {field.type === "select" && field.isSearchable ? (
-    // Aquí irá react-select
     <Select
       options={customProps?.ownerOptions || []}
       value={field.options?.find(opt => opt.value === watch(field.name))}
@@ -121,20 +120,34 @@ export const DynamicForm = ({
         })
       }}
     />
-  ) : field.type === "select" ? (
-                  <select
-                    className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" // CAMBIO: py-2.5 y focus ring
-                    disabled={isLoading}
-                    {...register(field.name, field.validation)}
-                  >
-                    <option value="">Selecciona una opción</option>
-                    {field.options?.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
+) : field.type === "select" ? (
+  <>
+    <select
+      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+      disabled={isLoading}
+      {...register(field.name, field.validation)}
+    >
+      <option value="">Selecciona una opción</option>
+      {field.options?.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+
+    {/*  CAMPO CONDICIONAL PARA "OTRO" - AHORA DENTRO DEL FRAGMENTO */}
+    {field.name === "especie" && watch('especie') === 'otro' && (
+      <div className="mt-2">
+        <input
+          type="text"
+          placeholder="Especifique la especie"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          {...register('especieOtro', { required: "Por favor especifica la especie" })}
+        />
+      </div>
+    )}
+  </>
+) : (
                   <>
                     <input
                       type={field.type === "password" && showPassword[field.name] ? "text" : field.type}

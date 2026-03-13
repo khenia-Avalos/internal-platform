@@ -182,15 +182,13 @@ registerPaciente: {
           required: "El nombre es requerido"
         }
       },
-      {
-        name: "especie",
-        type: "text",
-        label: "Especie",
-        placeholder: "Especie del paciente",
-        validation: {
-          required: "La especie es requerida"
-        }
-      },
+    {
+  name: "especie",
+  type: "select",
+  label: "Especie",
+  options: ['perro', 'gato', 'ave', 'conejo', 'otro'],
+  validation: { required: "La especie es requerida" }
+},
       {
         name: "raza",
         type: "text",
