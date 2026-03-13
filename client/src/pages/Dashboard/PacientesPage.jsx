@@ -222,8 +222,9 @@ data={pacientesConDueño}
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
             }}
-            onDelete={handleDeletePaciente}
-          />
+onDelete={(paciente) => {
+  handleDeletePaciente(paciente._id, paciente.nombre);
+}}              />
         )}
       </div>
     </div>

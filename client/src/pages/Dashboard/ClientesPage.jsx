@@ -196,8 +196,9 @@ function ClientesPage() {
               setClienteSeleccionado(cliente);
               handleEdit(cliente);
             }}
-            onDelete={handleDeleteCliente}
-          />
+onDelete={(cliente) => {
+  handleDeleteCliente(cliente._id, cliente.username);
+}}              />
         )}
       </div>
     </div>
