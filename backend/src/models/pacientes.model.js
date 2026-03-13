@@ -36,8 +36,12 @@ const pacienteSchema = new mongoose.Schema(
             trim: true
         },
           peso: {
-            type: Number,
-            min: 0
+  valor: Number,
+  unidad: {
+    type: String,
+    enum: ['kg', 'lb', 'g'],
+    default: 'kg'
+  }
         },
           temperatura: {
             type: Number,

@@ -15,8 +15,15 @@ export const getPaciente = async (req, res) => {
 
 export const createPaciente = async (req, res) => {
   try {
-    const { nombre, especie, raza, edad, sexo, colorPelaje, peso, temperatura, antecedentesMedicos, ownerId } = req.body;
+    const { nombre, especie, raza, edad, sexo, colorPelaje, peso,pesoUnidad, temperatura, antecedentesMedicos, ownerId } = req.body;
 
+
+
+    // Crear el objeto peso
+    const pesoObjeto = {
+      valor: peso,
+      unidad: pesoUnidad
+    };
     const newPaciente = new Paciente({
       nombre,
       especie,
@@ -24,7 +31,8 @@ export const createPaciente = async (req, res) => {
      edad,
      sexo,
         colorPelaje,
-        peso,
+      peso: pesoObjeto,  // ← Guardas el objeto completo
+        pesoUnidad,
         temperatura,
         antecedentesMedicos,
       ownerId
@@ -102,24 +110,22 @@ export const deletePaciente = async (req, res) => {
 export const getPacienteByOwner = async (req, res) => {
   try {
     const { ownerId } = req.params;
-    
-    console.log("🔍 PARÁMETRO RECIBIDO:", ownerId);
-    console.log("🔍 TIPO:", typeof ownerId);
+  
     
     // Buscar TODAS las mascotas para comparar
     const todas = await Paciente.find();
-    console.log("📊 TODAS las mascotas:", todas.map(m => ({
+    console.log("TODAS las mascotas:", todas.map(m => ({
       id: m._id,
       nombre: m.nombre,
       ownerId: m.ownerId
     })));
     
     const mascotas = await Paciente.find({ ownerId });
-    console.log("✅ RESULTADO FILTRADO:", mascotas.length);
+    console.log(" RESULTADO FILTRADO:", mascotas.length);
     
     res.json(mascotas);
   } catch (error) {
-    console.error("❌ ERROR:", error);
+    console.error("ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
