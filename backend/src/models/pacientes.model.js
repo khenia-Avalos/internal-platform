@@ -11,7 +11,7 @@ const pacienteSchema = new mongoose.Schema(
   especie: {
             type: String,
             required: true,
-                enum: ['perro', 'gato', 'ave', 'conejo', 'otro'],  // ← Valores permitidos
+                enum: ['perro', 'gato', 'ave', 'conejo', 'otro'],  
 
             trim: true
         },

@@ -18,9 +18,10 @@ export const getPaciente = async (req, res) => {
 
 export const createPaciente = async (req, res) => {
   try {
-    const { nombre, especie, raza, edad, sexo, colorPelaje, peso,pesoUnidad, temperatura, antecedentesMedicos, ownerId } = req.body;
+    const { nombre, especie,especieOtro, raza, edad, sexo, colorPelaje, peso,pesoUnidad, temperatura, antecedentesMedicos, ownerId } = req.body;
 
 
+const especieFinal = especie === 'otro' ? especieOtro : especie;
 
     // Crear el objeto peso
     const pesoObjeto = {
@@ -29,7 +30,7 @@ export const createPaciente = async (req, res) => {
     };
     const newPaciente = new Paciente({
       nombre,
-      especie,
+      especie:especieFinal,  // ← Usa la variable final que maneja "otro"
      raza,
      edad,
      sexo,
