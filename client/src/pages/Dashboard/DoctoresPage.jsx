@@ -193,7 +193,7 @@ function DoctoresPage() {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
             }}
-onDelete={(doctor) => handleDeleteDoctor(doctor._id, doctor.username)}          />
+onDelete={(doctor) => handleDeleteDoctor(user._id, user.username)}          />
         )}
       </div>
     </div>
