@@ -25,10 +25,16 @@ export const DataTable = ({ columns, data, onEdit, onDelete, onRowClick  }) => {
               </td>
             ))}
             <td className="px-4 py-2"  onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => onEdit(item)} className="text-blue-600 hover:text-blue-800 mr-2">
+              <button 
+                onClick={() => onEdit(item)} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 mr-2 shadow-sm hover:shadow"
+              >
                 Editar
               </button>
-              <button onClick={() => onDelete(item._id)} className="text-red-600 hover:text-red-800">
+              <button 
+                onClick={() => onDelete(item._id)} 
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow"
+              >
                 Eliminar
               </button>
             </td>
