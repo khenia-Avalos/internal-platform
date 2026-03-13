@@ -4,7 +4,6 @@ import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
-import { handleDuplicateError } from "../../utils/errorHandler";
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
