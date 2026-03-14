@@ -6,6 +6,7 @@ import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+import { useNavigate } from "react-router";
 
 
 import {
