@@ -8,7 +8,6 @@ import { InfoCard } from "../../components/InfoCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
-import { getClienteByIdRequest } from "/src/api/clientes";
 
 
 function PacienteDetallePage() {
