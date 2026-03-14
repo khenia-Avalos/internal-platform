@@ -1,81 +1,58 @@
-import { useParams, useNavigate, Link  } from 'react-router';
+import { useParams, useNavigate, Link } from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
-import { createConfig } from "../config/createConfig"
+import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
-
-import { 
-
-  createPacienteRequest, 
-
-} from "/src/api/pacientes";
-import { 
-
-  getClienteByIdRequest,
-
-} from "/src/api/clientes";
-import { 
-  getPacienteByOwnerRequest,
-
-} from "/src/api/pacientes";
+import { InfoCard } from '../../components/infoCard';
+import { createPacienteRequest } from "/src/api/pacientes";
+import { getClienteByIdRequest } from "/src/api/clientes";
+import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 
 function ClienteDetallePage() {
-      const navigate = useNavigate();
-
-  const { id } = useParams(); // ← Obtiene el ID de la URL
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [cliente, setCliente] = useState(null);
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState([]);
-const [successMessage, setSuccessMessage] = useState("");
-
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-  const cargarDatos = async () => {
-    setLoading(true);
+    const cargarDatos = async () => {
+      setLoading(true);
+      try {
+        const clienteRes = await getClienteByIdRequest(id);
+        setCliente(clienteRes.data);
+        
+        const mascotasRes = await getPacienteByOwnerRequest(id);
+        setMascotas(mascotasRes.data);
+      } catch (error) {
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) {
+      cargarDatos();
+    }
+  }, [id]);
+
+  const handleSubmitMascota = async (data) => {
     try {
-      // 1. Obtener cliente por ID
-      const clienteRes = await getClienteByIdRequest(id);
-      setCliente(clienteRes.data);
-      
-      // 2. Obtener mascotas de este cliente
+      await createPacienteRequest(data);
+      setModalAbierto(false);
       const mascotasRes = await getPacienteByOwnerRequest(id);
       setMascotas(mascotasRes.data);
-      
     } catch (error) {
-  manejarErrorResponse(error, setErrors, setSuccessMessage);
-    } finally {
-      setLoading(false);
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-  
-  if (id) {
-    cargarDatos();
-  }
-}, [id]);
 
-const handleSubmitMascota = async (data) => {
-  try {
-    await createPacienteRequest(data);
-    setModalAbierto(false);
-    // Recargar la lista de mascotas
-    const mascotasRes = await getPacienteByOwnerRequest(id);
-    setMascotas(mascotasRes.data);
-  } catch (error) {
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
-
-     // Extraer mensaje de error del backend
-    const errorMsg = error.response?.data?.message || 
-                     error.response?.data?.[0] || 
-                     "Error al crear mascota";
-    setErrors([errorMsg]);
-  }
-};
- return (
+  return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Botón volver */}
       <button
         onClick={() => navigate('/clientes')}
         className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
@@ -86,14 +63,12 @@ const handleSubmitMascota = async (data) => {
         Volver a Clientes
       </button>
 
-      {/* Estado de carga */}
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
         </div>
       )}
 
-      {/* Cliente no encontrado */}
       {!loading && !cliente && (
         <div className="text-center py-16">
           <p className="text-gray-500 text-lg">Cliente no encontrado</p>
@@ -106,57 +81,31 @@ const handleSubmitMascota = async (data) => {
         </div>
       )}
 
-      {/* Datos del cliente */}
       {!loading && cliente && (
         <>
-          {/* Tarjeta del cliente */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-            <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">Información del Cliente</h2>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-500">Nombre completo</p>
-                  <p className="text-lg font-semibold text-gray-800">{cliente.username} {cliente.lastname}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-lg text-gray-800">{cliente.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Teléfono</p>
-                  <p className="text-lg text-gray-800">{cliente.phoneNumber}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Cédula</p>
-                  <p className="text-lg text-gray-800">{cliente.cedula}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm text-gray-500">Dirección</p>
-                  <p className="text-lg text-gray-800">{cliente.direccion}</p>
-                </div>
-              </div>
-              
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                
+          <InfoCard
+            title="Información del Cliente"
+            data={[
+              { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname}` },
+              { label: "Email", value: cliente.email },
+              { label: "Teléfono", value: cliente.phoneNumber },
+              { label: "Cédula", value: cliente.cedula },
+              { label: "Dirección", value: cliente.direccion },
+            ]}
+          />
+          
+          <div className="mt-4 mb-6">
             <button 
-  onClick={() => 
-    
- {
-    setErrors([]);  // Limpiar errores al abrir
-    setModalAbierto(true);
-  }}
-  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
->
-  + Agregar Mascota
-</button>
-              </div>
-            </div>
+              onClick={() => {
+                setErrors([]);
+                setModalAbierto(true);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              + Agregar Mascota
+            </button>
           </div>
 
-          {/* Sección de mascotas */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-white">Mascotas de {cliente.username}</h2>
@@ -164,7 +113,6 @@ const handleSubmitMascota = async (data) => {
                 {mascotas.length} {mascotas.length === 1 ? 'mascota' : 'mascotas'}
               </span>
             </div>
-
             <div className="p-6">
               {mascotas.length === 0 ? (
                 <div className="text-center py-8">
@@ -197,22 +145,22 @@ const handleSubmitMascota = async (data) => {
           </div>
         </>
       )}
-<Modal 
-  isOpen={modalAbierto}
-  onClose={() => setModalAbierto(false)}
-  title="Agregar Nueva Mascota"
->
-  <DynamicForm
-    {...createConfig.registerPaciente}
-                    layout="grid"
 
-    defaultValues={{ ownerId: id }}
-    customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
-    onSubmit={handleSubmitMascota}
-     errors={errors}           
-  successMessage={successMessage} 
-  />
-</Modal>
+      <Modal 
+        isOpen={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+        title="Agregar Nueva Mascota"
+      >
+        <DynamicForm
+          {...createConfig.registerPaciente}
+          layout="grid"
+          defaultValues={{ ownerId: id }}
+          customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
+          onSubmit={handleSubmitMascota}
+          errors={errors}           
+          successMessage={successMessage} 
+        />
+      </Modal>
     </div>
   );
 }
