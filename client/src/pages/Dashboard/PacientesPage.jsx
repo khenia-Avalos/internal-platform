@@ -21,6 +21,7 @@ import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
+   const navigate = useNavigate();
 
   const [pacientes, setPacientes] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
