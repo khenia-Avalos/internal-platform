@@ -220,8 +220,11 @@ function PacientesPage() {
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
             data={pacientesConDueño}
-onRowClick={(paciente) => navigate(`/pacientes/${paciente._id}`)}
-            onEdit={(paciente) => {
+onRowClick={(paciente) => {
+  console.log("🆔 ID del paciente:", paciente._id);
+  console.log("👤 ID del dueño:", paciente.ownerId);
+  navigate(`/pacientes/${paciente._id}`);
+}}            onEdit={(paciente) => {
 
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
