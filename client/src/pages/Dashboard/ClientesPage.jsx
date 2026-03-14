@@ -6,7 +6,6 @@ import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
-import ClienteDetallePage from "./ClienteDetallePage";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 import {
