@@ -8,6 +8,8 @@ import { InfoCard } from "../../components/InfoCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
+
+
 function ClienteDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -24,7 +26,7 @@ function ClienteDetallePage() {
       try {
         const clienteRes = await getClienteByIdRequest(id);
         setCliente(clienteRes.data);
-        
+
         const mascotasRes = await getPacienteByOwnerRequest(id);
         setMascotas(mascotasRes.data);
       } catch (error) {
@@ -33,7 +35,7 @@ function ClienteDetallePage() {
         setLoading(false);
       }
     };
-    
+
     if (id) {
       cargarDatos();
     }
@@ -92,9 +94,9 @@ function ClienteDetallePage() {
               { label: "Dirección", value: cliente.direccion },
             ]}
           />
-          
+
           <div className="mt-4 mb-6">
-            <button 
+            <button
               onClick={() => {
                 setErrors([]);
                 setModalAbierto(true);
@@ -104,24 +106,24 @@ function ClienteDetallePage() {
               + Agregar Mascota
             </button>
           </div>
- <h3 className="text-xl font-semibold mb-4">Mascotas de {cliente.username}</h3>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {mascotas.map((mascota) => (
-      <InfoCard
-        key={mascota._id}
-        title={mascota.nombre}
-        data={[
-          { label: "Especie", value: mascota.especie },
-          { label: "Raza", value: mascota.raza || 'Sin raza' },
-          { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
-        ]}
-      />
-    ))}
-  </div>
-</>
+          <h3 className="text-xl font-semibold mb-4">Mascotas de {cliente.username}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mascotas.map((mascota) => (
+              <InfoCard
+                key={mascota._id}
+                title={mascota.nombre}
+                data={[
+                  { label: "Especie", value: mascota.especie },
+                  { label: "Raza", value: mascota.raza || 'Sin raza' },
+                  { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
+                ]}
+              />
+            ))}
+          </div>
+        </>
       )}
 
-      <Modal 
+      <Modal
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         title="Agregar Nueva Mascota"
@@ -132,8 +134,8 @@ function ClienteDetallePage() {
           defaultValues={{ ownerId: id }}
           customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
           onSubmit={handleSubmitMascota}
-          errors={errors}           
-          successMessage={successMessage} 
+          errors={errors}
+          successMessage={successMessage}
         />
       </Modal>
     </div>

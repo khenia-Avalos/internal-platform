@@ -9,11 +9,11 @@ import { useNavigate } from 'react-router';
 import ClienteDetallePage from "./ClienteDetallePage";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
-import { 
-  getClientesRequest, 
-  createClienteRequest, 
-  updateClienteRequest, 
-  deleteClienteRequest 
+import {
+  getClientesRequest,
+  createClienteRequest,
+  updateClienteRequest,
+  deleteClienteRequest
 } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
@@ -25,7 +25,7 @@ function ClientesPage() {
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
-  const [successMessage, setSuccessMessage] = useState(""); 
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const handleCreateCliente = async (data) => {
@@ -37,7 +37,7 @@ function ClientesPage() {
       setSuccessMessage("Cliente creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      
+
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
@@ -91,11 +91,11 @@ function ClientesPage() {
       {/* Cabecera - Versión móvil primero */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Gestion de clientes</h1>
-        
+
         {/* Barra de búsqueda y botón - Apilados en móvil, fila en desktop */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
-            <SearchBar 
+            <SearchBar
               value={busqueda}
               onChange={setBusqueda}
               placeholder="Buscar cliente por nombre, email, cédula..."
@@ -127,7 +127,7 @@ function ClientesPage() {
             </div>
             <DynamicForm
               {...createConfig.registerCliente}
-                              layout="grid"
+              layout="grid"
 
               onSubmit={handleCreateCliente}
               errors={errors}
@@ -151,7 +151,7 @@ function ClientesPage() {
             </div>
             <DynamicForm
               {...editConfig.editCliente}
-                              layout="grid"
+              layout="grid"
 
               defaultValues={clienteSeleccionado}
               errors={editErrors}
@@ -190,15 +190,15 @@ function ClientesPage() {
               { header: "Cedula", accessor: "cedula" },
               { header: "Dirección", accessor: "direccion" }]}
             data={clientesFiltrados}
-              onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)} // ← NUEVO
+            onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)} // ← NUEVO
 
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
               handleEdit(cliente);
             }}
-onDelete={(cliente) => {
-  handleDeleteCliente(cliente._id, cliente.username);
-}}              />
+            onDelete={(cliente) => {
+              handleDeleteCliente(cliente._id, cliente.username);
+            }} />
         )}
       </div>
     </div>

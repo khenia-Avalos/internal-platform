@@ -8,19 +8,19 @@ export const InfoCard = ({ title, data }) => {
           {title || "Información"}
         </h2>
       </div>
-      
-     <div className="p-6">
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {data.map((item, index) => (
-      <div key={index}>
-        <p className="text-sm text-gray-500">{item.label}</p>
-        <p className="text-lg font-semibold text-gray-800">
-          {item.value || 'No especificado'}
-        </p>
+
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {data.map((item, index) => (
+            <div key={index}>
+              <p className="text-sm text-gray-500">{item.label}</p>
+              <p className="text-lg font-semibold text-gray-800">
+                {item.value || 'No especificado'}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
     </div>
   );
 };

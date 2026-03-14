@@ -8,11 +8,11 @@ import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 
-import { 
-  getPacienteRequest, 
-  createPacienteRequest, 
-  updatePacienteRequest, 
-  deletePacienteRequest 
+import {
+  getPacienteRequest,
+  createPacienteRequest,
+  updatePacienteRequest,
+  deletePacienteRequest
 } from "/src/api/pacientes";
 // Importar la API de owners para obtener los dueños
 import { getClientesRequest } from "/src/api/clientes"; // ← NUEVO PASO 4
@@ -28,7 +28,7 @@ function PacientesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
-  
+
   // PASO 4: Estado para guardar los dueños (owners)
   const [clientes, setClientes] = useState([]); // ← NUEVO
 
@@ -44,7 +44,8 @@ function PacientesPage() {
         }));
         setClientes(clientesOptions);
       } catch (error) {
-   manejarErrorResponse(error, setErrors, setSuccessMessage);      }
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
+      }
     };
     obtenerClientes();
   }, []); // Se ejecuta solo una vez al montar el componente
@@ -58,8 +59,9 @@ function PacientesPage() {
       setSuccessMessage("Paciente creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-     
-   manejarErrorResponse(error, setErrors, setSuccessMessage);    }
+
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
   };
 
   useEffect(() => {
@@ -68,7 +70,7 @@ function PacientesPage() {
         const response = await getPacienteRequest();
         setPacientes(response.data);
       } catch (error) {
-          manejarErrorResponse(error, setErrors, setSuccessMessage);
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
 
       }
     };
@@ -81,13 +83,13 @@ function PacientesPage() {
       paciente.nombre?.toLowerCase().includes(texto) ||
       paciente.especie?.toLowerCase().includes(texto) ||
       paciente.raza?.toLowerCase().includes(texto) ||
-      paciente.ownerId?.toLowerCase().includes(texto) 
+      paciente.ownerId?.toLowerCase().includes(texto)
     );
   });
   const pacientesConDueño = pacientesFiltrados.map(paciente => ({
-  ...paciente,
-  nombreDueño: paciente.ownerId?.username || "Sin dueño"
-}));
+    ...paciente,
+    nombreDueño: paciente.ownerId?.username || "Sin dueño"
+  }));
 
   const { handleDelete: handleDeletePaciente } = useDelete(
     deletePacienteRequest,
@@ -115,10 +117,10 @@ function PacientesPage() {
       {/* Cabecera */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Gestión de mascotas/pacientes</h1>
-        
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
-            <SearchBar 
+            <SearchBar
               value={busqueda}
               onChange={setBusqueda}
               placeholder="Buscar paciente por nombre, raza y dueño."
@@ -150,9 +152,9 @@ function PacientesPage() {
             </div>
             <DynamicForm
               {...createConfig.registerPaciente}
-                layout="grid"
+              layout="grid"
               // PASO 5: Pasar las opciones de dueños como customProps
-              customProps={{ ownerOptions: clientes }} // ← NUEVO
+              customProps={{ ownerOptions: clientes }} 
               onSubmit={handleCreatePaciente}
               errors={errors}
               successMessage={successMessage}
@@ -175,7 +177,7 @@ function PacientesPage() {
             </div>
             <DynamicForm
               {...editConfig.editpaciente}
-                layout="grid"
+              layout="grid"
               defaultValues={pacienteSeleccionado}
               // También pasar customProps al formulario de edición
               customProps={{ ownerOptions: clientes }} // ← NUEVO (opcional, si editar también necesita el select)
@@ -214,17 +216,20 @@ function PacientesPage() {
               { header: "Edad", accessor: "edad" },
               { header: "Sexo", accessor: "sexo" },
               { header: "Antecedentes Médicos", accessor: "antecedentesMedicos" },
-{ header: "Dueño", accessor: "nombreDueño" },
+              { header: "Dueño", accessor: "nombreDueño" },
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
-data={pacientesConDueño}
+            data={pacientesConDueño}
+            onRowClick={(paciente) => navigate(`/pacientes/${paciente.ownerId}`)}
+
             onEdit={(paciente) => {
+
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
             }}
-onDelete={(paciente) => {
-  handleDeletePaciente(paciente._id, paciente.nombre);
-}}              />
+            onDelete={(paciente) => {
+              handleDeletePaciente(paciente._id, paciente.nombre);
+            }} />
         )}
       </div>
     </div>
