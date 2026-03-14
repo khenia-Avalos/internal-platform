@@ -4,7 +4,7 @@ import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
-import { InfoCard } from "../../components/InfoCard";
+import { InfoCard } from "../../components/infoCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
