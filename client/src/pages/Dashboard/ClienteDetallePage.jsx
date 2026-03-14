@@ -104,45 +104,21 @@ function ClienteDetallePage() {
               + Agregar Mascota
             </button>
           </div>
-
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-white">Mascotas de {cliente.username}</h2>
-              <span className="bg-white text-cyan-600 px-3 py-1 rounded-full text-sm font-semibold">
-                {mascotas.length} {mascotas.length === 1 ? 'mascota' : 'mascotas'}
-              </span>
-            </div>
-            <div className="p-6">
-              {mascotas.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Este cliente aún no tiene mascotas registradas</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mascotas.map((mascota) => (
-                    <div key={mascota._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{mascota.nombre}</h3>
-                          <p className="text-sm text-gray-600">{mascota.especie} • {mascota.raza || 'Sin raza'}</p>
-                          {mascota.edad && (
-                            <p className="text-sm text-gray-600 mt-1">Edad: {mascota.edad} años</p>
-                          )}
-                        </div>
-                        <Link
-                          to={`/mascotas/${mascota._id}`}
-                          className="text-cyan-600 hover:text-cyan-700 text-sm font-medium"
-                        >
-                          Ver detalle →
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+ <h3 className="text-xl font-semibold mb-4">Mascotas de {cliente.username}</h3>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {mascotas.map((mascota) => (
+      <InfoCard
+        key={mascota._id}
+        title={mascota.nombre}
+        data={[
+          { label: "Especie", value: mascota.especie },
+          { label: "Raza", value: mascota.raza || 'Sin raza' },
+          { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
+        ]}
+      />
+    ))}
+  </div>
+</>
       )}
 
       <Modal 
