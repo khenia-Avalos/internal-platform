@@ -10,7 +10,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import { TaskProvider } from "./context/TasksContext";
 import Navbar from "./components/Navbar";
 import { Outlet } from "react-router";
-import { ClienteDetallePage, PacienteDetallePage } from './pages/Dashboard';
+import ClienteDetallePage from './pages/Dashboard/ClienteDetallePage';
+import PacienteDetallePage from './pages/Dashboard/PacienteDetallePage';
 import ForgotPassword from "./pages/ForgotPassword"; 
 import ResetPassword from "./pages/ResetPassword"; 
 
