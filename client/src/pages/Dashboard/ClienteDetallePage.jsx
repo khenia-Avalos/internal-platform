@@ -7,7 +7,7 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/InfoCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
-
+import { createPacienteRequest } from "/src/api/pacientes";
 function ClienteDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
