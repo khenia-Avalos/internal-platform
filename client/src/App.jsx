@@ -11,7 +11,7 @@ import { TaskProvider } from "./context/TasksContext";
 import Navbar from "./components/Navbar";
 import { Outlet } from "react-router";
 import ClienteDetallePage from "./pages/Dashboard/ClienteDetallePage.jsx"; // ← con extensiónimport PacienteDetallePage from "./pages/Dashboard/PacienteDetallePage";
-
+import PacienteDetallePage from "./pages/Dashboard/PacienteDetallePage.jsx"; // ← con extensión
 import ForgotPassword from "./pages/ForgotPassword"; 
 import ResetPassword from "./pages/ResetPassword"; 
 
