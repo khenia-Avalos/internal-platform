@@ -8,7 +8,7 @@ import { InfoCard } from "../../components/desCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
-
+import {ClienteDetallePage} from "./ClienteDetallePage";
 
 function PacienteDetallePage() {
     const navigate = useNavigate();
