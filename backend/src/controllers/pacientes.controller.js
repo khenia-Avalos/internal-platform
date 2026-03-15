@@ -131,3 +131,25 @@ export const getPacienteByOwner = async (req, res) => {
   });
   }
 };
+
+
+// Obtener un paciente por ID
+export const getPacienteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const paciente = await Paciente.findById(id)
+      .populate('ownerId', 'username lastname email phoneNumber');
+    
+    if (!paciente) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+    
+    res.json(paciente);
+  } catch (error) {
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
+};
