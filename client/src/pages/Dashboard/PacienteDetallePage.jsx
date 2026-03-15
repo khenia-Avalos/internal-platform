@@ -7,15 +7,14 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
-import { createPacienteRequest } from "/src/api/pacientes";
-import ClienteDetallePage from './ClienteDetallePage';
+
 
 
 function PacienteDetallePage() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [paciente, setPaciente] = useState(null);
-    const [clientes, setClientes] = useState([]);
+    const [dueno, setDueno] = useState(null); // ← UN SOLO dueño, no array
     const [loading, setLoading] = useState(true);
     const [modalAbierto, setModalAbierto] = useState(false);
     const [errors, setErrors] = useState([]);
@@ -25,11 +24,15 @@ function PacienteDetallePage() {
         const cargarDatos = async () => {
             setLoading(true);
             try {
-                const clienteRes = await getClienteByIdRequest(id);
-                setCliente(clienteRes.data);
-
-                const mascotasRes = await getPacienteByOwnerRequest(id);
-                setMascotas(mascotasRes.data);
+                // 1. Cargar paciente por ID
+                const pacienteRes = await getPacienteByIdRequest(id);
+                setPaciente(pacienteRes.data);
+                
+                // 2. Si tiene dueño, cargar datos del dueño
+                if (pacienteRes.data.ownerId) {
+                    const duenoRes = await getClienteByIdRequest(pacienteRes.data.ownerId);
+                    setDueno(duenoRes.data);
+                }
             } catch (error) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             } finally {
@@ -42,27 +45,16 @@ function PacienteDetallePage() {
         }
     }, [id]);
 
-    const handleSubmitDueño = async (data) => {
-        try {
-            await createClienteRequest(data);
-            setModalAbierto(false);
-            const mascotasRes = await getClienteByIdRequest(id);
-            setCliente(mascotasRes.data);
-        } catch (error) {
-            manejarErrorResponse(error, setErrors, setSuccessMessage);
-        }
-    };
-
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <button
-                onClick={() => navigate('/clientes')}
+                onClick={() => navigate('/pacientes')}
                 className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
-                Volver
+                Volver a Pacientes
             </button>
 
             {loading && (
@@ -85,65 +77,39 @@ function PacienteDetallePage() {
 
             {!loading && paciente && (
                 <>
+                    {/* Tarjeta del Paciente */}
                     <InfoCard
-                        title="Información del Paciente"
+                        title={`Información de ${paciente.nombre}`}
                         data={[
-                            { label: "Nombre", value: mascota.nombre },
-                            { label: "Especie", value: mascota.especie },
-                            { label: "Raza", value: mascota.raza || 'Sin raza' },
-                            { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
-                            { label: "Sexo", value: mascota.sexo || 'No especificado' },
-                            { label: "Antecedentes Médicos", value: mascota.antecedentesMedicos || 'No especificados' },
-                            { label: "Color Pelaje", value: mascota.colorPelaje || 'No especificado' }
-
+                            { label: "Nombre", value: paciente.nombre },
+                            { label: "Especie", value: paciente.especie },
+                            { label: "Raza", value: paciente.raza || 'Sin raza' },
+                            { label: "Edad", value: paciente.edad ? `${paciente.edad} años` : 'No especificada' },
+                            { label: "Sexo", value: paciente.sexo || 'No especificado' },
+                            { label: "Color Pelaje", value: paciente.colorPelaje || 'No especificado' },
+                            { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No especificado' },
+                            { label: "Antecedentes Médicos", value: paciente.antecedentesMedicos || 'No especificados' },
                         ]}
                     />
 
-                    <div className="mt-4 mb-6">
-                        <button
-                            onClick={() => {
-                                setErrors([]);
-                                setModalAbierto(true);
-                            }}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                        >
-                            + Agregar Dueño
-                        </button>
-                    </div>
-                    <h3 className="text-xl font-semibold mb-4">Dueño de {mascota.nombre}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {cliente.map((cliente) => (
+                    {/* Tarjeta del Dueño (si existe) */}
+                    {dueno && (
+                        <div className="mt-8">
+                            <h3 className="text-xl font-semibold mb-4">Dueño de {paciente.nombre}</h3>
                             <InfoCard
-                                key={cliente._id}
-                                title={cliente.username}
+                                title={`${dueno.username} ${dueno.lastname}`}
                                 data={[
-                                    { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname}` },
-                                    { label: "Email", value: cliente.email },
-                                    { label: "Teléfono", value: cliente.phoneNumber },
-                                    { label: "Cédula", value: cliente.cedula },
-                                    { label: "Dirección", value: cliente.direccion },
+                                    { label: "Nombre completo", value: `${dueno.username} ${dueno.lastname}` },
+                                    { label: "Email", value: dueno.email },
+                                    { label: "Teléfono", value: dueno.phoneNumber },
+                                    { label: "Cédula", value: dueno.cedula },
+                                    { label: "Dirección", value: dueno.direccion },
                                 ]}
                             />
-                        ))}
-                    </div>
+                        </div>
+                    )}
                 </>
             )}
-
-            <Modal
-                isOpen={modalAbierto}
-                onClose={() => setModalAbierto(false)}
-                title="Agregar Nueva Mascota"
-            >
-                <DynamicForm
-                    {...createConfig.registerCliente}
-                    layout="grid"
-                    defaultValues={{ ownerId: id }}
-                    customProps={{ ownerOptions: [{ value: id, label: cliente?.username }] }}
-                    onSubmit={handleSubmitMascota}
-                    errors={errors}
-                    successMessage={successMessage}
-                />
-            </Modal>
         </div>
     );
 }
