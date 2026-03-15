@@ -5,3 +5,4 @@ export const createPacienteRequest = (paciente) => axios.post("/pacientes", paci
 export const updatePacienteRequest = (id, paciente) => axios.put(`/pacientes/${id}`, paciente);
 export const deletePacienteRequest = (id) => axios.delete(`/pacientes/${id}`);
 export const getPacienteByOwnerRequest = (ownerId) => axios.get(`/pacientes/owner/${ownerId}`);
+export const getPacienteByIdRequest = (id) => axios.get(`/pacientes/${id}`);

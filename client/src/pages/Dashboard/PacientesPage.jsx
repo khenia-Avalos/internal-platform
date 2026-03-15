@@ -223,8 +223,7 @@ function PacientesPage() {
             ]}
             data={pacientesConDueño}
 onRowClick={(paciente) => {
-  console.log("🆔 ID del paciente:", paciente._id);
-  console.log("👤 ID del dueño:", paciente.ownerId);
+
   navigate(`/pacientes/${paciente._id}`);
 }}            onEdit={(paciente) => {
 
