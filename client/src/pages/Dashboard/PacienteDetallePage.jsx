@@ -31,8 +31,7 @@ function PacienteDetallePage() {
                 
                 // 2. Si tiene dueño, cargar datos del dueño
                 if (pacienteRes.data.ownerId) {
-                    setDueno(duenoRes.data);
-                }
+   setDueno(pacienteRes.data.ownerId);                }
             } catch (error) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             } finally {
