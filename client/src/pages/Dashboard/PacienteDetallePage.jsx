@@ -31,7 +31,6 @@ function PacienteDetallePage() {
                 
                 // 2. Si tiene dueño, cargar datos del dueño
                 if (pacienteRes.data.ownerId) {
-                    const duenoRes = await getClienteByIdRequest(pacienteRes.data.ownerId);
                     setDueno(duenoRes.data);
                 }
             } catch (error) {
@@ -78,7 +77,6 @@ function PacienteDetallePage() {
 
             {!loading && paciente && (
                 <>
-                    {/* Tarjeta del Paciente */}
                     <InfoCard
                         title={`Información de ${paciente.nombre}`}
                         data={[
@@ -93,7 +91,6 @@ function PacienteDetallePage() {
                         ]}
                     />
 
-                    {/* Tarjeta del Dueño (si existe) */}
                     {dueno && (
                         <div className="mt-8">
                             <h3 className="text-xl font-semibold mb-4">Dueño de {paciente.nombre}</h3>
