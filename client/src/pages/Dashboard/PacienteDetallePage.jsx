@@ -7,7 +7,8 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
-
+import { createPacienteRequest } from "/src/api/pacientes";
+import { getPacienteByIdRequest } from "/src/api/pacientes";
 
 
 function PacienteDetallePage() {
