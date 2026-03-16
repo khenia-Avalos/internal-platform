@@ -2,7 +2,7 @@ import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js';  
 import { HORARIO_POR_DEFECTO } from '../../config/horariosPorDefecto.js';
-
+import Horario from '../models/horario.model.js';
 
 // Obtener todos los doctores
 export const getDoctores = async (req, res) => {
@@ -20,7 +20,7 @@ export const getDoctores = async (req, res) => {
 export const createDoctor = async (req, res) => {
   try {
     const { username, lastname, email, password, phoneNumber, especialidad } = req.body;
-    const existeDoctor = await Doctor.findOne({ email }); 
+const existeDoctor = await User.findOne({ email });  
 
     // Verificar si ya existe el email
     if (existeDoctor) {
