@@ -106,3 +106,23 @@ export const deleteDoctor = async (req, res) => {
     message: errorResponse.message 
   });  }
 };
+
+
+// Obtener un doctor por ID
+export const getDoctorById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doctor = await User.findById(id).select('-password');
+    
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    
+    res.json(doctor);
+  } catch (error) {
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
+};
