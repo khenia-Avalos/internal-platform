@@ -20,6 +20,7 @@ export const getDoctores = async (req, res) => {
 export const createDoctor = async (req, res) => {
   try {
     const { username, lastname, email, password, phoneNumber, especialidad } = req.body;
+    const existeDoctor = await Doctor.findOne({ email }); 
 
     // Verificar si ya existe el email
     if (existeDoctor) {
