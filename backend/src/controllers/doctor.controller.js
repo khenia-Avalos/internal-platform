@@ -1,6 +1,7 @@
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
+import { manejarError } from '../utils/errorHandler.js';  
+import { HORARIO_POR_DEFECTO } from '../../config/horariosPorDefecto.js';
 
 
 // Obtener todos los doctores
@@ -36,13 +37,23 @@ export const createDoctor = async (req, res) => {
       username,
       lastname,
       email,
-      password: hashedPassword, // ← Encriptado
+      password: hashedPassword, 
       phoneNumber,
       role: "doctor",
       especialidad
     });
 
     const savedDoctor = await newDoctor.save();
+     const horariosPorDefecto = HORARIO_POR_DEFECTO.dias.map(dia => ({
+      doctorId: savedDoctor._id,
+      dia,
+      horaInicio: HORARIO_POR_DEFECTO.horaInicio,
+      horaFin: HORARIO_POR_DEFECTO.horaFin,
+      intervalo: HORARIO_POR_DEFECTO.intervalo,
+      activo: HORARIO_POR_DEFECTO.activo
+    }));
+        await Horario.insertMany(horariosPorDefecto);
+
     
     // No enviar password en la respuesta
     const doctorResponse = savedDoctor.toObject();
