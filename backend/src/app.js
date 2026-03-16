@@ -8,6 +8,7 @@ import tasksRoutes from './routes/tasks.routes.js'
 import doctorRoutes from './routes/doctor.routes.js';
 import clientesRoutes from './routes/clientes.routes.js';
 import pacientesRoutes from './routes/pacientes.routes.js';
+import horarioRoutes from './routes/horario.routes.js';
 
 import { FRONTEND_URL } from "./config.js";
 
@@ -41,6 +42,7 @@ app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
 app.use("/api", clientesRoutes);
 app.use("/api", pacientesRoutes);
+app.use("/api", horarioRoutes);
 
 
 export default app;
