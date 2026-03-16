@@ -109,7 +109,7 @@ export const deleteDoctor = async (req, res) => {
 
 
 // Obtener un doctor por ID
-export const getDoctorById = async (req, res) => {
+export const getDoctorByIdRequest = async (req, res) => {
   try {
     const { id } = req.params;
     const doctor = await User.findById(id).select('-password');
