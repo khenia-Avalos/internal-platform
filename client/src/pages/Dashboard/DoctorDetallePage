@@ -1,0 +1,6 @@
+function CitasPage(){
+    return (
+        <div>DOCTORDETALLEPAGE</div>
+    )
+}
+export default CitasPage

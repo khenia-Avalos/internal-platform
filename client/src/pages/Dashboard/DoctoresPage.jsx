@@ -6,6 +6,8 @@ import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+import { useNavigate } from 'react-router';
+
 
 
 
@@ -20,6 +22,7 @@ import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function DoctoresPage() {
+  const navigate = useNavigate();
   const [doctores, setDoctores] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);
@@ -189,6 +192,7 @@ function DoctoresPage() {
               { header: "Especialidad", accessor: "especialidad" }
             ]}
             data={doctoresFiltrados}
+              onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
             onEdit={(doctor) => {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
