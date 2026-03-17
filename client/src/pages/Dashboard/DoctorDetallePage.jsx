@@ -6,7 +6,8 @@ import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getDoctorByIdRequest } from "/src/api/doctores";
-
+import { getHorariosByDoctorRequest } from "/src/api/horarios";
+import { DataTable } from "../../components/DataTable";
 
 
 
@@ -18,6 +19,7 @@ function DoctorDetallePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+const [horarios, setHorarios] = useState([]);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -25,6 +27,8 @@ function DoctorDetallePage() {
       try {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
+        const horariosRes = await getHorariosByDoctorRequest(id);
+setHorarios(horariosRes.data)
         
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -37,6 +41,17 @@ function DoctorDetallePage() {
       cargarDatos();
     }
   }, [id]);
+  const getNombreDia = (dia) => {
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];//los del config por posicion
+  return dias[dia];
+};
+const horariosFormateados = horarios.map(horario => ({
+  ...horario,
+  diaNombre: getNombreDia(horario.dia),
+  intervaloTexto: `${horario.intervalo} min`,
+  estadoTexto: horario.activo ? 'Activo' : 'Inactivo',
+  estadoColor: horario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+}));
 
 
   return (
@@ -92,6 +107,27 @@ function DoctorDetallePage() {
               + Agregar Horario
             </button>
             </div>
+            <DataTable
+  columns={[
+    { header: "Día", accessor: "diaNombre" },
+    { header: "Hora Inicio", accessor: "horaInicio" },
+    { header: "Hora Fin", accessor: "horaFin" },
+    { header: "Intervalo", accessor: "intervaloTexto" },
+    { 
+      header: "Estado", 
+      accessor: "estadoTexto",
+      // El badge lo hacemos con render porque es visual
+      render: (horario) => (
+        <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+          {horario.estadoTexto}
+        </span>
+      )
+    }
+  ]}
+  data={horariosFormateados}
+  onEdit={handleEditHorario}
+  onDelete={handleDeleteHorario}
+/>
         </>
       )}
 
