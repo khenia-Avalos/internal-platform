@@ -125,8 +125,7 @@ const horariosFormateados = horarios.map(horario => ({
     }
   ]}
   data={horariosFormateados}
-  onEdit={handleEditHorario}
-  onDelete={handleDeleteHorario}
+
 />
         </>
       )}
