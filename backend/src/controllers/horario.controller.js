@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js'; 
 import Horario from '../models/horario.model.js';
 
-export const getHorariosByDoctor = async (req, res) => {
+export const getHorariosByDoctorRequest = async (req, res) => {
   try {
     const { doctorId } = req.params;
     const horarios = await Horario.find({ doctorId });
