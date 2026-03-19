@@ -65,44 +65,19 @@ function PacientesPage() {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-useEffect(() => {
-  const obtenerPacientes = async () => {
-    try {
-      const response = await getPacienteRequest();
-      
-      const pacientesNormalizados = response.data.map(paciente => {
-        // Normalizar ownerId
-        let ownerNormalizado = paciente.ownerId;
-        
-        if (typeof paciente.ownerId === 'string') {
-          ownerNormalizado = {
-            _id: paciente.ownerId,
-            username: `ID: ${paciente.ownerId}`,
-          };
-        }
-        
-        // AHORA SÍ, getSearchableText YA ESTÁ DEFINIDA
-        const textoBusqueda = getSearchableText({
-          ...paciente,
-          ownerId: ownerNormalizado
-        });
-        
-        return {
-          ...paciente,
-          ownerId: ownerNormalizado,
-          _searchableText: textoBusqueda
-        };
-      });
-      
-      setPacientes(pacientesNormalizados);
-    } catch (error) {
-      console.error('Error al cargar pacientes:', error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
-  
-  obtenerPacientes();
-}, []); // <- Dependencias vacías
+
+  useEffect(() => {
+    const obtenerPacientes = async () => {
+      try {
+        const response = await getPacienteRequest();
+        setPacientes(response.data);
+      } catch (error) {
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
+
+      }
+    };
+    obtenerPacientes();
+  }, []);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
@@ -110,7 +85,7 @@ useEffect(() => {
       paciente.nombre?.toLowerCase().includes(texto) ||
       paciente.especie?.toLowerCase().includes(texto) ||
       paciente.raza?.toLowerCase().includes(texto) ||
-      paciente.ownerId?.toLowerCase().includes(texto)
+      paciente.ownerId?.username?.toLowerCase().includes(texto) // Buscar también por nombre de dueño
     );
   });
   const pacientesConDueño = pacientesFiltrados.map(paciente => ({
