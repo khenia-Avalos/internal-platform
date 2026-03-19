@@ -8,9 +8,8 @@ import { InfoCard } from "../../components/desCard";
 import { getDoctorByIdRequest } from "/src/api/doctores";
 import { getHorariosByDoctorRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
-
-
-
+import { editConfig } from "../config/editConfig";
+import { updateHorarioRequest } from "/src/api/horarios";  
 function DoctorDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -20,6 +19,7 @@ function DoctorDetallePage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
 const [horarios, setHorarios] = useState([]);
+const [horarioEditando, setHorarioEditando] = useState(null);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -53,7 +53,23 @@ const horariosFormateados = horarios.map(horario => ({
   estadoColor: horario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
 }));
 
-
+const handleEditHorario = (horario) => {
+  setHorarioEditando(horario);
+  setErrors([]);
+  setModalAbierto(true);
+}
+const handleUpdateHorario = async (data) => {
+  try {
+    await updateHorarioRequest(horarioEditando._id, data);
+    setModalAbierto(false);
+    const horariosRes = await getHorariosByDoctorRequest(id);
+    setHorarios(horariosRes.data);
+    setSuccessMessage("Horario actualizado correctamente");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  } catch (error) {
+    manejarErrorResponse(error, setErrors, setSuccessMessage);
+  }
+};
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
@@ -96,17 +112,7 @@ const horariosFormateados = horarios.map(horario => ({
             ]}
           />
           
-          <div className="mt-4 mb-6">
-            <button 
-              onClick={() => {
-                setErrors([]);
-                setModalAbierto(true);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              + Agregar Horario
-            </button>
-            </div>
+       
             <DataTable
   columns={[
     { header: "Día", accessor: "diaNombre" },
@@ -125,6 +131,7 @@ const horariosFormateados = horarios.map(horario => ({
     }
   ]}
   data={horariosFormateados}
+    onEdit={handleEditHorario}  
 
 />
         </>
@@ -133,8 +140,15 @@ const horariosFormateados = horarios.map(horario => ({
       <Modal 
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
-        title="Agregar Nuevo Horario"
+        title="Editar Horario"
       >
+         <DynamicForm
+    {...editConfig.editHorario}
+    defaultValues={horarioEditando}  // ← Los datos del horario a editar
+    onSubmit={handleUpdateHorario}
+    errors={errors}
+    successMessage={successMessage}
+  />
      
       </Modal>
     </div>
