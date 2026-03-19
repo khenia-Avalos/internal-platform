@@ -2,7 +2,6 @@ import { useParams, useNavigate, Link } from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
-import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getDoctorByIdRequest } from "/src/api/doctores";

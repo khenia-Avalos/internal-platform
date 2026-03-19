@@ -212,5 +212,42 @@ editpaciente: {
 }
   ],
   submitLabel: "Actualizar Paciente"
+},
+//para edithorario se crea en backend en horario por defecto, luego se edita solo hora inicio, fin, intervalo y activo, el doctor no se puede cambiar, ni el dia, para no complicar la logica de horarios
+
+editHorario: {
+  title: "Editar Horario",
+  fields: [
+    {
+      name: "horaInicio",
+      type: "time",
+      label: "Hora de inicio",
+      validation: { required: "La hora de inicio es requerida" }
+    },
+    {
+      name: "horaFin",
+      type: "time",
+      label: "Hora de fin",
+      validation: { required: "La hora de fin es requerida" }
+    },
+    {
+      name: "intervalo",
+      type: "number",
+      label: "Intervalo (minutos)",
+      validation: { 
+        required: "El intervalo es requerido",
+        min: { value: 15, message: "Mínimo 15 minutos" },
+        max: { value: 120, message: "Máximo 120 minutos" }
+      }
+    },
+    {
+      name: "activo",
+      type: "checkbox",
+      label: "Activo"
+    }
+  ],
+  submitLabel: "Actualizar Horario"
 }
 };
+
+
