@@ -65,19 +65,29 @@ function PacientesPage() {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-
-  useEffect(() => {
-    const obtenerPacientes = async () => {
-      try {
-        const response = await getPacienteRequest();
-        setPacientes(response.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-
-      }
-    };
-    obtenerPacientes();
-  }, []);
+useEffect(() => {
+  const obtenerPacientes = async () => {
+    try {
+      const response = await getPacienteRequest();
+      
+      // NORMALIZAR LOS DATOS AQUÍ
+      const pacientesNormalizados = response.data.map(paciente => ({
+        ...paciente,
+        // Asegurar que ownerId sea siempre un objeto con la estructura que necesitas
+        ownerId: typeof paciente.ownerId === 'string' 
+          ? { _id: paciente.ownerId, username: 'ID: ' + paciente.ownerId } // Caso: es solo string
+          : paciente.ownerId || { username: 'Sin dueño' }, // Caso: es objeto o null
+        // Crear un campo auxiliar para búsquedas
+        _searchableText: getSearchableText(paciente)
+      }));
+      
+      setPacientes(pacientesNormalizados);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+  obtenerPacientes();
+}, []);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
