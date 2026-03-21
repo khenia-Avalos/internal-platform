@@ -133,52 +133,66 @@ setTimeout(() => setSuccessMessage(""), 3000);
                             />
                         </div>
                     )}
-                     <div className="mt-8">
+                   <div className="mt-8">
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-xl font-semibold">Historial de Internados</h3>
+    <button
+      onClick={() => setMostrarFormInternado(true)}
+      className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
+    >
+      + Agregar Internado
+    </button>
+  </div>
+
+  {/* Formulario de internado */}
+  {mostrarFormInternado && (
+    <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold">Historial de Internados</h3>
+        <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
         <button
-          onClick={() => setMostrarFormInternado(true)}
-          className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
+          onClick={() => setMostrarFormInternado(false)}
+          className="text-gray-400 hover:text-gray-600 transition text-xl"
+          aria-label="Cerrar"
         >
-          + Agregar Internado
+          ✕
         </button>
       </div>
-
-      {/* Formulario de internado */}
-      {mostrarFormInternado && (
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
-            <button
-              onClick={() => setMostrarFormInternado(false)}
-              className="text-gray-400 hover:text-gray-600 transition text-xl"
-              aria-label="Cerrar"
-            >
-              ✕
-            </button>
-          </div>
-          <DynamicForm
-            {...createConfig.internado}
-            layout="grid"
-            defaultValues={{ pacienteId: id }}
-            onSubmit={handleCrearInternado}
-            errors={errors}
-            successMessage={successMessage}
-          />
-        </div>
-      )}
-
-     <InfoCard
-  key={internado._id}
-  title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
-  data={[
-    { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
-    { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'Sin fecha de egreso' },
-    { label: "Medicamentos", value: internado.medicamentos?.map(m => m.nombre).join(', ') || 'Sin medicamentos' },
-    { label: "Notas", value: internado.notas || 'Sin notas' },
-  ]}
-/>
+      <DynamicForm
+        {...createConfig.internado}
+        layout="grid"
+        defaultValues={{ pacienteId: id }}
+        onSubmit={handleCrearInternado}
+        errors={errors}
+        successMessage={successMessage}
+      />
     </div>
+  )}
+
+  {/* Lista de internados */}
+  {internados.length === 0 ? (
+    <p className="text-gray-500">No hay internados registrados</p>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {internados.map((internado) => (
+        <InfoCard
+          key={internado._id}
+          title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
+          data={[
+            { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
+            { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
+            { 
+              label: "Medicamentos", 
+              value: internado.medicamentos?.length > 0 
+                ? internado.medicamentos.map(m => `${m.nombre} (${m.dosis})`).join(', ')
+                : 'Sin medicamentos'
+            },
+            { label: "Notas", value: internado.notas || 'Sin notas' }
+          ]}
+        />
+      ))}
+    </div>
+  )}
+</div>
   </>
 )}
         
