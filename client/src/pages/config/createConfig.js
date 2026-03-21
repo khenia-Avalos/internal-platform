@@ -270,5 +270,34 @@ registerPaciente: {
   ],
   submitLabel: "Crear Cliente",
   redirect: {}
+},
+internado: {
+  title: "Registrar Internado",
+  fields: [
+    {
+      name: "fechaIngreso",
+      type: "date",
+      label: "Fecha de ingreso",
+      validation: { required: "La fecha de ingreso es requerida" }
+    },
+    {
+      name: "fechaEgreso",
+      type: "date",
+      label: "Fecha de egreso (opcional)"
+    },
+    {
+      name: "medicamentos",
+      type: "text",
+      label: "Medicamentos",
+      placeholder: "Nombres de medicamentos separados por comas"
+    },
+    {
+      name: "notas",
+      type: "textarea",
+      label: "Notas",
+      placeholder: "Observaciones adicionales"
+    }
+  ],
+  submitLabel: "Guardar Internado"
 }
 };

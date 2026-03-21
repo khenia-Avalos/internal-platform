@@ -110,7 +110,9 @@ const handleUpdateHorario = async (data) => {
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
-          
+          <div className="flex justify-between items-center mt-8 mb-4">
+            <h2 className="text-xl font-semibold text-gray-700">Horarios</h2>
+          </div>
        
             <DataTable
   columns={[

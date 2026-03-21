@@ -9,6 +9,7 @@ import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
+import { getInternadosByPacienteRequest, createInternadoRequest } from "/src/api/internados";
 
 
 function PacienteDetallePage() {
@@ -20,6 +21,8 @@ function PacienteDetallePage() {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [errors, setErrors] = useState([]);
     const [successMessage, setSuccessMessage] = useState("");
+    const [internados, setInternados] = useState([]);
+const [mostrarFormInternado, setMostrarFormInternado] = useState(false);
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -31,7 +34,12 @@ function PacienteDetallePage() {
                 
                 // 2. Si tiene dueño, cargar datos del dueño
                 if (pacienteRes.data.ownerId) {
-   setDueno(pacienteRes.data.ownerId);                }
+   setDueno(pacienteRes.data.ownerId);           
+     }
+     // Después de cargar el paciente
+  const internadosRes = await getInternadosByPacienteRequest(id);
+  setInternados(internadosRes.data);
+
             } catch (error) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             } finally {
@@ -43,6 +51,26 @@ function PacienteDetallePage() {
             cargarDatos();
         }
     }, [id]);
+
+
+
+const handleCrearInternado = async (data) => {
+    try {
+        //enviar datos con pacienteid
+await createInternadoRequest({ ...data, pacienteId: id });
+setMostrarFormInternado(false);
+setErrors([]);
+ const response = await getInternadosByPacienteRequest(id);
+      setInternados(response.data);
+      setSuccessMessage("Internado creado exitosamente");
+setTimeout(() => setSuccessMessage(""), 3000);
+    }catch (error) {
+               manejarErrorResponse(error, setErrors, setSuccessMessage);
+        
+
+    }
+}
+
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
@@ -105,8 +133,55 @@ function PacienteDetallePage() {
                             />
                         </div>
                     )}
-                </>
-            )}
+                     <div className="mt-8">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold">Historial de Internados</h3>
+        <button
+          onClick={() => setMostrarFormInternado(true)}
+          className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
+        >
+          + Agregar Internado
+        </button>
+      </div>
+
+      {/* Formulario de internado */}
+      {mostrarFormInternado && (
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
+            <button
+              onClick={() => setMostrarFormInternado(false)}
+              className="text-gray-400 hover:text-gray-600 transition text-xl"
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+          </div>
+          <DynamicForm
+            {...createConfig.internado}
+            layout="grid"
+            defaultValues={{ pacienteId: id }}
+            onSubmit={handleCrearInternado}
+            errors={errors}
+            successMessage={successMessage}
+          />
+        </div>
+      )}
+
+     <InfoCard
+  key={internado._id}
+  title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
+  data={[
+    { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
+    { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'Sin fecha de egreso' },
+    { label: "Medicamentos", value: internado.medicamentos?.map(m => m.nombre).join(', ') || 'Sin medicamentos' },
+    { label: "Notas", value: internado.notas || 'Sin notas' },
+  ]}
+/>
+    </div>
+  </>
+)}
+        
         </div>
     );
 }
