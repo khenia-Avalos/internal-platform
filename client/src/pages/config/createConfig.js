@@ -286,10 +286,22 @@ internado: {
       label: "Fecha de egreso (opcional)"
     },
     {
-      name: "medicamentos",
+      name: "medicamento",
       type: "text",
-      label: "Medicamentos",
-      placeholder: "Nombres de medicamentos separados por comas"
+      label: "Medicamento",
+      placeholder: "Nombre del medicamento"
+    },
+    {
+      name: "via",
+      type: "text",
+      label: "Vía de administración",
+      placeholder: "Oral, intravenosa, etc."
+    },
+    {
+      name: "dosis",
+      type: "text",
+      label: "Dosis",
+      placeholder: "500mg, 1 tableta, etc."
     },
     {
       name: "notas",

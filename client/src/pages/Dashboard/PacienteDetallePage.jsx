@@ -174,21 +174,18 @@ setTimeout(() => setSuccessMessage(""), 3000);
   ) : (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {internados.map((internado) => (
-        <InfoCard
-          key={internado._id}
-          title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
-          data={[
-            { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
-            { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
-            { 
-              label: "Medicamentos", 
-              value: internado.medicamentos?.length > 0 
-                ? internado.medicamentos.map(m => `${m.nombre} (${m.dosis})`).join(', ')
-                : 'Sin medicamentos'
-            },
-            { label: "Notas", value: internado.notas || 'Sin notas' }
-          ]}
-        />
+      <InfoCard
+  key={internado._id}
+  title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
+  data={[
+    { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
+    { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
+    { label: "Medicamento", value: internado.medicamento || 'No especificado' },
+    { label: "Vía", value: internado.via || 'No especificada' },
+    { label: "Dosis", value: internado.dosis || 'No especificada' },
+    { label: "Notas", value: internado.notas || 'Sin notas' }
+  ]}
+/>
       ))}
     </div>
   )}
