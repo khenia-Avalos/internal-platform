@@ -88,6 +88,28 @@ const handleUpdateHorario = async (data) => {
     manejarErrorResponse(error, setErrors, setSuccessMessage);
   }
 };
+
+const iniciarPausa = async () => {
+  try {
+    const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
+    setPausaActiva(res.data);
+    setSuccessMessage("Almuerzo iniciado");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  } catch (error) {
+    manejarErrorResponse(error, setErrors, setSuccessMessage);
+  }
+};
+
+const terminarPausa = async () => {
+  try {
+    await terminarPausaRequest(pausaActiva._id);
+    setPausaActiva(null);
+    setSuccessMessage("Almuerzo terminado");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  } catch (error) {
+    manejarErrorResponse(error, setErrors, setSuccessMessage);
+  }
+};
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
@@ -163,14 +185,14 @@ const handleUpdateHorario = async (data) => {
         onClick={iniciarPausa}
         className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
       >
-        🍽️ Iniciar Almuerzo
+         Iniciar Almuerzo
       </button>
     ) : (
       <button
         onClick={terminarPausa}
         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
       >
-        ✅ Volver del Almuerzo
+         Volver del Almuerzo
       </button>
     )}
   </div>
