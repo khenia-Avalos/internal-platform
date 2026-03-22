@@ -9,6 +9,8 @@ import { getHorariosByDoctorRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
 import { editConfig } from "../config/editConfig";
 import { updateHorarioRequest } from "/src/api/horarios";  
+import {iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest} from "/src/api/pausas";
+
 function DoctorDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -19,10 +21,12 @@ function DoctorDetallePage() {
   const [successMessage, setSuccessMessage] = useState("");
 const [horarios, setHorarios] = useState([]);
 const [horarioEditando, setHorarioEditando] = useState(null);
+const [pausaActiva, setPausaActiva] = useState(null);
 
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
+      
       try {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
@@ -40,6 +44,21 @@ setHorarios(horariosRes.data)
       cargarDatos();
     }
   }, [id]);
+
+useEffect(() => {
+  const cargarPausaActiva = async () => {
+    try {
+      const res = await getPausasActivasRequest(id);
+      if (res.data.length > 0) {
+        setPausaActiva(res.data[0]);
+      }
+    } catch (error) {
+      console.error("Error al cargar pausa activa:", error);
+    }
+  };
+  if (id) cargarPausaActiva();
+}, [id]);
+
   const getNombreDia = (dia) => {
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];//los del config por posicion
   return dias[dia];
@@ -135,6 +154,27 @@ const handleUpdateHorario = async (data) => {
     onEdit={handleEditHorario}  
 
 />
+
+<div className="flex justify-between items-center mt-8 mb-4">
+  <h2 className="text-xl font-semibold text-gray-700">Pausas</h2>
+  <div className="flex gap-3">
+    {!pausaActiva ? (
+      <button
+        onClick={iniciarPausa}
+        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+      >
+        🍽️ Iniciar Almuerzo
+      </button>
+    ) : (
+      <button
+        onClick={terminarPausa}
+        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+      >
+        ✅ Volver del Almuerzo
+      </button>
+    )}
+  </div>
+</div>
         </>
       )}
 
