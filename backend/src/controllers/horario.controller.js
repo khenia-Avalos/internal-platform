@@ -1,5 +1,4 @@
-import User from '../models/user.model.js';
-import bcrypt from 'bcryptjs';
+
 import { manejarError } from '../utils/errorHandler.js'; 
 import Horario from '../models/horario.model.js';
 
@@ -20,7 +19,6 @@ export const createHorario = async (req, res) => {
   try {
     const { doctorId, dia, horaInicio, horaFin, intervalo, activo = true } = req.body;
     
-    // ✅ VALIDACIONES PRIMERO
     if (horaFin <= horaInicio) {
       return res.status(400).json({ 
         message: "La hora de fin debe ser mayor a la hora de inicio" 

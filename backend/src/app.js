@@ -10,7 +10,7 @@ import clientesRoutes from './routes/clientes.routes.js';
 import pacientesRoutes from './routes/pacientes.routes.js';
 import horarioRoutes from './routes/horario.routes.js';
 import internadoRoutes from './routes/internado.routes.js';
-
+import pausaRoutes from './routes/pausa.routes.js';
 import { FRONTEND_URL } from "./config.js";
 
 const app = express();
@@ -45,6 +45,7 @@ app.use("/api", clientesRoutes);
 app.use("/api", pacientesRoutes);
 app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
+app.use("/api", pausaRoutes);
 
 
 export default app;
