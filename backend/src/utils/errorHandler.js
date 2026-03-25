@@ -10,14 +10,14 @@ const traducirNombreCampo = (campo) => {
     phoneNumber: 'teléfono',
     password: 'contraseña',
     
-    // Clientes
+    // Clientes (Owner)
     cedula: 'cédula',
     direccion: 'dirección',
     
     // Doctores
     especialidad: 'especialidad',
     
-    // Mascotas
+    // Mascotas (Paciente)
     nombre: 'nombre',
     especie: 'especie',
     raza: 'raza',
@@ -27,6 +27,35 @@ const traducirNombreCampo = (campo) => {
     peso: 'peso',
     temperatura: 'temperatura',
     antecedentesMedicos: 'antecedentes médicos',
+    ownerId: 'dueño',
+    
+    // Citas
+    doctorId: 'doctor',
+    pacienteId: 'mascota',
+    fecha: 'fecha',
+    horaInicio: 'hora de inicio',
+    horaFin: 'hora de fin',
+    motivo: 'motivo',
+    estado: 'estado',
+    notas: 'notas',
+    precio: 'precio',
+    
+    // Horarios
+    dia: 'día',
+    horaInicio: 'hora de inicio',
+    horaFin: 'hora de fin',
+    intervalo: 'intervalo entre citas',
+    activo: 'estado',
+    
+    // Pausas
+    inicio: 'inicio de pausa',
+    fin: 'fin de pausa',
+    activa: 'estado de pausa',
+    
+    // Internados
+    fechaIngreso: 'fecha de ingreso',
+    fechaEgreso: 'fecha de egreso',
+    medicamentos: 'medicamentos',
     
     // General
     role: 'rol'
@@ -42,7 +71,8 @@ const traducirErrorEnum = (campo, valorRecibido) => {
     especie: ['perro', 'gato', 'ave', 'conejo', 'otro'],
     sexo: ['macho', 'hembra'],
     role: ['admin', 'doctor', 'client', 'owner'],
-    especialidad: ['Medicina General', 'Groomer', 'Cirugía']
+    especialidad: ['Medicina General', 'Groomer', 'Cirugía'],
+    estado: ['pendiente', 'confirmada', 'cancelada', 'completada']
   };
 
   const opcionesTexto = opciones[campo]?.join(', ') || 'valores válidos';
@@ -65,6 +95,8 @@ const traducirErrorValidacion = (error) => {
     else if (err.kind === 'min') {
       if (campo === 'edad') {
         errores.push('La edad no puede ser negativa');
+      } else if (campo === 'peso' || campo === 'intervalo') {
+        errores.push(`El valor mínimo para ${traducirNombreCampo(campo)} es ${err.min}`);
       } else {
         errores.push(`El valor mínimo para ${traducirNombreCampo(campo)} es ${err.min}`);
       }
@@ -79,7 +111,16 @@ const traducirErrorValidacion = (error) => {
       errores.push(`El ${traducirNombreCampo(campo)} ya está registrado`);
     }
     else if (err.kind === 'regexp') {
-      errores.push(`El formato de ${traducirNombreCampo(campo)} no es válido`);
+      if (campo === 'phoneNumber') {
+        errores.push('El formato del teléfono no es válido. Ejemplo: +50670983832');
+      } else if (campo === 'horaInicio' || campo === 'horaFin') {
+        errores.push(`El formato de ${traducirNombreCampo(campo)} no es válido. Ejemplo: 09:00`);
+      } else {
+        errores.push(`El formato de ${traducirNombreCampo(campo)} no es válido`);
+      }
+    }
+    else if (err.kind === 'ObjectId') {
+      errores.push(`ID no válido para ${traducirNombreCampo(campo)}`);
     }
     else {
       errores.push(err.message);
@@ -109,7 +150,7 @@ const traducirErrorDuplicado = (error) => {
  * Manejador principal de errores
  */
 export const manejarError = (error) => {
-  console.error(' Error detectado:', error);
+  console.error('🔴 Error detectado:', error);
 
   // Error de validación de Mongoose
   if (error.name === 'ValidationError') {
@@ -140,16 +181,37 @@ export const manejarError = (error) => {
   if (error.name === 'CastError') {
     return {
       status: 400,
-      message: 'ID no válido'
+      message: `ID no válido para ${traducirNombreCampo(error.path)}`
     };
   }
+
   // Errores personalizados que tú lanzas
-if (error.name === 'CustomError') {
-  return {
-    status: error.status || 400,
-    message: error.message
-  };
-}
+  if (error.name === 'CustomError') {
+    return {
+      status: error.status || 400,
+      message: error.message
+    };
+  }
+
+  // Error de disponibilidad (horario, pausas, citas solapadas)
+  if (error.message && error.message.includes('horario')) {
+    return {
+      status: 400,
+      message: 'El doctor no tiene horario disponible en ese día'
+    };
+  }
+  if (error.message && error.message.includes('pausa')) {
+    return {
+      status: 400,
+      message: 'El doctor está en pausa en ese horario'
+    };
+  }
+  if (error.message && error.message.includes('cita')) {
+    return {
+      status: 400,
+      message: 'Ya existe una cita en ese horario'
+    };
+  }
 
   // Error por defecto
   console.error('❌ Error no manejado:', error);
