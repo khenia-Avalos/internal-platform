@@ -43,6 +43,10 @@ const citaSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-    },
-  timestamps: true});
+    }
+
+   },
+  {
+  timestamps: true  // Aquí va la opción, como segundo argumento
+});
 export default mongoose.model('Cita', citaSchema);
