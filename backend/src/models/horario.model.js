@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const horarioSchema = new mongoose.Schema({
   doctorId: {
-    type: mongoose.Schema.Types.ObjectId,  // ← AGREGADO
+    type: mongoose.Schema.Types.ObjectId,  
     required: true,
     ref: 'User'
   },
@@ -11,7 +11,6 @@ const horarioSchema = new mongoose.Schema({
     required: true,
     min: 0, 
     max: 6
-    // trim removido
   },
   horaInicio: {
     type: String,
@@ -31,12 +30,10 @@ const horarioSchema = new mongoose.Schema({
     default: 30, 
     min: 15, 
     max: 120
-    // trim removido
   },
   activo: {
     type: Boolean,
     default: true
-    // required: false removido, trim removido
   },
 }, {
   timestamps: true
