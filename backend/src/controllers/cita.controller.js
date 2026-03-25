@@ -13,7 +13,7 @@ const sumarMinutos = (hora, minutos) => {
 };
 
 
-export const crearCita = async (req, res) => {
+export const createCita = async (req, res) => {
     try {
          const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas } = req.body;
             
