@@ -311,5 +311,56 @@ internado: {
     }
   ],
   submitLabel: "Guardar Internado"
+},
+registerCita: {
+  title: "Agendar Cita",
+  fields: [
+    {
+      name: "titulo",
+      type: "text",
+      label: "Título de la cita",
+      placeholder: "Ej: Consulta general",
+      validation: { required: "El título es requerido" }
+    },
+    {
+      name: "fecha",
+      type: "date",
+      label: "Fecha",
+      validation: { required: "La fecha es requerida" }
+    },
+    {
+      name: "doctorId",
+      type: "select",
+      label: "Veterinario",
+      options: [], // se llena desde BD
+      isSearchable: true,
+      validation: { required: "El veterinario es requerido" }
+    },
+    {
+      name: "tipoCita",
+      type: "select",
+      label: "Tipo de cita",
+      options: [
+        { value: "consulta", label: "Consulta general" },
+        { value: "vacunacion", label: "Vacunación" },
+        { value: "cirugia", label: "Cirugía" },
+        { value: "estetica", label: "Estética (baño, corte)" }
+      ],
+      validation: { required: "El tipo de cita es requerido" }
+    },
+    {
+      name: "descripcion",
+      type: "textarea",
+      label: "Descripción",
+      placeholder: "Detalles adicionales sobre la cita"
+    },
+    {
+      name: "notas",
+      type: "textarea",
+      label: "Notas adicionales",
+      placeholder: "Observaciones importantes"
+    }
+  ],
+  submitLabel: "Agendar Cita"
 }
 };
