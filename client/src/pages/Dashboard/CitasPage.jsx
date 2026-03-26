@@ -205,4 +205,4 @@ function CitasPage() {
   );
 }
 
-export default ClientesPage;
+export default CitasPage
