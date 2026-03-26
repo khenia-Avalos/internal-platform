@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getHorariosDisponiblesRequest } from '../api/citas';
+import { getHorariosDisponiblesRequest } from '../api/cita';
 import { manejarErrorResponse } from '../utils/apiErrorHandler';
 
 export const HorariosDisponibles = ({ doctorId, fecha, onSelectHorario }) => {
