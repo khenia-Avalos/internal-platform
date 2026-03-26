@@ -195,3 +195,17 @@ export const getHorariosDisponibles = async (req, res) => {
     });
   }
 };
+
+export const getCitasRequest= async (id) => {
+  try {
+    const cita = await Cita.findById(id)
+      .populate('doctorId', 'username lastname especialidad')
+      .populate('pacienteId', 'nombre especie raza');
+    if (!cita) {
+      throw new Error("Cita no encontrada");
+    }
+    return cita;
+  } catch (error) {
+    throw error;
+  }
+}

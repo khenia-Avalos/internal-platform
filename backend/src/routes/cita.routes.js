@@ -5,7 +5,8 @@ import {
   getCitasByDoctor,
   getCitasByPaciente,
   updateCita,
-  deleteCita
+  deleteCita,
+  getCitasRequest
 } from '../controllers/cita.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
@@ -15,10 +16,12 @@ const router = Router();
 router.get('/citas/horarios/:doctorId/:fecha/:duracionCita', getHorariosDisponibles);
 router.post('/citas', createCita);
 
+
 // Rutas protegidas (requieren autenticación)
 router.get('/citas/doctor/:doctorId', validateToken, getCitasByDoctor);
 router.get('/citas/paciente/:pacienteId', validateToken, getCitasByPaciente);
 router.put('/citas/:id', validateToken, updateCita);
 router.delete('/citas/:id', validateToken, deleteCita);
+router.get('/citas', validateToken, getCitasRequest); // ← nueva ruta para obtener todas las citas
 
 export default router;
