@@ -1,40 +1,62 @@
 import { useState, useEffect } from 'react';
+import { getHorariosDisponiblesRequest } from '../api/citas';
+import { manejarErrorResponse } from '../utils/apiErrorHandler';
 
 export const HorariosDisponibles = ({ doctorId, fecha, onSelectHorario }) => {
-  // 1. Estados
   const [horarios, setHorarios] = useState([]);
-const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
+  const [errors, setErrors] = useState([]);
 
+  const cargarHorarios = async () => {
+    if (!doctorId || !fecha) {
+      setHorarios([]);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await getHorariosDisponiblesRequest(doctorId, fecha, 30); // duración por defecto
+      setHorarios(response.data);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // 2. useEffect para cargar horarios cuando cambie doctorId o fecha
+  useEffect(() => {
+    cargarHorarios();//cargar horarios cada vez que cambie el doctorId o la fecha   
+  }, [doctorId, fecha]);
 
- useEffect(() => {
-    const cargarHorarios = async () => {
-        if (!doctorId || !fecha) {
-            setHorarios([]);
-            return;
-        }
-        if (horarios.length > 0) return; // ya los cargamos
-        setLoading(true);   
-      try {
-        const response = await getHorario();
-        setHorarios(response.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-      }
-    };
-    cargarHorarios();
-  }, [doctorId, fecha]);//ejecuta cada vez que cambie doctorId o fecha
+  const handleSelectHorario = (horario) => {
+    setHorarioSeleccionado(horario);
+    onSelectHorario(horario);
+  };
 
+  if (loading) {
+    return <div className="text-center py-4">Cargando horarios...</div>;
+  }
 
-  // 3. Función para cargar horarios desde API
-  // 4. Función para seleccionar horario
-  // 5. Renderizado condicional (loading, sin horarios, lista de horarios)
+  if (horarios.length === 0) {
+    return <div className="text-center py-4 text-gray-500">No hay horarios disponibles para esta fecha</div>;
+  }
 
   return (
-    <div>
-      {/* Aquí va el contenido */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+      {horarios.map((horario, index) => (
+        <button
+          key={index}
+          onClick={() => handleSelectHorario(horario)}
+          className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+            horarioSeleccionado === horario
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          {horario.inicio} - {horario.fin}
+        </button>
+      ))}
     </div>
   );
 };
