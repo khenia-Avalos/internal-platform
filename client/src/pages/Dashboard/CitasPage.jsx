@@ -15,7 +15,7 @@ import {
   getCitasByPaciente,
   updateCita,
   deleteCita
-} from '../controllers/cita.controller.js';
+} from "/src/api/cita";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
