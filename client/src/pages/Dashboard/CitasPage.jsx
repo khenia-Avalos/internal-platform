@@ -7,7 +7,6 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
-import {createCita, getCitasByDoctor, deleteCitaRequest, updateCita} from "../../api/cita";
 import { 
   createCita,
   getHorariosDisponibles,
