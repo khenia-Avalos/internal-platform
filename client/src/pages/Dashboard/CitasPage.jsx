@@ -7,13 +7,12 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+import { FormularioCita } from "../../components/forms/FormularioCita";
 import { 
   createCita,
-  getHorariosDisponibles,
-  getCitasByDoctor,
-  getCitasByPaciente,
   updateCita,
-  deleteCita
+  deleteCita,
+  getCitasRequest
 } from "/src/api/cita";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
@@ -32,7 +31,7 @@ function CitasPage() {
     try {
       await createCita(data);
       setMostrarFormulario(false);
-      const response = await getCitasByDoctor();
+      const response = await getCitasRequest();
       setCitas(response.data);
       setSuccessMessage("Cita creada exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -45,8 +44,8 @@ function CitasPage() {
   useEffect(() => {
     const obtenerCitas = async () => {
       try {
-        const response = await getCitasByDoctor();
-        setCitas(response.data);
+const response = await getCitasRequest();  // ← obtiene todas las citas
+setCitas(response.data);  // ← guarda las citas en el estado
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
@@ -66,8 +65,8 @@ function CitasPage() {
   });
 
   const { handleDelete: handleDeleteCita } = useDelete(
-    deleteCitaRequest,
-    getCitasByDoctor,
+    deleteCita,
+    getCitasRequest,
     setCitas
   );
 
@@ -80,7 +79,7 @@ function CitasPage() {
     handleCancel
   } = useEdit(
     updateCita,
-    getCitasByDoctor,
+    getCitasRequest,
     setCitas,
     editConfig.cita,
     null
@@ -125,14 +124,10 @@ function CitasPage() {
                 ✕
               </button>
             </div>
-            <DynamicForm
-              {...createConfig.registerCita}
-              layout="grid"
-
-              onSubmit={handleCreateCita}
-              errors={errors}
-              successMessage={successMessage}
-            />
+          <FormularioCita
+  onSubmit={handleCreateCita}
+  cita={null}
+/>
           </div>
         )}
 
@@ -149,22 +144,17 @@ function CitasPage() {
                 ✕
               </button>
             </div>
-            <DynamicForm
-              {...editConfig.editCita}
-              layout="grid"
-
-              defaultValues={citaSeleccionada}
-              errors={editErrors}
-              successMessage={editSuccessMessage}
-              onSubmit={handleUpdate}
-            />
+            <FormularioCita
+  onSubmit={handleUpdate}
+  cita={citaSeleccionada}
+/>
           </div>
         )}
       </div>
 
       {/* Tabla de clientes */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
-        {clientes.length === 0 ? (
+{citas.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay citas registradas</p>
@@ -182,13 +172,13 @@ function CitasPage() {
           </div>
         ) : (
           <DataTable
-            columns={[
-              { header: "Nombre", accessor: "username" },
-              { header: "Apellido", accessor: "lastname" },
-              { header: "Email", accessor: "email" },
-              { header: "Teléfono", accessor: "phoneNumber" },
-              { header: "Cedula", accessor: "cedula" },
-              { header: "Dirección", accessor: "direccion" }]}
+           columns={[
+  { header: "Fecha", accessor: "fecha", render: (cita) => new Date(cita.fecha).toLocaleDateString() },
+  { header: "Hora", accessor: "horaInicio" },
+  { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
+  { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
+  { header: "Estado", accessor: "estado" }
+]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)} // ← NUEVO
 
