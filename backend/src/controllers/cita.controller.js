@@ -135,6 +135,10 @@ export const getHorariosDisponibles = async (req, res) => {
   try {
     const { doctorId, fecha, duracionCita } = req.params; // ← duracionCita viene del frontend
     
+const ahora = new Date();
+const esHoy = new Date(fecha).toDateString() === ahora.toDateString();//convierte la fecha y la actual a formato legible y compara
+const horaActual = ahora.toTimeString().slice(0, 5);//extrae los primjeros 5 caracteres de la hora actual (HH:MM) 
+
     const diaSemana = new Date(fecha).getDay();
     const horario = await Horario.findOne({ doctorId, dia: diaSemana });
     
@@ -161,35 +165,37 @@ export const getHorariosDisponibles = async (req, res) => {
     
     // Generar slots con duración variable
     const slots = [];
-    let horaActual = horario.horaInicio;// Inicializar con la hora de inicio del horario y let porque se va a modificar
+    let horaActualSlot = horario.horaInicio;// Inicializar con la hora de inicio del horario y let porque se va a modificar
     
-    while (sumarMinutos(horaActual, duracionCita) <= horario.horaFin) {
-      const horaFinSlot = sumarMinutos(horaActual, duracionCita);
+    while (sumarMinutos(horaActualSlot, duracionCita) <= horario.horaFin) {
+      const horaFinSlot = sumarMinutos(horaActualSlot, duracionCita);
       
       slots.push({
-        inicio: horaActual,
+        inicio: horaActualSlot,
         fin: horaFinSlot
       });
       
-      horaActual = sumarMinutos(horaActual, horario.intervalo);
+      horaActualSlot = sumarMinutos(horaActualSlot, horario.intervalo);
     }
     
-    // Filtrar slots ocupados por pausas
-    const slotsSinPausas = slots.filter(slot => {
-      return !pausas.some(pausa => {
-        return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-      });
-    });
-    
+  
     // Filtrar slots ocupados por citas
-    const slotsDisponibles = slotsSinPausas.filter(slot => {
-      return !citas.some(cita => {
-        return slot.inicio >= cita.horaInicio && slot.fin <= cita.horaFin;
+    const slotsDisponibles = slots.filter(slot => {
+      if (esHoy && slot.inicio < horaActual) {
+        return false; // No mostrar slots pasados si es hoy
+      }
+
+ // 6.3 Si ya hay una cita en ese horario → no disponible
+      const ocupado = citas.some(cita => {
+        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
+               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
+               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
       });
+      if (ocupado) return false;
+      
+      return true;
     });
-    
     res.json(slotsDisponibles);
-    
   } catch (error) {
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
