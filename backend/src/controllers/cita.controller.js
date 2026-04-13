@@ -190,7 +190,7 @@ if (fechaSeleccionada < hoy) {
   
     // Filtrar slots ocupados por citas
     const slotsDisponibles = slots.filter(slot => {
-      if (esHoy && slot.inicio < horaActual) {
+      if (esHoy && slot.fin <= horaActual) {
         return false; // No mostrar slots pasados si es hoy
       }
 
