@@ -187,9 +187,9 @@ const horaActual = ahora.toTimeString().slice(0, 5);//extrae los primjeros 5 car
 
  // 6.3 Si ya hay una cita en ese horario → no disponible
       const ocupado = citas.some(cita => {
-        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
-               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
-               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
+        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||//El inicio del slot está dentro de la cita (la cita empieza antes o justo cuando empieza el slot)
+               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||//El fin del slot está dentro de la cita (la cita termina después o justo cuando termina el slot)
+               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);//El slot engloba completamente a la cita (empieza antes y termina después)
       });
       if (ocupado) return false;
       
