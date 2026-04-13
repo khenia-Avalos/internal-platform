@@ -202,7 +202,7 @@ if (fechaSeleccionada < hoy) {
   console.log("   slot.fin <= horaActual:", slot.fin <= horaActual);
   
   // 1. Horas pasadas (solo hoy)
-  if (esHoy && slot.fin <= horaActual) {
+  if (esHoy && slot.inicio < horaActual) {
     console.log("   ❌ Bloqueado por hora pasada");
     return false;
   }
