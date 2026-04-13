@@ -153,13 +153,15 @@ export const getHorariosDisponibles = async (req, res) => {
       return res.json([]);
     }
     
-    const fechaSeleccionada = new Date(fecha);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    if (fechaSeleccionada < hoy) {
-      return res.json([]);
-    }
-    
+   // Validar que la fecha no sea pasada
+const fechaSeleccionada = new Date(fecha);
+const hoy = new Date();
+hoy.setHours(0, 0, 0, 0);
+fechaSeleccionada.setHours(0, 0, 0, 0);  // ← IMPORTANTE: comparar solo días
+
+if (fechaSeleccionada < hoy) {
+  return res.json([]);
+}
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
