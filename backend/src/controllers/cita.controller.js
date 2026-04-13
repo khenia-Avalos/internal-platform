@@ -133,28 +133,33 @@ export const deleteCita = async (req, res) => {
 
 export const getHorariosDisponibles = async (req, res) => {
   try {
-    const { doctorId, fecha, duracionCita } = req.params; // ← duracionCita viene del frontend
+    const { doctorId, fecha, duracionCita } = req.params;
     
-const ahora = new Date();
-const esHoy = new Date(fecha).toDateString() === ahora.toDateString();//convierte la fecha y la actual a formato legible y compara
-const horaActual = ahora.toTimeString().slice(0, 5);//extrae los primjeros 5 caracteres de la hora actual (HH:MM) 
-
+    // Convertir duracionCita a número
+    const duracion = parseInt(duracionCita);
+    
+    const ahora = new Date();
+    const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
+    const horaActual = ahora.toTimeString().slice(0, 5);
+    
     const diaSemana = new Date(fecha).getDay();
     const horario = await Horario.findOne({ doctorId, dia: diaSemana });
     
     if (!horario) {
-      return res.status(404).json({ message: "No hay horario configurado para este día" });
+      return res.json([]);  // ← Array vacío, no error 404
     }
     
     if (!horario.activo) {
-  return res.json([]);
-}
-const fechaSeleccionada = new Date(fecha);
-const hoy = new Date();
-hoy.setHours(0, 0, 0, 0);
-if (fechaSeleccionada < hoy) {
-  return res.json([]);
-}
+      return res.json([]);
+    }
+    
+    const fechaSeleccionada = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fechaSeleccionada < hoy) {
+      return res.json([]);
+    }
+    
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
@@ -172,50 +177,51 @@ if (fechaSeleccionada < hoy) {
       }
     });
     
-    // Generar slots con duración variable
+    // Generar slots
     const slots = [];
-    let horaActualSlot = horario.horaInicio;// Inicializar con la hora de inicio del horario y let porque se va a modificar
+    let horaActualSlot = horario.horaInicio;
+    const intervalo = parseInt(horario.intervalo);  // ← Asegurar número
     
-    while (sumarMinutos(horaActualSlot, duracionCita) <= horario.horaFin) {
-      const horaFinSlot = sumarMinutos(horaActualSlot, duracionCita);
+    while (sumarMinutos(horaActualSlot, duracion) <= horario.horaFin) {
+      const horaFinSlot = sumarMinutos(horaActualSlot, duracion);
       
       slots.push({
         inicio: horaActualSlot,
         fin: horaFinSlot
       });
       
-      horaActualSlot = sumarMinutos(horaActualSlot, horario.intervalo);
+      horaActualSlot = sumarMinutos(horaActualSlot, intervalo);
     }
     
-  
-    // Filtrar slots ocupados por citas
+    // Filtrar slots
     const slotsDisponibles = slots.filter(slot => {
+      // 1. Horas pasadas (solo hoy)
       if (esHoy && slot.fin <= horaActual) {
-        return false; // No mostrar slots pasados si es hoy
+        return false;
       }
-
-  // 2. Filtrar pausas (almuerzo)
-  const enPausa = pausas.some(pausa => {
-    return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-  });
-  if (enPausa) return false;
-
- // 6.3 Si ya hay una cita en ese horario → no disponible
+      
+      // 2. Pausas (almuerzo)
+      const enPausa = pausas.some(pausa => {
+        return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+      });
+      if (enPausa) return false;
+      
+      // 3. Citas existentes
       const ocupado = citas.some(cita => {
-        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||//El inicio del slot está dentro de la cita (la cita empieza antes o justo cuando empieza el slot)
-               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||//El fin del slot está dentro de la cita (la cita termina después o justo cuando termina el slot)
-               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);//El slot engloba completamente a la cita (empieza antes y termina después)
+        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
+               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
+               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
       });
       if (ocupado) return false;
       
       return true;
     });
+    
     res.json(slotsDisponibles);
+    
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error("Error en getHorariosDisponibles:", error);
+    res.status(500).json({ message: "Error al obtener horarios disponibles" });
   }
 };
 
