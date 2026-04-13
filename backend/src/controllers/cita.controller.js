@@ -195,13 +195,19 @@ if (fechaSeleccionada < hoy) {
       horaActualSlot = sumarMinutos(horaActualSlot, intervalo);
     }
     
-    // Filtrar slots
-    const slotsDisponibles = slots.filter(slot => {
-      // 1. Horas pasadas (solo hoy)
-      if (esHoy && slot.fin <= horaActual) {
-        return false;
-      }
-      
+ const slotsDisponibles = slots.filter(slot => {
+  console.log("🔍 Slot evaluando:", slot.inicio, "-", slot.fin);
+  console.log("   esHoy:", esHoy);
+  console.log("   horaActual:", horaActual);
+  console.log("   slot.fin <= horaActual:", slot.fin <= horaActual);
+  
+  // 1. Horas pasadas (solo hoy)
+  if (esHoy && slot.fin <= horaActual) {
+    console.log("   ❌ Bloqueado por hora pasada");
+    return false;
+  }
+  
+
       // 2. Pausas (almuerzo)
       const enPausa = pausas.some(pausa => {
         return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
