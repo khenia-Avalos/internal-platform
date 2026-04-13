@@ -3,6 +3,8 @@ import User from '../models/user.model.js';
 import Paciente from '../models/pacientes.model.js';
 import Cita from '../models/cita.model.js'
 import { manejarError } from '../utils/errorHandler.js'; 
+import Horario from '../models/horario.model.js';
+import Pausa from '../models/pausa.model.js';
 
 // Suma minutos a una hora en formato "HH:MM"
 const sumarMinutos = (hora, minutos) => {
@@ -196,16 +198,16 @@ export const getHorariosDisponibles = async (req, res) => {
   }
 };
 
-export const getCitasRequest= async (id) => {
+export const getCitasRequest = async (req, res) => {  // ← Recibe req, res
   try {
-    const cita = await Cita.findById(id)
+    const citas = await Cita.find()  // ← Obtiene TODAS las citas
       .populate('doctorId', 'username lastname especialidad')
       .populate('pacienteId', 'nombre especie raza');
-    if (!cita) {
-      throw new Error("Cita no encontrada");
-    }
-    return cita;
+    res.json(citas);  // ← Envía respuesta
   } catch (error) {
-    throw error;
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
-}
+};
