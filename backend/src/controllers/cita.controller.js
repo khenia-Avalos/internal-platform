@@ -146,6 +146,15 @@ const horaActual = ahora.toTimeString().slice(0, 5);//extrae los primjeros 5 car
       return res.status(404).json({ message: "No hay horario configurado para este día" });
     }
     
+    if (!horario.activo) {
+  return res.json([]);
+}
+const fechaSeleccionada = new Date(fecha);
+const hoy = new Date();
+hoy.setHours(0, 0, 0, 0);
+if (fechaSeleccionada < hoy) {
+  return res.json([]);
+}
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
@@ -184,6 +193,12 @@ const horaActual = ahora.toTimeString().slice(0, 5);//extrae los primjeros 5 car
       if (esHoy && slot.inicio < horaActual) {
         return false; // No mostrar slots pasados si es hoy
       }
+
+  // 2. Filtrar pausas (almuerzo)
+  const enPausa = pausas.some(pausa => {
+    return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+  });
+  if (enPausa) return false;
 
  // 6.3 Si ya hay una cita en ese horario → no disponible
       const ocupado = citas.some(cita => {
