@@ -134,7 +134,11 @@ export const deleteCita = async (req, res) => {
 export const getHorariosDisponibles = async (req, res) => {
   try {
     const { doctorId, fecha, duracionCita } = req.params;
-    
+    // ✅ AGREGA AQUÍ ESTOS console.log
+    console.log("🔍 getHorariosDisponibles llamado con:");
+    console.log("   doctorId:", doctorId);
+    console.log("   fecha:", fecha);
+    console.log("   duracionCita:", duracionCita);
     // Convertir duracionCita a número
     const duracion = parseInt(duracionCita);
     
