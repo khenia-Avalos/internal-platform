@@ -200,7 +200,8 @@ if (fechaSeleccionada < hoy) {
   console.log("   esHoy:", esHoy);
   console.log("   horaActual:", horaActual);
   console.log("   slot.fin <= horaActual:", slot.fin <= horaActual);
-  
+  console.log("🎯 Total slots generados antes del filtro:", slots.length);
+slots.forEach(s => console.log(`   ${s.inicio} - ${s.fin}`));
   // 1. Horas pasadas (solo hoy)
   if (esHoy && slot.inicio < horaActual) {
     console.log("   ❌ Bloqueado por hora pasada");
