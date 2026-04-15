@@ -58,6 +58,25 @@ useEffect(() => {
   };
   if (id) cargarPausaActiva();
 }, [id]);
+// Recargar pausa activa cuando la página recibe foco (al volver de otra pestaña/módulo)
+useEffect(() => {
+  const handleFocus = () => {
+    if (id) {
+      getPausasActivasRequest(id).then(res => {
+        if (res.data.length > 0) {
+          setPausaActiva(res.data[0]);
+        } else {
+          setPausaActiva(null);
+        }
+      });
+    }
+  };
+  
+  window.addEventListener('focus', handleFocus);
+  return () => window.removeEventListener('focus', handleFocus);
+}, [id]);
+
+
 
   const getNombreDia = (dia) => {
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];//los del config por posicion
