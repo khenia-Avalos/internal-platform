@@ -1,5 +1,5 @@
-import { useParams, useNavigate, Link, useLocation} from 'react-router';
-import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link, useLocation } from 'react-router';
+import { useState, useEffect, useRef } from 'react'; // AQUÍ CAMBIE (agregué useRef)
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
@@ -9,7 +9,7 @@ import { getHorariosByDoctorRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
 import { editConfig } from "../config/editConfig";
 import { updateHorarioRequest } from "/src/api/horarios";  
-import {iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest} from "/src/api/pausas";
+import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest } from "/src/api/pausas";
 
 function DoctorDetallePage() {
   const navigate = useNavigate();
@@ -20,9 +20,12 @@ function DoctorDetallePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
-const [horarios, setHorarios] = useState([]);
-const [horarioEditando, setHorarioEditando] = useState(null);
-const [pausaActiva, setPausaActiva] = useState(null);
+  const [horarios, setHorarios] = useState([]);
+  const [horarioEditando, setHorarioEditando] = useState(null);
+  const [pausaActiva, setPausaActiva] = useState(null);
+  
+  // AQUÍ CAMBIE - Ref para evitar peticiones duplicadas
+  const cargandoPausaRef = useRef(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -32,8 +35,7 @@ const [pausaActiva, setPausaActiva] = useState(null);
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
         const horariosRes = await getHorariosByDoctorRequest(id);
-setHorarios(horariosRes.data)
-        
+        setHorarios(horariosRes.data);
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       } finally {
@@ -46,91 +48,96 @@ setHorarios(horariosRes.data)
     }
   }, [id]);
 
-
-// Cargar pausa activa al montar y cuando la URL cambia
-useEffect(() => {
-  let ignore = false; // Flag para evitar peticiones obsoletas
-  
-  const cargarPausaActiva = async () => {
-    try {
-      const res = await getPausasActivasRequest(id);
-      if (!ignore) {
-        console.log("📦 Respuesta completa de pausa activa:", res);
-        console.log("📦 Datos recibidos:", res.data);
-        console.log("📦 Cantidad de pausas activas:", res.data.length);
+  // AQUÍ CAMBIE - Nuevo useEffect con useRef para evitar peticiones duplicadas
+  useEffect(() => {
+    // Evitar ejecución si ya está cargando
+    if (cargandoPausaRef.current) return;
+    
+    cargandoPausaRef.current = true;
+    
+    const cargarPausaActiva = async () => {
+      try {
+        const res = await getPausasActivasRequest(id);
+        console.log("📦 Pausa activa desde backend:", res.data);
         if (res.data.length > 0) {
-          console.log("✅ Pausa activa encontrada:", res.data[0]);
           setPausaActiva(res.data[0]);
         } else {
-          console.log("❌ No hay pausa activa");
           setPausaActiva(null);
         }
-      }
-    } catch (error) {
-      if (!ignore) {
+      } catch (error) {
         console.error("Error al cargar pausa activa:", error);
+      } finally {
+        cargandoPausaRef.current = false;
       }
-    }
-  };
-  
-  if (id) cargarPausaActiva();
-  
-  return () => {
-    ignore = true; // Limpiar cuando el componente se desmonte o la dependencia cambie
-  };
-}, [id, location.key]);
+    };
+    
+    if (id) cargarPausaActiva();
+    
+    return () => {
+      cargandoPausaRef.current = false; // AQUÍ CAMBIE - Limpiar al desmontar
+    };
+  }, [id, location.key]);
 
   const getNombreDia = (dia) => {
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];//los del config por posicion
-  return dias[dia];
-};
-const horariosFormateados = horarios.map(horario => ({
-  ...horario,
-  diaNombre: getNombreDia(horario.dia),
-  intervaloTexto: `${horario.intervalo} min`,
-  estadoTexto: horario.activo ? 'Activo' : 'Inactivo',
-  estadoColor: horario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-}));
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    return dias[dia];
+  };
+  
+  const horariosFormateados = horarios.map(horario => ({
+    ...horario,
+    diaNombre: getNombreDia(horario.dia),
+    intervaloTexto: `${horario.intervalo} min`,
+    estadoTexto: horario.activo ? 'Activo' : 'Inactivo',
+    estadoColor: horario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+  }));
 
-const handleEditHorario = (horario) => {
-  setHorarioEditando(horario);
-  setErrors([]);
-  setModalAbierto(true);
-}
-const handleUpdateHorario = async (data) => {
-  try {
-    await updateHorarioRequest(horarioEditando._id, data);
-    setModalAbierto(false);
-    const horariosRes = await getHorariosByDoctorRequest(id);
-    setHorarios(horariosRes.data);
-    setSuccessMessage("Horario actualizado correctamente");
-    setTimeout(() => setSuccessMessage(""), 3000);
-  } catch (error) {
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
-  }
-};
+  const handleEditHorario = (horario) => {
+    setHorarioEditando(horario);
+    setErrors([]);
+    setModalAbierto(true);
+  };
+  
+  const handleUpdateHorario = async (data) => {
+    try {
+      await updateHorarioRequest(horarioEditando._id, data);
+      setModalAbierto(false);
+      const horariosRes = await getHorariosByDoctorRequest(id);
+      setHorarios(horariosRes.data);
+      setSuccessMessage("Horario actualizado correctamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
 
-const iniciarPausa = async () => {
-  try {
-    const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
-    setPausaActiva(res.data);
-    setSuccessMessage("Almuerzo iniciado");
-    setTimeout(() => setSuccessMessage(""), 3000);
-  } catch (error) {
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
-  }
-};
+  const iniciarPausa = async () => {
+    try {
+      const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
+      setPausaActiva(res.data);
+      setSuccessMessage("Almuerzo iniciado");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
 
-const terminarPausa = async () => {
-  try {
-    await terminarPausaRequest(pausaActiva._id);
-    setPausaActiva(null);
-    setSuccessMessage("Almuerzo terminado");
-    setTimeout(() => setSuccessMessage(""), 3000);
-  } catch (error) {
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
-  }
-};
+  // AQUÍ CAMBIE - Función terminarPausa mejorada
+  const terminarPausa = async () => {
+    try {
+      await terminarPausaRequest(pausaActiva._id);
+      setPausaActiva(null);
+      setSuccessMessage("Almuerzo terminado");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      // Forzar recarga de pausa después de terminar
+      const res = await getPausasActivasRequest(id);
+      if (res.data.length > 0) {
+        setPausaActiva(res.data[0]);
+      }
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
@@ -176,48 +183,46 @@ const terminarPausa = async () => {
             <h2 className="text-xl font-semibold text-gray-700">Horarios</h2>
           </div>
        
-            <DataTable
-  columns={[
-    { header: "Día", accessor: "diaNombre" },
-    { header: "Hora Inicio", accessor: "horaInicio" },
-    { header: "Hora Fin", accessor: "horaFin" },
-    { header: "Intervalo", accessor: "intervaloTexto" },
-    { 
-      header: "Estado", 
-      accessor: "estadoTexto",
-      // El badge lo hacemos con render porque es visual
-      render: (horario) => (
-        <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
-          {horario.estadoTexto}
-        </span>
-      )
-    }
-  ]}
-  data={horariosFormateados}
-    onEdit={handleEditHorario}  
+          <DataTable
+            columns={[
+              { header: "Día", accessor: "diaNombre" },
+              { header: "Hora Inicio", accessor: "horaInicio" },
+              { header: "Hora Fin", accessor: "horaFin" },
+              { header: "Intervalo", accessor: "intervaloTexto" },
+              { 
+                header: "Estado", 
+                accessor: "estadoTexto",
+                render: (horario) => (
+                  <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+                    {horario.estadoTexto}
+                  </span>
+                )
+              }
+            ]}
+            data={horariosFormateados}
+            onEdit={handleEditHorario}  
+          />
 
-/>
-
-<div className="flex justify-between items-center mt-8 mb-4">
-  <h2 className="text-xl font-semibold text-gray-700">Pausas</h2>
-  <div className="flex gap-3">
-    {!pausaActiva ? (
-      <button
-        onClick={iniciarPausa}
-        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
-      >
-         Iniciar Almuerzo
-      </button>
-    ) : (
-      <button
-        onClick={terminarPausa}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-      >
-         Volver del Almuerzo
-      </button>
-    )}
-  </div>
-</div>
+          <div className="flex justify-between items-center mt-8 mb-4">
+            <h2 className="text-xl font-semibold text-gray-700">Pausas</h2>
+            <div className="flex gap-3">
+              {!pausaActiva ? (
+                <button
+                  onClick={iniciarPausa}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+                >
+                  Iniciar Almuerzo
+                </button>
+              ) : (
+                <button
+                  onClick={terminarPausa}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  Volver del Almuerzo
+                </button>
+              )}
+            </div>
+          </div>
         </>
       )}
 
@@ -226,14 +231,13 @@ const terminarPausa = async () => {
         onClose={() => setModalAbierto(false)}
         title="Editar Horario"
       >
-         <DynamicForm
-    {...editConfig.editHorario}
-    defaultValues={horarioEditando}  // ← Los datos del horario a editar
-    onSubmit={handleUpdateHorario}
-    errors={errors}
-    successMessage={successMessage}
-  />
-     
+        <DynamicForm
+          {...editConfig.editHorario}
+          defaultValues={horarioEditando}
+          onSubmit={handleUpdateHorario}
+          errors={errors}
+          successMessage={successMessage}
+        />
       </Modal>
     </div>
   );
