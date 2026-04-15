@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate, Link, useLocation} from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
@@ -13,6 +13,7 @@ import {iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest} from
 
 function DoctorDetallePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,19 +46,23 @@ setHorarios(horariosRes.data)
     }
   }, [id]);
 
+// Cargar pausa activa al montar el componente y cuando la URL cambia
 useEffect(() => {
   const cargarPausaActiva = async () => {
     try {
       const res = await getPausasActivasRequest(id);
+      console.log("🔄 Recargando pausa activa...");
       if (res.data.length > 0) {
         setPausaActiva(res.data[0]);
+      } else {
+        setPausaActiva(null);
       }
     } catch (error) {
       console.error("Error al cargar pausa activa:", error);
     }
   };
   if (id) cargarPausaActiva();
-}, [id]);
+}, [id, location.key]); // ← location.key cambia cada vez que navegas
 // Recargar pausa activa cuando la página recibe foco (al volver de otra pestaña/módulo)
 useEffect(() => {
   const handleFocus = () => {
