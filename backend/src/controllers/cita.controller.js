@@ -1,4 +1,3 @@
-
 import User from '../models/user.model.js';
 import Paciente from '../models/pacientes.model.js';
 import Cita from '../models/cita.model.js'
@@ -13,7 +12,6 @@ const sumarMinutos = (hora, minutos) => {
   fecha.setHours(horas, mins + minutos, 0);
   return fecha.toTimeString().slice(0, 5);
 };
-
 
 export const createCita = async (req, res) => {
     try {
@@ -134,38 +132,61 @@ export const deleteCita = async (req, res) => {
 export const getHorariosDisponibles = async (req, res) => {
   try {
     const { doctorId, fecha, duracionCita } = req.params;
-    // ✅ AGREGA AQUÍ ESTOS console.log
-    console.log("🔍 getHorariosDisponibles llamado con:");
+    
+    console.log("========== INICIO getHorariosDisponibles ==========");
+    console.log("📥 Parámetros recibidos:");
     console.log("   doctorId:", doctorId);
     console.log("   fecha:", fecha);
     console.log("   duracionCita:", duracionCita);
-    // Convertir duracionCita a número
+    
     const duracion = parseInt(duracionCita);
     
     const ahora = new Date();
     const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
     const horaActual = ahora.toTimeString().slice(0, 5);
     
+    console.log("📅 Fecha actual:", ahora.toISOString());
+    console.log("   esHoy:", esHoy);
+    console.log("   horaActual:", horaActual);
+    
     const diaSemana = new Date(fecha).getDay();
+    console.log("📆 día de la semana:", diaSemana, "(0=domingo, 1=lunes...)");
+    
     const horario = await Horario.findOne({ doctorId, dia: diaSemana });
     
-    if (!horario) {
-      return res.json([]);  // ← Array vacío, no error 404
+    console.log("📋 horario encontrado:", horario ? "SÍ" : "NO");
+    if (horario) {
+      console.log("   horaInicio:", horario.horaInicio);
+      console.log("   horaFin:", horario.horaFin);
+      console.log("   intervalo:", horario.intervalo);
+      console.log("   activo:", horario.activo);
     }
     
-    if (!horario.activo) {
+    if (!horario) {
+      console.log("❌ No hay horario para este día, devolviendo []");
       return res.json([]);
     }
     
-   // Validar que la fecha no sea pasada
-const fechaSeleccionada = new Date(fecha);
-const hoy = new Date();
-hoy.setHours(0, 0, 0, 0);
-fechaSeleccionada.setHours(0, 0, 0, 0);  // ← IMPORTANTE: comparar solo días
-
-if (fechaSeleccionada < hoy) {
-  return res.json([]);
-}
+    if (!horario.activo) {
+      console.log("❌ Horario inactivo, devolviendo []");
+      return res.json([]);
+    }
+    
+    const fechaSeleccionada = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaSeleccionada.setHours(0, 0, 0, 0);
+    
+    console.log("📅 Comparación de fechas:");
+    console.log("   fechaSeleccionada:", fechaSeleccionada);
+    console.log("   hoy:", hoy);
+    console.log("   fechaSeleccionada < hoy:", fechaSeleccionada < hoy);
+    
+    if (fechaSeleccionada < hoy) {
+      console.log("❌ Fecha pasada, devolviendo []");
+      return res.json([]);
+    }
+    
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
@@ -175,6 +196,8 @@ if (fechaSeleccionada < hoy) {
       activa: true
     });
     
+    console.log("🍽️ Pausas activas encontradas:", pausas.length);
+    
     const citas = await Cita.find({ 
       doctorId, 
       fecha: {
@@ -183,67 +206,90 @@ if (fechaSeleccionada < hoy) {
       }
     });
     
+    console.log("📋 Citas existentes para esta fecha:", citas.length);
+    
     // Generar slots
     const slots = [];
     let horaActualSlot = horario.horaInicio;
-    const intervalo = parseInt(horario.intervalo);  // ← Asegurar número
+    const intervalo = parseInt(horario.intervalo);
+    
+    console.log("🔄 Generando slots...");
+    console.log("   duracion:", duracion);
+    console.log("   intervalo:", intervalo);
+    console.log("   rango:", horario.horaInicio, "-", horario.horaFin);
     
     while (sumarMinutos(horaActualSlot, duracion) <= horario.horaFin) {
       const horaFinSlot = sumarMinutos(horaActualSlot, duracion);
-      
       slots.push({
         inicio: horaActualSlot,
         fin: horaFinSlot
       });
-      
+      console.log(`   Slot generado: ${horaActualSlot} - ${horaFinSlot}`);
       horaActualSlot = sumarMinutos(horaActualSlot, intervalo);
     }
     
- const slotsDisponibles = slots.filter(slot => {
-  console.log("🔍 Slot evaluando:", slot.inicio, "-", slot.fin);
-  console.log("   esHoy:", esHoy);
-  console.log("   horaActual:", horaActual);
-  console.log("   slot.fin <= horaActual:", slot.fin <= horaActual);
-  console.log("🎯 Total slots generados antes del filtro:", slots.length);
-slots.forEach(s => console.log(`   ${s.inicio} - ${s.fin}`));
-  // 1. Horas pasadas (solo hoy)
-  if (esHoy && slot.inicio < horaActual) {
-    console.log("   ❌ Bloqueado por hora pasada");
-    return false;
-  }
-  
-
+    console.log("🎯 Total slots generados:", slots.length);
+    
+    if (slots.length === 0) {
+      console.log("❌ No se generaron slots, devolviendo []");
+      return res.json([]);
+    }
+    
+    const slotsDisponibles = slots.filter(slot => {
+      let disponible = true;
+      let motivo = "";
+      
+      // 1. Horas pasadas (solo hoy)
+      if (esHoy && slot.inicio < horaActual) {
+        disponible = false;
+        motivo = "hora pasada";
+      }
+      
       // 2. Pausas (almuerzo)
-      const enPausa = pausas.some(pausa => {
-        return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-      });
-      if (enPausa) return false;
+      if (disponible) {
+        const enPausa = pausas.some(pausa => {
+          return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+        });
+        if (enPausa) {
+          disponible = false;
+          motivo = "pausa activa";
+        }
+      }
       
       // 3. Citas existentes
-      const ocupado = citas.some(cita => {
-        return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
-               (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
-               (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
-      });
-      if (ocupado) return false;
+      if (disponible) {
+        const ocupado = citas.some(cita => {
+          return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
+                 (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
+                 (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
+        });
+        if (ocupado) {
+          disponible = false;
+          motivo = "cita existente";
+        }
+      }
       
-      return true;
+      console.log(`   Slot ${slot.inicio}-${slot.fin}: ${disponible ? "✅ DISPONIBLE" : `❌ NO DISPONIBLE (${motivo})`}`);
+      return disponible;
     });
+    
+    console.log("✅ slotsDisponibles finales:", slotsDisponibles.length);
+    console.log("========== FIN getHorariosDisponibles ==========");
     
     res.json(slotsDisponibles);
     
   } catch (error) {
-    console.error("Error en getHorariosDisponibles:", error);
+    console.error("❌ Error en getHorariosDisponibles:", error);
     res.status(500).json({ message: "Error al obtener horarios disponibles" });
   }
 };
 
-export const getCitasRequest = async (req, res) => {  // ← Recibe req, res
+export const getCitasRequest = async (req, res) => {
   try {
-    const citas = await Cita.find()  // ← Obtiene TODAS las citas
+    const citas = await Cita.find()
       .populate('doctorId', 'username lastname especialidad')
       .populate('pacienteId', 'nombre especie raza');
-    res.json(citas);  // ← Envía respuesta
+    res.json(citas);
   } catch (error) {
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
