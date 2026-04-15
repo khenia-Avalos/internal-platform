@@ -46,15 +46,19 @@ setHorarios(horariosRes.data)
     }
   }, [id]);
 
-// Cargar pausa activa al montar el componente y cuando la URL cambia
+
 useEffect(() => {
   const cargarPausaActiva = async () => {
     try {
       const res = await getPausasActivasRequest(id);
-      console.log("🔄 Recargando pausa activa...");
+      console.log("📦 Respuesta completa de pausa activa:", res);
+      console.log("📦 Datos recibidos:", res.data);
+      console.log("📦 Cantidad de pausas activas:", res.data.length);
       if (res.data.length > 0) {
+        console.log("✅ Pausa activa encontrada:", res.data[0]);
         setPausaActiva(res.data[0]);
       } else {
+        console.log("❌ No hay pausa activa");
         setPausaActiva(null);
       }
     } catch (error) {
@@ -62,7 +66,9 @@ useEffect(() => {
     }
   };
   if (id) cargarPausaActiva();
-}, [id, location.key]); // ← location.key cambia cada vez que navegas
+}, [id, location.key]);
+
+
 // Recargar pausa activa cuando la página recibe foco (al volver de otra pestaña/módulo)
 useEffect(() => {
   const handleFocus = () => {
