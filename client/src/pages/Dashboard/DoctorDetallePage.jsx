@@ -46,31 +46,52 @@ function DoctorDetallePage() {
   }, [id]);
 
   // ✅ UN SOLO useEffect para cargar la pausa activa
-  useEffect(() => {
-    let isMounted = true;
-    
-    const cargarPausaActiva = async () => {
-      try {
-        const res = await getPausasActivasRequest(id);
-        if (isMounted) {
-          console.log("📦 Pausa activa (final):", res.data);
-          if (res.data.length > 0) {
-            setPausaActiva(res.data[0]);
-          } else {
-            setPausaActiva(null);
-          }
+// Cargar pausa activa - VERSIÓN CON LOGS
+useEffect(() => {
+  let isMounted = true;
+  
+  console.log("🔄 [1] useEffect ejecutándose para doctor:", id);
+  console.log("🔄 [2] location.key actual:", location.key);
+  
+  const cargarPausaActiva = async () => {
+    console.log("🔄 [3] Iniciando cargarPausaActiva...");
+    try {
+      console.log("🔄 [4] Haciendo petición a getPausasActivasRequest...");
+      const res = await getPausasActivasRequest(id);
+      console.log("🔄 [5] Petición completada. Respuesta:", res);
+      console.log("🔄 [6] res.data:", res.data);
+      console.log("🔄 [7] res.data.length:", res.data.length);
+      
+      if (isMounted) {
+        if (res.data.length > 0) {
+          console.log("✅ [8] Pausa activa ENCONTRADA:", res.data[0]);
+          console.log("✅ [9] Llamando a setPausaActiva con:", res.data[0]);
+          setPausaActiva(res.data[0]);
+        } else {
+          console.log("❌ [10] No hay pausa activa");
+          console.log("❌ [11] Llamando a setPausaActiva con: null");
+          setPausaActiva(null);
         }
-      } catch (error) {
-        console.error("Error al cargar pausa activa:", error);
+      } else {
+        console.log("⚠️ [12] Componente desmontado, ignorando respuesta");
       }
-    };
-    
-    if (id) cargarPausaActiva();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [id, location.key]);
+    } catch (error) {
+      console.error("❌ [13] Error en cargarPausaActiva:", error);
+    }
+  };
+  
+  if (id) {
+    console.log("🔄 [14] id existe, llamando a cargarPausaActiva()");
+    cargarPausaActiva();
+  } else {
+    console.log("❌ [15] id no existe, saltando carga");
+  }
+  
+  return () => {
+    console.log("🧹 [16] Limpiando useEffect, isMounted = false");
+    isMounted = false;
+  };
+}, [id, location.key]);
 
   const getNombreDia = (dia) => {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -125,7 +146,7 @@ function DoctorDetallePage() {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-
+console.log("🎨 [RENDER] pausaActiva actual es:", pausaActiva);
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
