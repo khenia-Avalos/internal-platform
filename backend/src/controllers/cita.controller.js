@@ -149,6 +149,8 @@ const horaActual = ahora.toLocaleTimeString('en-US', {
   minute: '2-digit', 
   hour12: false 
 });
+// Convertir hora actual a minutos (para comparar)
+const horaActualEnMinutos = parseInt(horaActual.split(':')[0]) * 60 + parseInt(horaActual.split(':')[1]);
     
     console.log("📅 Fecha actual:", ahora.toISOString());
     console.log("   esHoy:", esHoy);
@@ -244,11 +246,16 @@ const horaActual = ahora.toLocaleTimeString('en-US', {
       let disponible = true;
       let motivo = "";
       
-      // 1. Horas pasadas (solo hoy)
-      if (esHoy && slot.inicio < horaActual) {
-        disponible = false;
-        motivo = "hora pasada";
-      }
+   // 1. Horas pasadas (solo hoy, con margen de 15 minutos)
+if (esHoy) {
+  const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
+  const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
+  
+  if (diferencia > 15) {
+    disponible = false;
+    motivo = `hora pasada (hace ${diferencia} minutos)`;
+  }
+}
       
       // 2. Pausas (almuerzo)
       if (disponible) {
