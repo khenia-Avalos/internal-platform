@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link, useLocation } from 'react-router';
-import { useState, useEffect, useRef } from 'react'; // AQUÍ CAMBIE (agregué useRef)
+import { useState, useEffect } from 'react'; // ← ELIMINÉ useRef
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
@@ -24,9 +24,6 @@ function DoctorDetallePage() {
   const [horarioEditando, setHorarioEditando] = useState(null);
   const [pausaActiva, setPausaActiva] = useState(null);
   
-  // AQUÍ CAMBIE - Ref para evitar peticiones duplicadas
-  const cargandoPausaRef = useRef(false);
-
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
@@ -48,33 +45,30 @@ function DoctorDetallePage() {
     }
   }, [id]);
 
-  // AQUÍ CAMBIE - Nuevo useEffect con useRef para evitar peticiones duplicadas
+  // ✅ UN SOLO useEffect para cargar la pausa activa
   useEffect(() => {
-    // Evitar ejecución si ya está cargando
-    if (cargandoPausaRef.current) return;
-    
-    cargandoPausaRef.current = true;
+    let isMounted = true;
     
     const cargarPausaActiva = async () => {
       try {
         const res = await getPausasActivasRequest(id);
-        console.log("📦 Pausa activa desde backend:", res.data);
-        if (res.data.length > 0) {
-          setPausaActiva(res.data[0]);
-        } else {
-          setPausaActiva(null);
+        if (isMounted) {
+          console.log("📦 Pausa activa (final):", res.data);
+          if (res.data.length > 0) {
+            setPausaActiva(res.data[0]);
+          } else {
+            setPausaActiva(null);
+          }
         }
       } catch (error) {
         console.error("Error al cargar pausa activa:", error);
-      } finally {
-        cargandoPausaRef.current = false;
       }
     };
     
     if (id) cargarPausaActiva();
     
     return () => {
-      cargandoPausaRef.current = false; // AQUÍ CAMBIE - Limpiar al desmontar
+      isMounted = false;
     };
   }, [id, location.key]);
 
@@ -121,18 +115,12 @@ function DoctorDetallePage() {
     }
   };
 
-  // AQUÍ CAMBIE - Función terminarPausa mejorada
   const terminarPausa = async () => {
     try {
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
       setSuccessMessage("Almuerzo terminado");
       setTimeout(() => setSuccessMessage(""), 3000);
-      // Forzar recarga de pausa después de terminar
-      const res = await getPausasActivasRequest(id);
-      if (res.data.length > 0) {
-        setPausaActiva(res.data[0]);
-      }
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
