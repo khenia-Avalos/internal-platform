@@ -143,7 +143,12 @@ export const getHorariosDisponibles = async (req, res) => {
     
     const ahora = new Date();
     const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
-    const horaActual = ahora.toTimeString().slice(0, 5);
+const horaActual = ahora.toLocaleTimeString('en-US', { 
+  timeZone: 'America/Costa_Rica', 
+  hour: '2-digit', 
+  minute: '2-digit', 
+  hour12: false 
+});
     
     console.log("📅 Fecha actual:", ahora.toISOString());
     console.log("   esHoy:", esHoy);
