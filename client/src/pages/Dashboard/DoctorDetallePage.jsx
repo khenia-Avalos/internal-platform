@@ -47,6 +47,7 @@ setHorarios(horariosRes.data)
   }, [id]);
 
 
+// Cargar pausa activa al montar y cuando la URL cambia
 useEffect(() => {
   const cargarPausaActiva = async () => {
     try {
@@ -67,26 +68,6 @@ useEffect(() => {
   };
   if (id) cargarPausaActiva();
 }, [id, location.key]);
-
-
-// Recargar pausa activa cuando la página recibe foco (al volver de otra pestaña/módulo)
-useEffect(() => {
-  const handleFocus = () => {
-    if (id) {
-      getPausasActivasRequest(id).then(res => {
-        if (res.data.length > 0) {
-          setPausaActiva(res.data[0]);
-        } else {
-          setPausaActiva(null);
-        }
-      });
-    }
-  };
-  
-  window.addEventListener('focus', handleFocus);
-  return () => window.removeEventListener('focus', handleFocus);
-}, [id]);
-
 
 
   const getNombreDia = (dia) => {
