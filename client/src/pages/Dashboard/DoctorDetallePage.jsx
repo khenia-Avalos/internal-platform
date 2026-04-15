@@ -49,26 +49,36 @@ setHorarios(horariosRes.data)
 
 // Cargar pausa activa al montar y cuando la URL cambia
 useEffect(() => {
+  let ignore = false; // Flag para evitar peticiones obsoletas
+  
   const cargarPausaActiva = async () => {
     try {
       const res = await getPausasActivasRequest(id);
-      console.log("📦 Respuesta completa de pausa activa:", res);
-      console.log("📦 Datos recibidos:", res.data);
-      console.log("📦 Cantidad de pausas activas:", res.data.length);
-      if (res.data.length > 0) {
-        console.log("✅ Pausa activa encontrada:", res.data[0]);
-        setPausaActiva(res.data[0]);
-      } else {
-        console.log("❌ No hay pausa activa");
-        setPausaActiva(null);
+      if (!ignore) {
+        console.log("📦 Respuesta completa de pausa activa:", res);
+        console.log("📦 Datos recibidos:", res.data);
+        console.log("📦 Cantidad de pausas activas:", res.data.length);
+        if (res.data.length > 0) {
+          console.log("✅ Pausa activa encontrada:", res.data[0]);
+          setPausaActiva(res.data[0]);
+        } else {
+          console.log("❌ No hay pausa activa");
+          setPausaActiva(null);
+        }
       }
     } catch (error) {
-      console.error("Error al cargar pausa activa:", error);
+      if (!ignore) {
+        console.error("Error al cargar pausa activa:", error);
+      }
     }
   };
+  
   if (id) cargarPausaActiva();
+  
+  return () => {
+    ignore = true; // Limpiar cuando el componente se desmonte o la dependencia cambie
+  };
 }, [id, location.key]);
-
 
   const getNombreDia = (dia) => {
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];//los del config por posicion
