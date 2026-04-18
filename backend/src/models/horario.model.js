@@ -10,7 +10,7 @@ const horarioSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0, 
-    max: 6
+    max: 7
   },
   horaInicio: {
     type: String,
