@@ -243,59 +243,68 @@ if (pausas.length > 0) {
       return res.json([]);
     }
     
-    const slotsDisponibles = slots.filter(slot => {
-      let disponible = true;
-      let motivo = "";
-      
-   // 1. Horas pasadas (solo hoy, con margen de 15 minutos)
-if (esHoy) {
-  const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
-  const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
+const slotsDisponibles = slots.filter(slot => {
+  let disponible = true;
+  let motivo = "";
   
-  if (diferencia > 15) {
-    disponible = false;
-    motivo = `hora pasada (hace ${diferencia} minutos)`;
+  // 1. Horas pasadas (solo hoy, con margen de 15 minutos)
+  if (esHoy) {
+    const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
+    const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
+    
+    if (diferencia > 15) {
+      disponible = false;
+      motivo = `hora pasada (hace ${diferencia} minutos)`;
+    }
   }
-}
-      
- // 2. Pausas (almuerzo)
-const enPausa = pausas.some(pausa => {
-  // Si la pausa está activa (sin fin), bloquea desde el inicio
-  if (!pausa.fin) {
-    return slot.inicio >= pausa.inicio;
-  }
-  // Si tiene fin, bloquea el rango completo
-  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-});
-if (enPausa) {
-  disponible = false;
-  motivo = "almuerzo";
-}
-      // 3. Citas existentes
-      if (disponible) {
-        const ocupado = citas.some(cita => {
-          return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
-                 (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
-                 (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
-        });
-        if (ocupado) {
-          disponible = false;
-          motivo = "cita existente";
-        }
+
+  // 2. Pausas (almuerzo)
+  if (disponible) {
+    const pausasFormateadas = pausas.map(p => ({
+      inicio: new Date(p.inicio).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null
+    }));
+    
+    const enPausa = pausasFormateadas.some(pausa => {
+      if (!pausa.fin) {
+        return slot.inicio >= pausa.inicio;
       }
-      
-      console.log(`   Slot ${slot.inicio}-${slot.fin}: ${disponible ? "✅ DISPONIBLE" : `❌ NO DISPONIBLE (${motivo})`}`);
-      return disponible;
+      return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
     });
     
-    console.log("✅ slotsDisponibles finales:", slotsDisponibles.length);
-    console.log("========== FIN getHorariosDisponibles ==========");
-    
-    res.json(slotsDisponibles);
-    
+    if (enPausa) {
+      disponible = false;
+      motivo = "almuerzo";
+    }
+  }
+
+  // 3. Citas existentes
+  if (disponible) {
+    const ocupado = citas.some(cita => {
+      return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
+             (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
+             (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin);
+    });
+    if (ocupado) {
+      disponible = false;
+      motivo = "cita existente";
+    }
+  }
+  
+  console.log(`   Slot ${slot.inicio}-${slot.fin}: ${disponible ? "✅ DISPONIBLE" : `❌ NO DISPONIBLE (${motivo})`}`);
+  return disponible;
+});
+
+console.log(" slotsDisponibles finales:", slotsDisponibles.length);
+console.log("========== FIN getHorariosDisponibles ==========");
+
+res.json(slotsDisponibles);
+
   } catch (error) {
-    console.error("❌ Error en getHorariosDisponibles:", error);
-    res.status(500).json({ message: "Error al obtener horarios disponibles" });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
