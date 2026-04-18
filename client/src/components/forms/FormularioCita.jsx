@@ -25,14 +25,7 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [correo, setCorreo] = useState(cita?.correo || '');
-const duracionPorTipo = {
-  'consulta': 30,
-  'vacunacion': 30,
-  'cirugia': 60,
-  'estetica': 120
-};
 
-const [duracionCita, setDuracionCita] = useState(duracionPorTipo[tipoCita]);
 
   // Cargar doctores y dueños al montar
 useEffect(() => {
