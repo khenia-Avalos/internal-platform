@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js';  
 import { HORARIO_POR_DEFECTO } from '../../config/horariosPorDefecto.js';
 import Horario from '../models/horario.model.js';
-import { getHorarioPorDefecto } from '../config/horariosPorDefecto.js';
+import { getHorarioPorDefecto } from '../../config/horariosPorDefecto.js';
 
 
 // Obtener todos los doctores
