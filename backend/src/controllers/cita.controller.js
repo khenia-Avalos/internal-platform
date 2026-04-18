@@ -193,17 +193,18 @@ const horaActualEnMinutos = parseInt(horaActual.split(':')[0]) * 60 + parseInt(h
       console.log("❌ Fecha pasada, devolviendo []");
       return res.json([]);
     }
-    
-    const pausas = await Pausa.find({ 
-      doctorId, 
-      fecha: {
-        $gte: new Date(fecha + "T00:00:00"),
-        $lt: new Date(fecha + "T23:59:59")
-      },
-      activa: true
-    });
-    
-    console.log("🍽️ Pausas activas encontradas:", pausas.length);
+const pausas = await Pausa.find({ 
+  doctorId, 
+  fecha: {
+    $gte: new Date(fecha + "T00:00:00"),
+    $lt: new Date(fecha + "T23:59:59")
+  },
+  activa: true
+});
+console.log("🍽️ Pausas activas encontradas para la fecha", fecha, ":", pausas.length);
+if (pausas.length > 0) {
+  console.log("   Detalle de pausas:", JSON.stringify(pausas, null, 2));
+}
     
     const citas = await Cita.find({ 
       doctorId, 
