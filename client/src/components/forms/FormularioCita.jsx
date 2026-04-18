@@ -24,6 +24,7 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [correo, setCorreo] = useState(cita?.correo || '');
 
 
   // Cargar doctores y dueños al montar
@@ -186,6 +187,21 @@ return(
       </select>
     </div>
   )}
+
+  {/* Campo de correo electrónico */}
+<div className="mb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Correo electrónico *
+  </label>
+  <input
+    type="email"
+    value={correo}
+    onChange={(e) => setCorreo(e.target.value)}
+    placeholder="correo@ejemplo.com"
+    className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+    required
+  />
+</div>
 
   {/* Campo 6: Tipo de cita */}
   <div className="mb-4">
