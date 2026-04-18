@@ -260,10 +260,25 @@ const slotsDisponibles = slots.filter(slot => {
 
   // 2. Pausas (almuerzo)
   if (disponible) {
-    const pausasFormateadas = pausas.map(p => ({
-      inicio: new Date(p.inicio).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null
-    }));
+const pausasFormateadas = pausas.map(p => {
+  const inicioLocal = new Date(p.inicio).toLocaleTimeString('en-US', { 
+    timeZone: 'America/Costa_Rica', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
+  return {
+    inicio: inicioLocal,
+    fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { 
+      timeZone: 'America/Costa_Rica', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    }) : null
+  };
+});
+
+console.log("📝 pausasFormateadas:", JSON.stringify(pausasFormateadas, null, 2));
     
  const enPausa = pausasFormateadas.some(pausa => {
   console.log(`   Comparando slot ${slot.inicio} con pausa inicio ${pausa.inicio}:`);
