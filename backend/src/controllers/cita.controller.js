@@ -278,21 +278,25 @@ if (disponible) {
     };
   });
   
-  const enPausa = pausasFormateadas.some(pausa => {
-    if (!pausa.fin) {
-      // Calcular fin como inicio + 60 minutos
-      const [horas, minutos] = pausa.inicio.split(':').map(Number);
-      let minutosFin = minutos + 60;
-      let horasFin = horas;
-      if (minutosFin >= 60) {
-        horasFin += Math.floor(minutosFin / 60);
-        minutosFin = minutosFin % 60;
-      }
-      const horaFin = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
-      return slot.inicio >= pausa.inicio && slot.fin <= horaFin;
+const enPausa = pausasFormateadas.some(pausa => {
+  if (!pausa.fin) {
+    // Calcular fin como inicio + 60 minutos
+    const [horas, minutos] = pausa.inicio.split(':').map(Number);
+    let minutosFin = minutos + 60;
+    let horasFin = horas;
+    if (minutosFin >= 60) {
+      horasFin += Math.floor(minutosFin / 60);
+      minutosFin = minutosFin % 60;
     }
-    return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-  });
+    const horaFin = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
+    
+    // Bloquear si el slot EMPIEZA durante el almuerzo O TERMINA después del inicio
+    return (slot.inicio >= pausa.inicio && slot.inicio < horaFin) ||
+           (slot.fin > pausa.inicio && slot.fin <= horaFin) ||
+           (slot.inicio <= pausa.inicio && slot.fin >= horaFin);
+  }
+  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+});
   
   if (enPausa) {
     disponible = false;
