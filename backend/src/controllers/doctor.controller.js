@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js';  
 import { HORARIO_POR_DEFECTO } from '../../config/horariosPorDefecto.js';
 import Horario from '../models/horario.model.js';
+import { getHorarioPorDefecto } from '../config/horariosPorDefecto.js';
+
 
 // Obtener todos los doctores
 export const getDoctores = async (req, res) => {
@@ -45,13 +47,14 @@ const existeDoctor = await User.findOne({ email });
     });
 
     const savedDoctor = await newDoctor.save();
-     const horariosPorDefecto = HORARIO_POR_DEFECTO.dias.map(dia => ({
+    const horarioConfig = getHorarioPorDefecto(especialidad);
+     const horariosPorDefecto = horarioConfig.dias.map(dia => ({
       doctorId: savedDoctor._id,
       dia,
-      horaInicio: HORARIO_POR_DEFECTO.horaInicio,
-      horaFin: HORARIO_POR_DEFECTO.horaFin,
-      intervalo: HORARIO_POR_DEFECTO.intervalo,
-      activo: HORARIO_POR_DEFECTO.activo
+      horaInicio: horarioConfig.horaInicio,
+      horaFin: horarioConfig.horaFin,
+      intervalo: horarioConfig.intervalo,
+      activo: horarioConfig.activo
     }));
         await Horario.insertMany(horariosPorDefecto);
 

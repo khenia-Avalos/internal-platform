@@ -265,21 +265,17 @@ const slotsDisponibles = slots.filter(slot => {//filtra los slots para quedarnos
   let disponible = true;
   let motivo = "";
   
-// 1. Horas pasadas (solo hoy, con margen dinámico según duración)
-if (esHoy) {
-  const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
-  const slotFinEnMinutos = parseInt(slot.fin.split(':')[0]) * 60 + parseInt(slot.fin.split(':')[1]);
-  const duracionSlot = slotFinEnMinutos - slotInicioEnMinutos;
-  const margenPermitido = Math.floor(duracionSlot / 2); // Mitad de la duración
-  
-  const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
-  
-  // Bloquear si ya pasó más de la mitad del slot
-  if (diferencia > margenPermitido) {
-    disponible = false;
-    motivo = `hora pasada (margen superado: ${diferencia}min > ${margenPermitido}min)`;
+  // 1. Horas pasadas (solo hoy, con margen de 15 minutos)
+  if (esHoy) {// si es hoy, bloquea los slots que ya pasaron (con margen de 15 minutos)
+    const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);// convierte la hora de inicio del slot a minutos para comparar con la hora actual
+    const diferencia = horaActualEnMinutos - slotInicioEnMinutos;// calcula la diferencia en minutos entre la hora actual y la hora de inicio del slot
+    
+    if (diferencia > 15) {// si el slot ya pasó hace más de 15 minutos, no está disponible
+      disponible = false;
+      motivo = `hora pasada (hace ${diferencia} minutos)`;
+    }
   }
-}
+
 // 2. Pausas (almuerzo)
 if (disponible) {
   const pausasFormateadas = pausas.map(p => {// formatea las pausas para comparar solo horas y minutos
