@@ -13,7 +13,7 @@ import { validateToken } from '../middlewares/validateToken.js';
 const router = Router();
 
 // Rutas públicas (para agendar sin login)
-router.get('/citas/horarios/:doctorId/:fecha/:duracionCita', getHorariosDisponibles);
+router.get('/citas/horarios/:doctorId/:fecha', getHorariosDisponibles);
 router.post('/citas', createCita);
 
 
