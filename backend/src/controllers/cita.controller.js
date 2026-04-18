@@ -265,12 +265,15 @@ const slotsDisponibles = slots.filter(slot => {
       fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null
     }));
     
-    const enPausa = pausasFormateadas.some(pausa => {
-      if (!pausa.fin) {
-        return slot.inicio >= pausa.inicio;
-      }
-      return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-    });
+ const enPausa = pausasFormateadas.some(pausa => {
+  console.log(`   Comparando slot ${slot.inicio} con pausa inicio ${pausa.inicio}:`);
+  console.log(`      slot.inicio >= pausa.inicio: ${slot.inicio >= pausa.inicio}`);
+  if (!pausa.fin) {
+    return slot.inicio >= pausa.inicio;
+  }
+  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+});
+console.log(`   enPausa: ${enPausa}`);
     
     if (enPausa) {
       disponible = false;
