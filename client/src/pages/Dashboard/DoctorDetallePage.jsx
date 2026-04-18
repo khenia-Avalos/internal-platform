@@ -50,33 +50,33 @@ function DoctorDetallePage() {
 useEffect(() => {
   let isMounted = true;
   
-  console.log("🔄 [1] useEffect ejecutándose para doctor:", id);
-  console.log("🔄 [2] location.key actual:", location.key);
+  console.log(" [1] useEffect ejecutándose para doctor:", id);
+  console.log(" [2] location.key actual:", location.key);
   
   const cargarPausaActiva = async () => {
-    console.log("🔄 [3] Iniciando cargarPausaActiva...");
+    console.log(" [3] Iniciando cargarPausaActiva...");
     try {
-      console.log("🔄 [4] Haciendo petición a getPausasActivasRequest...");
+      console.log(" [4] Haciendo petición a getPausasActivasRequest...");
       const res = await getPausasActivasRequest(id);
-      console.log("🔄 [5] Petición completada. Respuesta:", res);
-      console.log("🔄 [6] res.data:", res.data);
-      console.log("🔄 [7] res.data.length:", res.data.length);
+      console.log(" [5] Petición completada. Respuesta:", res);
+      console.log(" [6] res.data:", res.data);
+      console.log(" [7] res.data.length:", res.data.length);
       
       if (isMounted) {
         if (res.data.length > 0) {
-          console.log("✅ [8] Pausa activa ENCONTRADA:", res.data[0]);
-          console.log("✅ [9] Llamando a setPausaActiva con:", res.data[0]);
+          console.log("[8] Pausa activa ENCONTRADA:", res.data[0]);
+          console.log(" [9] Llamando a setPausaActiva con:", res.data[0]);
           setPausaActiva(res.data[0]);
         } else {
-          console.log("❌ [10] No hay pausa activa");
-          console.log("❌ [11] Llamando a setPausaActiva con: null");
+          console.log(" [10] No hay pausa activa");
+          console.log(" [11] Llamando a setPausaActiva con: null");
           setPausaActiva(null);
         }
       } else {
-        console.log("⚠️ [12] Componente desmontado, ignorando respuesta");
+        console.log(" [12] Componente desmontado, ignorando respuesta");
       }
     } catch (error) {
-      console.error("❌ [13] Error en cargarPausaActiva:", error);
+      console.error("[13] Error en cargarPausaActiva:", error);
     }
   };
   
@@ -84,7 +84,7 @@ useEffect(() => {
     console.log("🔄 [14] id existe, llamando a cargarPausaActiva()");
     cargarPausaActiva();
   } else {
-    console.log("❌ [15] id no existe, saltando carga");
+    console.log(" [15] id no existe, saltando carga");
   }
   
   return () => {
@@ -146,7 +146,7 @@ useEffect(() => {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-console.log("🎨 [RENDER] pausaActiva actual es:", pausaActiva);
+console.log(" [RENDER] pausaActiva actual es:", pausaActiva);
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button

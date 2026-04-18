@@ -16,11 +16,10 @@ export const HorariosDisponibles = ({ doctorId, fecha, onSelectHorario }) => {
     
     setLoading(true);
     try {
-      const response = await getHorariosDisponiblesRequest(doctorId, fecha, 30); // duración por defecto
-     
-         console.log("📦 Respuesta completa:", response);
-    console.log("📦 Datos:", response.data);
-    console.log("📦 Cantidad:", response.data.length);
+const response = await getHorariosDisponiblesRequest(doctorId, fecha, duracionCita);//aqui se logra que sea dinamico
+         console.log(" Respuesta completa:", response);
+    console.log(" Datos:", response.data);
+    console.log(" Cantidad:", response.data.length);
      
       setHorarios(response.data);
     } catch (error) {
