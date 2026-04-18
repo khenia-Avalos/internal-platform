@@ -258,17 +258,19 @@ if (esHoy) {
   }
 }
       
-      // 2. Pausas (almuerzo)
-      if (disponible) {
-        const enPausa = pausas.some(pausa => {
-          return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-        });
-        if (enPausa) {
-          disponible = false;
-          motivo = "pausa activa";
-        }
-      }
-      
+ // 2. Pausas (almuerzo)
+const enPausa = pausas.some(pausa => {
+  // Si la pausa está activa (sin fin), bloquea desde el inicio
+  if (!pausa.fin) {
+    return slot.inicio >= pausa.inicio;
+  }
+  // Si tiene fin, bloquea el rango completo
+  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+});
+if (enPausa) {
+  disponible = false;
+  motivo = "almuerzo";
+}
       // 3. Citas existentes
       if (disponible) {
         const ocupado = citas.some(cita => {
