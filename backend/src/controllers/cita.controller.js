@@ -12,6 +12,13 @@ const sumarMinutos = (hora, minutos) => {
   fecha.setHours(horas, mins + minutos, 0);
   return fecha.toTimeString().slice(0, 5);
 };
+const sumarMinutosAHora = (horaStr, minutos) => {
+  const [horas, mins] = horaStr.split(':').map(Number);
+  let totalMinutos = horas * 60 + mins + minutos;
+  const nuevasHoras = Math.floor(totalMinutos / 60);
+  const nuevosMinutos = totalMinutos % 60;
+  return `${nuevasHoras.toString().padStart(2, '0')}:${nuevosMinutos.toString().padStart(2, '0')}`;
+};
 
 export const createCita = async (req, res) => {
     try {
@@ -291,8 +298,7 @@ if (disponible) {
       const horaFinAlmuerzo = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
       
       // Bloquear si el slot empieza después del inicio y antes del fin del almuerzo (con margen)
-      return slot.inicio >= pausa.inicio && slot.inicio < horaFinAlmuerzo;
-    }
+return slot.fin > pausa.inicio && slot.fin < horaFinAlmuerzo;    }
     return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
   });
   
