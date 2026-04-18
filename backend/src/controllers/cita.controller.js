@@ -251,7 +251,8 @@ if (pausas.length > 0) {
         fin: horaFinSlot
       });
       console.log(`   Slot generado: ${horaActualSlot} - ${horaFinSlot}`);
-      horaActualSlot = sumarMinutos(horaActualSlot, intervalo);// actualiza la hora de inicio del siguiente slot sumando el intervalo a la hora de inicio del slot actual
+  horaActualSlot = sumarMinutos(horaActualSlot, duracion);
+
     }
     
     console.log(" Total slots generados:", slots.length);
