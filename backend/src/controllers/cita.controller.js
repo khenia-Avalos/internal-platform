@@ -149,7 +149,7 @@ export const deleteCita = async (req, res) => {
 
 export const getHorariosDisponibles = async (req, res) => {
   try {
-    const { doctorId, fecha, duracionCita } = req.params;
+const { doctorId, fecha } = req.params;// recibe el id del doctor y la fecha para la que se quieren los horarios disponibles
     
     console.log("========== INICIO getHorariosDisponibles ==========");
     console.log(" Parámetros recibidos:");
@@ -157,8 +157,7 @@ export const getHorariosDisponibles = async (req, res) => {
     console.log("   fecha:", fecha);
     console.log("   duracionCita:", duracionCita);
     
-    const duracion = parseInt(duracionCita);// convierte la duracion a numero
-    
+const duracion = horario.intervalo;    // Obtener el horario del doctor para ese día de la semana
     const ahora = new Date();
     const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
 const horaActual = ahora.toLocaleTimeString('en-US', { 
