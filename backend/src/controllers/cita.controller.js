@@ -4,6 +4,9 @@ import Cita from '../models/cita.model.js'
 import { manejarError } from '../utils/errorHandler.js'; 
 import Horario from '../models/horario.model.js';
 import Pausa from '../models/pausa.model.js';
+import { sendAppointmentConfirmationEmail } from '../services/authService.js';
+
+
 
 // Suma minutos a una hora en formato "HH:MM"
 const sumarMinutos = (hora, minutos) => {
@@ -47,6 +50,13 @@ if (!paciente) {
             
             const citaGuardada = await nuevaCita.save();
             res.status(201).json(citaGuardada);
+            if (paciente.ownerId?.email) {
+  await sendAppointmentConfirmationEmail(
+    paciente.ownerId.email,
+    paciente.ownerId.username,
+    citaGuardada
+  );
+}
 
     }
         catch (error) {
@@ -54,6 +64,7 @@ if (!paciente) {
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
     });
+    
 
         }
 
@@ -350,3 +361,4 @@ export const getCitasRequest = async (req, res) => {
     });
   }
 };
+

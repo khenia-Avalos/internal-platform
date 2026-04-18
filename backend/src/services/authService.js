@@ -20,7 +20,124 @@ try {
 }
 
 class EmailService {
+
+  async sendAppointmentConfirmation(toEmail, nombreCliente, cita) {
+  try {
+    const subject = "Confirmación de Cita - Clínica Veterinaria";
+    const html = this.getAppointmentHtmlTemplate(nombreCliente, cita);
+    const text = this.getAppointmentTextTemplate(nombreCliente, cita);
+
+    if (!sgMail) {
+      throw new Error("SendGrid no está configurado");
+    }
+
+    const msg = {
+      to: toEmail,
+      from: {
+        email: SENDGRID_FROM_EMAIL,
+        name: "Clínica Veterinaria",
+      },
+      subject: subject,
+      html: html,
+      text: text,
+      trackingSettings: {
+        openTracking: { enable: true },
+      },
+      category: "appointment-confirmation",
+    };
+
+    const response = await sgMail.send(msg);
+
+    return {
+      success: true,
+      service: "sendgrid",
+      messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
+    };
+  } catch (error) {
+    console.error("❌ Error enviando email de confirmación:", error.message);
+    if (error.response) {
+      console.error("Detalles SendGrid:", error.response.body);
+    }
+    throw error;
+  }
+}
+
+getAppointmentHtmlTemplate(nombreCliente, cita) {
+  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
+  const horaInicio = cita.horaInicio;
+  const horaFin = cita.horaFin;
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px; }
+        .button-cancel { background: #f44336; }
+        .button-wa { background: #25D366; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        .actions { text-align: center; margin: 30px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Cita Confirmada</h1>
+        </div>
+        <div class="content">
+            <h2>Hola ${nombreCliente},</h2>
+            <p>Tu cita ha sido <strong>agendada exitosamente</strong>.</p>
+            
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <p><strong>📅 Fecha:</strong> ${fecha}</p>
+                <p><strong>⏰ Horario:</strong> ${horaInicio} - ${horaFin}</p>
+                <p><strong>👨‍⚕️ Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname}</p>
+                <p><strong>🐾 Mascota:</strong> ${cita.pacienteId?.nombre}</p>
+                <p><strong>📝 Motivo:</strong> ${cita.motivo || 'Consulta general'}</p>
+            </div>
+            
+            <div class="actions">
+                <a href="${FRONTEND_URL}/citas/confirmar/${cita._id}" class="button">✅ Confirmar</a>
+                <a href="${FRONTEND_URL}/citas/cancelar/${cita._id}" class="button button-cancel">❌ Cancelar</a>
+                <a href="https://wa.me/506XXXXXXXX?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}" class="button button-wa">📱 Reagendar por WhatsApp</a>
+            </div>
+            
+            <p><strong>Importante:</strong> Si necesitas modificar tu cita, puedes usar los botones de arriba.</p>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Clínica Veterinaria. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+getAppointmentTextTemplate(nombreCliente, cita) {
+  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
+  return `CONFIRMACIÓN DE CITA
+
+Hola ${nombreCliente},
+
+Tu cita ha sido agendada exitosamente.
+
+Fecha: ${fecha}
+Horario: ${cita.horaInicio} - ${cita.horaFin}
+Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname}
+Mascota: ${cita.pacienteId?.nombre}
+Motivo: ${cita.motivo || 'Consulta general'}
+
+Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
+
+© ${new Date().getFullYear()} Clínica Veterinaria.`;
+}
   async sendResetPassword(toEmail, username, resetLink) {
+
+    
     //busca usuario en bd
     try {
       const subject = "Restablece tu Contraseña - Clínica Veterinaria";
@@ -128,6 +245,10 @@ Si no solicitaste este cambio, puedes ignorar este email.
   }
 }
 
+
+
+
+
 const emailService = new EmailService();
 
 export const sendResetPasswordEmail = async (email) => {
@@ -215,6 +336,18 @@ export const checkEmailConfig = async () => {//codigo para debug
       success: false,
       message: "Error verificando configuración de SendGrid",
       error: error.message,
+    };
+  }
+};
+export const sendAppointmentConfirmationEmail = async (email, nombreCliente, cita) => {
+  try {
+    const result = await emailService.sendAppointmentConfirmation(email, nombreCliente, cita);
+    return result;
+  } catch (error) {
+    console.error("Error en sendAppointmentConfirmationEmail:", error);
+    return {
+      success: false,
+      message: "Error enviando correo de confirmación",
     };
   }
 };
