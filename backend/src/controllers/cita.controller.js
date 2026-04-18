@@ -258,44 +258,47 @@ const slotsDisponibles = slots.filter(slot => {
     }
   }
 
-  // 2. Pausas (almuerzo)
-  if (disponible) {
-const pausasFormateadas = pausas.map(p => {
-  const inicioLocal = new Date(p.inicio).toLocaleTimeString('en-US', { 
-    timeZone: 'America/Costa_Rica', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false 
-  });
-  return {
-    inicio: inicioLocal,
-    fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { 
+ // 2. Pausas (almuerzo)
+if (disponible) {
+  const pausasFormateadas = pausas.map(p => {
+    const inicioLocal = new Date(p.inicio).toLocaleTimeString('en-US', { 
       timeZone: 'America/Costa_Rica', 
       hour: '2-digit', 
       minute: '2-digit', 
       hour12: false 
-    }) : null
-  };
-});
-
-console.log("📝 pausasFormateadas:", JSON.stringify(pausasFormateadas, null, 2));
-    
- const enPausa = pausasFormateadas.some(pausa => {
-  console.log(`   Comparando slot ${slot.inicio} con pausa inicio ${pausa.inicio}:`);
-  console.log(`      slot.inicio >= pausa.inicio: ${slot.inicio >= pausa.inicio}`);
-  if (!pausa.fin) {
-    return slot.inicio >= pausa.inicio;
-  }
-  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-});
-console.log(`   enPausa: ${enPausa}`);
-    
-    if (enPausa) {
-      disponible = false;
-      motivo = "almuerzo";
+    });
+    return {
+      inicio: inicioLocal,
+      fin: p.fin ? new Date(p.fin).toLocaleTimeString('en-US', { 
+        timeZone: 'America/Costa_Rica', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+      }) : null
+    };
+  });
+  
+  const enPausa = pausasFormateadas.some(pausa => {
+    if (!pausa.fin) {
+      // Calcular fin como inicio + 60 minutos
+      const [horas, minutos] = pausa.inicio.split(':').map(Number);
+      let minutosFin = minutos + 60;
+      let horasFin = horas;
+      if (minutosFin >= 60) {
+        horasFin += Math.floor(minutosFin / 60);
+        minutosFin = minutosFin % 60;
+      }
+      const horaFin = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
+      return slot.inicio >= pausa.inicio && slot.fin <= horaFin;
     }
+    return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+  });
+  
+  if (enPausa) {
+    disponible = false;
+    motivo = "almuerzo";
   }
-
+}
   // 3. Citas existentes
   if (disponible) {
     const ocupado = citas.some(cita => {
