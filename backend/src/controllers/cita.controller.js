@@ -258,7 +258,7 @@ const slotsDisponibles = slots.filter(slot => {
     }
   }
 
- // 2. Pausas (almuerzo)
+// 2. Pausas (almuerzo)
 if (disponible) {
   const pausasFormateadas = pausas.map(p => {
     const inicioLocal = new Date(p.inicio).toLocaleTimeString('en-US', { 
@@ -278,25 +278,23 @@ if (disponible) {
     };
   });
   
-const enPausa = pausasFormateadas.some(pausa => {
-  if (!pausa.fin) {
-    // Calcular fin como inicio + 60 minutos
-    const [horas, minutos] = pausa.inicio.split(':').map(Number);
-    let minutosFin = minutos + 60;
-    let horasFin = horas;
-    if (minutosFin >= 60) {
-      horasFin += Math.floor(minutosFin / 60);
-      minutosFin = minutosFin % 60;
+  const enPausa = pausasFormateadas.some(pausa => {
+    if (!pausa.fin) {
+      // Calcular hora fin del almuerzo (inicio + 60 + 15 minutos de margen)
+      const [horas, minutos] = pausa.inicio.split(':').map(Number);
+      let minutosFin = minutos + 75; // 60 + 15
+      let horasFin = horas;
+      if (minutosFin >= 60) {
+        horasFin += Math.floor(minutosFin / 60);
+        minutosFin = minutosFin % 60;
+      }
+      const horaFinAlmuerzo = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
+      
+      // Bloquear si el slot empieza después del inicio y antes del fin del almuerzo (con margen)
+      return slot.inicio >= pausa.inicio && slot.inicio < horaFinAlmuerzo;
     }
-    const horaFin = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
-    
-    // Bloquear si el slot EMPIEZA durante el almuerzo O TERMINA después del inicio
-    return (slot.inicio >= pausa.inicio && slot.inicio < horaFin) ||
-           (slot.fin > pausa.inicio && slot.fin <= horaFin) ||
-           (slot.inicio <= pausa.inicio && slot.fin >= horaFin);
-  }
-  return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
-});
+    return slot.inicio >= pausa.inicio && slot.fin <= pausa.fin;
+  });
   
   if (enPausa) {
     disponible = false;
