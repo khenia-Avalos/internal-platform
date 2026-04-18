@@ -64,19 +64,22 @@ export const terminarPausa = async (req, res) => {
 };
 
 export const getPausasActivas = async (req, res) => {
-try {
-
+  try {
     const { doctorId } = req.params;
     
- const pausas = await Pausa.find({ doctorId, activo: true });
+    console.log("🔍 Buscando pausas activas para doctorId:", doctorId);
+    
+    const pausas = await Pausa.find({ doctorId, activa: true });
+    
+    console.log("📦 Pausas encontradas:", pausas.length);
+    console.log("📦 Datos:", pausas);
+    
     res.json(pausas);
-  
-
-}catch (error) {
-  const errorResponse = manejarError(error);
+  } catch (error) {
+    console.error("❌ Error en getPausasActivas:", error);
+    const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
     });
-
-}
+  }
 };
