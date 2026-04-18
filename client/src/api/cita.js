@@ -1,7 +1,7 @@
 import axios from "./axios";
 
-export const getHorariosDisponiblesRequest = (doctorId, fecha, duracionCita) => 
-  axios.get(`/citas/horarios/${doctorId}/${fecha}/${duracionCita}?t=${Date.now()}`);
+export const getHorariosDisponiblesRequest = (doctorId, fecha) => 
+  axios.get(`/citas/horarios/${doctorId}/${fecha}?t=${Date.now()}`);
 export const createCita = (cita) => axios.post("/citas", cita);
 export const getCitasByDoctor = () => axios.get("/citas/doctor"); 
 export const getCitasByPaciente = () => axios.get("/citas/paciente");
