@@ -25,6 +25,7 @@ function CitasPage() {
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [fechaFiltro, setFechaFiltro] = useState("");
   const navigate = useNavigate();
 
   const handleCreateCita = async (data) => {
@@ -41,29 +42,37 @@ function CitasPage() {
     }
   };
 
-  useEffect(() => {
-    const obtenerCitas = async () => {
-      try {
-const response = await getCitasRequest();  // ← obtiene todas las citas
-setCitas(response.data);  // ← guarda las citas en el estado
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-      }
-    };
-    obtenerCitas();
-  }, []);
+useEffect(() => {
+  const obtenerCitas = async () => {
+    try {
+      const response = await getCitasRequest();
+      // Ordenar por fecha (más reciente primero)
+      const citasOrdenadas = response.data.sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha)
+      );
+      setCitas(citasOrdenadas);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+  obtenerCitas();
+}, []);
 
-  const citasFiltradas = citas.filter(cita => {
-    const texto = busqueda.toLowerCase();
-    return (
-      cita.doctorId?.username?.toLowerCase().includes(texto) ||
-      cita.doctorId?.lastname?.toLowerCase().includes(texto) ||
-      cita.doctorId?.email?.toLowerCase().includes(texto) ||
-      cita.doctorId?.phoneNumber?.toLowerCase().includes(texto) ||
-      cita.doctorId?.especialidad?.toLowerCase().includes(texto)
-    );
-  });
 
+const citasFiltradas = citas.filter(cita => {
+  // Filtro por búsqueda
+  const texto = busqueda.toLowerCase();
+  const matchBusqueda = (
+    cita.doctorId?.username?.toLowerCase().includes(texto) ||
+    cita.doctorId?.lastname?.toLowerCase().includes(texto) ||
+    cita.pacienteId?.nombre?.toLowerCase().includes(texto)
+  );
+  
+  // Filtro por fecha
+  const matchFecha = fechaFiltro ? cita.fecha?.startsWith(fechaFiltro) : true;
+  
+  return matchBusqueda && matchFecha;
+});
   const { handleDelete: handleDeleteCita } = useDelete(
     deleteCita,
     getCitasRequest,
@@ -99,6 +108,13 @@ setCitas(response.data);  // ← guarda las citas en el estado
               onChange={setBusqueda}
               placeholder="Buscar cita por nombre de dueño o mascota"
             />
+            <input
+  type="date"
+  value={fechaFiltro}
+  onChange={(e) => setFechaFiltro(e.target.value)}
+  className="px-4 py-2 border border-cyan-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+  placeholder="Filtrar por fecha"
+/>
           </div>
           <button
             onClick={() => setMostrarFormulario(true)}
