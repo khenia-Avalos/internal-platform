@@ -189,7 +189,17 @@ const citasFiltradas = citas.filter(cita => {
         ) : (
           <DataTable
            columns={[
-  { header: "Fecha", accessor: "fecha", render: (cita) => new Date(cita.fecha).toLocaleDateString() },
+{ 
+  header: "Fecha", 
+  accessor: "fecha", 
+  render: (cita) => {
+    const fecha = new Date(cita.fecha);//conversion de zona horaria a formato legible
+    const año = fecha.getUTCFullYear();
+    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getUTCDate()).padStart(2, '0');
+    return `${dia}/${mes}/${año}`;
+  }
+},
   { header: "Hora", accessor: "horaInicio" },
   { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
   { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
