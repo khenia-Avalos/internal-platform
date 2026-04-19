@@ -25,7 +25,7 @@ const sumarMinutosAHora = (horaStr, minutos) => {
 
 export const createCita = async (req, res) => {
     try {
-         const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas } = req.body;
+         const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas,correo } = req.body;
             
           // Verificar que el doctor existe y es doctor
 const doctor = await User.findOne({ _id: doctorId, role: "doctor" });
@@ -49,26 +49,26 @@ if (!paciente) {
             });
             
             const citaGuardada = await nuevaCita.save();
-            res.status(201).json(citaGuardada);
-            if (paciente.ownerId?.email) {
-  await sendAppointmentConfirmationEmail(
-    paciente.ownerId.email,
-    paciente.ownerId.username,
-    citaGuardada
-  );
-}
 
+   if (correo) {
+      await sendAppointmentConfirmationEmail(
+        correo,
+        paciente.ownerId?.username || "Cliente",
+        citaGuardada
+      );
     }
-        catch (error) {
-              const errorResponse = manejarError(error);
+    
+    res.status(201).json(citaGuardada);
+    
+  } catch (error) {
+    const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
     });
-    
-
-        }
-
+  }
 }
+
+ 
 
 export const getCitasByDoctor = async (req, res) => {
   try {
