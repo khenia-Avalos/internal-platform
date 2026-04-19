@@ -23,52 +23,76 @@ const sumarMinutosAHora = (horaStr, minutos) => {
   return `${nuevasHoras.toString().padStart(2, '0')}:${nuevosMinutos.toString().padStart(2, '0')}`;
 };
 
+
 export const createCita = async (req, res) => {
-    try {
-         const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas,correo } = req.body;
-            
-          // Verificar que el doctor existe y es doctor
-const doctor = await User.findOne({ _id: doctorId, role: "doctor" });
-if (!doctor) {
-  return res.status(404).json({ message: "Doctor no encontrado" });
-}
-// Verificar que el paciente (mascota) existe
-const paciente = await Paciente.findById(pacienteId);
-if (!paciente) {
-  return res.status(404).json({ message: "Paciente no encontrado" });
-}
-
-            const nuevaCita = new Cita({
-              doctorId,
-              pacienteId,
-              fecha,
-              horaInicio,
-              horaFin,
-             motivo,
-              notas
-            });
-            
-            const citaGuardada = await nuevaCita.save();
-
-   if (correo) {
-      await sendAppointmentConfirmationEmail(
-        correo,
-        paciente.ownerId?.username || "Cliente",
-        citaGuardada
-      );
+  try {
+    console.log("========== INICIO createCita ==========");
+    console.log("📥 Body recibido:", req.body);
+    
+    const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas, correo } = req.body;
+    
+    console.log("📧 Correo recibido:", correo);
+    console.log("👨‍⚕️ doctorId:", doctorId);
+    console.log("🐾 pacienteId:", pacienteId);
+    
+    // Verificar que el doctor existe y es doctor
+    const doctor = await User.findOne({ _id: doctorId, role: "doctor" });
+    if (!doctor) {
+      console.log("❌ Doctor no encontrado");
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    console.log("✅ Doctor encontrado:", doctor.username);
+    
+    // Verificar que el paciente (mascota) existe
+    const paciente = await Paciente.findById(pacienteId);
+    if (!paciente) {
+      console.log("❌ Paciente no encontrado");
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+    console.log("✅ Paciente encontrado:", paciente.nombre);
+    
+    const nuevaCita = new Cita({
+      doctorId,
+      pacienteId,
+      fecha,
+      horaInicio,
+      horaFin,
+      motivo,
+      notas
+    });
+    
+    const citaGuardada = await nuevaCita.save();
+    console.log("✅ Cita guardada con ID:", citaGuardada._id);
+    
+    // Enviar correo de confirmación
+    if (correo) {
+      console.log("📧 Intentando enviar correo a:", correo);
+      try {
+        await sendAppointmentConfirmationEmail(
+          correo,
+          paciente.ownerId?.username || "Cliente",
+          citaGuardada
+        );
+        console.log("✅ Correo enviado exitosamente a:", correo);
+      } catch (emailError) {
+        console.error("❌ Error enviando correo:", emailError.message);
+        // No detenemos el proceso, la cita ya está creada
+      }
+    } else {
+      console.log("⚠️ No se proporcionó correo, no se envió notificación");
     }
     
+    console.log("========== FIN createCita ==========");
     res.status(201).json(citaGuardada);
     
   } catch (error) {
+    console.error("❌ Error en createCita:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
     });
   }
-}
-
- 
+};
 
 export const getCitasByDoctor = async (req, res) => {
   try {
