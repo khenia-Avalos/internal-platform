@@ -86,7 +86,8 @@ const handleSubmit = async (e) => {
     titulo,
     tipoCita,
     descripcion,
-    notas
+    notas, 
+    correo
   };
   
   setLoading(true);
@@ -159,7 +160,7 @@ return(
     const duenoIdSeleccionado = e.target.value;
     setDuenoId(duenoIdSeleccionado);
     
-    // 👇 ESTO ES LO NUEVO: actualizar el correo
+    // 👇ESTO ES LO NUEVO: actualizar el correo
     const duenoSeleccionado = duenos.find(d => d._id === duenoIdSeleccionado);
     if (duenoSeleccionado) {
       setCorreo(duenoSeleccionado.email || '');
