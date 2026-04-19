@@ -153,13 +153,13 @@ return(
   {/* Campo 4: Dueños (con buscador) */}
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
-  <select
+ <select
   value={duenoId}
   onChange={(e) => {
     const duenoIdSeleccionado = e.target.value;
     setDuenoId(duenoIdSeleccionado);
     
-    // Buscar el dueño seleccionado y actualizar el correo
+    // 👇 ESTO ES LO NUEVO: actualizar el correo
     const duenoSeleccionado = duenos.find(d => d._id === duenoIdSeleccionado);
     if (duenoSeleccionado) {
       setCorreo(duenoSeleccionado.email || '');
@@ -169,7 +169,14 @@ return(
   }}
   className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
   required
-></select>
+>
+  <option value="">Selecciona un dueño</option>
+  {duenos.map((dueno) => (
+    <option key={dueno._id} value={dueno._id}>
+      {dueno.username} {dueno.lastname} - {dueno.email}
+    </option>
+  ))}
+</select>
   </div>
 
   {/* Campo 5: Mascotas (se muestra solo si hay dueño seleccionado) */}
