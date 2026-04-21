@@ -300,7 +300,13 @@ export const getCitasRequest = async (req, res) => {
   try {
     const citas = await Cita.find()
       .populate('doctorId', 'username lastname especialidad')
-      .populate('pacienteId', 'nombre especie raza');
+      .populate({
+        path: 'pacienteId',
+        populate: {
+          path: 'ownerId',
+          select: 'username email'
+        }
+      });
     res.json(citas);
   } catch (error) {
     const errorResponse = manejarError(error);
@@ -309,4 +315,3 @@ export const getCitasRequest = async (req, res) => {
     });
   }
 };
-
