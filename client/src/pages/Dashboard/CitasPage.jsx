@@ -206,7 +206,7 @@ const citasFiltradas = citas.filter(cita => {
   { header: "Estado", accessor: "estado" }
 ]}
             data={citasFiltradas}
-            onRowClick={(cita) => navigate(`/citas/${cita._id}`)} // ← NUEVO
+            onRowClick={(cita) => navigate(`/citas/${cita._id}`)} // app.jsx lo sabe
 
             onEdit={(cita) => {
               setCitaSeleccionada(cita);
