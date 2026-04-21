@@ -13,6 +13,7 @@ import { Outlet } from "react-router";
 import ClienteDetallePage from './pages/Dashboard/ClienteDetallePage';
 import PacienteDetallePage from './pages/Dashboard/PacienteDetallePage';
 import DoctorDetallePage from './pages/Dashboard/DoctorDetallePage.jsx';
+import CitaDetallePage from "./pages/Dashboard/CitaDetallePage";
 import ForgotPassword from "./pages/ForgotPassword"; 
 import ResetPassword from "./pages/ResetPassword"; 
 
