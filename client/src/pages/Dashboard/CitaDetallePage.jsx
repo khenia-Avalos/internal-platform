@@ -7,6 +7,8 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getCitasRequest } from "/src/api/cita";
 import { getCitasByPaciente } from "/src/api/cita";
+import { getCitaByIdRequest } from "/src/api/cita";
+
 
 
 
@@ -23,8 +25,8 @@ function CitaDetallePage() {
     const cargarDatos = async () => {
       setLoading(true);
       try {
-        const citaRes = await getCitasRequest(id);
-        setCita(citaRes.data);
+    const citaRes = await getCitaByIdRequest(id);
+setCita(citaRes.data);
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       } finally {
