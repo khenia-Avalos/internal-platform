@@ -315,3 +315,27 @@ export const getCitasRequest = async (req, res) => {
     });
   }
 };
+
+export const getCitaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cita = await Cita.findById(id)
+      .populate('doctorId', 'username lastname especialidad')
+      .populate({
+        path: 'pacienteId',
+        populate: {
+          path: 'ownerId',
+          select: 'username email'
+        }
+      });
+    if (!cita) {
+      return res.status(404).json({ message: "Cita no encontrada" });
+    }
+    res.json(cita);
+  } catch (error) {
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
+};
