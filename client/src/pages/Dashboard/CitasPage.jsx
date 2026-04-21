@@ -109,7 +109,7 @@ const citasFiltradas = citas.filter(cita => {
               placeholder="Buscar cita por nombre de dueño o mascota"
             />
             <input
-  type="date"
+  type="date"//calendario para filtrar por fecha lo crea el navegadoir automaticamente
   value={fechaFiltro}
   onChange={(e) => setFechaFiltro(e.target.value)}
   className="px-4 py-2 border border-cyan-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
