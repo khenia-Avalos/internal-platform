@@ -13,7 +13,8 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   const [mascotas, setMascotas] = useState([]);
 
 
-const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');//si citadoctor es objeto sacale el id
+  // Extraer IDs correctamente (para creación y edición)
+  const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');
   const [fecha, setFecha] = useState(cita?.fecha || '');
   const [horario, setHorario] = useState(null);
   const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || cita?.duenoId || '');
@@ -23,6 +24,9 @@ const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId |
   const [descripcion, setDescripcion] = useState(cita?.descripcion || '');
   const [notas, setNotas] = useState(cita?.notas || '');
   const [correo, setCorreo] = useState(cita?.correo || '');
+
+    const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(false);
 
 
   // Cargar doctores y dueños al montar
