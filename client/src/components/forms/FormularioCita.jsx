@@ -16,13 +16,13 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   // Extraer IDs correctamente (para creación y edición)
   const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');
   const [horario, setHorario] = useState(null);
-  const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || cita?.duenoId || '');
-  const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || cita?.pacienteId || '');
+const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || '');
+const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || '');
+const [correo, setCorreo] = useState(cita?.pacienteId?.ownerId?.email || cita?.correo || '');
   const [titulo, setTitulo] = useState(cita?.titulo || '');
   const [tipoCita, setTipoCita] = useState(cita?.tipoCita || 'consulta');
   const [descripcion, setDescripcion] = useState(cita?.descripcion || '');
   const [notas, setNotas] = useState(cita?.notas || '');
-  const [correo, setCorreo] = useState(cita?.correo || '');
 
     const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
