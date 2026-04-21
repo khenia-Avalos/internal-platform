@@ -15,7 +15,6 @@ export const FormularioCita = ({ onSubmit, cita }) => {
 
   // Extraer IDs correctamente (para creación y edición)
   const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');
-  const [fecha, setFecha] = useState(cita?.fecha || '');
   const [horario, setHorario] = useState(null);
   const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || cita?.duenoId || '');
   const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || cita?.pacienteId || '');
@@ -27,6 +26,9 @@ export const FormularioCita = ({ onSubmit, cita }) => {
 
     const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Formatear la fecha para el input type="date"
+const fechaFormateada = cita?.fecha ? cita.fecha.split('T')[0] : '';
+const [fecha, setFecha] = useState(fechaFormateada);
 
 
   // Cargar doctores y dueños al montar
