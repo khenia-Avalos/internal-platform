@@ -13,17 +13,15 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   const [mascotas, setMascotas] = useState([]);
 
 
-    const [doctorId, setDoctorId] = useState(cita?.doctorId || '');//cita existe? entonces dame su propiedad doctorId, sino dejalo vacio
-  const [fecha, setFecha] = useState(cita?.fecha || '');//cita es el prop que viene del padre osea citaspage, donde se crea
+const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');//si citadoctor es objeto sacale el id
+  const [fecha, setFecha] = useState(cita?.fecha || '');
   const [horario, setHorario] = useState(null);
-  const [duenoId, setDuenoId] = useState(cita?.duenoId || '');
-  const [mascotaId, setMascotaId] = useState(cita?.pacienteId || '');
+  const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || cita?.duenoId || '');
+  const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || cita?.pacienteId || '');
   const [titulo, setTitulo] = useState(cita?.titulo || '');
   const [tipoCita, setTipoCita] = useState(cita?.tipoCita || 'consulta');
   const [descripcion, setDescripcion] = useState(cita?.descripcion || '');
   const [notas, setNotas] = useState(cita?.notas || '');
-  const [errors, setErrors] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [correo, setCorreo] = useState(cita?.correo || '');
 
 
