@@ -222,15 +222,16 @@ export const getHorariosDisponibles = async (req, res) => {
       activa: true
     });
     
-    const citas = await Cita.find({ 
-      doctorId, 
-      fecha: {
-        $gte: new Date(fecha + "T00:00:00"),
-        $lt: new Date(fecha + "T23:59:59")
-      }
-    });
+ const citas = await Cita.find({ 
+  doctorId, 
+  fecha: {
+    $gte: new Date(fecha + "T00:00:00"),
+    $lt: new Date(fecha + "T23:59:59")
+  },
+  estado: { $ne: 'cancelada' }  // ← EXCLUIR CITAS CANCELADAS
+});
     
-    // ✅ SIMPLIFICADO: usar horario.intervalo como duración
+    //  SIMPLIFICADO: usar horario.intervalo como duración
     const duracion = horario.intervalo;
     
     const slots = [];
