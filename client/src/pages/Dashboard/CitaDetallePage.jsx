@@ -23,14 +23,28 @@ function CitaDetallePage() {
   const [updating, setUpdating] = useState(false);
 
 
-  const cambiarEstado = async (nuevoEstado) => {
-  if (!window.confirm(`¿Estás seguro de ${nuevoEstado === 'cancelada' ? 'cancelar' : 'confirmar'} esta cita?`)) return;
+const cambiarEstado = async (nuevoEstado) => {
+  let mensajeConfirmacion = '';
+  let mensajeExito = '';
+  
+  if (nuevoEstado === 'confirmada') {
+    mensajeConfirmacion = '¿Estás seguro de confirmar esta cita?';
+    mensajeExito = 'Cita confirmada exitosamente';
+  } else if (nuevoEstado === 'cancelada') {
+    mensajeConfirmacion = '¿Estás seguro de cancelar esta cita?';
+    mensajeExito = 'Cita cancelada exitosamente';
+  } else if (nuevoEstado === 'completada') {
+    mensajeConfirmacion = '¿Estás seguro de marcar esta cita como completada?';
+    mensajeExito = 'Cita marcada como completada';
+  }
+  
+  if (!window.confirm(mensajeConfirmacion)) return;
   
   setUpdating(true);
   try {
     await updateCita(cita._id, { estado: nuevoEstado });
     setCita({ ...cita, estado: nuevoEstado });
-    setSuccessMessage(`Cita ${nuevoEstado === 'confirmada' ? 'confirmada' : 'cancelada'} exitosamente`);
+    setSuccessMessage(mensajeExito);
     setTimeout(() => setSuccessMessage(""), 3000);
   } catch (error) {
     manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -117,13 +131,13 @@ setCita(citaRes.data);
   {cita.estado === 'pendiente' && (
     <>
       <button onClick={() => cambiarEstado('confirmada')} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-        ✅ Confirmar Cita
+         Confirmar Cita
       </button>
       <button onClick={() => cambiarEstado('cancelada')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-        ❌ Cancelar Cita
+         Cancelar Cita
       </button>
       <button onClick={reagendarWhatsApp} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-        📱 Reagendar por WhatsApp
+         Reagendar por WhatsApp
       </button>
     </>
   )}
@@ -132,10 +146,10 @@ setCita(citaRes.data);
   {cita.estado === 'confirmada' && (
     <>
       <button onClick={() => cambiarEstado('completada')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        ✅ Marcar como Completada
+         Marcar como Completada
       </button>
       <button onClick={reagendarWhatsApp} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-        📱 Reagendar por WhatsApp
+        📱Reagendar por WhatsApp
       </button>
     </>
   )}
