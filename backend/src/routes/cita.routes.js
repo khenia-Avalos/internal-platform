@@ -6,7 +6,8 @@ import {
   getCitasByPaciente,
   updateCita,
   deleteCita,
-  getCitasRequest
+  getCitasRequest,
+  getCitaById
 } from '../controllers/cita.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
