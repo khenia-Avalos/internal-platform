@@ -7,7 +7,9 @@ import {
   updateCita,
   deleteCita,
   getCitasRequest,
-  getCitaById
+  getCitaById,
+  confirmarCitaConToken,
+  cancelarCitaConToken
 } from '../controllers/cita.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
