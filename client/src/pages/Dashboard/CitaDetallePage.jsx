@@ -7,7 +7,7 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getCitasRequest } from "/src/api/cita";
 import { getCitasByPaciente } from "/src/api/cita";
-import { getCitaByIdRequest } from "/src/api/cita";
+import { getCitaByIdRequest, updateCita} from "/src/api/cita";
 
 
 
@@ -20,6 +20,29 @@ function CitaDetallePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [updating, setUpdating] = useState(false);
+
+
+  const cambiarEstado = async (nuevoEstado) => {
+  if (!window.confirm(`¿Estás seguro de ${nuevoEstado === 'cancelada' ? 'cancelar' : 'confirmar'} esta cita?`)) return;
+  
+  setUpdating(true);
+  try {
+    await updateCita(cita._id, { estado: nuevoEstado });
+    setCita({ ...cita, estado: nuevoEstado });
+    setSuccessMessage(`Cita ${nuevoEstado === 'confirmada' ? 'confirmada' : 'cancelada'} exitosamente`);
+    setTimeout(() => setSuccessMessage(""), 3000);
+  } catch (error) {
+    manejarErrorResponse(error, setErrors, setSuccessMessage);
+  } finally {
+    setUpdating(false);
+  }
+};
+
+const reagendarWhatsApp = () => {
+  const mensaje = `Hola, quisiera reagendar mi cita del ${new Date(cita.fecha).toLocaleDateString()} a las ${cita.horaInicio}.`;
+  window.open(`https://wa.me/50670932898?text=${encodeURIComponent(mensaje)}`, '_blank');
+};
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -39,6 +62,7 @@ setCita(citaRes.data);
     }
   }, [id]);
 
+  
  
 
   return (
@@ -88,6 +112,45 @@ setCita(citaRes.data);
     { label: "Correo del dueño", value: cita.pacienteId?.ownerId?.email || 'No especificado' },
   ]}
 />
+
+<div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+  {cita.estado === 'pendiente' && (
+    <>
+      <button
+        onClick={() => cambiarEstado('confirmada')}
+        disabled={updating}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+      >
+        ✅ Confirmar Cita
+      </button>
+      <button
+        onClick={() => cambiarEstado('cancelada')}
+        disabled={updating}
+        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+      >
+        ❌ Cancelar Cita
+      </button>
+    </>
+  )}
+  
+  {cita.estado === 'confirmada' && (
+    <button
+      onClick={() => cambiarEstado('completada')}
+      disabled={updating}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+    >
+      ✅ Marcar como Completada
+    </button>
+  )}
+  
+  {cita.estado === 'cancelada' && (
+    <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>
+  )}
+  
+  {cita.estado === 'completada' && (
+    <p className="text-green-600 font-medium">Esta cita ya fue completada</p>
+  )}
+</div>
           
         </>
       )}
