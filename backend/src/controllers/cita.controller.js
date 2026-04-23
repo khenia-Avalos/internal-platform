@@ -319,6 +319,7 @@ export const getCitasRequest = async (req, res) => {
 export const getCitaById = async (req, res) => {
   try {
     const { id } = req.params;
+    
     const cita = await Cita.findById(id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -328,11 +329,16 @@ export const getCitaById = async (req, res) => {
           select: 'username email'
         }
       });
+    
+    console.log("🔍 Cita encontrada:", JSON.stringify(cita, null, 2));
+    
     if (!cita) {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
+    
     res.json(cita);
   } catch (error) {
+    console.error("❌ Error en getCitaById:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
