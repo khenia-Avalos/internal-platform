@@ -133,10 +133,16 @@ export const updateCita = async (req, res) => {
     const { id } = req.params;
     const { estado, motivo, notas } = req.body;
     
+    // Validar que el estado sea válido
+    const estadosValidos = ['pendiente', 'confirmada', 'cancelada', 'completada'];
+    if (estado && !estadosValidos.includes(estado)) {
+      return res.status(400).json({ message: "Estado no válido" });
+    }
+    
     const citaActualizada = await Cita.findByIdAndUpdate(
       id,
       { estado, motivo, notas },
-      { new: true }
+      { new: true, runValidators: true }
     );
     
     if (!citaActualizada) {
