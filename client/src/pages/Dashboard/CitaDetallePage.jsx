@@ -74,25 +74,20 @@ setCita(citaRes.data);
       {!loading && cita && (
         <>
           <InfoCard
-            title="Información de la cita"
-            data={[
-              { label: "Doctor", value: `${cita.doctorId.username} ${cita.doctorId.lastname}` },
-                            { label: "Titulo de la cita", value: cita.titulo },
-              { label: "Descripción", value: cita.descripcion || 'No especificada' },
-                            { label: "Notas Adicionales", value: cita.notas || 'No especificadas' },
-
-
-              { label: "Fecha", value: cita.fecha },
-              { label: "Hora", value: cita.hora },
-              { label: "tipo de cita", value: cita.tipo },
-              
-
-              { label: "Dueño", value: cita.clienteId.username },
-              { label: "Mascota", value: cita.pacienteId.mascota },
-              { label: "correo del dueño", value: cita.clienteId.email },
-
-            ]}
-          />
+  title="Información de la cita"
+  data={[
+    { label: "Doctor", value: cita.doctorId ? `${cita.doctorId.username} ${cita.doctorId.lastname}` : 'No asignado' },
+    { label: "Título de la cita", value: cita.titulo || 'Sin título' },
+    { label: "Descripción", value: cita.descripcion || 'No especificada' },
+    { label: "Notas Adicionales", value: cita.notas || 'No especificadas' },
+    { label: "Fecha", value: cita.fecha ? new Date(cita.fecha).toLocaleDateString() : 'No especificada' },
+    { label: "Hora", value: cita.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
+    { label: "Tipo de cita", value: cita.tipoCita || 'No especificado' },
+    { label: "Dueño", value: cita.pacienteId?.ownerId?.username || 'No especificado' },
+    { label: "Mascota", value: cita.pacienteId?.nombre || 'No especificada' },
+    { label: "Correo del dueño", value: cita.pacienteId?.ownerId?.email || 'No especificado' },
+  ]}
+/>
           
         </>
       )}
