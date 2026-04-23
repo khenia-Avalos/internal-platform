@@ -43,7 +43,12 @@ const citaSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-    }
+    },
+    
+    tokenConfirmacion: {
+  type: String,
+  default: null
+}
 
    },
   {

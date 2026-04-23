@@ -67,6 +67,11 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
   const horaInicio = cita.horaInicio;
   const horaFin = cita.horaFin;
   
+  // URLs con token para confirmar y cancelar
+  const confirmarUrl = `${FRONTEND_URL}/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+  const cancelarUrl = `${FRONTEND_URL}/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+  const whatsappUrl = `https://wa.me/50670932898?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}%20a%20las%20${horaInicio}`;
+  
   return `
 <!DOCTYPE html>
 <html>
@@ -87,27 +92,28 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
 <body>
     <div class="container">
         <div class="header">
-            <h1>✅ Cita Confirmada</h1>
+            <h1> Confirmación de Cita</h1>
         </div>
         <div class="content">
             <h2>Hola ${nombreCliente},</h2>
             <p>Tu cita ha sido <strong>agendada exitosamente</strong>.</p>
             
             <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin: 20px 0;">
-                <p><strong>📅 Fecha:</strong> ${fecha}</p>
-                <p><strong>⏰ Horario:</strong> ${horaInicio} - ${horaFin}</p>
-                <p><strong>👨‍⚕️ Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname}</p>
-                <p><strong>🐾 Mascota:</strong> ${cita.pacienteId?.nombre}</p>
-                <p><strong>📝 Motivo:</strong> ${cita.motivo || 'Consulta general'}</p>
+                <p><strong> Fecha:</strong> ${fecha}</p>
+                <p><strong> Horario:</strong> ${horaInicio} - ${horaFin}</p>
+                <p><strong> Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname}</p>
+                <p><strong> Mascota:</strong> ${cita.pacienteId?.nombre}</p>
+                <p><strong> Motivo:</strong> ${cita.motivo || 'Consulta general'}</p>
             </div>
             
             <div class="actions">
-                <a href="${FRONTEND_URL}/citas/confirmar/${cita._id}" class="button">✅ Confirmar</a>
-                <a href="${FRONTEND_URL}/citas/cancelar/${cita._id}" class="button button-cancel">❌ Cancelar</a>
-                <a href="https://wa.me/506XXXXXXXX?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}" class="button button-wa">📱 Reagendar por WhatsApp</a>
+                <a href="${confirmarUrl}" class="button"> Confirmar Cita</a>
+                <a href="${cancelarUrl}" class="button button-cancel"> Cancelar Cita</a>
+                <a href="${whatsappUrl}" class="button button-wa" target="_blank"> Reagendar por WhatsApp</a>
             </div>
             
             <p><strong>Importante:</strong> Si necesitas modificar tu cita, puedes usar los botones de arriba.</p>
+            <p><small>Este enlace es personal e intransferible. Caduca en 7 días.</small></p>
         </div>
         <div class="footer">
             <p>© ${new Date().getFullYear()} Clínica Veterinaria. Todos los derechos reservados.</p>
