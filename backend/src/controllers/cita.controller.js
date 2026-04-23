@@ -6,6 +6,7 @@ import Horario from '../models/horario.model.js';
 import Pausa from '../models/pausa.model.js';
 import { sendAppointmentConfirmationEmail } from '../services/authService.js';
 import { createAccessToken } from '../libs/jwt.js';
+import { FRONTEND_URL } from '../config.js';
 
 import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
@@ -66,6 +67,22 @@ export const createCita = async (req, res) => {
     
     const citaGuardada = await nuevaCita.save();
     console.log("Cita guardada con ID:", citaGuardada._id);
+
+    // Volver a buscar la cita con populate
+const citaConDatos = await Cita.findById(citaGuardada._id)
+  .populate('doctorId', 'username lastname especialidad')
+  .populate({
+    path: 'pacienteId',
+    populate: {
+      path: 'ownerId',
+      select: 'username email'
+    }
+  });
+
+// Enviar correo con citaConDatos (no con citaGuardada)
+if (correo) {
+  await sendAppointmentConfirmationEmail(correo, paciente.ownerId?.username || "Cliente", citaConDatos);
+}
 
     // Después de guardar la cita, generar token
 const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");

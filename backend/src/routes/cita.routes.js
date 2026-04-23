@@ -16,6 +16,9 @@ const router = Router();
 // Rutas públicas (para agendar sin login)
 router.get('/citas/horarios/:doctorId/:fecha', getHorariosDisponibles);
 router.post('/citas', createCita);
+// Rutas para confirmar/cancelar desde el correo (públicas, sin validateToken)
+router.get('/confirmar-cita/:id', confirmarCitaConToken);
+router.get('/cancelar-cita/:id', cancelarCitaConToken);
 
 
 // Rutas protegidas (requieren autenticación)
