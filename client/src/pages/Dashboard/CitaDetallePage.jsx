@@ -112,47 +112,37 @@ setCita(citaRes.data);
     { label: "Correo del dueño", value: cita.pacienteId?.ownerId?.email || 'No especificado' },
   ]}
 />
-
-<div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+<div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
+  {/* Cita pendiente */}
   {cita.estado === 'pendiente' && (
     <>
-      <button
-        onClick={() => cambiarEstado('confirmada')}
-        disabled={updating}
-        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-      >
-         Confirmar Cita
+      <button onClick={() => cambiarEstado('confirmada')} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+        ✅ Confirmar Cita
       </button>
-      <button
-        onClick={() => cambiarEstado('cancelada')}
-        disabled={updating}
-        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-      >
-         Cancelar Cita
+      <button onClick={() => cambiarEstado('cancelada')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+        ❌ Cancelar Cita
+      </button>
+      <button onClick={reagendarWhatsApp} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+        📱 Reagendar por WhatsApp
       </button>
     </>
   )}
   
+  {/* Cita confirmada */}
   {cita.estado === 'confirmada' && (
-    <><button
-                onClick={() => cambiarEstado('completada')}
-                disabled={updating}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-              >
-                Marcar como Completada
-              </button><button onClick={reagendarWhatsApp} className="..."> // ← AGREGAR ESTO
-                // ← AGREGAR ESTO
-                 Reagendar por WhatsApp
-                </button></>
+    <>
+      <button onClick={() => cambiarEstado('completada')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        ✅ Marcar como Completada
+      </button>
+      <button onClick={reagendarWhatsApp} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+        📱 Reagendar por WhatsApp
+      </button>
+    </>
   )}
   
-  {cita.estado === 'cancelada' && (
-    <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>
-  )}
-  
-  {cita.estado === 'completada' && (
-    <p className="text-green-600 font-medium">Esta cita ya fue completada</p>
-  )}
+  {/* Mensajes para otros estados */}
+  {cita.estado === 'cancelada' && <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>}
+  {cita.estado === 'completada' && <p className="text-green-600 font-medium">Esta cita ya fue completada</p>}
 </div>
           
         </>
