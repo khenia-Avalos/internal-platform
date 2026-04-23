@@ -121,26 +121,29 @@ setCita(citaRes.data);
         disabled={updating}
         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
       >
-        ✅ Confirmar Cita
+         Confirmar Cita
       </button>
       <button
         onClick={() => cambiarEstado('cancelada')}
         disabled={updating}
         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
       >
-        ❌ Cancelar Cita
+         Cancelar Cita
       </button>
     </>
   )}
   
   {cita.estado === 'confirmada' && (
-    <button
-      onClick={() => cambiarEstado('completada')}
-      disabled={updating}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-    >
-      ✅ Marcar como Completada
-    </button>
+    <><button
+                onClick={() => cambiarEstado('completada')}
+                disabled={updating}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                Marcar como Completada
+              </button><button onClick={reagendarWhatsApp} className="..."> // ← AGREGAR ESTO
+                // ← AGREGAR ESTO
+                 Reagendar por WhatsApp
+                </button></>
   )}
   
   {cita.estado === 'cancelada' && (
