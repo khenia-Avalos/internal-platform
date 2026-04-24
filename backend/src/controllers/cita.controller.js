@@ -62,7 +62,9 @@ export const createCita = async (req, res) => {
       horaInicio,
       horaFin,
       motivo,
-      notas
+      notas,
+      tipoCita,
+      descripcion
     });
     
     const citaGuardada = await nuevaCita.save();
@@ -158,7 +160,7 @@ export const getCitasByPaciente = async (req, res) => {
 export const updateCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, motivo, notas } = req.body;
+    const { estado, motivo, notas, tipoCita, titulo, descripcion } = req.body;
     
     // Validar que el estado sea válido
     const estadosValidos = ['pendiente', 'confirmada', 'cancelada', 'completada'];
@@ -168,7 +170,7 @@ export const updateCita = async (req, res) => {
     
     const citaActualizada = await Cita.findByIdAndUpdate(
       id,
-      { estado, motivo, notas },
+      { estado, motivo, notas, tipoCita, titulo, descripcion },
       { new: true, runValidators: true }
     );
     
@@ -184,7 +186,6 @@ export const updateCita = async (req, res) => {
     });
   }
 };
-
 export const deleteCita = async (req, res) => {
   try {
     const { id } = req.params;
