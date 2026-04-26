@@ -80,19 +80,25 @@ const citasFiltradas = citas.filter(cita => {
   );
 
   const {
-    showForm: showEditForm,
-    errors: editErrors,
-    successMessage: editSuccessMessage,
-    handleEdit,
-    handleUpdate,
-    handleCancel
-  } = useEdit(
-    updateCita,
-    getCitasRequest,
-    setCitas,
-    editConfig.cita,
-    null
-  );
+  showForm: showEditForm,
+  errors: editErrors,
+  successMessage: editSuccessMessage,
+  handleEdit,
+  handleUpdate,
+  handleCancel
+} = useEdit(
+  async (id, data) => {
+    console.log("🔵 1. updateCita llamado con ID:", id);
+    console.log("🔵 2. Datos a enviar:", data);
+    const res = await updateCita(id, data);
+    console.log("🔵 3. Respuesta del backend:", res);
+    return res;
+  },
+  getCitasRequest,
+  setCitas,
+  editConfig.editCita,
+  null
+);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
