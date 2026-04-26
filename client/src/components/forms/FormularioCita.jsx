@@ -74,6 +74,8 @@ const cargarMascotas = async (ownerId) => {
 };
 
 const handleSubmit = async (e) => {
+    console.log("🟢 handleSubmit se ejecutó");  // ← AGREGAR ESTO
+
   e.preventDefault();
   
   if (!horario) {
