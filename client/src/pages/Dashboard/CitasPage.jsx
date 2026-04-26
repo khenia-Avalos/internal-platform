@@ -38,19 +38,20 @@ function CitasPage() {
   };
 
 const handleUpdateCita = async (data) => {
+  console.log("🚨🚨🚨 DATOS A ENVIAR AL BACKEND:", JSON.stringify(data, null, 2));
   try {
-    await updateCita(citaSeleccionada._id, data);
+    const res = await updateCita(citaSeleccionada._id, data);
+    console.log("🚨🚨🚨 RESPUESTA DEL BACKEND:", res);
     const response = await getCitasRequest();
     setCitas(response.data);
-    setSuccessMessage("Cita actualizada exitosamente");
+    setSuccessMessage("Cita actualizada");
     setTimeout(() => setSuccessMessage(""), 3000);
     setShowEditForm(false);
     setCitaSeleccionada(null);
   } catch (error) {
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
+    console.error("🚨🚨🚨 ERROR:", error);
   }
 };
-
   useEffect(() => {
     const obtenerCitas = async () => {
       try {
