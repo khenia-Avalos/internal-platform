@@ -84,6 +84,20 @@ const handleUpdateCita = async (data) => {
     setCitas
   );
 
+  const {
+  showForm: showEditForm,
+  errors: editErrors,
+  successMessage: editSuccessMessage,
+  handleEdit,
+  handleUpdate,
+  handleCancel
+} = useEdit(
+  updateCita,
+  getCitasRequest,
+  setCitas,
+  editConfig.editCita,
+  null
+);
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -110,16 +124,29 @@ const handleUpdateCita = async (data) => {
         </div>
       )}
 
-      {/* Formulario de edición */}
-      {showEditForm && citaSeleccionada && (
-        <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Editar Cita</h2>
-            <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400">✕</button>
-          </div>
-          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada} />
-        </div>
-      )}
+    {/* Formulario de edición */}
+{showEditForm && clienteSeleccionado && (
+  <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Cita</h2>
+      <button
+        onClick={handleCancel}
+        className="text-gray-400 hover:text-gray-600 transition text-xl"
+        aria-label="Cerrar"
+      >
+        ✕
+      </button>
+    </div>
+    <DynamicForm
+      {...editConfig.editCita}
+      layout="grid"
+      defaultValues={citaSeleccionada}
+      errors={editErrors}
+      successMessage={editSuccessMessage}
+      onSubmit={handleUpdate}
+    />
+  </div>
+)}
 
       {/* Tabla */}
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
