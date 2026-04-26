@@ -103,7 +103,11 @@ const handleSubmit = async (e) => {
     setLoading(false);
   }
 };
-return(
+console.log("🎨 FormularioCita renderizado con cita:", cita);
+
+return (
+  <>
+    {console.log("🎨 FormularioCita - el botón dirá:", cita ? "Actualizar Cita" : "Crear Cita")}
 
 <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
   <h2 className="text-xl font-semibold mb-4">
@@ -280,6 +284,7 @@ return(
     {loading ? "Guardando..." : cita ? "Actualizar Cita" : "Crear Cita"}
   </button>
 </form>
+  </>
 );
 };
 
