@@ -156,34 +156,20 @@ export const updateCita = async (req, res) => {
     const { id } = req.params;
     const { estado, motivo, notas, tipoCita, titulo, descripcion } = req.body;
     
-    console.log("🔄 Actualizando cita ID:", id);
-    console.log("📦 Datos recibidos:", { estado, motivo, notas, tipoCita, titulo, descripcion });
-    
-    // Validar que el estado sea válido
-    const estadosValidos = ['pendiente', 'confirmada', 'cancelada', 'completada'];
-    if (estado && !estadosValidos.includes(estado)) {
-      return res.status(400).json({ message: "Estado no válido" });
-    }
-    
     const citaActualizada = await Cita.findByIdAndUpdate(
       id,
       { estado, motivo, notas, tipoCita, titulo, descripcion },
-      { new: true, runValidators: true }
+      { new: true }
     );
     
     if (!citaActualizada) {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
     
-    console.log("✅ Cita actualizada:", citaActualizada);
     res.json(citaActualizada);
-    
   } catch (error) {
-    console.error("❌ Error en updateCita:", error);
     const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 export const deleteCita = async (req, res) => {
