@@ -85,7 +85,7 @@ const handleUpdateCita = async (data) => {
   );
 
   const {
-  showForm: showEditForm,
+  showForm: showEditFormFromHook, // <-- Renombrado para evitar conflicto
   errors: editErrors,
   successMessage: editSuccessMessage,
   handleEdit,
@@ -125,7 +125,7 @@ const handleUpdateCita = async (data) => {
       )}
 
     {/* Formulario de edición */}
-{showEditForm && clienteSeleccionado && (
+{showEditFormFromHook && clienteSeleccionado && (
   <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
     <div className="flex justify-between items-center mb-4">
       <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Cita</h2>
