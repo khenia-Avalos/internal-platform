@@ -154,13 +154,9 @@ export const getCitasByPaciente = async (req, res) => {
 export const updateCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, motivo, notas, tipoCita, titulo, descripcion } = req.body;
+    const data = req.body;
     
-    const citaActualizada = await Cita.findByIdAndUpdate(
-      id,
-      { estado, motivo, notas, tipoCita, titulo, descripcion },
-      { new: true }
-    );
+    const citaActualizada = await Cita.findByIdAndUpdate(id, data, { new: true });
     
     if (!citaActualizada) {
       return res.status(404).json({ message: "Cita no encontrada" });
