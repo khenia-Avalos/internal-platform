@@ -74,16 +74,16 @@ const cargarMascotas = async (ownerId) => {
 };
 
 const handleSubmit = async (e) => {
-    console.log("🟢 handleSubmit se ejecutó");  // ← AGREGAR ESTO
-
-  e.preventDefault();
+  e.preventDefault();  // ← PRIMERO, siempre
+  
+  console.log("🟢 handleSubmit se ejecutó");
   
   if (!horario) {
     setErrors(["Por favor selecciona un horario"]);
     return;
   }
   
-  const datosCita = {//crea un objeto con toda la info necesaria para crear la cita, que se envia al padre (citaspage) y este a su vez lo envia a la api
+  const datosCita = {
     doctorId,
     fecha,
     horaInicio: horario.inicio,
@@ -96,17 +96,20 @@ const handleSubmit = async (e) => {
     correo
   };
   
+  console.log("🟢 handleSubmit - datosCita:", datosCita);
+  console.log("🟢 handleSubmit - onSubmit es:", onSubmit);
+  
   setLoading(true);
   try {
     await onSubmit(datosCita);
+    console.log("🟢 handleSubmit - después de onSubmit");
   } catch (error) {
+    console.log("🟢 handleSubmit - error:", error);
     manejarErrorResponse(error, setErrors);
   } finally {
     setLoading(false);
   }
 };
-console.log("🎨 FormularioCita renderizado con cita:", cita);
-
 return (
   <>
     {console.log("🎨 FormularioCita - el botón dirá:", cita ? "Actualizar Cita" : "Crear Cita")}
