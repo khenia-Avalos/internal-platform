@@ -33,8 +33,7 @@ export const createCita = async (req, res) => {
     console.log("========== INICIO createCita ==========");
     console.log(" Body recibido:", req.body);
     
-    const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas, correo } = req.body;
-    
+const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas, correo, tipoCita, descripcion, titulo } = req.body;    
     console.log("Correo recibido:", correo);
     console.log(" doctorId:", doctorId);
     console.log(" pacienteId:", pacienteId);
