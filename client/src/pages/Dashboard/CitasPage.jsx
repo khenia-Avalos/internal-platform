@@ -12,6 +12,7 @@ import {
 import { DataTable } from "../../components/DataTable";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 import { useDelete } from "../../hooks/useDelete";
+import { useEdit } from "../../hooks/useEdit";
 
 function CitasPage() {
   const [citas, setCitas] = useState([]);
