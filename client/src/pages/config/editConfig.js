@@ -247,6 +247,42 @@ editHorario: {
     }
   ],
   submitLabel: "Actualizar Horario"
+},
+
+
+
+editCita: {
+  title: "Editar Cita",
+  fields: [
+    {
+      name: "tipoCita",
+      type: "select",
+      label: "Tipo de cita",
+      options: ["consulta", "vacunacion", "cirugia", "estetica"],
+      validation: { required: "El tipo de cita es requerido" }
+    },
+    {
+      name: "titulo",
+      type: "text",
+      label: "Título de la cita",
+      placeholder: "Ej: Consulta de seguimiento"
+    },
+    {
+      name: "descripcion",
+      type: "textarea",
+      label: "Descripción",
+      rows: 3,
+      placeholder: "Detalles de la consulta, síntomas, etc."
+    },
+    {
+      name: "notas",
+      type: "textarea",
+      label: "Notas adicionales",
+      rows: 2,
+      placeholder: "Información adicional para el veterinario"
+    }
+  ],
+  submitLabel: "Actualizar Cita"
 }
 };
 
