@@ -97,18 +97,34 @@ const handleSubmit = async (e) => {
     correo
   };
   
+  console.log("🔴🔴🔴 FormularioCita - DATOS A ENVIAR:", datosCita);
+  console.log("🔴🔴🔴 FormularioCita - onSubmit ES:", onSubmit);
+  
   setLoading(true);
   
-  // ✅ LLAMAR DIRECTAMENTE A onSubmit
-  const resultado = onSubmit(datosCita);
-  
-  // Si onSubmit es una promesa (async), esperarla
-  if (resultado && typeof resultado.then === 'function') {
-    await resultado;
+  try {
+    // 👇 ESPERAR CORRECTAMENTE a que onSubmit termine
+    await onSubmit(datosCita);
+    console.log("🔴🔴🔴 FormularioCita - onSubmit COMPLETADO");
+    
+    // ✅ Limpiar el formulario SOLO después de éxito
+    setDoctorId('');
+    setHorario(null);
+    setDuenoId('');
+    setMascotaId('');
+    setFecha('');
+    setTitulo('');
+    setTipoCita('consulta');
+    setDescripcion('');
+    setNotas('');
+    setCorreo('');
+    
+  } catch (error) {
+    console.error("🔴🔴🔴 FormularioCita - ERROR:", error);
+    setErrors([error.message || "Error al guardar la cita"]);
+  } finally {
+    setLoading(false);
   }
-  
-  setLoading(false);
-  setShowForm(false);
 };
 return (
   <>
