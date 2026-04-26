@@ -166,8 +166,11 @@ const citasFiltradas = citas.filter(cita => {
                 ✕
               </button>
             </div>
-            <FormularioCita
-  onSubmit={handleUpdate}
+         <FormularioCita
+  onSubmit={(data) => {
+    alert("🔥 El formulario se envió con datos: " + JSON.stringify(data));
+    console.log("🔥 Datos enviados:", data);
+  }}
   cita={citaSeleccionada}
 />
           </div>
