@@ -7,6 +7,9 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 
 export const FormularioCita = ({ onSubmit, cita }) => {
+  console.log("🎯 FormularioCita - onSubmit recibido:", onSubmit);
+  console.log("🎯 FormularioCita - cita recibida:", cita);
+  
 
       const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -286,7 +289,7 @@ return (
     disabled={loading}
     className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
   >
-    {loading ? "Guardando..." : cita ? "Actualizar Cita" : "Crear Cita"}
+  {loading ? "Guardando..." : cita ? "Actualizar Cita" : "Crear Cita"}
   </button>
 </form>
   </>
