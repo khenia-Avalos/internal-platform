@@ -104,8 +104,11 @@ const handleSubmit = async (e) => {
   
   setLoading(true);
   try {
+
+    console.log("🔴🔴🔴 ANTES de llamar a onSubmit");
+console.log("🔴🔴🔴 typeof onSubmit:", typeof onSubmit);
     await onSubmit(datosCita);
-    console.log("🟢 handleSubmit - después de onSubmit");
+console.log("🔴🔴🔴 DESPUÉS de llamar a onSubmit");
   } catch (error) {
     console.log("🟢 handleSubmit - error:", error);
     manejarErrorResponse(error, setErrors);
