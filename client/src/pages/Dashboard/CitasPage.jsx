@@ -153,28 +153,36 @@ const citasFiltradas = citas.filter(cita => {
           </div>
         )}
 
-        {/* Formulario de edición */}
-        {showEditForm && (
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Cita</h2>
-              <button
-                onClick={handleCancel}
-                className="text-gray-400 hover:text-gray-600 transition text-xl"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-         <FormularioCita
-  onSubmit={(data) => {
-    alert("🔥 El formulario se envió con datos: " + JSON.stringify(data));
-    console.log("🔥 Datos enviados:", data);
-  }}
-  cita={citaSeleccionada}
-/>
-          </div>
-        )}
+     {/* Formulario de edición */}
+{showEditForm && (
+  <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Cita</h2>
+      <button
+        onClick={handleCancel}
+        className="text-gray-400 hover:text-gray-600 transition text-xl"
+        aria-label="Cerrar"
+      >
+        ✕
+      </button>
+    </div>
+    <FormularioCita
+      onSubmit={async (data) => {
+        try {
+          await updateCita(citaSeleccionada._id, data);
+          const response = await getCitasRequest();
+          setCitas(response.data);
+          setSuccessMessage("Cita actualizada exitosamente");
+          setTimeout(() => setSuccessMessage(""), 3000);
+          setShowEditForm(false);
+        } catch (error) {
+          manejarErrorResponse(error, setErrors, setSuccessMessage);
+        }
+      }}
+      cita={citaSeleccionada}
+    />
+  </div>
+)}
       </div>
 
       {/* Tabla de clientes */}
