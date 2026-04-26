@@ -77,9 +77,7 @@ const cargarMascotas = async (ownerId) => {
 };
 
 const handleSubmit = async (e) => {
-  e.preventDefault();  // ← PRIMERO, siempre
-  
-  console.log("🟢 handleSubmit se ejecutó");
+  e.preventDefault();
   
   if (!horario) {
     setErrors(["Por favor selecciona un horario"]);
@@ -99,22 +97,18 @@ const handleSubmit = async (e) => {
     correo
   };
   
-  console.log("🟢 handleSubmit - datosCita:", datosCita);
-  console.log("🟢 handleSubmit - onSubmit es:", onSubmit);
-  
   setLoading(true);
-  try {
-
-    console.log("🔴🔴🔴 ANTES de llamar a onSubmit");
-console.log("🔴🔴🔴 typeof onSubmit:", typeof onSubmit);
-    await onSubmit(datosCita);
-console.log("🔴🔴🔴 DESPUÉS de llamar a onSubmit");
-  } catch (error) {
-    console.log("🟢 handleSubmit - error:", error);
-    manejarErrorResponse(error, setErrors);
-  } finally {
-    setLoading(false);
+  
+  // ✅ LLAMAR DIRECTAMENTE A onSubmit
+  const resultado = onSubmit(datosCita);
+  
+  // Si onSubmit es una promesa (async), esperarla
+  if (resultado && typeof resultado.then === 'function') {
+    await resultado;
   }
+  
+  setLoading(false);
+  setShowForm(false);
 };
 return (
   <>
