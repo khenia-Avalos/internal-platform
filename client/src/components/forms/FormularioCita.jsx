@@ -5,9 +5,10 @@ import { getClientesRequest } from '../../api/clientes';
 import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
-export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
-  console.log("🎯 FormularioCita MOUNT - onSubmit:", onSubmit);
-  
+export const FormularioCita = ({ onSubmit, cita }) => {
+  console.log("🎯 FormularioCita - onSubmit recibido:", onSubmit);
+  console.log("🎯 FormularioCita - cita recibida:", cita);
+
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -67,7 +68,8 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    e.stopPropagation(); // ← EVITA PROPAGACIÓN
+    e.stopPropagation();
+    
     console.log("🚨🚨🚨 handleSubmit EJECUTADO");
     
     if (!horario) {
@@ -94,23 +96,15 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
     };
     
     console.log("🚨🚨🚨 DATOS A ENVIAR:", JSON.stringify(datosCita, null, 2));
-    console.log("🚨🚨🚨 FUNCIÓN onSubmit:", onSubmit.toString());
     
     setLoading(true);
     setErrors([]);
     
     try {
-      const resultado = onSubmit(datosCita);
-      console.log("🚨🚨🚨 resultado de onSubmit:", resultado);
-      
-      // Si es promesa, esperar
-      if (resultado && typeof resultado.then === 'function') {
-        await resultado;
-      }
-      
+      await onSubmit(datosCita);
       console.log("🚨🚨🚨 onSubmit COMPLETADO CON ÉXITO");
       
-      // Limpiar formulario solo si no estamos editando
+      // Limpiar formulario solo si es creación (no edición)
       if (!cita) {
         setDoctorId('');
         setHorario(null);
@@ -124,9 +118,6 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         setCorreo('');
       }
       
-      // Llamar callback de éxito si existe
-      if (onSuccess) onSuccess();
-      
     } catch (error) {
       console.error("🚨🚨🚨 ERROR en onSubmit:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar la cita"]);
@@ -136,24 +127,25 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
+    <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
       <h2 className="text-xl font-semibold mb-4">
         {cita ? 'Editar Cita' : 'Nueva Cita'}
       </h2>
 
       {/* Mostrar errores */}
       {errors.length > 0 && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {errors.map((err, i) => <p key={i}>{err}</p>)}
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
         </div>
       )}
 
+      {/* Campo 1: Doctores */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
         <select
           value={doctorId}
           onChange={(e) => setDoctorId(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           required
         >
           <option value="">Selecciona un veterinario</option>
@@ -165,17 +157,19 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         </select>
       </div>
 
+      {/* Campo 2: Fecha */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
         <input
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           required
         />
       </div>
 
+      {/* Campo 3: Horarios Disponibles */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
         <HorariosDisponibles
@@ -185,11 +179,12 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         />
         {horario && (
           <p className="text-sm text-green-600 mt-1">
-            Horario seleccionado: {horario.inicio} - {horario.fin}
+            ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
           </p>
         )}
       </div>
 
+      {/* Campo 4: Dueños */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
@@ -204,7 +199,7 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
               setCorreo('');
             }
           }}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           required
         >
           <option value="">Selecciona un dueño</option>
@@ -216,13 +211,14 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         </select>
       </div>
 
+      {/* Campo 5: Mascotas */}
       {duenoId && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
           <select
             value={mascotaId}
             onChange={(e) => setMascotaId(e.target.value)}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             required
           >
             <option value="">Selecciona una mascota</option>
@@ -235,23 +231,26 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         </div>
       )}
 
+      {/* Campo 6: Correo */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
         <input
           type="email"
           value={correo}
           onChange={(e) => setCorreo(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          placeholder="correo@ejemplo.com"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           required
         />
       </div>
 
+      {/* Campo 7: Tipo de cita */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
         <select
           value={tipoCita}
           onChange={(e) => setTipoCita(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           required
         >
           <option value="consulta">Consulta general</option>
@@ -261,41 +260,47 @@ export const FormularioCita = ({ onSubmit, cita, onSuccess }) => {
         </select>
       </div>
 
+      {/* Campo 8: Título */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
         <input
           type="text"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          placeholder="Ej: Consulta de seguimiento"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
       </div>
 
+      {/* Campo 9: Descripción */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
         <textarea
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           rows={3}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          placeholder="Detalles de la consulta, síntomas, etc."
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
       </div>
 
+      {/* Campo 10: Notas adicionales */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
         <textarea
           value={notas}
           onChange={(e) => setNotas(e.target.value)}
           rows={2}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+          placeholder="Información adicional para el veterinario"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
       </div>
 
+      {/* Botón de enviar */}
       <button
         type="submit"
         disabled={loading}
-        onClick={() => console.log("🚨🚨🚨 BOTÓN CLICKEADO")}
-        className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50"
+        className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
       >
         {loading ? "Guardando..." : cita ? "Actualizar Cita" : "Crear Cita"}
       </button>

@@ -38,15 +38,18 @@ function CitasPage() {
   };
 
 const handleUpdateCita = async (data) => {
+  console.log("🚨🚨🚨 handleUpdateCita RECIBIÓ:", data);
   try {
-    await updateCita(citaSeleccionada._id, data);
-    const response = await getCitasRequest();
-    setCitas(response.data);
+    const response = await updateCita(citaSeleccionada._id, data);
+    console.log("🚨🚨🚨 RESPUESTA BACKEND:", response);
+    const responseCitas = await getCitasRequest();
+    setCitas(responseCitas.data);
     setSuccessMessage("Cita actualizada exitosamente");
     setTimeout(() => setSuccessMessage(""), 3000);
     setShowEditForm(false);
     setCitaSeleccionada(null);
   } catch (error) {
+    console.error("🚨🚨🚨 ERROR:", error);
     manejarErrorResponse(error, setErrors, setSuccessMessage);
   }
 };
