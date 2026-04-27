@@ -13,7 +13,7 @@ import {
   createClienteTemporalRequest,
   completarRegistroClienteRequest,
   deleteClienteRequest
-} from "../../api/clientesTemporales";
+} from "../../api/ClientesTemporales";
 
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
