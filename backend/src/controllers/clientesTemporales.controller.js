@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import Cliente from '../models/Cliente.js';
+import Cliente from '../models/owner.model.js';
 
 // ============================================
 // OBTENER TODOS LOS CLIENTES TEMPORALES
