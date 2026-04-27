@@ -10,8 +10,8 @@ import { toast, Toaster } from 'sonner';
 import {
   getClientesTemporalesRequest,
   createClienteTemporalRequest,
-  completarRegistroClienteTemporalRequest,  // ← Agrega "Temporal"
-  deleteClienteTemporalRequest  // ← También debería ser "Temporal"
+  completarRegistroClienteTemporalRequest,  // ✅ Corregido: añadido "Temporal"
+  deleteClienteTemporalRequest  // ✅ Corregido: añadido "Temporal"
 } from "../../api/ClientesTemporales";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
@@ -77,7 +77,8 @@ function ClientesTemporalesPage() {
 
   const handleSubmitCompleto = async (data) => {
     try {
-      await completarRegistroClienteRequest(clienteSeleccionado._id, data);
+      // ✅ Corregido: añadido "Temporal" al nombre de la función
+      await completarRegistroClienteTemporalRequest(clienteSeleccionado._id, data);
       
       // Recargar lista
       const response = await getClientesTemporalesRequest();
@@ -98,8 +99,9 @@ function ClientesTemporalesPage() {
   };
 
   // Eliminar cliente temporal
+  // ✅ Corregido: cambiado deleteClienteRequest por deleteClienteTemporalRequest
   const { handleDelete: handleDeleteClienteTemporal } = useDelete(
-    deleteClienteRequest,
+    deleteClienteTemporalRequest,  // ✅ Corregido: añadido "Temporal"
     getClientesTemporalesRequest,
     setClientesTemporales,
     {
