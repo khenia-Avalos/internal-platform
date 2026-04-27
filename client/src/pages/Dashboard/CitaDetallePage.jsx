@@ -1,40 +1,44 @@
 import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getCitaByIdRequest, updateCita } from "/src/api/cita";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 
 function CitaDetallePage() {
-  console.log("🚀 COMPONENTE CitaDetallePage RENDERIZADO");
-  
   const navigate = useNavigate();
   const { id } = useParams();
-  console.log("🚀 ID de la cita:", id);
-  
   const [cita, setCita] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
-  const [successMessage, setSuccessMessage] = useState("");
   const [updating, setUpdating] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
 
-  console.log("🚀 Estado showReagendarModal:", showReagendarModal);
+  // Función para mostrar fecha sin conversión de zona horaria
+  const mostrarFechaLocal = (fechaISO) => {
+    if (!fechaISO) return 'No especificada';
+    const [year, month, day] = fechaISO.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   const cambiarEstado = async (nuevoEstado) => {
-    console.log("🚀 cambiarEstado llamado con:", nuevoEstado);
     let mensajeConfirmacion = '';
     let mensajeExito = '';
+    let mensajeError = '';
     
     if (nuevoEstado === 'confirmada') {
       mensajeConfirmacion = '¿Estás seguro de confirmar esta cita?';
-      mensajeExito = 'Cita confirmada exitosamente';
+      mensajeExito = '✅ Cita confirmada exitosamente';
+      mensajeError = '❌ Error al confirmar la cita';
     } else if (nuevoEstado === 'cancelada') {
       mensajeConfirmacion = '¿Estás seguro de cancelar esta cita?';
-      mensajeExito = 'Cita cancelada exitosamente';
+      mensajeExito = '❌ Cita cancelada';
+      mensajeError = '❌ Error al cancelar la cita';
     } else if (nuevoEstado === 'completada') {
       mensajeConfirmacion = '¿Estás seguro de marcar esta cita como completada?';
-      mensajeExito = 'Cita marcada como completada';
+      mensajeExito = '✅ Cita marcada como completada';
+      mensajeError = '❌ Error al marcar la cita como completada';
     }
     
     if (!window.confirm(mensajeConfirmacion)) return;
@@ -43,44 +47,44 @@ function CitaDetallePage() {
     try {
       await updateCita(cita._id, { estado: nuevoEstado });
       setCita({ ...cita, estado: nuevoEstado });
-      setSuccessMessage(mensajeExito);
-      setTimeout(() => setSuccessMessage(""), 3000);
+      toast.success(mensajeExito, { duration: 3000 });
     } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error(mensajeError);
+      manejarErrorResponse(error, setErrors);
     } finally {
       setUpdating(false);
     }
   };
 
   const handleReagendar = async (data) => {
-    console.log("🔄 handleReagendar RECIBIÓ datos:", data);
+    console.log("🔄 Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
-      console.log("🔄 Cita actualizada en backend");
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
-      setSuccessMessage("Cita reagendada exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      
+      toast.success('📅 Cita reagendada exitosamente', {
+        description: `Nueva fecha: ${mostrarFechaLocal(data.fecha)} a las ${data.horaInicio}`,
+        duration: 4000,
+      });
+      
       setShowReagendarModal(false);
-      console.log("🔄 Modal cerrado");
     } catch (error) {
       console.error("🔄 Error en reagendar:", error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error('❌ Error al reagendar la cita');
+      manejarErrorResponse(error, setErrors);
     }
   };
 
   useEffect(() => {
-    console.log("🚀 useEffect ejecutándose");
     const cargarDatos = async () => {
-      console.log("🚀 Cargando datos de cita...");
       setLoading(true);
       try {
         const citaRes = await getCitaByIdRequest(id);
-        console.log("🚀 Cita cargada:", citaRes.data);
         setCita(citaRes.data);
       } catch (error) {
-        console.error("🚀 Error cargando cita:", error);
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
+        console.error("Error cargando cita:", error);
+        manejarErrorResponse(error, setErrors);
       } finally {
         setLoading(false);
       }
@@ -88,31 +92,17 @@ function CitaDetallePage() {
     
     if (id) {
       cargarDatos();
-    } else {
-      console.log("🚀 No hay ID");
     }
   }, [id]);
 
-  // Función para abrir modal
   const abrirModalReagendar = () => {
-    console.log("🔴🔴🔴 BOTÓN CLICKEADO - abrirModalReagendar");
-    console.log("🔴🔴🔴 cita actual:", cita);
-    console.log("🔴🔴🔴 showReagendarModal antes:", showReagendarModal);
     setShowReagendarModal(true);
-    console.log("🔴🔴🔴 setShowReagendarModal(true) ejecutado");
-    // Verificar después de un pequeño delay
-    setTimeout(() => {
-      console.log("🔴🔴🔴 showReagendarModal después del set:", showReagendarModal);
-    }, 100);
   };
 
-  const mostrarFechaLocal = (fechaISO) => {
-  if (!fechaISO) return 'No especificada';
-  const [year, month, day] = fechaISO.split('T')[0].split('-');
-  return `${day}/${month}/${year}`;
-};
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <Toaster position="top-right" richColors closeButton duration={3000} />
+
       <button
         onClick={() => navigate('/citas')}
         className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
@@ -123,16 +113,8 @@ function CitaDetallePage() {
         Volver atrás
       </button>
 
-      {/* Mensaje de éxito */}
-      {successMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Mensaje de errores */}
       {errors.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
+        <div className="fixed top-20 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
           {errors.map((err, i) => <p key={i}>{err}</p>)}
         </div>
       )}
@@ -164,8 +146,8 @@ function CitaDetallePage() {
               { label: "Título de la cita", value: cita.titulo || 'Sin título' },
               { label: "Descripción", value: cita.descripcion || 'No especificada' },
               { label: "Notas Adicionales", value: cita.notas || 'No especificadas' },
-  { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },    
-             { label: "Hora", value: cita.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
+              { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
+              { label: "Hora", value: cita.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
               { label: "Tipo de cita", value: cita.tipoCita || 'No especificado' },
               { label: "Dueño", value: cita.pacienteId?.ownerId?.username || 'No especificado' },
               { label: "Mascota", value: cita.pacienteId?.nombre || 'No especificada' },
@@ -176,16 +158,23 @@ function CitaDetallePage() {
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>
-                <button onClick={() => cambiarEstado('confirmada')} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <button 
+                  onClick={() => cambiarEstado('confirmada')} 
+                  disabled={updating}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                >
                   ✅ Confirmar Cita
                 </button>
-                <button onClick={() => cambiarEstado('cancelada')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                <button 
+                  onClick={() => cambiarEstado('cancelada')} 
+                  disabled={updating}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                >
                   ❌ Cancelar Cita
                 </button>
                 <button 
                   onClick={abrirModalReagendar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  id="btn-reagendar"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   📅 Reagendar Cita
                 </button>
@@ -194,34 +183,38 @@ function CitaDetallePage() {
             
             {cita.estado === 'confirmada' && (
               <>
-                <button onClick={() => cambiarEstado('completada')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button 
+                  onClick={() => cambiarEstado('completada')} 
+                  disabled={updating}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                >
                   ✅ Marcar como Completada
                 </button>
                 <button 
                   onClick={abrirModalReagendar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  id="btn-reagendar"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   📅 Reagendar Cita
                 </button>
               </>
             )}
             
-            {cita.estado === 'cancelada' && <p className="text-red-600 font-medium">❌ Esta cita ha sido cancelada</p>}
-            {cita.estado === 'completada' && <p className="text-green-600 font-medium">✅ Esta cita ya fue completada</p>}
+            {cita.estado === 'cancelada' && (
+              <p className="text-red-600 font-medium">❌ Esta cita ha sido cancelada</p>
+            )}
+            {cita.estado === 'completada' && (
+              <p className="text-green-600 font-medium">✅ Esta cita ya fue completada</p>
+            )}
           </div>
         </>
       )}
 
-      {/* MODAL SIMPLE CON LOGS */}
+      {/* Modal para reagendar */}
       {showReagendarModal && (
         <>
           <div 
             className="fixed inset-0 z-50 bg-black bg-opacity-50"
-            onClick={() => {
-              console.log("🔴 Fondo clickeado - cerrando modal");
-              setShowReagendarModal(false);
-            }}
+            onClick={() => setShowReagendarModal(false)}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div 
@@ -229,10 +222,7 @@ function CitaDetallePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => {
-                  console.log("🔴 Botón cerrar clickeado");
-                  setShowReagendarModal(false);
-                }}
+                onClick={() => setShowReagendarModal(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
               >
                 ✕
@@ -240,7 +230,7 @@ function CitaDetallePage() {
               <div className="p-6">
                 <h2 className="text-xl font-bold mb-4 text-gray-800">Reagendar Cita</h2>
                 <p className="text-sm text-gray-500 mb-4">
-                  Cita actual: {new Date(cita.fecha).toLocaleDateString()} a las {cita.horaInicio}
+                  Cita actual: {mostrarFechaLocal(cita.fecha)} a las {cita.horaInicio}
                 </p>
                 <FormularioCita 
                   onSubmit={handleReagendar}

@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { toast, Toaster } from 'sonner';
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
@@ -19,40 +20,61 @@ function CitasPage() {
   const [citaSeleccionada, setCitaSeleccionada] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
-  const [successMessage, setSuccessMessage] = useState("");
   const [fechaFiltro, setFechaFiltro] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
   const navigate = useNavigate();
+
+  // Función para mostrar fecha sin conversión de zona horaria
+  const mostrarFechaLocal = (fechaISO) => {
+    if (!fechaISO) return '';
+    const [year, month, day] = fechaISO.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   const handleCreateCita = async (data) => {
     try {
       await createCita(data);
       setMostrarFormulario(false);
       const response = await getCitasRequest();
-      setCitas(response.data);
-      setSuccessMessage("Cita creada exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      const citasOrdenadas = response.data.sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha)
+      );
+      setCitas(citasOrdenadas);
+      
+      toast.success('✅ Cita creada exitosamente', {
+        description: `${data.tipoCita} - ${data.fecha} a las ${data.horaInicio}`,
+        duration: 3000,
+      });
+      
     } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error('❌ Error al crear la cita');
+      manejarErrorResponse(error, setErrors);
     }
   };
 
-const handleUpdateCita = async (data) => {
-  console.log("🚨🚨🚨 handleUpdateCita RECIBIÓ:", data);
-  try {
-    const response = await updateCita(citaSeleccionada._id, data);
-    console.log("🚨🚨🚨 RESPUESTA BACKEND:", response);
-    const responseCitas = await getCitasRequest();
-    setCitas(responseCitas.data);
-    setSuccessMessage("Cita actualizada exitosamente");
-    setTimeout(() => setSuccessMessage(""), 3000);
-    setShowEditForm(false);
-    setCitaSeleccionada(null);
-  } catch (error) {
-    console.error("🚨🚨🚨 ERROR:", error);
-    manejarErrorResponse(error, setErrors, setSuccessMessage);
-  }
-};
+  const handleUpdateCita = async (data) => {
+    console.log("🚨🚨🚨 handleUpdateCita RECIBIÓ:", data);
+    try {
+      await updateCita(citaSeleccionada._id, data);
+      const responseCitas = await getCitasRequest();
+      const citasOrdenadas = responseCitas.data.sort((a, b) => 
+        new Date(b.fecha) - new Date(a.fecha)
+      );
+      setCitas(citasOrdenadas);
+      
+      toast.success('✏️ Cita actualizada exitosamente', {
+        description: `Datos generales actualizados`,
+        duration: 3000,
+      });
+      
+      setShowEditForm(false);
+      setCitaSeleccionada(null);
+    } catch (error) {
+      console.error("🚨🚨🚨 ERROR:", error);
+      toast.error('❌ Error al actualizar la cita');
+      manejarErrorResponse(error, setErrors);
+    }
+  };
 
   useEffect(() => {
     const obtenerCitas = async () => {
@@ -63,7 +85,7 @@ const handleUpdateCita = async (data) => {
         );
         setCitas(citasOrdenadas);
       } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
+        manejarErrorResponse(error, setErrors);
       }
     };
     obtenerCitas();
@@ -83,24 +105,34 @@ const handleUpdateCita = async (data) => {
   const { handleDelete: handleDeleteCita } = useDelete(
     deleteCita,
     getCitasRequest,
-    setCitas
+    setCitas,
+    {
+      onSuccess: () => toast.success('🗑️ Cita eliminada exitosamente'),
+      onError: () => toast.error('❌ Error al eliminar la cita')
+    }
   );
 
-  const mostrarFechaLocal = (fechaISO) => {
-  if (!fechaISO) return '';
-  const [year, month, day] = fechaISO.split('T')[0].split('-');
-  return `${day}/${month}/${year}`;
-};
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      {/* Toaster para notificaciones */}
+      <Toaster position="top-right" richColors closeButton duration={3000} />
+
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Gestión de citas</h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar cita..." />
-            <input type="date" value={fechaFiltro} onChange={(e) => setFechaFiltro(e.target.value)} className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" />
+            <input 
+              type="date" 
+              value={fechaFiltro} 
+              onChange={(e) => setFechaFiltro(e.target.value)} 
+              className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
+            />
           </div>
-          <button onClick={() => setMostrarFormulario(true)} className="bg-cyan-600 text-white px-5 py-2 rounded-lg">
+          <button 
+            onClick={() => setMostrarFormulario(true)} 
+            className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
+          >
             + Nueva Cita
           </button>
         </div>
@@ -111,10 +143,9 @@ const handleUpdateCita = async (data) => {
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
-            <button onClick={() => setMostrarFormulario(false)} className="text-gray-400">✕</button>
+            <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
-          <FormularioCita onSubmit={handleCreateCita} cita={null} 
-           isEdit={false} />
+          <FormularioCita onSubmit={handleCreateCita} cita={null} isEdit={false} />
         </div>
       )}
 
@@ -123,24 +154,27 @@ const handleUpdateCita = async (data) => {
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Editar Cita</h2>
-            <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400">✕</button>
+            <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
-          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada}
-                isEdit={true}     // ← AGREGAR ESTO
- />
+          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada} isEdit={true} />
         </div>
       )}
 
       {/* Tabla */}
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         {citas.length === 0 ? (
-          <div className="text-center py-16"><p className="text-gray-500">No hay citas registradas</p></div>
+          <div className="text-center py-16">
+            <p className="text-gray-500">No hay citas registradas</p>
+          </div>
         ) : citasFiltradas.length === 0 ? (
-          <div className="text-center py-16"><p className="text-gray-500">No se encontraron resultados</p></div>
+          <div className="text-center py-16">
+            <p className="text-gray-500">No se encontraron resultados</p>
+          </div>
         ) : (
           <DataTable
             columns={[
-    { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) }, // ← SOLO ESTA LÍNEA CAMBIA              { header: "Hora", accessor: "horaInicio" },
+              { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
+              { header: "Hora", accessor: "horaInicio" },
               { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
               { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
               { header: "Estado", accessor: "estado" }

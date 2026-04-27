@@ -98,22 +98,21 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     };
     
     if (!isEdit) {
-      // 🔧 SOLUCIÓN DEFINITIVA: Enviar la fecha como string puro
-      // El backend debe guardar EXACTAMENTE este string
+   
       datosCita.fecha = fecha; // Ej: "2026-04-30"
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
     }
     
-    console.log("📅 Fecha seleccionada (input):", fecha);
-    console.log("📅 Fecha que se envía:", datosCita.fecha);
+    console.log(" Fecha seleccionada (input):", fecha);
+    console.log(" Fecha que se envía:", datosCita.fecha);
     
     setLoading(true);
     setErrors([]);
     
     try {
       await onSubmit(datosCita);
-      console.log("✅ Cita guardada con fecha:", datosCita.fecha);
+      console.log(" Cita guardada con fecha:", datosCita.fecha);
       
       if (!isEdit) {
         setDoctorId('');
@@ -129,7 +128,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       }
       
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error(" Error:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
@@ -139,12 +138,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
       <h2 className="text-xl font-semibold mb-4">
-        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
+        {isEdit ? ' Editar Cita' : '+ Nueva Cita'}
       </h2>
 
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
+          {errors.map((err, i) => <p key={i}> {err}</p>)}
         </div>
       )}
 
@@ -187,7 +186,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
-                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
+                Horario seleccionado: {horario.inicio} - {horario.fin}
               </p>
             )}
           </div>
@@ -197,13 +196,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
           <p className="text-sm text-gray-600">
-            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
+            <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
           </p>
           <p className="text-sm text-gray-600">
-            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
+             <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
           </p>
           <p className="text-sm text-gray-600">
-            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
+             <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
           </p>
         </div>
       )}
