@@ -1,25 +1,19 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
-import Modal from '../../components/Modal';
-import { DynamicForm } from "../../components/DynamicForm";
-import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
-import { getCitasRequest } from "/src/api/cita";
-import { getCitasByPaciente } from "/src/api/cita";
 import { getCitaByIdRequest, updateCita } from "/src/api/cita";
-import { FormularioCita } from "../../components/forms/FormularioCita"; // ← IMPORTAR
+import { FormularioCita } from "../../components/forms/FormularioCita";
 
 function CitaDetallePage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [cita, setCita] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [showReagendarModal, setShowReagendarModal] = useState(false); // ← NUEVO
+  const [showReagendarModal, setShowReagendarModal] = useState(false);
 
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
@@ -51,12 +45,10 @@ function CitaDetallePage() {
     }
   };
 
-  // ← NUEVA FUNCIÓN PARA REAGENDAR
   const handleReagendar = async (data) => {
-    console.log(" Reagendando cita:", data);
+    console.log("🔄 Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
-      // Recargar los datos actualizados
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
       setSuccessMessage("Cita reagendada exitosamente");
@@ -88,23 +80,23 @@ function CitaDetallePage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
-        onClick={() => navigate('/clientes')}
+        onClick={() => navigate('/citas')}
         className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
         </svg>
-        Volver atras
+        Volver atrás
       </button>
 
-      {/* Modal de éxito */}
+      {/* Mensaje de éxito */}
       {successMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-lg">
           {successMessage}
         </div>
       )}
 
-      {/* Modal de errores */}
+      {/* Mensaje de errores */}
       {errors.length > 0 && (
         <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
           {errors.map((err, i) => <p key={i}>{err}</p>)}
@@ -148,57 +140,81 @@ function CitaDetallePage() {
           />
           
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
-            {/* Cita pendiente */}
             {cita.estado === 'pendiente' && (
               <>
                 <button onClick={() => cambiarEstado('confirmada')} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                   Confirmar Cita
+                  ✅ Confirmar Cita
                 </button>
                 <button onClick={() => cambiarEstado('cancelada')} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                  Cancelar Cita
+                  ❌ Cancelar Cita
                 </button>
                 <button 
-                  onClick={() => setShowReagendarModal(true)}  // ← ABRIR MODAL
+                  onClick={() => {
+                    console.log("🔴 Abriendo modal de reagendar");
+                    setShowReagendarModal(true);
+                  }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Reagendar Cita
+                  📅 Reagendar Cita
                 </button>
               </>
             )}
             
-            {/* Cita confirmada */}
             {cita.estado === 'confirmada' && (
               <>
                 <button onClick={() => cambiarEstado('completada')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                   Marcar como Completada
+                  ✅ Marcar como Completada
                 </button>
                 <button 
-                  onClick={() => setShowReagendarModal(true)}  // ← ABRIR MODAL
+                  onClick={() => {
+                    console.log("🔴 Abriendo modal de reagendar");
+                    setShowReagendarModal(true);
+                  }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Reagendar Cita
+                  📅 Reagendar Cita
                 </button>
               </>
             )}
             
-            {/* Mensajes para otros estados */}
-            {cita.estado === 'cancelada' && <p className="text-red-600 font-medium"> Esta cita ha sido cancelada</p>}
-            {cita.estado === 'completada' && <p className="text-green-600 font-medium"> Esta cita ya fue completada</p>}
+            {cita.estado === 'cancelada' && <p className="text-red-600 font-medium">❌ Esta cita ha sido cancelada</p>}
+            {cita.estado === 'completada' && <p className="text-green-600 font-medium">✅ Esta cita ya fue completada</p>}
           </div>
         </>
       )}
 
-      {/* MODAL PARA REAGENDAR - SÍ muestra fecha y horario */}
+      {/* MODAL SIMPLE - SIN DEPENDENCIA DE COMPONENTE EXTERNO */}
       {showReagendarModal && cita && (
-        <Modal onClose={() => setShowReagendarModal(false)}>
-          <div className="max-h-[90vh] overflow-y-auto">
-            <FormularioCita 
-              onSubmit={handleReagendar}
-              cita={cita}
-              isEdit={false}  // ← false para que MUESTRE fecha y horario
-            />
+        <>
+          <div 
+            className="fixed inset-0 z-50 bg-black bg-opacity-50"
+            onClick={() => setShowReagendarModal(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div 
+              className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowReagendarModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
+              >
+                ✕
+              </button>
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Reagendar Cita</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Cita actual: {new Date(cita.fecha).toLocaleDateString()} a las {cita.horaInicio}
+                </p>
+                <FormularioCita 
+                  onSubmit={handleReagendar}
+                  cita={cita}
+                  isEdit={false}
+                />
+              </div>
+            </div>
           </div>
-        </Modal>
+        </>
       )}
     </div>
   );
