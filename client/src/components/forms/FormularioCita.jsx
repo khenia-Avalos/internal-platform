@@ -20,12 +20,8 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // Extraer fecha en formato YYYY-MM-DD
   const [fecha, setFecha] = useState(() => {
-    if (cita?.fecha) {
-      return cita.fecha.split('T')[0];
-    }
+    if (cita?.fecha) return cita.fecha.split('T')[0];
     return '';
   });
 
@@ -69,13 +65,17 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     }
   };
 
+  // 🔧 IMPORTANTE: Esta función SOLO guarda el horario, NO envía nada
   const handleSelectHorario = (horarioSeleccionado) => {
+    console.log("🕒 Horario seleccionado:", horarioSeleccionado);
     setHorario(horarioSeleccionado);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log("📝 Enviando formulario - clic en botón");
     
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
@@ -98,21 +98,17 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     };
     
     if (!isEdit) {
-   
-      datosCita.fecha = fecha; // Ej: "2026-04-30"
+      datosCita.fecha = fecha;
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
     }
-    
-    console.log(" Fecha seleccionada (input):", fecha);
-    console.log(" Fecha que se envía:", datosCita.fecha);
     
     setLoading(true);
     setErrors([]);
     
     try {
       await onSubmit(datosCita);
-      console.log(" Cita guardada con fecha:", datosCita.fecha);
+      console.log("✅ Envío exitoso");
       
       if (!isEdit) {
         setDoctorId('');
@@ -128,7 +124,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       }
       
     } catch (error) {
-      console.error(" Error:", error);
+      console.error("❌ Error:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
@@ -138,12 +134,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
       <h2 className="text-xl font-semibold mb-4">
-        {isEdit ? ' Editar Cita' : '+ Nueva Cita'}
+        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
       </h2>
 
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {errors.map((err, i) => <p key={i}> {err}</p>)}
+          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
         </div>
       )}
 
@@ -186,7 +182,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
-                Horario seleccionado: {horario.inicio} - {horario.fin}
+                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
               </p>
             )}
           </div>
@@ -196,13 +192,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
           <p className="text-sm text-gray-600">
-            <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
+            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
           </p>
           <p className="text-sm text-gray-600">
-             <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
+            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
           </p>
           <p className="text-sm text-gray-600">
-             <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
+            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
           </p>
         </div>
       )}
