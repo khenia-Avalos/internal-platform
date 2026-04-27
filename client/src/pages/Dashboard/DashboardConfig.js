@@ -19,6 +19,10 @@ export const dashboardModules = {
     name: "Clientes",
     component: ClientesPage,
   },{
+    id: "clientes Temporales",
+    name: "Clientes Temporales",
+    component: ClientesTemporalesPage,
+  },{
     id: "doctores",
     name: "Doctores",
     component: DoctoresPage,

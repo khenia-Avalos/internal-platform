@@ -362,5 +362,100 @@ registerCita: {
     }
   ],
   submitLabel: "Agendar Cita"
+},
+
+registerClienteTemporal: {
+  title: " Nuevo Cliente Temporal (Agendamiento Rápido)",
+  fields: [
+    {
+      name: "username",
+      type: "text",
+      label: "Nombre del dueño *",
+      placeholder: "Ej: Juan Pérez",
+      validation: {
+        required: "El nombre es requerido"
+      }
+    },
+    {
+      name: "lastname",
+      type: "text",
+      label: "Apellido del dueño",
+      placeholder: "Ej: Pérez Gómez",
+      validation: {
+        required: false  // ← Opcional para cliente temporal
+      }
+    },
+    {
+      name: "phoneNumber",
+      type: "tel",
+      label: "Teléfono *",
+      placeholder: "+506 7098 3832",
+      validation: {
+        required: "El número de teléfono es requerido",
+        pattern: {
+          value: /^\+\d{1,4}[0-9\s\-]{8,15}$/,
+          message: "Formato: +50670983832 o +506 7098 3832"
+        }
+      },
+      helperText: "Incluye código de país (+506 Costa Rica)"
+    },
+    {
+      name: "email",
+      type: "email",
+      label: "Correo electrónico (opcional)",
+      placeholder: "cliente@ejemplo.com",
+      validation: {
+        required: false
+      }
+    },
+    {
+      name: "nombreMascota",
+      type: "text",
+      label: "Nombre de la mascota *",
+      placeholder: "Ej: Firulais",
+      validation: {
+        required: "El nombre de la mascota es requerido"
+      }
+    },
+    {
+      name: "especie",
+      type: "select",
+      label: "Especie *",
+      options: ['perro', 'gato', 'conejo', 'ave', 'hámster', 'tortuga', 'otro'],
+      validation: { 
+        required: "La especie es requerida" 
+      }
+    },
+    {
+      name: "fechaCita",
+      type: "date",
+      label: "Fecha de la cita *",
+      validation: {
+        required: "La fecha es requerida"
+      }
+    },
+    {
+      name: "horaCita",
+      type: "select",
+      label: "Horario preferido",
+      options: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
+      validation: {
+        required: "El horario es requerido"
+      }
+    },
+    {
+      name: "notas",
+      type: "textarea",
+      label: "Notas adicionales",
+      placeholder: "Síntomas, observaciones, etc.",
+      validation: {
+        required: false
+      }
+    }
+  ],
+  submitLabel: "Agendar Cita Rápida",
+  redirect: { path: "/ClientesTemporalesPage" }
 }
+
+
 };

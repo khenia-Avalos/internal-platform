@@ -2,8 +2,8 @@ import React from "react";
 import {Dashboardconfig} from "../../pages/Dashboard/DashboardConfig";
 
 function Sidebar ({activeModule, setActiveModule, userRole, modules}) {
-  console.log("📋 Sidebar - módulos recibidos:", modules);
-console.log("🔵 activeModule:", activeModule);
+  console.log(" Sidebar - módulos recibidos:", modules);
+console.log(" activeModule:", activeModule);
   return (
     <div className="w-64 bg-white shadow-md">
       <div className="p-4 flex items-center gap-2">
