@@ -21,18 +21,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // 🔧 CORRECCIÓN DE ZONA HORARIA - Extraer solo la fecha sin conversión
-  const obtenerFechaLocal = (fechaISO) => {
-    if (!fechaISO) return '';
-    // Si viene en formato ISO (YYYY-MM-DDTHH:MM:SS.ZZZ)
-    if (fechaISO.includes('T')) {
-      return fechaISO.split('T')[0];
+  // Extraer fecha en formato YYYY-MM-DD
+  const [fecha, setFecha] = useState(() => {
+    if (cita?.fecha) {
+      return cita.fecha.split('T')[0];
     }
-    // Si ya viene en formato YYYY-MM-DD
-    return fechaISO;
-  };
-  
-  const [fecha, setFecha] = useState(cita?.fecha ? obtenerFechaLocal(cita.fecha) : '');
+    return '';
+  });
 
   useEffect(() => {
     cargarDoctores();
@@ -75,15 +70,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   };
 
   const handleSelectHorario = (horarioSeleccionado) => {
-    console.log("🕒 Horario seleccionado:", horarioSeleccionado);
     setHorario(horarioSeleccionado);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log("📝 Enviando formulario");
     
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
@@ -106,22 +98,22 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     };
     
     if (!isEdit) {
-      // 🔧 Enviar la fecha EXACTAMENTE como el usuario la seleccionó
-      // Sin conversión de zona horaria
-      datosCita.fecha = fecha; // Formato: YYYY-MM-DD
+      // 🔧 SOLUCIÓN DEFINITIVA: Enviar la fecha como string puro
+      // El backend debe guardar EXACTAMENTE este string
+      datosCita.fecha = fecha; // Ej: "2026-04-30"
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
     }
     
-    console.log("📦 Fecha seleccionada por usuario:", fecha);
-    console.log("📦 Datos a enviar:", datosCita);
+    console.log("📅 Fecha seleccionada (input):", fecha);
+    console.log("📅 Fecha que se envía:", datosCita.fecha);
     
     setLoading(true);
     setErrors([]);
     
     try {
       await onSubmit(datosCita);
-      console.log("✅ Envío exitoso");
+      console.log("✅ Cita guardada con fecha:", datosCita.fecha);
       
       if (!isEdit) {
         setDoctorId('');
@@ -205,7 +197,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
           <p className="text-sm text-gray-600">
-            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0].split('-').reverse().join('/') : ''}
+            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
           </p>
           <p className="text-sm text-gray-600">
             ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
