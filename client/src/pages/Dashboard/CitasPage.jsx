@@ -108,7 +108,8 @@ const handleUpdateCita = async (data) => {
             <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
             <button onClick={() => setMostrarFormulario(false)} className="text-gray-400">✕</button>
           </div>
-          <FormularioCita onSubmit={handleCreateCita} cita={null} />
+          <FormularioCita onSubmit={handleCreateCita} cita={null} 
+           isEdit={false} />
         </div>
       )}
 
@@ -119,7 +120,9 @@ const handleUpdateCita = async (data) => {
             <h2 className="text-xl font-semibold">Editar Cita</h2>
             <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400">✕</button>
           </div>
-          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada} />
+          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada}
+                isEdit={true}     // ← AGREGAR ESTO
+ />
         </div>
       )}
 
