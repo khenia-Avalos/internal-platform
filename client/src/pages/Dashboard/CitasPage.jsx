@@ -86,6 +86,11 @@ const handleUpdateCita = async (data) => {
     setCitas
   );
 
+  const mostrarFechaLocal = (fechaISO) => {
+  if (!fechaISO) return '';
+  const [year, month, day] = fechaISO.split('T')[0].split('-');
+  return `${day}/${month}/${year}`;
+};
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -135,8 +140,7 @@ const handleUpdateCita = async (data) => {
         ) : (
           <DataTable
             columns={[
-              { header: "Fecha", accessor: "fecha", render: (cita) => new Date(cita.fecha).toLocaleDateString() },
-              { header: "Hora", accessor: "horaInicio" },
+    { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) }, // ← SOLO ESTA LÍNEA CAMBIA              { header: "Hora", accessor: "horaInicio" },
               { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
               { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
               { header: "Estado", accessor: "estado" }

@@ -106,6 +106,11 @@ function CitaDetallePage() {
     }, 100);
   };
 
+  const mostrarFechaLocal = (fechaISO) => {
+  if (!fechaISO) return 'No especificada';
+  const [year, month, day] = fechaISO.split('T')[0].split('-');
+  return `${day}/${month}/${year}`;
+};
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
@@ -159,8 +164,8 @@ function CitaDetallePage() {
               { label: "Título de la cita", value: cita.titulo || 'Sin título' },
               { label: "Descripción", value: cita.descripcion || 'No especificada' },
               { label: "Notas Adicionales", value: cita.notas || 'No especificadas' },
-              { label: "Fecha", value: cita.fecha ? new Date(cita.fecha).toLocaleDateString() : 'No especificada' },
-              { label: "Hora", value: cita.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
+  { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },    
+             { label: "Hora", value: cita.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
               { label: "Tipo de cita", value: cita.tipoCita || 'No especificado' },
               { label: "Dueño", value: cita.pacienteId?.ownerId?.username || 'No especificado' },
               { label: "Mascota", value: cita.pacienteId?.nombre || 'No especificada' },
