@@ -6,6 +6,10 @@ import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => {
+  console.log("🎯🎯🎯 COMPONENTE FORMULARIO CITA - RENDERIZADO");
+  console.log("🎯 isEdit:", isEdit);
+  console.log("🎯 cita:", cita);
+  
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -21,16 +25,22 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fecha, setFecha] = useState(() => {
-    if (cita?.fecha) return cita.fecha.split('T')[0];
+    if (cita?.fecha) {
+      const fechaStr = cita.fecha.split('T')[0];
+      console.log("🎯 Fecha inicial desde cita:", fechaStr);
+      return fechaStr;
+    }
     return '';
   });
 
   useEffect(() => {
+    console.log("🎯 useEffect - cargando doctores y dueños");
     cargarDoctores();
     cargarDuenos();
   }, []);
 
   useEffect(() => {
+    console.log("🎯 useEffect - duenoId cambió a:", duenoId);
     if (duenoId) {
       cargarMascotas(duenoId);
     } else {
@@ -42,6 +52,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     try {
       const res = await getDoctoresRequest();
       setDoctores(res.data);
+      console.log("🎯 Doctores cargados:", res.data.length);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
@@ -51,6 +62,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     try {
       const res = await getClientesRequest();
       setDuenos(res.data);
+      console.log("🎯 Dueños cargados:", res.data.length);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
@@ -60,29 +72,43 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     try {
       const res = await getPacienteByOwnerRequest(ownerId);
       setMascotas(res.data);
+      console.log("🎯 Mascotas cargadas para dueño", ownerId, ":", res.data.length);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
   };
 
-  // 🔧 IMPORTANTE: Esta función SOLO guarda el horario, NO envía nada
+  // MANEJADOR DE SELECCIÓN DE HORARIO - SOLO guarda el horario
   const handleSelectHorario = (horarioSeleccionado) => {
+    console.log("🕒🕒🕒 HANDLE_SELECT_HORARIO - EJECUTADO");
     console.log("🕒 Horario seleccionado:", horarioSeleccionado);
+    console.log("🕒 Este es SOLO un callback de selección - NO debe enviar el formulario");
     setHorario(horarioSeleccionado);
   };
 
+  // MANEJADOR DE ENVÍO DEL FORMULARIO - SOLO se ejecuta al hacer clic en el botón
   const handleSubmit = async (e) => {
+    console.log("🚨🚨🚨 HANDLE_SUBMIT - EJECUTADO");
+    console.log("🚨 Evento recibido:", e);
+    console.log("🚨 Tipo de evento:", e.type);
+    console.log("🚨 ¿Quién llamó a handleSubmit?");
+    
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("📝 Enviando formulario - clic en botón");
+    console.log("📝 Validando campos...");
+    console.log("📝 isEdit:", isEdit);
+    console.log("📝 horario:", horario);
+    console.log("📝 mascotaId:", mascotaId);
     
     if (!isEdit && !horario) {
+      console.log("❌ Error: No hay horario seleccionado");
       setErrors(["Por favor selecciona un horario"]);
       return;
     }
     
     if (!mascotaId) {
+      console.log("❌ Error: No hay mascota seleccionada");
       setErrors(["Por favor selecciona una mascota"]);
       return;
     }
@@ -103,14 +129,19 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       datosCita.horaFin = horario.fin;
     }
     
+    console.log("📝 Datos a enviar:", JSON.stringify(datosCita, null, 2));
+    console.log("📝 Fecha seleccionada por usuario:", fecha);
+    
     setLoading(true);
     setErrors([]);
     
     try {
+      console.log("📤 Llamando a onSubmit...");
       await onSubmit(datosCita);
-      console.log("✅ Envío exitoso");
+      console.log("✅ onSubmit completado con éxito");
       
       if (!isEdit) {
+        console.log("🧹 Limpiando formulario...");
         setDoctorId('');
         setHorario(null);
         setDuenoId('');
@@ -124,15 +155,18 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       }
       
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("❌ Error en onSubmit:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
+      console.log("🏁 handleSubmit finalizado");
     }
   };
 
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
+      {console.log("🎨 RENDERIZANDO FORMULARIO - isEdit:", isEdit)}
+      
       <h2 className="text-xl font-semibold mb-4">
         {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
       </h2>
@@ -149,7 +183,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
             <select
               value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
+              onChange={(e) => {
+                console.log("📋 Veterinario cambiado a:", e.target.value);
+                setDoctorId(e.target.value);
+              }}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             >
@@ -167,7 +204,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             <input
               type="date"
               value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
+              onChange={(e) => {
+                console.log("📅 Fecha cambiada a:", e.target.value);
+                setFecha(e.target.value);
+              }}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             />
@@ -209,6 +249,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
           value={duenoId}
           onChange={(e) => {
             const duenoIdSeleccionado = e.target.value;
+            console.log("👤 Dueño seleccionado:", duenoIdSeleccionado);
             setDuenoId(duenoIdSeleccionado);
             const duenoSeleccionado = duenos.find(d => d._id === duenoIdSeleccionado);
             if (duenoSeleccionado) {
@@ -234,7 +275,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
           <select
             value={mascotaId}
-            onChange={(e) => setMascotaId(e.target.value)}
+            onChange={(e) => {
+              console.log("🐕 Mascota seleccionada:", e.target.value);
+              setMascotaId(e.target.value);
+            }}
             className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
             required
           >
@@ -308,6 +352,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         <button
           type="submit"
           disabled={loading}
+          onClick={() => console.log("🔴🔴🔴 BOTÓN CLICKEADO - type=submit")}
           className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
         >
           {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
@@ -315,7 +360,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         {onCancel && (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={() => {
+              console.log("🔴 Botón Cancelar clickeado");
+              onCancel();
+            }}
             className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
           >
             Cancelar
