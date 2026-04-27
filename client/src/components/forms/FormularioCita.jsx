@@ -7,7 +7,6 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
   console.log("🎯 FormularioCita - isEdit:", isEdit);
-  console.log("🎯 FormularioCita - cita:", cita);
 
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -23,14 +22,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // Solo usar fecha si NO es edición
-  const fechaFormateada = cita?.fecha && !isEdit ? cita.fecha.split('T')[0] : '';
-  const [fecha, setFecha] = useState(fechaFormateada);
-
-  // Mostrar fecha/horario actual en edición (solo lectura)
-  const fechaActual = cita?.fecha ? new Date(cita.fecha).toLocaleDateString() : '';
-  const horarioActual = cita?.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : '';
+  const [fecha, setFecha] = useState(cita?.fecha ? cita.fecha.split('T')[0] : '');
 
   useEffect(() => {
     cargarDoctores();
@@ -78,7 +70,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
     
     console.log("🚨🚨🚨 handleSubmit EJECUTADO - isEdit:", isEdit);
     
-    // En edición, NO validar horario
+    // Validar horario SOLO en creación
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
       return;
@@ -99,7 +91,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
       correo
     };
     
-    // Solo incluir fecha/horario en creación
+    // Agregar fecha/horario SOLO en creación
     if (!isEdit) {
       datosCita.fecha = fecha;
       datosCita.horaInicio = horario.inicio;
@@ -113,10 +105,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
     
     try {
       await onSubmit(datosCita);
-      console.log("🚨🚨🚨 onSubmit COMPLETADO CON ÉXITO");
+      console.log("🚨🚨🚨 onSubmit COMPLETADO");
       
       if (!isEdit) {
-        // Limpiar formulario solo en creación
         setDoctorId('');
         setHorario(null);
         setDuenoId('');
@@ -149,22 +140,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </div>
       )}
 
-      {/* Información de fecha/horario en modo edición */}
-      {isEdit && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-          <p className="text-sm text-gray-600">
-            📅 <strong>Fecha actual:</strong> {fechaActual}
-          </p>
-          <p className="text-sm text-gray-600">
-            ⏰ <strong>Horario actual:</strong> {horarioActual}
-          </p>
-          <p className="text-xs text-amber-600 mt-2">
-            💡 Para cambiar la fecha u horario, usa la opción "Reagendar Cita"
-          </p>
-        </div>
-      )}
-
-      {/* Campos de fecha y horario - SOLO en creación */}
+      {/* ========================================== */}
+      {/* CAMPOS QUE SOLO APARECEN EN CREACIÓN */}
+      {/* ========================================== */}
       {!isEdit && (
         <>
           <div className="mb-4">
@@ -211,20 +189,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </>
       )}
 
-      {/* En edición, mostrar doctor como texto readonly */}
-      {isEdit && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario</label>
-          <input
-            type="text"
-            value={`${cita?.doctorId?.username || ''} ${cita?.doctorId?.lastname || ''}`}
-            disabled
-            className="w-full bg-gray-100 text-zinc-700 px-4 py-2.5 rounded-md border border-gray-300"
-          />
-        </div>
-      )}
+      {/* ========================================== */}
+      {/* CAMPOS QUE APARECEN EN AMBOS MODOS */}
+      {/* ========================================== */}
 
-      {/* Dueños - visible en ambos modos */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
@@ -251,7 +219,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </select>
       </div>
 
-      {/* Mascotas */}
       {duenoId && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
@@ -271,7 +238,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </div>
       )}
 
-      {/* Correo */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
         <input
@@ -283,7 +249,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         />
       </div>
 
-      {/* Tipo de cita */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
         <select
@@ -299,7 +264,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </select>
       </div>
 
-      {/* Título */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
         <input
@@ -310,7 +274,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         />
       </div>
 
-      {/* Descripción */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
         <textarea
@@ -321,7 +284,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         />
       </div>
 
-      {/* Notas */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
         <textarea
