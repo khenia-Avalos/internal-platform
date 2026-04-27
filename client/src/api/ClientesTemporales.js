@@ -1,8 +1,5 @@
 import axios from "./axios";
 
-// ============================================
-// CLIENTES TEMPORALES
-// ============================================
 
 // Obtener todos los clientes temporales
 export const getClientesTemporalesRequest = () => axios.get("/clientes-temporales");
