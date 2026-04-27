@@ -6,8 +6,12 @@ import { getCitaByIdRequest, updateCita } from "/src/api/cita";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 
 function CitaDetallePage() {
+  console.log("🚀 COMPONENTE CitaDetallePage RENDERIZADO");
+  
   const navigate = useNavigate();
   const { id } = useParams();
+  console.log("🚀 ID de la cita:", id);
+  
   const [cita, setCita] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
@@ -15,7 +19,10 @@ function CitaDetallePage() {
   const [updating, setUpdating] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
 
+  console.log("🚀 Estado showReagendarModal:", showReagendarModal);
+
   const cambiarEstado = async (nuevoEstado) => {
+    console.log("🚀 cambiarEstado llamado con:", nuevoEstado);
     let mensajeConfirmacion = '';
     let mensajeExito = '';
     
@@ -46,26 +53,33 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log("🔄 Reagendando cita:", data);
+    console.log("🔄 handleReagendar RECIBIÓ datos:", data);
     try {
       await updateCita(cita._id, data);
+      console.log("🔄 Cita actualizada en backend");
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
       setSuccessMessage("Cita reagendada exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
       setShowReagendarModal(false);
+      console.log("🔄 Modal cerrado");
     } catch (error) {
+      console.error("🔄 Error en reagendar:", error);
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
 
   useEffect(() => {
+    console.log("🚀 useEffect ejecutándose");
     const cargarDatos = async () => {
+      console.log("🚀 Cargando datos de cita...");
       setLoading(true);
       try {
         const citaRes = await getCitaByIdRequest(id);
+        console.log("🚀 Cita cargada:", citaRes.data);
         setCita(citaRes.data);
       } catch (error) {
+        console.error("🚀 Error cargando cita:", error);
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       } finally {
         setLoading(false);
@@ -74,8 +88,23 @@ function CitaDetallePage() {
     
     if (id) {
       cargarDatos();
+    } else {
+      console.log("🚀 No hay ID");
     }
   }, [id]);
+
+  // Función para abrir modal
+  const abrirModalReagendar = () => {
+    console.log("🔴🔴🔴 BOTÓN CLICKEADO - abrirModalReagendar");
+    console.log("🔴🔴🔴 cita actual:", cita);
+    console.log("🔴🔴🔴 showReagendarModal antes:", showReagendarModal);
+    setShowReagendarModal(true);
+    console.log("🔴🔴🔴 setShowReagendarModal(true) ejecutado");
+    // Verificar después de un pequeño delay
+    setTimeout(() => {
+      console.log("🔴🔴🔴 showReagendarModal después del set:", showReagendarModal);
+    }, 100);
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -149,11 +178,9 @@ function CitaDetallePage() {
                   ❌ Cancelar Cita
                 </button>
                 <button 
-                  onClick={() => {
-                    console.log("🔴 Abriendo modal de reagendar");
-                    setShowReagendarModal(true);
-                  }}
+                  onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  id="btn-reagendar"
                 >
                   📅 Reagendar Cita
                 </button>
@@ -166,11 +193,9 @@ function CitaDetallePage() {
                   ✅ Marcar como Completada
                 </button>
                 <button 
-                  onClick={() => {
-                    console.log("🔴 Abriendo modal de reagendar");
-                    setShowReagendarModal(true);
-                  }}
+                  onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  id="btn-reagendar"
                 >
                   📅 Reagendar Cita
                 </button>
@@ -183,12 +208,15 @@ function CitaDetallePage() {
         </>
       )}
 
-      {/* MODAL SIMPLE - SIN DEPENDENCIA DE COMPONENTE EXTERNO */}
-      {showReagendarModal && cita && (
+      {/* MODAL SIMPLE CON LOGS */}
+      {showReagendarModal && (
         <>
           <div 
             className="fixed inset-0 z-50 bg-black bg-opacity-50"
-            onClick={() => setShowReagendarModal(false)}
+            onClick={() => {
+              console.log("🔴 Fondo clickeado - cerrando modal");
+              setShowReagendarModal(false);
+            }}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div 
@@ -196,7 +224,10 @@ function CitaDetallePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => setShowReagendarModal(false)}
+                onClick={() => {
+                  console.log("🔴 Botón cerrar clickeado");
+                  setShowReagendarModal(false);
+                }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
               >
                 ✕
