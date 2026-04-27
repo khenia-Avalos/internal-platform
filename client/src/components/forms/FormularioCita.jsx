@@ -6,8 +6,6 @@ import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
-  console.log("🎯 FormularioCita - isEdit:", isEdit);
-
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -68,8 +66,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("🚨🚨🚨 handleSubmit EJECUTADO - isEdit:", isEdit);
-    
     // Validar horario SOLO en creación
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
@@ -98,14 +94,11 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
       datosCita.horaFin = horario.fin;
     }
     
-    console.log("🚨🚨🚨 DATOS A ENVIAR:", JSON.stringify(datosCita, null, 2));
-    
     setLoading(true);
     setErrors([]);
     
     try {
       await onSubmit(datosCita);
-      console.log("🚨🚨🚨 onSubmit COMPLETADO");
       
       if (!isEdit) {
         setDoctorId('');
@@ -121,7 +114,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
       }
       
     } catch (error) {
-      console.error("🚨🚨🚨 ERROR:", error);
+      console.error("Error:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
@@ -140,9 +133,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </div>
       )}
 
-      {/* ========================================== */}
       {/* CAMPOS QUE SOLO APARECEN EN CREACIÓN */}
-      {/* ========================================== */}
       {!isEdit && (
         <>
           <div className="mb-4">
@@ -189,10 +180,22 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </>
       )}
 
-      {/* ========================================== */}
-      {/* CAMPOS QUE APARECEN EN AMBOS MODOS */}
-      {/* ========================================== */}
+      {/* En edición, mostrar datos actuales */}
+      {isEdit && cita && (
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+          <p className="text-sm text-gray-600">
+            📅 <strong>Fecha actual:</strong> {new Date(cita.fecha).toLocaleDateString()}
+          </p>
+          <p className="text-sm text-gray-600">
+            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
+          </p>
+          <p className="text-sm text-gray-600">
+            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
+          </p>
+        </div>
+      )}
 
+      {/* CAMPOS QUE APARECEN EN AMBOS MODOS */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
