@@ -5,9 +5,9 @@ import { getClientesRequest } from '../../api/clientes';
 import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
-export const FormularioCita = ({ onSubmit, cita }) => {
-  console.log("🎯 FormularioCita - onSubmit recibido:", onSubmit);
-  console.log("🎯 FormularioCita - cita recibida:", cita);
+export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
+  console.log("🎯 FormularioCita - isEdit:", isEdit);
+  console.log("🎯 FormularioCita - cita:", cita);
 
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -23,8 +23,14 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const fechaFormateada = cita?.fecha ? cita.fecha.split('T')[0] : '';
+  
+  // Solo usar fecha si NO es edición
+  const fechaFormateada = cita?.fecha && !isEdit ? cita.fecha.split('T')[0] : '';
   const [fecha, setFecha] = useState(fechaFormateada);
+
+  // Mostrar fecha/horario actual en edición (solo lectura)
+  const fechaActual = cita?.fecha ? new Date(cita.fecha).toLocaleDateString() : '';
+  const horarioActual = cita?.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : '';
 
   useEffect(() => {
     cargarDoctores();
@@ -70,9 +76,10 @@ export const FormularioCita = ({ onSubmit, cita }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("🚨🚨🚨 handleSubmit EJECUTADO");
+    console.log("🚨🚨🚨 handleSubmit EJECUTADO - isEdit:", isEdit);
     
-    if (!horario) {
+    // En edición, NO validar horario
+    if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
       return;
     }
@@ -84,9 +91,6 @@ export const FormularioCita = ({ onSubmit, cita }) => {
     
     const datosCita = {
       doctorId,
-      fecha,
-      horaInicio: horario.inicio,
-      horaFin: horario.fin,
       pacienteId: mascotaId,
       titulo,
       tipoCita,
@@ -94,6 +98,13 @@ export const FormularioCita = ({ onSubmit, cita }) => {
       notas, 
       correo
     };
+    
+    // Solo incluir fecha/horario en creación
+    if (!isEdit) {
+      datosCita.fecha = fecha;
+      datosCita.horaInicio = horario.inicio;
+      datosCita.horaFin = horario.fin;
+    }
     
     console.log("🚨🚨🚨 DATOS A ENVIAR:", JSON.stringify(datosCita, null, 2));
     
@@ -104,8 +115,8 @@ export const FormularioCita = ({ onSubmit, cita }) => {
       await onSubmit(datosCita);
       console.log("🚨🚨🚨 onSubmit COMPLETADO CON ÉXITO");
       
-      // Limpiar formulario solo si es creación (no edición)
-      if (!cita) {
+      if (!isEdit) {
+        // Limpiar formulario solo en creación
         setDoctorId('');
         setHorario(null);
         setDuenoId('');
@@ -119,8 +130,8 @@ export const FormularioCita = ({ onSubmit, cita }) => {
       }
       
     } catch (error) {
-      console.error("🚨🚨🚨 ERROR en onSubmit:", error);
-      setErrors([error?.response?.data?.message || error.message || "Error al guardar la cita"]);
+      console.error("🚨🚨🚨 ERROR:", error);
+      setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
     }
@@ -129,62 +140,91 @@ export const FormularioCita = ({ onSubmit, cita }) => {
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
       <h2 className="text-xl font-semibold mb-4">
-        {cita ? 'Editar Cita' : 'Nueva Cita'}
+        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
       </h2>
 
-      {/* Mostrar errores */}
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
         </div>
       )}
 
-      {/* Campo 1: Doctores */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
-        <select
-          value={doctorId}
-          onChange={(e) => setDoctorId(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-          required
-        >
-          <option value="">Selecciona un veterinario</option>
-          {doctores.map((doctor) => (
-            <option key={doctor._id} value={doctor._id}>
-              {doctor.username} {doctor.lastname} - {doctor.especialidad}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Campo 2: Fecha */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
-        <input
-          type="date"
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-          required
-        />
-      </div>
-
-      {/* Campo 3: Horarios Disponibles */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
-        <HorariosDisponibles
-          doctorId={doctorId}
-          fecha={fecha}
-          onSelectHorario={setHorario}
-        />
-        {horario && (
-          <p className="text-sm text-green-600 mt-1">
-            ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
+      {/* Información de fecha/horario en modo edición */}
+      {isEdit && (
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+          <p className="text-sm text-gray-600">
+            📅 <strong>Fecha actual:</strong> {fechaActual}
           </p>
-        )}
-      </div>
+          <p className="text-sm text-gray-600">
+            ⏰ <strong>Horario actual:</strong> {horarioActual}
+          </p>
+          <p className="text-xs text-amber-600 mt-2">
+            💡 Para cambiar la fecha u horario, usa la opción "Reagendar Cita"
+          </p>
+        </div>
+      )}
 
-      {/* Campo 4: Dueños */}
+      {/* Campos de fecha y horario - SOLO en creación */}
+      {!isEdit && (
+        <>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
+            <select
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+              required
+            >
+              <option value="">Selecciona un veterinario</option>
+              {doctores.map((doctor) => (
+                <option key={doctor._id} value={doctor._id}>
+                  {doctor.username} {doctor.lastname} - {doctor.especialidad}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
+            <HorariosDisponibles
+              doctorId={doctorId}
+              fecha={fecha}
+              onSelectHorario={setHorario}
+            />
+            {horario && (
+              <p className="text-sm text-green-600 mt-1">
+                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* En edición, mostrar doctor como texto readonly */}
+      {isEdit && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario</label>
+          <input
+            type="text"
+            value={`${cita?.doctorId?.username || ''} ${cita?.doctorId?.lastname || ''}`}
+            disabled
+            className="w-full bg-gray-100 text-zinc-700 px-4 py-2.5 rounded-md border border-gray-300"
+          />
+        </div>
+      )}
+
+      {/* Dueños - visible en ambos modos */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
@@ -199,7 +239,7 @@ export const FormularioCita = ({ onSubmit, cita }) => {
               setCorreo('');
             }
           }}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           required
         >
           <option value="">Selecciona un dueño</option>
@@ -211,14 +251,14 @@ export const FormularioCita = ({ onSubmit, cita }) => {
         </select>
       </div>
 
-      {/* Campo 5: Mascotas */}
+      {/* Mascotas */}
       {duenoId && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
           <select
             value={mascotaId}
             onChange={(e) => setMascotaId(e.target.value)}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
             required
           >
             <option value="">Selecciona una mascota</option>
@@ -231,26 +271,25 @@ export const FormularioCita = ({ onSubmit, cita }) => {
         </div>
       )}
 
-      {/* Campo 6: Correo */}
+      {/* Correo */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
         <input
           type="email"
           value={correo}
           onChange={(e) => setCorreo(e.target.value)}
-          placeholder="correo@ejemplo.com"
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           required
         />
       </div>
 
-      {/* Campo 7: Tipo de cita */}
+      {/* Tipo de cita */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
         <select
           value={tipoCita}
           onChange={(e) => setTipoCita(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           required
         >
           <option value="consulta">Consulta general</option>
@@ -260,49 +299,45 @@ export const FormularioCita = ({ onSubmit, cita }) => {
         </select>
       </div>
 
-      {/* Campo 8: Título */}
+      {/* Título */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
         <input
           type="text"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          placeholder="Ej: Consulta de seguimiento"
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
         />
       </div>
 
-      {/* Campo 9: Descripción */}
+      {/* Descripción */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
         <textarea
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           rows={3}
-          placeholder="Detalles de la consulta, síntomas, etc."
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
         />
       </div>
 
-      {/* Campo 10: Notas adicionales */}
+      {/* Notas */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
         <textarea
           value={notas}
           onChange={(e) => setNotas(e.target.value)}
           rows={2}
-          placeholder="Información adicional para el veterinario"
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
         />
       </div>
 
-      {/* Botón de enviar */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
       >
-        {loading ? "Guardando..." : cita ? "Actualizar Cita" : "Crear Cita"}
+        {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
       </button>
     </form>
   );
