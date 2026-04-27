@@ -10,8 +10,8 @@ import { toast, Toaster } from 'sonner';
 import {
   getClientesTemporalesRequest,
   createClienteTemporalRequest,
-  completarRegistroClienteTemporalRequest,  // ✅ Corregido: añadido "Temporal"
-  deleteClienteTemporalRequest  // ✅ Corregido: añadido "Temporal"
+  completarRegistroClienteTemporalRequest,  //  Corregido: añadido "Temporal"
+  deleteClienteTemporalRequest  //  Corregido: añadido "Temporal"
 } from "../../api/ClientesTemporales";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
@@ -45,7 +45,7 @@ function ClientesTemporalesPage() {
 
   // Crear cliente temporal (agendamiento rápido)
   const handleCreateClienteTemporal = async (data) => {
-    console.log("📝 Creando cliente temporal:", data);
+    console.log(" Creando cliente temporal:", data);
     
     try {
       // Enviar datos al backend para crear cliente temporal + cita
@@ -57,14 +57,14 @@ function ClientesTemporalesPage() {
       const clientesResponse = await getClientesTemporalesRequest();
       setClientesTemporales(clientesResponse.data);
       
-      toast.success("✅ Cita agendada temporalmente", {
+      toast.success(" Cita agendada temporalmente", {
         description: `Cliente: ${data.username} - Mascota: ${data.nombreMascota}`,
         duration: 4000,
       });
       
     } catch (error) {
       console.error("Error:", error);
-      toast.error("❌ Error al agendar cita temporal");
+      toast.error(" Error al agendar cita temporal");
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -77,7 +77,7 @@ function ClientesTemporalesPage() {
 
   const handleSubmitCompleto = async (data) => {
     try {
-      // ✅ Corregido: añadido "Temporal" al nombre de la función
+      //  Corregido: añadido "Temporal" al nombre de la función
       await completarRegistroClienteTemporalRequest(clienteSeleccionado._id, data);
       
       // Recargar lista
@@ -87,26 +87,26 @@ function ClientesTemporalesPage() {
       setMostrarFormCompleto(false);
       setClienteSeleccionado(null);
       
-      toast.success("✅ Cliente registrado completamente", {
+      toast.success(" Cliente registrado completamente", {
         description: "Ahora puede iniciar sesión con su email y contraseña",
         duration: 4000,
       });
       
     } catch (error) {
-      toast.error("❌ Error al completar registro");
+      toast.error("Error al completar registro");
       manejarErrorResponse(error, setErrors);
     }
   };
 
   // Eliminar cliente temporal
-  // ✅ Corregido: cambiado deleteClienteRequest por deleteClienteTemporalRequest
+  //  Corregido: cambiado deleteClienteRequest por deleteClienteTemporalRequest
   const { handleDelete: handleDeleteClienteTemporal } = useDelete(
-    deleteClienteTemporalRequest,  // ✅ Corregido: añadido "Temporal"
+    deleteClienteTemporalRequest,  //  Corregido: añadido "Temporal"
     getClientesTemporalesRequest,
     setClientesTemporales,
     {
-      onSuccess: () => toast.success("🗑️ Cliente temporal eliminado"),
-      onError: () => toast.error("❌ Error al eliminar cliente temporal")
+      onSuccess: () => toast.success(" Cliente temporal eliminado"),
+      onError: () => toast.error(" Error al eliminar cliente temporal")
     }
   );
 
@@ -127,7 +127,7 @@ function ClientesTemporalesPage() {
       {/* Cabecera */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-          📞 Clientes Temporales (Agendamiento Rápido)
+           Clientes Temporales (Agendamiento Rápido)
         </h1>
         <p className="text-gray-500 text-sm mb-4">
           Clientes que agendaron cita sin completar registro. Al llegar a la consulta, complete sus datos.
@@ -145,7 +145,7 @@ function ClientesTemporalesPage() {
             onClick={() => setMostrarFormulario(true)}
             className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
           >
-            📞 + Nueva Cita Rápida
+             Nueva Cita Rápida
           </button>
         </div>
       </div>
@@ -180,7 +180,7 @@ function ClientesTemporalesPage() {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-700">
-                  ✏️ Completar Registro - {clienteSeleccionado.username}
+                   Completar Registro - {clienteSeleccionado.username}
                 </h2>
                 <button
                   onClick={() => setMostrarFormCompleto(false)}
@@ -192,7 +192,7 @@ function ClientesTemporalesPage() {
               
               <div className="bg-yellow-50 p-3 rounded-lg mb-4 border border-yellow-200">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ Este cliente agendó una cita de forma rápida. Complete sus datos para que pueda iniciar sesión.
+                   Este cliente agendó una cita de forma rápida. Complete sus datos para que pueda iniciar sesión.
                 </p>
               </div>
               
@@ -220,10 +220,10 @@ function ClientesTemporalesPage() {
           </div>
         ) : clientesTemporales.length === 0 ? (
           <div className="text-center py-16 px-4">
-            <div className="text-6xl mb-4">📞</div>
+            <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay clientes temporales</p>
             <p className="text-gray-400 mt-2">
-              Haz clic en "+ Nueva Cita Rápida" para agendar una cita sin registro completo
+              Haz clic en " Nueva Cita Rápida" para agendar una cita sin registro completo
             </p>
           </div>
         ) : clientesFiltrados.length === 0 ? (
