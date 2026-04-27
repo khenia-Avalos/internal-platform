@@ -20,7 +20,19 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fecha, setFecha] = useState(cita?.fecha ? cita.fecha.split('T')[0] : '');
+  
+  // 🔧 CORRECCIÓN DE ZONA HORARIA - Extraer solo la fecha sin conversión
+  const obtenerFechaLocal = (fechaISO) => {
+    if (!fechaISO) return '';
+    // Si viene en formato ISO (YYYY-MM-DDTHH:MM:SS.ZZZ)
+    if (fechaISO.includes('T')) {
+      return fechaISO.split('T')[0];
+    }
+    // Si ya viene en formato YYYY-MM-DD
+    return fechaISO;
+  };
+  
+  const [fecha, setFecha] = useState(cita?.fecha ? obtenerFechaLocal(cita.fecha) : '');
 
   useEffect(() => {
     cargarDoctores();
@@ -63,7 +75,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   };
 
   const handleSelectHorario = (horarioSeleccionado) => {
-    console.log("🕒 Horario seleccionado (NO se envía el formulario):", horarioSeleccionado);
+    console.log("🕒 Horario seleccionado:", horarioSeleccionado);
     setHorario(horarioSeleccionado);
   };
 
@@ -71,7 +83,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("📝 Enviando formulario manualmente por click en botón");
+    console.log("📝 Enviando formulario");
     
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
@@ -94,11 +106,14 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     };
     
     if (!isEdit) {
-      datosCita.fecha = fecha;
+      // 🔧 Enviar la fecha EXACTAMENTE como el usuario la seleccionó
+      // Sin conversión de zona horaria
+      datosCita.fecha = fecha; // Formato: YYYY-MM-DD
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
     }
     
+    console.log("📦 Fecha seleccionada por usuario:", fecha);
     console.log("📦 Datos a enviar:", datosCita);
     
     setLoading(true);
@@ -173,49 +188,11 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
-            
-            {/* VERSIÓN DE PRUEBA - COMENTA HORARIOSDISPONIBLES */}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">Selecciona un horario:</p>
-              <div className="flex gap-2 flex-wrap">
-                <button 
-                  type="button"
-                  onClick={() => handleSelectHorario({ inicio: "09:00", fin: "10:00" })}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-cyan-500 hover:text-white"
-                >
-                  09:00 - 10:00
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleSelectHorario({ inicio: "10:00", fin: "11:00" })}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-cyan-500 hover:text-white"
-                >
-                  10:00 - 11:00
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleSelectHorario({ inicio: "11:00", fin: "12:00" })}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-cyan-500 hover:text-white"
-                >
-                  11:00 - 12:00
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleSelectHorario({ inicio: "14:00", fin: "15:00" })}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-cyan-500 hover:text-white"
-                >
-                  14:00 - 15:00
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleSelectHorario({ inicio: "15:00", fin: "16:00" })}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-cyan-500 hover:text-white"
-                >
-                  15:00 - 16:00
-                </button>
-              </div>
-            </div>
-            
+            <HorariosDisponibles
+              doctorId={doctorId}
+              fecha={fecha}
+              onSelectHorario={handleSelectHorario}
+            />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
                 ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
@@ -227,9 +204,15 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-          <p className="text-sm text-gray-600">📅 <strong>Fecha actual:</strong> {new Date(cita.fecha).toLocaleDateString()}</p>
-          <p className="text-sm text-gray-600">⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}</p>
-          <p className="text-sm text-gray-600">👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}</p>
+          <p className="text-sm text-gray-600">
+            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0].split('-').reverse().join('/') : ''}
+          </p>
+          <p className="text-sm text-gray-600">
+            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
+          </p>
+          <p className="text-sm text-gray-600">
+            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
+          </p>
         </div>
       )}
 
@@ -241,8 +224,11 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             const duenoIdSeleccionado = e.target.value;
             setDuenoId(duenoIdSeleccionado);
             const duenoSeleccionado = duenos.find(d => d._id === duenoIdSeleccionado);
-            if (duenoSeleccionado) setCorreo(duenoSeleccionado.email || '');
-            else setCorreo('');
+            if (duenoSeleccionado) {
+              setCorreo(duenoSeleccionado.email || '');
+            } else {
+              setCorreo('');
+            }
           }}
           className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           required
