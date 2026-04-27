@@ -7,14 +7,12 @@ import { useNavigate } from 'react-router';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { toast, Toaster } from 'sonner';
 
-// ✅ CORREGIDO - Ruta relativa
 import {
   getClientesTemporalesRequest,
   createClienteTemporalRequest,
-  completarRegistroClienteRequest,
-  deleteClienteRequest
+  completarRegistroClienteTemporalRequest,  // ← Agrega "Temporal"
+  deleteClienteTemporalRequest  // ← También debería ser "Temporal"
 } from "../../api/ClientesTemporales";
-
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 
