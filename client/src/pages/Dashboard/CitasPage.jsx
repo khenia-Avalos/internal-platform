@@ -41,19 +41,19 @@ function CitasPage() {
       );
       setCitas(citasOrdenadas);
       
-      toast.success('✅ Cita creada exitosamente', {
+      toast.success(' Cita creada exitosamente', {
         description: `${data.tipoCita} - ${data.fecha} a las ${data.horaInicio}`,
         duration: 3000,
       });
       
     } catch (error) {
-      toast.error('❌ Error al crear la cita');
+      toast.error(' Error al crear la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
 
   const handleUpdateCita = async (data) => {
-    console.log("🚨🚨🚨 handleUpdateCita RECIBIÓ:", data);
+    console.log(" handleUpdateCita RECIBIÓ:", data);
     try {
       await updateCita(citaSeleccionada._id, data);
       const responseCitas = await getCitasRequest();
@@ -62,7 +62,7 @@ function CitasPage() {
       );
       setCitas(citasOrdenadas);
       
-      toast.success('✏️ Cita actualizada exitosamente', {
+      toast.success(' Cita actualizada exitosamente', {
         description: `Datos generales actualizados`,
         duration: 3000,
       });
@@ -70,8 +70,8 @@ function CitasPage() {
       setShowEditForm(false);
       setCitaSeleccionada(null);
     } catch (error) {
-      console.error("🚨🚨🚨 ERROR:", error);
-      toast.error('❌ Error al actualizar la cita');
+      console.error(" ERROR:", error);
+      toast.error(' Error al actualizar la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -107,8 +107,8 @@ function CitasPage() {
     getCitasRequest,
     setCitas,
     {
-      onSuccess: () => toast.success('🗑️ Cita eliminada exitosamente'),
-      onError: () => toast.error('❌ Error al eliminar la cita')
+      onSuccess: () => toast.success(' Cita eliminada exitosamente'),
+      onError: () => toast.error(' Error al eliminar la cita')
     }
   );
 

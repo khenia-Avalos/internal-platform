@@ -29,16 +29,16 @@ function CitaDetallePage() {
     
     if (nuevoEstado === 'confirmada') {
       mensajeConfirmacion = '¿Estás seguro de confirmar esta cita?';
-      mensajeExito = '✅ Cita confirmada exitosamente';
-      mensajeError = '❌ Error al confirmar la cita';
+      mensajeExito = ' Cita confirmada exitosamente';
+      mensajeError = ' Error al confirmar la cita';
     } else if (nuevoEstado === 'cancelada') {
       mensajeConfirmacion = '¿Estás seguro de cancelar esta cita?';
-      mensajeExito = '❌ Cita cancelada';
-      mensajeError = '❌ Error al cancelar la cita';
+      mensajeExito = ' Cita cancelada';
+      mensajeError = ' Error al cancelar la cita';
     } else if (nuevoEstado === 'completada') {
       mensajeConfirmacion = '¿Estás seguro de marcar esta cita como completada?';
-      mensajeExito = '✅ Cita marcada como completada';
-      mensajeError = '❌ Error al marcar la cita como completada';
+      mensajeExito = ' Cita marcada como completada';
+      mensajeError = ' Error al marcar la cita como completada';
     }
     
     if (!window.confirm(mensajeConfirmacion)) return;
@@ -57,21 +57,21 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log("🔄 Reagendando cita:", data);
+    console.log(" Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
       
-      toast.success('📅 Cita reagendada exitosamente', {
+      toast.success('Cita reagendada exitosamente', {
         description: `Nueva fecha: ${mostrarFechaLocal(data.fecha)} a las ${data.horaInicio}`,
         duration: 4000,
       });
       
       setShowReagendarModal(false);
     } catch (error) {
-      console.error("🔄 Error en reagendar:", error);
-      toast.error('❌ Error al reagendar la cita');
+      console.error(" Error en reagendar:", error);
+      toast.error(' Error al reagendar la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -163,20 +163,20 @@ function CitaDetallePage() {
                   disabled={updating}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                 >
-                  ✅ Confirmar Cita
+                   Confirmar Cita
                 </button>
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                 >
-                  ❌ Cancelar Cita
+                   Cancelar Cita
                 </button>
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
-                  📅 Reagendar Cita
+                   Reagendar Cita
                 </button>
               </>
             )}
@@ -188,22 +188,22 @@ function CitaDetallePage() {
                   disabled={updating}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  ✅ Marcar como Completada
+                   Marcar como Completada
                 </button>
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
-                  📅 Reagendar Cita
+                   Reagendar Cita
                 </button>
               </>
             )}
             
             {cita.estado === 'cancelada' && (
-              <p className="text-red-600 font-medium">❌ Esta cita ha sido cancelada</p>
+              <p className="text-red-600 font-medium"> Esta cita ha sido cancelada</p>
             )}
             {cita.estado === 'completada' && (
-              <p className="text-green-600 font-medium">✅ Esta cita ya fue completada</p>
+              <p className="text-green-600 font-medium"> Esta cita ya fue completada</p>
             )}
           </div>
         </>
