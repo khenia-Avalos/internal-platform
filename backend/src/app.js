@@ -12,6 +12,7 @@ import horarioRoutes from './routes/horario.routes.js';
 import internadoRoutes from './routes/internado.routes.js';
 import pausaRoutes from './routes/pausa.routes.js';
 import citaRoutes from './routes/cita.routes.js';
+import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import { FRONTEND_URL } from "./config.js";
 
 const app = express();
@@ -48,6 +49,6 @@ app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
-
+app.use("/api", clientesTemporalesRoutes);
 
 export default app;
