@@ -4,7 +4,7 @@ import DoctoresPage from "../Dashboard/DoctoresPage";
 import CitasPage from "../Dashboard/CitasPage";      
 import PacientesPage from "../Dashboard/PacientesPage";
 import PerfilPage from "../Dashboard/PerfilPage";   
-import ClientesTemporalesPage from "../Dashboard/ClientesTemporalesPage"; 
+import ClientesTemporalesPage from "../Dashboard/ClientesTempralesPage"; 
 // 1. Definimos los roles como constantes
 export const ROLES = {
   ADMIN: 'admin',
