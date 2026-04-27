@@ -5,7 +5,7 @@ import { getClientesRequest } from '../../api/clientes';
 import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
-export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
+export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => {
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -20,7 +20,18 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
   const [notas, setNotas] = useState(cita?.notas || '');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fecha, setFecha] = useState(cita?.fecha ? cita.fecha.split('T')[0] : '');
+  
+  // CORRECCIÓN DE FECHA - ajustar zona horaria
+  const ajustarFecha = (fechaStr) => {
+    if (!fechaStr) return '';
+    const fecha = new Date(fechaStr);
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const [fecha, setFecha] = useState(cita?.fecha ? ajustarFecha(cita.fecha) : '');
 
   useEffect(() => {
     cargarDoctores();
@@ -62,11 +73,18 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
     }
   };
 
+  // MANEJAR SELECCIÓN DE HORARIO - SOLO guarda en estado, NO envía
+  const handleSelectHorario = (horarioSeleccionado) => {
+    console.log("Horario seleccionado:", horarioSeleccionado);
+    setHorario(horarioSeleccionado);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Validar horario SOLO en creación
+    console.log("Enviando formulario manualmente");
+    
     if (!isEdit && !horario) {
       setErrors(["Por favor selecciona un horario"]);
       return;
@@ -87,12 +105,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
       correo
     };
     
-    // Agregar fecha/horario SOLO en creación
     if (!isEdit) {
       datosCita.fecha = fecha;
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
     }
+    
+    console.log("Datos a enviar:", datosCita);
     
     setLoading(true);
     setErrors([]);
@@ -101,6 +120,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
       await onSubmit(datosCita);
       
       if (!isEdit) {
+        // Limpiar formulario
         setDoctorId('');
         setHorario(null);
         setDuenoId('');
@@ -133,7 +153,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </div>
       )}
 
-      {/* CAMPOS QUE SOLO APARECEN EN CREACIÓN */}
       {!isEdit && (
         <>
           <div className="mb-4">
@@ -169,7 +188,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
             <HorariosDisponibles
               doctorId={doctorId}
               fecha={fecha}
-              onSelectHorario={setHorario}
+              onSelectHorario={handleSelectHorario}
             />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
@@ -180,7 +199,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </>
       )}
 
-      {/* En edición, mostrar datos actuales */}
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
           <p className="text-sm text-gray-600">
@@ -195,7 +213,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         </div>
       )}
 
-      {/* CAMPOS QUE APARECEN EN AMBOS MODOS */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
@@ -297,13 +314,24 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false }) => {
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
-      >
-        {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
+        >
+          {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 };
