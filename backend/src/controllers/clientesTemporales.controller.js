@@ -46,35 +46,59 @@ export const getClienteTemporalById = async (req, res) => {
 export const createClienteTemporal = async (req, res) => {
   try {
     const { 
-      username, 
+      username,
+      lastname,
       phoneNumber, 
       email, 
       nombreMascota, 
       especie, 
       fechaCita, 
-      horaCita, 
-      notas,
-      doctorId  // Opcional, si quieres asignar doctor desde el frontend
+      horaInicio,
+      horaFin,
+      doctorId,
+      tipoCita,
+      sintomas,
+      tiempoSintomas,
+      notas
     } = req.body;
+    
+    console.log('📝 Creando cliente temporal con datos:', {
+      username,
+      lastname,
+      phoneNumber,
+      email,
+      nombreMascota,
+      especie,
+      fechaCita,
+      horaInicio,
+      horaFin,
+      doctorId,
+      tipoCita,
+      sintomas,
+      tiempoSintomas
+    });
     
     // Verificar si ya existe por teléfono
     let clienteExistente = await Cliente.findOne({ phoneNumber });
     
+    const nuevaCitaTemporal = {
+      fecha: fechaCita,
+      horaInicio: horaInicio,
+      horaFin: horaFin,
+      notas: notas || '',
+      doctorId: doctorId || null,
+      tipoCita: tipoCita || 'consulta',
+      sintomas: sintomas || '',
+      tiempoSintomas: tiempoSintomas || '',
+      pacienteTemporal: {
+        nombre: nombreMascota,
+        especie: especie
+      },
+      creadaEn: new Date()
+    };
+    
     if (clienteExistente) {
       // Si ya existe, solo agregar la cita temporal
-      const nuevaCitaTemporal = {
-        fecha: fechaCita,
-        horaInicio: horaCita,
-        horaFin: horaCita, // Asumiendo hora de 1 hora
-        notas: notas || '',
-        doctorId: doctorId || null,
-        pacienteTemporal: {
-          nombre: nombreMascota,
-          especie: especie
-        },
-        creadaEn: new Date()
-      };
-      
       clienteExistente.citasTemporales = clienteExistente.citasTemporales || [];
       clienteExistente.citasTemporales.push(nuevaCitaTemporal);
       await clienteExistente.save();
@@ -89,24 +113,15 @@ export const createClienteTemporal = async (req, res) => {
     // Crear nuevo cliente temporal
     const nuevoCliente = new Cliente({
       username,
+      lastname: lastname || '',
       phoneNumber,
       email: email || null,
       estado: 'temporal',
-      citasTemporales: [{
-        fecha: fechaCita,
-        horaInicio: horaCita,
-        horaFin: horaCita,
-        notas: notas || '',
-        doctorId: doctorId || null,
-        pacienteTemporal: {
-          nombre: nombreMascota,
-          especie: especie
-        },
-        creadaEn: new Date()
-      }]
+      citasTemporales: [nuevaCitaTemporal]
     });
     
     await nuevoCliente.save();
+    
     res.status(201).json({
       message: 'Cliente temporal y cita creados exitosamente',
       cliente: nuevoCliente,
@@ -163,6 +178,12 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
+    // Opcional: Convertir citas temporales a reales automáticamente
+    if (cliente.citasTemporales && cliente.citasTemporales.length > 0) {
+      // Aquí puedes llamar a una función para convertir las citas
+      // o dejar que el admin las convierta manualmente
+    }
+    
     res.json({ 
       message: 'Cliente registrado completamente',
       cliente: {
@@ -213,7 +234,7 @@ export const deleteClienteTemporal = async (req, res) => {
 export const convertirCitaTemporal = async (req, res) => {
   try {
     const { clienteId, citaTemporalIndex } = req.params;
-    const { doctorId, fecha, horaInicio, horaFin, pacienteId } = req.body;
+    const { doctorId, fecha, horaInicio, horaFin } = req.body;
     
     const cliente = await Cliente.findById(clienteId);
     if (!cliente) {
@@ -225,14 +246,35 @@ export const convertirCitaTemporal = async (req, res) => {
       return res.status(404).json({ message: 'Cita temporal no encontrada' });
     }
     
-    // Aquí convertirías la cita temporal a una cita real
-    // usando tu modelo de Citas
+    // Verificar que el cliente ya completó su registro
+    if (cliente.estado !== 'completo') {
+      return res.status(400).json({ message: 'El cliente debe completar su registro primero' });
+    }
     
-    // Marcar la cita temporal como convertida o eliminarla
+    // Aquí importas tu modelo de Cita
+    // const Cita = require('../models/cita.model.js');
+    
+    // Crear la cita real
+    // const nuevaCita = new Cita({
+    //   pacienteId: pacienteId, // Necesitas obtener el pacienteId
+    //   doctorId: citaTemporal.doctorId || doctorId,
+    //   fecha: citaTemporal.fecha,
+    //   horaInicio: citaTemporal.horaInicio,
+    //   horaFin: citaTemporal.horaFin,
+    //   tipoCita: citaTemporal.tipoCita,
+    //   notas: citaTemporal.notas,
+    //   estado: 'pendiente'
+    // });
+    // await nuevaCita.save();
+    
+    // Eliminar la cita temporal
     cliente.citasTemporales.splice(citaTemporalIndex, 1);
     await cliente.save();
     
-    res.json({ message: 'Cita temporal convertida exitosamente' });
+    res.json({ 
+      message: 'Cita temporal convertida exitosamente',
+      // cita: nuevaCita 
+    });
     
   } catch (error) {
     console.error('Error en convertirCitaTemporal:', error);
