@@ -10,7 +10,20 @@ export const getClientesTemporales = async (req, res) => {
       estado: { $in: ['temporal', 'incompleto'] } 
     }).sort({ createdAt: -1 });
     
-    res.json(clientes);
+    // Formatear respuesta para que siempre tenga citasTemporales
+    const clientesFormateados = clientes.map(cliente => ({
+      _id: cliente._id,
+      username: cliente.username,
+      lastname: cliente.lastname || '',
+      phoneNumber: cliente.phoneNumber,
+      email: cliente.email || '',
+      estado: cliente.estado,
+      citasTemporales: cliente.citasTemporales || [],
+      createdAt: cliente.createdAt
+    }));
+    
+    console.log(`📊 Enviando ${clientesFormateados.length} clientes temporales`);
+    res.json(clientesFormateados);
   } catch (error) {
     console.error('Error en getClientesTemporales:', error);
     res.status(500).json({ message: error.message });
@@ -33,7 +46,16 @@ export const getClienteTemporalById = async (req, res) => {
       return res.status(400).json({ message: 'No es un cliente temporal' });
     }
     
-    res.json(cliente);
+    res.json({
+      _id: cliente._id,
+      username: cliente.username,
+      lastname: cliente.lastname || '',
+      phoneNumber: cliente.phoneNumber,
+      email: cliente.email || '',
+      estado: cliente.estado,
+      citasTemporales: cliente.citasTemporales || [],
+      createdAt: cliente.createdAt
+    });
   } catch (error) {
     console.error('Error en getClienteTemporalById:', error);
     res.status(500).json({ message: error.message });
@@ -46,36 +68,32 @@ export const getClienteTemporalById = async (req, res) => {
 export const createClienteTemporal = async (req, res) => {
   try {
     const { 
-      username,
-      lastname,
+      username, 
+      lastname, 
       phoneNumber, 
       email, 
       nombreMascota, 
       especie, 
       fechaCita, 
-      horaInicio,
-      horaFin,
-      doctorId,
-      tipoCita,
-      sintomas,
-      tiempoSintomas,
+      horaInicio, 
+      horaFin, 
+      doctorId, 
+      tipoCita, 
+      sintomas, 
+      tiempoSintomas, 
       notas
     } = req.body;
     
     console.log('📝 Creando cliente temporal con datos:', {
       username,
-      lastname,
       phoneNumber,
-      email,
       nombreMascota,
       especie,
       fechaCita,
       horaInicio,
       horaFin,
       doctorId,
-      tipoCita,
-      sintomas,
-      tiempoSintomas
+      tipoCita
     });
     
     // Verificar si ya existe por teléfono
@@ -97,39 +115,58 @@ export const createClienteTemporal = async (req, res) => {
       creadaEn: new Date()
     };
     
+    let cliente;
+    let esNuevo = false;
+    
     if (clienteExistente) {
       // Si ya existe, solo agregar la cita temporal
+      console.log(`📝 Cliente existente encontrado: ${clienteExistente.username}`);
       clienteExistente.citasTemporales = clienteExistente.citasTemporales || [];
       clienteExistente.citasTemporales.push(nuevaCitaTemporal);
       await clienteExistente.save();
-      
-      return res.status(200).json({
-        message: 'Cita temporal agregada a cliente existente',
-        cliente: clienteExistente,
-        esNuevo: false
+      cliente = clienteExistente;
+      esNuevo = false;
+    } else {
+      // Crear nuevo cliente temporal
+      console.log(`📝 Creando nuevo cliente temporal: ${username}`);
+      const nuevoCliente = new Cliente({
+        username,
+        lastname: lastname || '',
+        phoneNumber,
+        email: email || null,
+        estado: 'temporal',
+        citasTemporales: [nuevaCitaTemporal]
       });
+      await nuevoCliente.save();
+      cliente = nuevoCliente;
+      esNuevo = true;
     }
     
-    // Crear nuevo cliente temporal
-    const nuevoCliente = new Cliente({
-      username,
-      lastname: lastname || '',
-      phoneNumber,
-      email: email || null,
-      estado: 'temporal',
-      citasTemporales: [nuevaCitaTemporal]
-    });
+    // Obtener el cliente con todos sus datos actualizados
+    const clienteActualizado = await Cliente.findById(cliente._id);
     
-    await nuevoCliente.save();
+    const respuesta = {
+      message: esNuevo 
+        ? 'Cliente temporal y cita creados exitosamente' 
+        : 'Cita temporal agregada a cliente existente',
+      cliente: {
+        _id: clienteActualizado._id,
+        username: clienteActualizado.username,
+        lastname: clienteActualizado.lastname || '',
+        phoneNumber: clienteActualizado.phoneNumber,
+        email: clienteActualizado.email || '',
+        estado: clienteActualizado.estado,
+        citasTemporales: clienteActualizado.citasTemporales || [],
+        createdAt: clienteActualizado.createdAt
+      },
+      esNuevo
+    };
     
-    res.status(201).json({
-      message: 'Cliente temporal y cita creados exitosamente',
-      cliente: nuevoCliente,
-      esNuevo: true
-    });
+    console.log(`✅ Cliente temporal guardado: ${username}`);
+    res.status(201).json(respuesta);
     
   } catch (error) {
-    console.error('Error en createClienteTemporal:', error);
+    console.error('❌ Error en createClienteTemporal:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -142,6 +179,8 @@ export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
     const { lastname, cedula, direccion, email, password } = req.body;
+    
+    console.log(`📝 Completando registro para cliente: ${id}`);
     
     const cliente = await Cliente.findById(id);
     if (!cliente) {
@@ -178,11 +217,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
-    // Opcional: Convertir citas temporales a reales automáticamente
-    if (cliente.citasTemporales && cliente.citasTemporales.length > 0) {
-      // Aquí puedes llamar a una función para convertir las citas
-      // o dejar que el admin las convierta manualmente
-    }
+    console.log(`✅ Cliente ${cliente.username} completado exitosamente`);
     
     res.json({ 
       message: 'Cliente registrado completamente',
@@ -197,7 +232,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error en completarRegistroClienteTemporal:', error);
+    console.error('❌ Error en completarRegistroClienteTemporal:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -220,10 +255,11 @@ export const deleteClienteTemporal = async (req, res) => {
     }
     
     await cliente.deleteOne();
+    console.log(`🗑️ Cliente temporal eliminado: ${cliente.username}`);
     res.json({ message: 'Cliente temporal eliminado exitosamente' });
     
   } catch (error) {
-    console.error('Error en deleteClienteTemporal:', error);
+    console.error('❌ Error en deleteClienteTemporal:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -234,7 +270,7 @@ export const deleteClienteTemporal = async (req, res) => {
 export const convertirCitaTemporal = async (req, res) => {
   try {
     const { clienteId, citaTemporalIndex } = req.params;
-    const { doctorId, fecha, horaInicio, horaFin } = req.body;
+    const { doctorId, fecha, horaInicio, horaFin, pacienteId } = req.body;
     
     const cliente = await Cliente.findById(clienteId);
     if (!cliente) {
@@ -256,7 +292,7 @@ export const convertirCitaTemporal = async (req, res) => {
     
     // Crear la cita real
     // const nuevaCita = new Cita({
-    //   pacienteId: pacienteId, // Necesitas obtener el pacienteId
+    //   pacienteId: pacienteId,
     //   doctorId: citaTemporal.doctorId || doctorId,
     //   fecha: citaTemporal.fecha,
     //   horaInicio: citaTemporal.horaInicio,
@@ -277,7 +313,7 @@ export const convertirCitaTemporal = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error en convertirCitaTemporal:', error);
+    console.error('❌ Error en convertirCitaTemporal:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -288,7 +324,7 @@ export const convertirCitaTemporal = async (req, res) => {
 export const getCitasTemporalesByCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const cliente = await Cliente.findById(id);
+    const cliente = await Cliente.findById(id).populate('citasTemporales.doctorId');
     
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -297,7 +333,7 @@ export const getCitasTemporalesByCliente = async (req, res) => {
     res.json(cliente.citasTemporales || []);
     
   } catch (error) {
-    console.error('Error en getCitasTemporalesByCliente:', error);
+    console.error('❌ Error en getCitasTemporalesByCliente:', error);
     res.status(500).json({ message: error.message });
   }
 };
