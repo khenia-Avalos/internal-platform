@@ -1,7 +1,7 @@
 // src/components/forms/FormularioCitaTemporal.jsx
 import { useState, useEffect } from 'react';
 import { getDoctoresRequest } from '../../api/doctores';
-import { getHorariosDisponiblesByDoctorAndDate } from '../../api/horario';
+import { getHorariosDisponiblesByDoctorAndDate } from '../../api/horarios';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCitaTemporal = ({ onSubmit, onCancel }) => {
