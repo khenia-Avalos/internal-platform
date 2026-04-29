@@ -4,15 +4,15 @@ import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
 
 
 // Obtener todos los clientes
+// En clientes.controller.js
 export const getClientes = async (req, res) => {
   try {
-    const clientes = await Owner.find().select('-password');
+    // Solo clientes con estado completo
+    const clientes = await Cliente.find({ estado: 'completo' }).sort({ createdAt: -1 });
     res.json(clientes);
   } catch (error) {
-  const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });  }
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // Crear un nuevo cliente
