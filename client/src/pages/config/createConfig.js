@@ -473,6 +473,61 @@ registerClienteTemporal: {
   ],
   submitLabel: "Agendar Cita Rápida",
   redirect: { path: "/dashboard/clientes-temporales" }
+},
+
+completarRegistroCliente: {
+  title: "Completar Registro de Cliente",
+  fields: [
+    {
+      name: "lastname",
+      type: "text",
+      label: "Apellido *",
+      placeholder: "Ej: Pérez Gómez",
+      validation: { required: "El apellido es requerido" }
+    },
+    {
+      name: "cedula",
+      type: "text",
+      label: "Cédula *",
+      placeholder: "000000000",
+      validation: { required: "La cédula es requerida" }
+    },
+    {
+      name: "direccion",
+      type: "text",
+      label: "Dirección *",
+      placeholder: "San José, Costa Rica",
+      validation: { required: "La dirección es requerida" }
+    },
+    {
+      name: "email",
+      type: "email",
+      label: "Correo electrónico *",
+      placeholder: "cliente@ejemplo.com",
+      validation: { required: "El email es requerido" }
+    },
+    {
+      name: "password",
+      type: "password",
+      label: "Contraseña *",
+      placeholder: "********",
+      validation: {
+        required: "La contraseña es requerida",
+        minLength: { value: 6, message: "Mínimo 6 caracteres" }
+      }
+    },
+    {
+      name: "confirmPassword",
+      type: "password",
+      label: "Confirmar contraseña *",
+      placeholder: "********",
+      validation: {
+        required: "Confirme su contraseña",
+        validate: (value, formData) => value === formData.password || "Las contraseñas no coinciden"
+      }
+    }
+  ],
+  submitLabel: "Completar Registro"
 }
 
 };
