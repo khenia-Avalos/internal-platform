@@ -15,6 +15,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     lastname: '',
     phoneNumber: '',
     email: '',
+    cedula: '',
     nombreMascota: '',
     especie: '',
     doctorId: '',
@@ -193,6 +194,18 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
           />
           <p className="text-xs text-gray-500 mt-1">Incluye código de país (+506 Costa Rica)</p>
         </div>
+        <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Cédula *</label>
+  <input
+    type="text"
+    name="cedula"
+    value={formData.cedula}
+    onChange={handleChange}
+    placeholder="000000000"
+    className="w-full border border-cyan-400 rounded-md px-3 py-2"
+    required
+  />
+</div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email (opcional)</label>

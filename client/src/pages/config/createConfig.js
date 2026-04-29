@@ -397,6 +397,7 @@ registerClienteTemporal: {
       },
       helperText: "Incluye código de país (+506 Costa Rica)"
     },
+        
     {
       name: "email",
       type: "email",
@@ -525,7 +526,9 @@ completarRegistroCliente: {
         required: "Confirme su contraseña",
         validate: (value, formData) => value === formData.password || "Las contraseñas no coinciden"
       }
+      
     }
+    
   ],
   submitLabel: "Completar Registro"
 }
