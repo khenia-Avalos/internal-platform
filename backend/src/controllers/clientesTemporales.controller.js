@@ -77,6 +77,9 @@ export const getClienteTemporalById = async (req, res) => {
 // ============================================
 // CREAR CLIENTE TEMPORAL (AGENDAMIENTO RÁPIDO)
 // ============================================
+// ============================================
+// CREAR CLIENTE TEMPORAL (AGENDAMIENTO RÁPIDO)
+// ============================================
 export const createClienteTemporal = async (req, res) => {
   try {
     console.log('\n========== CREATE CLIENTE TEMPORAL ==========');
@@ -86,6 +89,7 @@ export const createClienteTemporal = async (req, res) => {
       lastname, 
       phoneNumber, 
       email, 
+      cedula,           // ← NUEVO: cédula como identificador
       nombreMascota, 
       especie, 
       fechaCita, 
@@ -100,28 +104,35 @@ export const createClienteTemporal = async (req, res) => {
     
     console.log('📝 Datos recibidos:', {
       username,
+      cedula,
       phoneNumber,
       nombreMascota,
-      especie,
       fechaCita,
-      horaInicio,
-      horaFin,
-      doctorId,
-      tipoCita
+      horaInicio
     });
     
-    // Verificar si ya existe por teléfono
-    let clienteExistente = await Cliente.findOne({ phoneNumber });
+    // 🔍 Verificar si ya existe un cliente con la misma CÉDULA
+    let clienteExistente = null;
     
-    if (clienteExistente) {
-      console.log(`🔍 Cliente existente encontrado:`);
-      console.log(`   - ID: ${clienteExistente._id}`);
-      console.log(`   - Nombre: ${clienteExistente.username}`);
-      console.log(`   - Estado actual: ${clienteExistente.estado}`);
-      console.log(`   - ¿Tiene citasTemporales? ${clienteExistente.citasTemporales ? 'Sí' : 'No'}`);
-      console.log(`   - Cantidad citas actuales: ${clienteExistente.citasTemporales?.length || 0}`);
-    } else {
-      console.log(`🔍 No existe cliente con teléfono ${phoneNumber}, se creará uno NUEVO`);
+    if (cedula) {
+      clienteExistente = await Cliente.findOne({ cedula });
+      
+      if (clienteExistente) {
+        console.log(`🔍 Cliente existente encontrado por CÉDULA:`);
+        console.log(`   - ID: ${clienteExistente._id}`);
+        console.log(`   - Nombre: ${clienteExistente.username}`);
+        console.log(`   - Estado actual: ${clienteExistente.estado}`);
+        console.log(`   - Cédula: ${clienteExistente.cedula}`);
+      }
+    }
+    
+    // Si no encontró por cédula, verificar por teléfono (opcional, como advertencia)
+    if (!clienteExistente && phoneNumber) {
+      const clientePorTelefono = await Cliente.findOne({ phoneNumber });
+      if (clientePorTelefono) {
+        console.log(`⚠️ Advertencia: El teléfono ${phoneNumber} ya pertenece a ${clientePorTelefono.username} (cédula: ${clientePorTelefono.cedula})`);
+        // No bloqueamos, solo advertimos
+      }
     }
     
     const nuevaCitaTemporal = {
@@ -144,46 +155,47 @@ export const createClienteTemporal = async (req, res) => {
     let esNuevo = false;
     
     if (clienteExistente) {
-      // Si ya existe, solo agregar la cita temporal
+      // Si ya existe por cédula, agregar la cita temporal
       clienteExistente.citasTemporales = clienteExistente.citasTemporales || [];
       clienteExistente.citasTemporales.push(nuevaCitaTemporal);
       await clienteExistente.save();
       cliente = clienteExistente;
       esNuevo = false;
       console.log(`📝 Cita temporal AGREGADA a cliente existente: ${clienteExistente.username}`);
-      console.log(`📊 Nueva cantidad de citas: ${clienteExistente.citasTemporales.length}`);
     } else {
+      // Validar que la cédula no esté vacía
+      if (!cedula) {
+        return res.status(400).json({ 
+          message: 'La cédula es requerida para crear un cliente temporal',
+          field: 'cedula'
+        });
+      }
+      
       // Crear nuevo cliente temporal
       const nuevoCliente = new Cliente({
         username,
         lastname: lastname || '',
         phoneNumber,
         email: email || null,
+        cedula,  // ← Guardamos la cédula
         estado: 'temporal',
         citasTemporales: [nuevaCitaTemporal]
       });
       await nuevoCliente.save();
       cliente = nuevoCliente;
       esNuevo = true;
-      console.log(`📝 Cliente NUEVO creado: ${username} (estado: temporal)`);
-      console.log(`📊 Citas temporales: 1`);
+      console.log(`📝 Cliente NUEVO creado: ${username} (cédula: ${cedula}, estado: temporal)`);
     }
     
-    // Obtener el cliente con todos sus datos actualizados
+    // Obtener el cliente actualizado
     const clienteActualizado = await Cliente.findById(cliente._id);
     
     console.log(`✅ Resultado final:`);
     console.log(`   - ID: ${clienteActualizado._id}`);
     console.log(`   - Nombre: ${clienteActualizado.username}`);
+    console.log(`   - Cédula: ${clienteActualizado.cedula}`);
     console.log(`   - Estado: ${clienteActualizado.estado}`);
     console.log(`   - Total citas temporales: ${clienteActualizado.citasTemporales?.length || 0}`);
-    
-    // Mostrar las citas temporales
-    if (clienteActualizado.citasTemporales && clienteActualizado.citasTemporales.length > 0) {
-      clienteActualizado.citasTemporales.forEach((cita, idx) => {
-        console.log(`   - Cita ${idx + 1}: ${cita.fecha} ${cita.horaInicio} - ${cita.pacienteTemporal?.nombre}`);
-      });
-    }
     
     const respuesta = {
       message: esNuevo 
@@ -195,6 +207,7 @@ export const createClienteTemporal = async (req, res) => {
         lastname: clienteActualizado.lastname || '',
         phoneNumber: clienteActualizado.phoneNumber,
         email: clienteActualizado.email || '',
+        cedula: clienteActualizado.cedula,
         estado: clienteActualizado.estado,
         citasTemporales: clienteActualizado.citasTemporales || [],
         createdAt: clienteActualizado.createdAt
@@ -207,6 +220,13 @@ export const createClienteTemporal = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en createClienteTemporal:', error);
+    // Manejar error de cédula duplicada
+    if (error.code === 11000 && error.keyPattern?.cedula) {
+      return res.status(400).json({ 
+        message: 'Ya existe un cliente registrado con esta cédula',
+        field: 'cedula'
+      });
+    }
     res.status(500).json({ message: error.message });
   }
 };
