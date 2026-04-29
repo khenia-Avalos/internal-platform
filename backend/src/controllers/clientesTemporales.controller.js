@@ -6,9 +6,20 @@ import Cliente from '../models/owner.model.js';
 // ============================================
 export const getClientesTemporales = async (req, res) => {
   try {
+    console.log('\n========== GET CLIENTES TEMPORALES ==========');
+    
+    // Primero, mostrar todos los clientes para depurar
+    const todos = await Cliente.find({});
+    console.log(`📊 TOTAL CLIENTES EN BD: ${todos.length}`);
+    todos.forEach(c => {
+      console.log(`   - ${c.username}: estado=${c.estado}, citasTemporales=${c.citasTemporales?.length || 0}, tel=${c.phoneNumber}`);
+    });
+    
     const clientes = await Cliente.find({ 
       estado: { $in: ['temporal', 'incompleto'] } 
     }).sort({ createdAt: -1 });
+    
+    console.log(`📊 Clientes con estado temporal/incompleto: ${clientes.length}`);
     
     // Formatear respuesta para que siempre tenga citasTemporales
     const clientesFormateados = clientes.map(cliente => ({
@@ -23,9 +34,10 @@ export const getClientesTemporales = async (req, res) => {
     }));
     
     console.log(`📊 Enviando ${clientesFormateados.length} clientes temporales`);
+    console.log('========== FIN GET ==========\n');
     res.json(clientesFormateados);
   } catch (error) {
-    console.error('Error en getClientesTemporales:', error);
+    console.error('❌ Error en getClientesTemporales:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -67,6 +79,8 @@ export const getClienteTemporalById = async (req, res) => {
 // ============================================
 export const createClienteTemporal = async (req, res) => {
   try {
+    console.log('\n========== CREATE CLIENTE TEMPORAL ==========');
+    
     const { 
       username, 
       lastname, 
@@ -84,7 +98,7 @@ export const createClienteTemporal = async (req, res) => {
       notas
     } = req.body;
     
-    console.log('📝 Creando cliente temporal con datos:', {
+    console.log('📝 Datos recibidos:', {
       username,
       phoneNumber,
       nombreMascota,
@@ -98,6 +112,17 @@ export const createClienteTemporal = async (req, res) => {
     
     // Verificar si ya existe por teléfono
     let clienteExistente = await Cliente.findOne({ phoneNumber });
+    
+    if (clienteExistente) {
+      console.log(`🔍 Cliente existente encontrado:`);
+      console.log(`   - ID: ${clienteExistente._id}`);
+      console.log(`   - Nombre: ${clienteExistente.username}`);
+      console.log(`   - Estado actual: ${clienteExistente.estado}`);
+      console.log(`   - ¿Tiene citasTemporales? ${clienteExistente.citasTemporales ? 'Sí' : 'No'}`);
+      console.log(`   - Cantidad citas actuales: ${clienteExistente.citasTemporales?.length || 0}`);
+    } else {
+      console.log(`🔍 No existe cliente con teléfono ${phoneNumber}, se creará uno NUEVO`);
+    }
     
     const nuevaCitaTemporal = {
       fecha: fechaCita,
@@ -120,15 +145,15 @@ export const createClienteTemporal = async (req, res) => {
     
     if (clienteExistente) {
       // Si ya existe, solo agregar la cita temporal
-      console.log(`📝 Cliente existente encontrado: ${clienteExistente.username}`);
       clienteExistente.citasTemporales = clienteExistente.citasTemporales || [];
       clienteExistente.citasTemporales.push(nuevaCitaTemporal);
       await clienteExistente.save();
       cliente = clienteExistente;
       esNuevo = false;
+      console.log(`📝 Cita temporal AGREGADA a cliente existente: ${clienteExistente.username}`);
+      console.log(`📊 Nueva cantidad de citas: ${clienteExistente.citasTemporales.length}`);
     } else {
       // Crear nuevo cliente temporal
-      console.log(`📝 Creando nuevo cliente temporal: ${username}`);
       const nuevoCliente = new Cliente({
         username,
         lastname: lastname || '',
@@ -140,10 +165,25 @@ export const createClienteTemporal = async (req, res) => {
       await nuevoCliente.save();
       cliente = nuevoCliente;
       esNuevo = true;
+      console.log(`📝 Cliente NUEVO creado: ${username} (estado: temporal)`);
+      console.log(`📊 Citas temporales: 1`);
     }
     
     // Obtener el cliente con todos sus datos actualizados
     const clienteActualizado = await Cliente.findById(cliente._id);
+    
+    console.log(`✅ Resultado final:`);
+    console.log(`   - ID: ${clienteActualizado._id}`);
+    console.log(`   - Nombre: ${clienteActualizado.username}`);
+    console.log(`   - Estado: ${clienteActualizado.estado}`);
+    console.log(`   - Total citas temporales: ${clienteActualizado.citasTemporales?.length || 0}`);
+    
+    // Mostrar las citas temporales
+    if (clienteActualizado.citasTemporales && clienteActualizado.citasTemporales.length > 0) {
+      clienteActualizado.citasTemporales.forEach((cita, idx) => {
+        console.log(`   - Cita ${idx + 1}: ${cita.fecha} ${cita.horaInicio} - ${cita.pacienteTemporal?.nombre}`);
+      });
+    }
     
     const respuesta = {
       message: esNuevo 
@@ -162,7 +202,7 @@ export const createClienteTemporal = async (req, res) => {
       esNuevo
     };
     
-    console.log(`✅ Cliente temporal guardado: ${username}`);
+    console.log('========== FIN CREATE ==========\n');
     res.status(201).json(respuesta);
     
   } catch (error) {
@@ -173,19 +213,21 @@ export const createClienteTemporal = async (req, res) => {
 
 // ============================================
 // COMPLETAR REGISTRO DE CLIENTE TEMPORAL
-// (Convertir temporal → completo)
 // ============================================
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
     const { lastname, cedula, direccion, email, password } = req.body;
     
-    console.log(`📝 Completando registro para cliente: ${id}`);
+    console.log(`\n========== COMPLETAR REGISTRO ==========`);
+    console.log(`📝 Completando registro para cliente ID: ${id}`);
     
     const cliente = await Cliente.findById(id);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
+    
+    console.log(`📝 Cliente encontrado: ${cliente.username}, estado actual: ${cliente.estado}`);
     
     if (cliente.estado === 'completo') {
       return res.status(400).json({ message: 'El cliente ya está registrado completamente' });
@@ -217,7 +259,8 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
-    console.log(`✅ Cliente ${cliente.username} completado exitosamente`);
+    console.log(`✅ Cliente ${cliente.username} completado exitosamente, nuevo estado: ${cliente.estado}`);
+    console.log('========== FIN COMPLETAR ==========\n');
     
     res.json({ 
       message: 'Cliente registrado completamente',
@@ -249,7 +292,6 @@ export const deleteClienteTemporal = async (req, res) => {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
     
-    // Solo permitir eliminar clientes temporales o incompletos
     if (cliente.estado === 'completo') {
       return res.status(400).json({ message: 'No se puede eliminar un cliente registrado' });
     }
@@ -282,35 +324,15 @@ export const convertirCitaTemporal = async (req, res) => {
       return res.status(404).json({ message: 'Cita temporal no encontrada' });
     }
     
-    // Verificar que el cliente ya completó su registro
     if (cliente.estado !== 'completo') {
       return res.status(400).json({ message: 'El cliente debe completar su registro primero' });
     }
     
-    // Aquí importas tu modelo de Cita
-    // const Cita = require('../models/cita.model.js');
-    
-    // Crear la cita real
-    // const nuevaCita = new Cita({
-    //   pacienteId: pacienteId,
-    //   doctorId: citaTemporal.doctorId || doctorId,
-    //   fecha: citaTemporal.fecha,
-    //   horaInicio: citaTemporal.horaInicio,
-    //   horaFin: citaTemporal.horaFin,
-    //   tipoCita: citaTemporal.tipoCita,
-    //   notas: citaTemporal.notas,
-    //   estado: 'pendiente'
-    // });
-    // await nuevaCita.save();
-    
-    // Eliminar la cita temporal
+    // Marcar la cita temporal como convertida o eliminarla
     cliente.citasTemporales.splice(citaTemporalIndex, 1);
     await cliente.save();
     
-    res.json({ 
-      message: 'Cita temporal convertida exitosamente',
-      // cita: nuevaCita 
-    });
+    res.json({ message: 'Cita temporal convertida exitosamente' });
     
   } catch (error) {
     console.error('❌ Error en convertirCitaTemporal:', error);
