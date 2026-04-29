@@ -364,26 +364,24 @@ registerCita: {
   submitLabel: "Agendar Cita"
 },
 
+// En tu createConfig.js
+
 registerClienteTemporal: {
-  title: " Nuevo Cliente Temporal (Agendamiento Rápido)",
+  title: "📞 Nuevo Cliente Temporal (Agendamiento Rápido)",
   fields: [
     {
       name: "username",
       type: "text",
       label: "Nombre del dueño *",
       placeholder: "Ej: Juan Pérez",
-      validation: {
-        required: "El nombre es requerido"
-      }
+      validation: { required: "El nombre es requerido" }
     },
     {
       name: "lastname",
       type: "text",
       label: "Apellido del dueño",
       placeholder: "Ej: Pérez Gómez",
-      validation: {
-        required: false  // ← Opcional para cliente temporal
-      }
+      validation: { required: false }
     },
     {
       name: "phoneNumber",
@@ -404,76 +402,77 @@ registerClienteTemporal: {
       type: "email",
       label: "Correo electrónico (opcional)",
       placeholder: "cliente@ejemplo.com",
-      validation: {
-        required: false
-      }
+      validation: { required: false }
     },
     {
       name: "nombreMascota",
       type: "text",
       label: "Nombre de la mascota *",
       placeholder: "Ej: Firulais",
-      validation: {
-        required: "El nombre de la mascota es requerido"
-      }
+      validation: { required: "El nombre de la mascota es requerido" }
     },
     {
       name: "especie",
       type: "select",
       label: "Especie *",
       options: ['perro', 'gato', 'conejo', 'ave', 'hámster', 'tortuga', 'otro'],
-      validation: { 
-        required: "La especie es requerida" 
-      }
+      validation: { required: "La especie es requerida" }
+    },
+    {
+      name: "doctorId",
+      type: "select",
+      label: "Veterinario *",
+      placeholder: "Selecciona un veterinario",
+      options: [], // Se llena dinámicamente
+      validation: { required: "El veterinario es requerido" }
     },
     {
       name: "fechaCita",
       type: "date",
       label: "Fecha de la cita *",
-      validation: {
-        required: "La fecha es requerida"
-      }
+      validation: { required: "La fecha es requerida" }
     },
     {
       name: "horaCita",
       type: "select",
-      label: "Horario preferido",
-      options: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
-      validation: {
-        required: "El horario es requerido"
-      }
+      label: "Horario disponible *",
+      placeholder: "Selecciona un horario",
+      options: [], // Se llena dinámicamente según doctor y fecha
+      validation: { required: "El horario es requerido" }
     },
-      {
+    {
+      name: "tipoCita",
+      type: "select",
+      label: "Tipo de cita *",
+      options: ['consulta', 'estetica'],
+      validation: { required: "El tipo de cita es requerido" }
+    },
+    {
       name: "sintomas",
       type: "select",
       label: "Síntomas",
       options: ['vomito', 'Diarrea', 'Falta de apetito', 'tos', 'otro'],
-      validation: { 
-        required: "Los síntomas son requeridos" 
-      }
+      validation: { required: false }
     },
     {
       name: "tiempoSintomas",
       type: "textarea",
-      label: "Hace cuanto comenzaron los síntomas",
+      label: "¿Hace cuánto comenzaron los síntomas?",
       placeholder: "Ej: 2 días, 1 semana, etc.",
-      validation: {
-        required: false
-      }
+      rows: 2,
+      validation: { required: false }
     },
-     {
+    {
       name: "notas",
       type: "textarea",
       label: "Notas adicionales",
-      placeholder: "Síntomas, observaciones, etc.",
-      validation: {
-        required: false
-      }
+      placeholder: "Observaciones adicionales...",
+      rows: 3,
+      validation: { required: false }
     }
   ],
   submitLabel: "Agendar Cita Rápida",
-  redirect: { path: "/ClientesTemporalesPage" }
+  redirect: { path: "/dashboard/clientes-temporales" }
 }
-
 
 };
