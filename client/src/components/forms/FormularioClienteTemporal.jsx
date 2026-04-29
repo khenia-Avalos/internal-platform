@@ -15,7 +15,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     lastname: '',
     phoneNumber: '',
     email: '',
-    cedula: '',
+    cedula: '',           // ← NUEVO
     nombreMascota: '',
     especie: '',
     doctorId: '',
@@ -73,7 +73,6 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
   };
 
   const handleSelectHorario = (horario) => {
-    console.log("Horario seleccionado:", horario);
     setHorarioSeleccionado(horario);
   };
 
@@ -81,9 +80,9 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Validaciones
     const nuevosErrores = [];
     if (!formData.username) nuevosErrores.push('El nombre del dueño es requerido');
+    if (!formData.cedula) nuevosErrores.push('La cédula es requerida');
     if (!formData.phoneNumber) nuevosErrores.push('El teléfono es requerido');
     if (!formData.nombreMascota) nuevosErrores.push('El nombre de la mascota es requerido');
     if (!formData.especie) nuevosErrores.push('La especie es requerida');
@@ -105,6 +104,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
         lastname: formData.lastname,
         phoneNumber: formData.phoneNumber,
         email: formData.email,
+        cedula: formData.cedula,           // ← NUEVO
         nombreMascota: formData.nombreMascota,
         especie: formData.especie,
         doctorId: formData.doctorId,
@@ -117,22 +117,20 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
         notas: formData.notas
       };
       
-      console.log("📝 Enviando datos:", datosEnvio);
+      console.log("📝 Datos a enviar:", datosEnvio);
       
-      const response = await createClienteTemporalRequest(datosEnvio);
-      console.log("✅ Respuesta:", response.data);
+      await createClienteTemporalRequest(datosEnvio);
       
-      toast.success('✅ Cita agendada exitosamente', {
-        description: `Cliente: ${formData.username} - Mascota: ${formData.nombreMascota}`,
-        duration: 4000,
-      });
-      
+      toast.success('✅ Cita agendada exitosamente');
       if (onSuccess) onSuccess();
       
     } catch (error) {
       console.error('❌ Error:', error);
-      console.error('Detalle:', error.response?.data);
-      setErrors([error?.response?.data?.message || 'Error al agendar cita']);
+      if (error.response?.status === 400) {
+        setErrors([error.response?.data?.message || 'Error en los datos']);
+      } else {
+        setErrors(['Error al agendar cita']);
+      }
       toast.error('❌ Error al agendar cita');
     } finally {
       setLoading(false);
@@ -145,8 +143,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       
       <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
         <p className="text-sm text-blue-700">
-          ⚡ Agendamiento rápido - Solo datos básicos.
-          Al llegar a la cita, podrá completar el registro completo del cliente.
+          ⚡ Agendamiento rápido - La cédula será su identificador único.
         </p>
       </div>
 
@@ -165,7 +162,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="username"
             value={formData.username}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           />
         </div>
@@ -177,7 +174,20 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="lastname"
             value={formData.lastname}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cédula *</label>
+          <input
+            type="text"
+            name="cedula"
+            value={formData.cedula}
+            onChange={handleChange}
+            placeholder="000000000"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
+            required
           />
         </div>
         
@@ -189,32 +199,19 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             value={formData.phoneNumber}
             onChange={handleChange}
             placeholder="+506 7098 3832"
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           />
-          <p className="text-xs text-gray-500 mt-1">Incluye código de país (+506 Costa Rica)</p>
         </div>
-        <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Cédula *</label>
-  <input
-    type="text"
-    name="cedula"
-    value={formData.cedula}
-    onChange={handleChange}
-    placeholder="000000000"
-    className="w-full border border-cyan-400 rounded-md px-3 py-2"
-    required
-  />
-</div>
         
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Email (opcional)</label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
           />
         </div>
       </div>
@@ -228,7 +225,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="nombreMascota"
             value={formData.nombreMascota}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           />
         </div>
@@ -239,7 +236,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="especie"
             value={formData.especie}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           >
             <option value="">Selecciona una especie</option>
@@ -262,7 +259,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="tipoCita"
             value={formData.tipoCita}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           >
             <option value="consulta">Consulta médica 🩺</option>
@@ -276,7 +273,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="doctorId"
             value={formData.doctorId}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           >
             <option value="">Selecciona un veterinario</option>
@@ -297,7 +294,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="fechaCita"
             value={formData.fechaCita}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
             required
           />
         </div>
@@ -342,7 +339,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="sintomas"
             value={formData.sintomas}
             onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
           >
             <option value="">Selecciona un síntoma (opcional)</option>
             <option value="vomito">Vómito</option>
@@ -361,7 +358,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             value={formData.tiempoSintomas}
             onChange={handleChange}
             placeholder="Ej: 2 días, 1 semana..."
-            className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
           />
         </div>
       </div>
@@ -373,8 +370,8 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
           value={formData.notas}
           onChange={handleChange}
           rows={3}
-          placeholder="Información adicional que quieras proporcionar..."
-          className="w-full border border-cyan-400 rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500"
+          placeholder="Información adicional..."
+          className="w-full border border-cyan-400 rounded-md px-3 py-2"
         />
       </div>
 
