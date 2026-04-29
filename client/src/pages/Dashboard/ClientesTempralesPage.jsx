@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormularioCita } from './FormularioCita';
+import { FormularioCita } from "../../components/forms/FormularioCita";
 import { createClienteTemporalRequest } from '../../api/ClientesTemporales';
 import { toast } from 'sonner';
 
