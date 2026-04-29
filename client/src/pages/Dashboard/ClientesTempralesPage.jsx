@@ -192,7 +192,7 @@ function ClientesTemporalesPage() {
               }
             ]}
             data={clientesFiltrados}
-            onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)}
+onRowClick={(record) => navigate(`/clientes-temporales/${record._id}`)}
             onEdit={(cliente) => {
               if (cliente.estado !== 'completo') {
                 handleCompletarRegistro(cliente);
