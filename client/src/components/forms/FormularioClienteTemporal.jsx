@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { HorariosDisponibles } from '../HorariosDisponibles';
+import { useState, useEffect } from 'react';
 import { getDoctoresRequest } from '../../api/doctores';
+import { getHorariosDisponiblesRequest } from '../../api/cita';
 import { createClienteTemporalRequest } from '../../api/ClientesTemporales';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
 
 export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
   const [doctores, setDoctores] = useState([]);
+  const [horarios, setHorarios] = useState([]);
+  const [cargandoHorarios, setCargandoHorarios] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     lastname: '',
@@ -23,7 +24,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     tiempoSintomas: '',
     notas: ''
   });
-  const [horario, setHorario] = useState(null);
+  const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
 
   // Cargar doctores filtrados (solo Medicina General y Groomer)
   useEffect(() => {
@@ -43,17 +44,41 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     cargarDoctores();
   }, []);
 
+  // Cargar horarios cuando cambia doctor o fecha
+  useEffect(() => {
+    const cargarHorarios = async () => {
+      if (formData.doctorId && formData.fechaCita) {
+        setCargandoHorarios(true);
+        try {
+          const res = await getHorariosDisponiblesRequest(formData.doctorId, formData.fechaCita);
+          setHorarios(res.data);
+          setHorarioSeleccionado(null);
+        } catch (error) {
+          console.error('Error cargando horarios:', error);
+          setHorarios([]);
+        } finally {
+          setCargandoHorarios(false);
+        }
+      } else {
+        setHorarios([]);
+      }
+    };
+    cargarHorarios();
+  }, [formData.doctorId, formData.fechaCita]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Limpiar horario cuando cambia doctor o fecha
-    if (name === 'doctorId' || name === 'fechaCita') {
-      setHorario(null);
-    }
+  };
+
+  const handleSelectHorario = (horario) => {
+    console.log("Horario seleccionado:", horario);
+    setHorarioSeleccionado(horario);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     
     // Validaciones
     const nuevosErrores = [];
@@ -63,7 +88,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     if (!formData.especie) nuevosErrores.push('La especie es requerida');
     if (!formData.doctorId) nuevosErrores.push('Debe seleccionar un veterinario');
     if (!formData.fechaCita) nuevosErrores.push('Debe seleccionar una fecha');
-    if (!horario) nuevosErrores.push('Debe seleccionar un horario');
+    if (!horarioSeleccionado) nuevosErrores.push('Debe seleccionar un horario');
     
     if (nuevosErrores.length > 0) {
       setErrors(nuevosErrores);
@@ -75,12 +100,26 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     
     try {
       const datosEnvio = {
-        ...formData,
-        horaInicio: horario.inicio,
-        horaFin: horario.fin
+        username: formData.username,
+        lastname: formData.lastname,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        nombreMascota: formData.nombreMascota,
+        especie: formData.especie,
+        doctorId: formData.doctorId,
+        fechaCita: formData.fechaCita,
+        horaInicio: horarioSeleccionado.inicio,
+        horaFin: horarioSeleccionado.fin,
+        tipoCita: formData.tipoCita,
+        sintomas: formData.sintomas,
+        tiempoSintomas: formData.tiempoSintomas,
+        notas: formData.notas
       };
       
-      await createClienteTemporalRequest(datosEnvio);
+      console.log("📝 Enviando datos:", datosEnvio);
+      
+      const response = await createClienteTemporalRequest(datosEnvio);
+      console.log("✅ Respuesta:", response.data);
       
       toast.success('✅ Cita agendada exitosamente', {
         description: `Cliente: ${formData.username} - Mascota: ${formData.nombreMascota}`,
@@ -90,7 +129,8 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       if (onSuccess) onSuccess();
       
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error:', error);
+      console.error('Detalle:', error.response?.data);
       setErrors([error?.response?.data?.message || 'Error al agendar cita']);
       toast.error('❌ Error al agendar cita');
     } finally {
@@ -251,14 +291,31 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
-          <HorariosDisponibles
-            doctorId={formData.doctorId}
-            fecha={formData.fechaCita}
-            onSelectHorario={setHorario}
-          />
-          {horario && (
+          {cargandoHorarios ? (
+            <div className="text-center py-4 text-gray-500">Cargando horarios...</div>
+          ) : horarios.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">No hay horarios disponibles</div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              {horarios.map((horario, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelectHorario(horario)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    horarioSeleccionado === horario
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {horario.inicio} - {horario.fin}
+                </button>
+              ))}
+            </div>
+          )}
+          {horarioSeleccionado && (
             <p className="text-sm text-green-600 mt-1">
-              ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
+              ✅ Horario seleccionado: {horarioSeleccionado.inicio} - {horarioSeleccionado.fin}
             </p>
           )}
         </div>
