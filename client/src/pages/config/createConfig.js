@@ -443,7 +443,25 @@ registerClienteTemporal: {
         required: "El horario es requerido"
       }
     },
+      {
+      name: "sintomas",
+      type: "select",
+      label: "Síntomas",
+      options: ['vomito', 'Diarrea', 'Falta de apetito', 'tos', 'otro'],
+      validation: { 
+        required: "Los síntomas son requeridos" 
+      }
+    },
     {
+      name: "tiempoSintomas",
+      type: "textarea",
+      label: "Hace cuanto comenzaron los síntomas",
+      placeholder: "Ej: 2 días, 1 semana, etc.",
+      validation: {
+        required: false
+      }
+    },
+     {
       name: "notas",
       type: "textarea",
       label: "Notas adicionales",
