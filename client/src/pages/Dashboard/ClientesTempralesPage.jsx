@@ -5,12 +5,9 @@ import { useNavigate } from 'react-router';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { toast, Toaster } from 'sonner';
 import { FormularioClienteTemporal } from "../../components/forms/FormularioClienteTemporal";
-import { DynamicForm } from "../../components/DynamicForm";
-import { createConfig } from "../config/createConfig";
 
 import {
   getClientesTemporalesRequest,
-  completarRegistroClienteTemporalRequest,
   deleteClienteTemporalRequest
 } from "../../api/ClientesTemporales";
 import { DataTable } from "../../components/DataTable";
@@ -19,8 +16,6 @@ import { useDelete } from "../../hooks/useDelete";
 function ClientesTemporalesPage() {
   const [clientesTemporales, setClientesTemporales] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [mostrarFormCompleto, setMostrarFormCompleto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -46,24 +41,6 @@ function ClientesTemporalesPage() {
   const recargarLista = async () => {
     const response = await getClientesTemporalesRequest();
     setClientesTemporales(response.data);
-  };
-
-  const handleCompletarRegistro = async (cliente) => {
-    setClienteSeleccionado(cliente);
-    setMostrarFormCompleto(true);
-  };
-
-  const handleSubmitCompleto = async (data) => {
-    try {
-      await completarRegistroClienteTemporalRequest(clienteSeleccionado._id, data);
-      await recargarLista();
-      setMostrarFormCompleto(false);
-      setClienteSeleccionado(null);
-      toast.success("✅ Cliente registrado completamente");
-    } catch (error) {
-      toast.error("❌ Error al completar registro");
-      manejarErrorResponse(error, setErrors);
-    }
   };
 
   const { handleDelete: handleDeleteClienteTemporal } = useDelete(
@@ -138,32 +115,7 @@ function ClientesTemporalesPage() {
         </div>
       )}
 
-      {/* Modal para completar registro */}
-      {mostrarFormCompleto && clienteSeleccionado && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Completar Registro - {clienteSeleccionado.username}</h2>
-                <button onClick={() => setMostrarFormCompleto(false)} className="text-gray-400">✕</button>
-              </div>
-              <DynamicForm
-                {...createConfig.completarRegistroCliente}
-                layout="grid"
-                defaultValues={{
-                  username: clienteSeleccionado.username,
-                  phoneNumber: clienteSeleccionado.phoneNumber,
-                  email: clienteSeleccionado.email || '',
-                }}
-                onSubmit={handleSubmitCompleto}
-                errors={errors}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabla */}
+      {/* Tabla - SIN botón de editar */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
         {loading ? (
           <div className="flex justify-center py-16">
@@ -192,14 +144,10 @@ function ClientesTemporalesPage() {
               }
             ]}
             data={clientesFiltrados}
-onRowClick={(record) => navigate(`/clientes-temporales/${record._id}`)}
-            onEdit={(cliente) => {
-              if (cliente.estado !== 'completo') {
-                handleCompletarRegistro(cliente);
-              }
-            }}
+            onRowClick={(record) => navigate(`/clientes-temporales/${record._id}`)}
+            // ✅ ELIMINADO onEdit - No hay botón de editar
             onDelete={(cliente) => handleDeleteClienteTemporal(cliente._id, cliente.username)}
-            editLabel={cliente => cliente.estado !== 'completo' ? "Completar Registro" : "Ver"}
+            // ✅ Eliminado editLabel
           />
         )}
       </div>

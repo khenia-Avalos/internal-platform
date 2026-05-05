@@ -5,7 +5,11 @@ import { DynamicForm } from "../../components/DynamicForm";
 import { createConfig } from "../config/createConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
-import { getClienteTemporalByIdRequest } from "../../api/ClientesTemporales";
+import { 
+  getClienteTemporalByIdRequest, 
+  completarRegistroClienteTemporalRequest 
+} from "../../api/ClientesTemporales";
+import { toast, Toaster } from 'sonner';
 
 function ClienteTemporalDetallePage() {
   const navigate = useNavigate();
@@ -14,6 +18,8 @@ function ClienteTemporalDetallePage() {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [mostrarModalCompletar, setMostrarModalCompletar] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Función para mostrar fecha local
   const mostrarFechaLocal = (fechaISO) => {
@@ -22,26 +28,45 @@ function ClienteTemporalDetallePage() {
     return `${day}/${month}/${year}`;
   };
 
+  const cargarDatos = async () => {
+    setLoading(true);
+    try {
+      const clienteRes = await getClienteTemporalByIdRequest(id);
+      setCliente(clienteRes.data);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const cargarDatos = async () => {
-      setLoading(true);
-      try {
-        const clienteRes = await getClienteTemporalByIdRequest(id);
-        setCliente(clienteRes.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     if (id) {
       cargarDatos();
     }
   }, [id]);
 
+  // Función para completar registro
+  const handleCompletarRegistro = async (data) => {
+    setSubmitting(true);
+    try {
+      await completarRegistroClienteTemporalRequest(id, data);
+      toast.success("✅ Cliente registrado completamente");
+      setMostrarModalCompletar(false);
+      // Recargar datos
+      await cargarDatos();
+    } catch (error) {
+      toast.error("❌ Error al completar registro");
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <Toaster position="top-right" richColors closeButton duration={3000} />
+      
       <button
         onClick={() => navigate('/dashboard/clientes-temporales')}
         className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
@@ -126,10 +151,7 @@ function ClienteTemporalDetallePage() {
           {cliente.estado !== 'completo' && (
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => {
-                  // Aquí puedes abrir un modal para completar registro
-                  alert("Funcionalidad de completar registro en desarrollo");
-                }}
+                onClick={() => setMostrarModalCompletar(true)}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               >
                 + Completar Registro
@@ -138,8 +160,34 @@ function ClienteTemporalDetallePage() {
           )}
         </>
       )}
+
+      {/* Modal para completar registro */}
+      <Modal
+        isOpen={mostrarModalCompletar}
+        onClose={() => setMostrarModalCompletar(false)}
+        title="Completar Registro de Cliente"
+        size="lg"
+      >
+        <div className="p-4">
+          <p className="text-sm text-gray-600 mb-4">
+            Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
+          </p>
+          <DynamicForm
+            {...createConfig.completarRegistroCliente}
+            layout="grid"
+            defaultValues={{
+              username: cliente?.username || '',
+              phoneNumber: cliente?.phoneNumber || '',
+              email: cliente?.email || '',
+            }}
+            onSubmit={handleCompletarRegistro}
+            errors={errors}
+            isSubmitting={submitting}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
 
-export default ClienteTemporalDetallePage; 
+export default ClienteTemporalDetallePage;
