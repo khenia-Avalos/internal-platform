@@ -1,6 +1,7 @@
 import Owner from '../models/owner.model.js';
 import bcrypt from 'bcryptjs'; 
 import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
+import { sendWelcomeEmail } from '../services/authService.js';
 
 
 // Obtener todos los clientes
@@ -15,10 +16,9 @@ export const getClientes = async (req, res) => {
   }
 };     
 
-// Crear un nuevo cliente
 export const createCliente = async (req, res) => {
   try {
-    const { username, lastname, email, password, phoneNumber, cedula, direccion } = req.body;
+    const { username, lastname, email, phoneNumber, cedula, direccion } = req.body;
 
     // Verificar si ya existe el email
     const existeCliente = await Owner.findOne({ email });
@@ -26,33 +26,46 @@ export const createCliente = async (req, res) => {
       return res.status(400).json({ message: "El email ya está registrado" });
     }
 
-    // Encriptar password
+    // Contraseña por defecto
+    const DEFAULT_PASSWORD = "veterinaria123";
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, salt);
 
     const newCliente = new Owner({
       username,
       lastname,
       email,
-      password: hashedPassword,  // ← Guardar encriptada
+      password: hashedPassword,
       phoneNumber,
-      // role: "client" ← ELIMINADO (no existe en Owner)
       cedula,
-      direccion
+      direccion,
+      estado: 'completo'
     });
 
     const savedCliente = await newCliente.save();
+    
+    // ✅ Enviar correo de bienvenida
+    try {
+      await sendWelcomeEmail(email, username, DEFAULT_PASSWORD);
+      console.log(`📧 Correo de bienvenida enviado a: ${email}`);
+    } catch (emailError) {
+      console.error(`❌ Error al enviar correo a ${email}:`, emailError.message);
+    }
     
     // No enviar password en la respuesta
     const clienteResponse = savedCliente.toObject();
     delete clienteResponse.password;
     
-    res.status(201).json(clienteResponse);
+    res.status(201).json({
+      message: `Cliente creado exitosamente. Se ha enviado un correo con las credenciales a ${email}`,
+      cliente: clienteResponse
+    });
+    
   } catch (error) {
-     const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 

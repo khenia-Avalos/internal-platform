@@ -1,9 +1,8 @@
 import bcrypt from 'bcryptjs';
 import Cliente from '../models/owner.model.js';
+import { sendWelcomeEmail } from '../services/authService.js';
 
-// ============================================
-// OBTENER TODOS LOS CLIENTES TEMPORALES
-// ============================================
+
 export const getClientesTemporales = async (req, res) => {
   try {
     console.log('\n========== GET CLIENTES TEMPORALES ==========');
@@ -42,9 +41,7 @@ export const getClientesTemporales = async (req, res) => {
   }
 };
 
-// ============================================
-// OBTENER CLIENTE TEMPORAL POR ID
-// ============================================
+
 export const getClienteTemporalById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -74,11 +71,7 @@ export const getClienteTemporalById = async (req, res) => {
   }
 };
 
-// ============================================
-// CREAR CLIENTE TEMPORAL (AGENDAMIENTO RÁPIDO)
-// ============================================
-// ============================================
-// CREAR CLIENTE TEMPORAL (AGENDAMIENTO RÁPIDO)
+
 // ============================================
 export const createClienteTemporal = async (req, res) => {
   try {
@@ -231,65 +224,88 @@ export const createClienteTemporal = async (req, res) => {
   }
 };
 
-// ============================================
-// COMPLETAR REGISTRO DE CLIENTE TEMPORAL
-// ============================================
+
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
-    const { lastname, cedula, direccion, email, password } = req.body;
+    const { lastname, cedula, direccion, email } = req.body;
     
     console.log(`\n========== COMPLETAR REGISTRO ==========`);
     console.log(`📝 Completando registro para cliente ID: ${id}`);
     
-    const cliente = await Cliente.findById(id);
+    const cliente = await Owner.findById(id);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
-    
-    console.log(`📝 Cliente encontrado: ${cliente.username}, estado actual: ${cliente.estado}`);
     
     if (cliente.estado === 'completo') {
       return res.status(400).json({ message: 'El cliente ya está registrado completamente' });
     }
     
-    // Verificar si el email ya está en uso por otro cliente
+    // Verificar si el email ya está en uso
     if (email) {
-      const emailExistente = await Cliente.findOne({ 
+      const emailExistente = await Owner.findOne({ 
         email, 
         _id: { $ne: id } 
       });
       if (emailExistente) {
-        return res.status(400).json({ message: 'El email ya está registrado' });
+        return res.status(400).json({ message: 'El email ya está registrado por otro usuario' });
       }
       cliente.email = email;
     }
     
-    // Completar datos faltantes
+    // Verificar cédula
+    if (cedula) {
+      const cedulaExistente = await Owner.findOne({ 
+        cedula, 
+        _id: { $ne: id } 
+      });
+      if (cedulaExistente) {
+        return res.status(400).json({ message: 'La cédula ya está registrada por otro usuario' });
+      }
+      cliente.cedula = cedula;
+    }
+    
+    // Completar datos
     cliente.lastname = lastname || '';
-    cliente.cedula = cedula || '';
     cliente.direccion = direccion || '';
     cliente.estado = 'completo';
     
-    // Crear hash de contraseña si se proporcionó
-    if (password) {
+    // Asignar contraseña por defecto si no tiene
+    const DEFAULT_PASSWORD = "veterinaria123";
+    let contrasenaAsignada = false;
+    
+    if (!cliente.password) {
       const salt = await bcrypt.genSalt(10);
-      cliente.password = await bcrypt.hash(password, salt);
+      cliente.password = await bcrypt.hash(DEFAULT_PASSWORD, salt);
+      contrasenaAsignada = true;
     }
     
     await cliente.save();
     
-    console.log(`✅ Cliente ${cliente.username} completado exitosamente, nuevo estado: ${cliente.estado}`);
-    console.log('========== FIN COMPLETAR ==========\n');
+    // ✅ Enviar correo de bienvenida solo si se asignó contraseña nueva y tiene email
+    if (contrasenaAsignada && cliente.email) {
+      try {
+        await sendWelcomeEmail(cliente.email, cliente.username, DEFAULT_PASSWORD);
+        console.log(`📧 Correo de bienvenida enviado a: ${cliente.email}`);
+      } catch (emailError) {
+        console.error(`❌ Error al enviar correo a ${cliente.email}:`, emailError.message);
+      }
+    }
+    
+    console.log(`✅ Cliente ${cliente.username} completado exitosamente`);
     
     res.json({ 
-      message: 'Cliente registrado completamente',
+      message: contrasenaAsignada && cliente.email 
+        ? `Cliente registrado completamente. Se ha enviado un correo con las credenciales a ${cliente.email}`
+        : 'Cliente registrado completamente',
       cliente: {
         _id: cliente._id,
         username: cliente.username,
         lastname: cliente.lastname,
         email: cliente.email,
         phoneNumber: cliente.phoneNumber,
+        cedula: cliente.cedula,
         estado: cliente.estado
       }
     });
@@ -300,9 +316,6 @@ export const completarRegistroClienteTemporal = async (req, res) => {
   }
 };
 
-// ============================================
-// ELIMINAR CLIENTE TEMPORAL
-// ============================================
 export const deleteClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;

@@ -30,31 +30,31 @@ const sumarMinutosAHora = (horaStr, minutos) => {
 export const createCita = async (req, res) => {
   try {
     console.log("========== INICIO createCita ==========");
-    console.log("📥 Body recibido:", req.body);
+    console.log(" Body recibido:", req.body);
     
     const { doctorId, pacienteId, fecha, horaInicio, horaFin, motivo, notas, correo, tipoCita, titulo, descripcion } = req.body;
     
-    console.log("📧 Correo recibido:", correo);
-    console.log("👨‍⚕️ doctorId:", doctorId);
-    console.log("🐾 pacienteId:", pacienteId);
-    console.log("📝 tipoCita:", tipoCita);
-    console.log("📌 titulo:", titulo);
+    console.log("Correo recibido:", correo);
+    console.log(" doctorId:", doctorId);
+    console.log(" pacienteId:", pacienteId);
+    console.log(" tipoCita:", tipoCita);
+    console.log(" titulo:", titulo);
     
     // Verificar que el doctor existe y es doctor
     const doctor = await User.findOne({ _id: doctorId, role: "doctor" });
     if (!doctor) {
-      console.log("❌ Doctor no encontrado");
+      console.log(" Doctor no encontrado");
       return res.status(404).json({ message: "Doctor no encontrado" });
     }
-    console.log("✅ Doctor encontrado:", doctor.username);
+    console.log(" Doctor encontrado:", doctor.username);
     
     // Verificar que el paciente (mascota) existe
     const paciente = await Paciente.findById(pacienteId);
     if (!paciente) {
-      console.log("❌ Paciente no encontrado");
+      console.log(" Paciente no encontrado");
       return res.status(404).json({ message: "Paciente no encontrado" });
     }
-    console.log("✅ Paciente encontrado:", paciente.nombre);
+    console.log(" Paciente encontrado:", paciente.nombre);
     
     const nuevaCita = new Cita({
       doctorId,
@@ -70,7 +70,7 @@ export const createCita = async (req, res) => {
     });
     
     const citaGuardada = await nuevaCita.save();
-    console.log("✅ Cita guardada con ID:", citaGuardada._id);
+    console.log(" Cita guardada con ID:", citaGuardada._id);
 
     // Volver a buscar la cita con populate
     const citaConDatos = await Cita.findById(citaGuardada._id)
@@ -90,26 +90,26 @@ export const createCita = async (req, res) => {
     
     // Enviar correo de confirmación
     if (correo) {
-      console.log("📧 Intentando enviar correo a:", correo);
+      console.log(" Intentando enviar correo a:", correo);
       try {
         await sendAppointmentConfirmationEmail(
           correo,
           paciente.ownerId?.username || "Cliente",
           citaConDatos
         );
-        console.log("✅ Correo enviado exitosamente a:", correo);
+        console.log(" Correo enviado exitosamente a:", correo);
       } catch (emailError) {
-        console.error("❌ Error enviando correo:", emailError.message);
+        console.error(" Error enviando correo:", emailError.message);
       }
     } else {
-      console.log("⚠️ No se proporcionó correo, no se envió notificación");
+      console.log(" No se proporcionó correo, no se envió notificación");
     }
     
     console.log("========== FIN createCita ==========");
     res.status(201).json(citaGuardada);
     
   } catch (error) {
-    console.error("❌ Error en createCita:", error);
+    console.error(" Error en createCita:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
