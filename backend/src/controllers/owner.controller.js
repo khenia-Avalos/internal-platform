@@ -13,7 +13,7 @@ export const getClientes = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+};     
 
 // Crear un nuevo cliente
 export const createCliente = async (req, res) => {
