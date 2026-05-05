@@ -405,6 +405,13 @@ registerClienteTemporal: {
       placeholder: "cliente@ejemplo.com",
       validation: { required: false }
     },
+     {
+      name: "cedula",
+      type: "text",
+      label: "Cédula *",
+      placeholder: "000000000",
+      validation: { required: "La cédula es requerida" }
+    },
     {
       name: "nombreMascota",
       type: "text",
