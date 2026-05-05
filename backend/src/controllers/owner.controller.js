@@ -8,7 +8,7 @@ import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
 export const getClientes = async (req, res) => {
   try {
     // Solo clientes con estado completo
-    const clientes = await Cliente.find({ estado: 'completo' }).sort({ createdAt: -1 });
+    const clientes = await Owner.find({ estado: 'completo' }).sort({ createdAt: -1 });
     res.json(clientes);
   } catch (error) {
     res.status(500).json({ message: error.message });
