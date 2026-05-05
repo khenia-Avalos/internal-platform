@@ -80,10 +80,11 @@
   redirect: {}  
 },
 
-registerCliente: {
-  title: "Nuevo Cliente",
-  fields: [
-   {
+
+  registerCliente: {
+    title: "Nuevo Cliente",
+    fields: [
+      {
         name: "username",
         type: "text",
         label: "Nombre",
@@ -139,33 +140,82 @@ registerCliente: {
         }
       },
       {
+        name: "cedula",
+        type: "text",
+        label: "Cédula",
+        placeholder: "000000000",
+        validation: { required: "La cédula es requerida" }
+      },
+      {
+        name: "direccion",
+        type: "text",
+        label: "Dirección",
+        placeholder: "Dirección exacta",
+        validation: { required: "La dirección es requerida" }
+      },
+      // ✅ NUEVO: Checkbox para contraseña por defecto
+      {
+        name: "usarPasswordDefault",
+        type: "checkbox",
+        label: "Usar contraseña por defecto",
+        description: "veterinaria123",
+        defaultValue: true,
+        helperText: "Al seleccionar esta opción, se usará automáticamente la contraseña 'veterinaria123'"
+      },
+      // ✅ Campo de contraseña personalizada (condicional)
+      {
         name: "password",
         type: "password",
-        label: "Contraseña",
+        label: "Contraseña personalizada",
         placeholder: "••••••••",
         showToggle: true,
+        dependsOn: {
+          field: "usarPasswordDefault",
+          value: false
+        },
         validation: {
-          required: "La contraseña es requerida"
+          requiredIf: (formData) => !formData.usarPasswordDefault,
+          minLength: { value: 6, message: "Mínimo 6 caracteres" }
         }
       },
-    {
-      name: "cedula",
-      type: "text",
-      label: "Cédula",
-      placeholder: "000000000",
-      validation: { required: "La cédula es requerida" }
-    },
-    {
-      name: "direccion",
-      type: "text",
-      label: "Dirección",
-      placeholder: "Dirección exacta",
-      validation: { required: "La dirección es requerida" }
+      // ✅ Confirmar contraseña (condicional)
+      {
+        name: "confirmPassword",
+        type: "password",
+        label: "Confirmar contraseña",
+        placeholder: "••••••••",
+        dependsOn: {
+          field: "usarPasswordDefault",
+          value: false
+        },
+        validation: {
+          requiredIf: (formData) => !formData.usarPasswordDefault,
+          validate: (value, formData) => {
+            if (formData.usarPasswordDefault) return true;
+            return value === formData.password || "Las contraseñas no coinciden";
+          }
+        }
+      }
+    ],
+    submitLabel: "Crear Cliente",
+    redirect: {},
+    // Procesar datos antes de enviar
+    beforeSubmit: (formData) => {
+      const processedData = { ...formData };
+      
+      // Si usa contraseña por defecto, asignar "veterinaria123"
+      if (formData.usarPasswordDefault) {
+        processedData.password = "veterinaria123";
+      }
+      
+      // Eliminar campos auxiliares
+      delete processedData.usarPasswordDefault;
+      delete processedData.confirmPassword;
+      
+      return processedData;
     }
-  ],
-  submitLabel: "Crear Cliente",
-  redirect: {}
-},
+  },
+
 
 
 
@@ -483,61 +533,96 @@ registerClienteTemporal: {
   redirect: { path: "/dashboard/clientes-temporales" }
 },
 
-completarRegistroCliente: {
-  title: "Completar Registro de Cliente",
-  fields: [
-    {
-      name: "lastname",
-      type: "text",
-      label: "Apellido *",
-      placeholder: "Ej: Pérez Gómez",
-      validation: { required: "El apellido es requerido" }
-    },
-    {
-      name: "cedula",
-      type: "text",
-      label: "Cédula *",
-      placeholder: "000000000",
-      validation: { required: "La cédula es requerida" }
-    },
-    {
-      name: "direccion",
-      type: "text",
-      label: "Dirección *",
-      placeholder: "San José, Costa Rica",
-      validation: { required: "La dirección es requerida" }
-    },
-    {
-      name: "email",
-      type: "email",
-      label: "Correo electrónico *",
-      placeholder: "cliente@ejemplo.com",
-      validation: { required: "El email es requerido" }
-    },
-    {
-      name: "password",
-      type: "password",
-      label: "Contraseña *",
-      placeholder: "********",
-      validation: {
-        required: "La contraseña es requerida",
-        minLength: { value: 6, message: "Mínimo 6 caracteres" }
+ completarRegistroCliente: {
+    title: "Completar Registro de Cliente",
+    fields: [
+      {
+        name: "lastname",
+        type: "text",
+        label: "Apellido *",
+        placeholder: "Ej: Pérez Gómez",
+        validation: { required: "El apellido es requerido" }
+      },
+      {
+        name: "cedula",
+        type: "text",
+        label: "Cédula *",
+        placeholder: "000000000",
+        validation: { required: "La cédula es requerida" }
+      },
+      {
+        name: "direccion",
+        type: "text",
+        label: "Dirección *",
+        placeholder: "San José, Costa Rica",
+        validation: { required: "La dirección es requerida" }
+      },
+      {
+        name: "email",
+        type: "email",
+        label: "Correo electrónico *",
+        placeholder: "cliente@ejemplo.com",
+        validation: { required: "El email es requerido" }
+      },
+      // ✅ NUEVO: Checkbox para contraseña por defecto
+      {
+        name: "usarPasswordDefault",
+        type: "checkbox",
+        label: "Usar contraseña por defecto",
+        description: "veterinaria123",
+        defaultValue: true,
+        helperText: "Al seleccionar esta opción, se usará automáticamente la contraseña 'veterinaria123'"
+      },
+      // ✅ Campo de contraseña personalizada (condicional)
+      {
+        name: "password",
+        type: "password",
+        label: "Contraseña personalizada",
+        placeholder: "********",
+        dependsOn: {
+          field: "usarPasswordDefault",
+          value: false
+        },
+        validation: {
+          requiredIf: (formData) => !formData.usarPasswordDefault,
+          minLength: { value: 6, message: "Mínimo 6 caracteres" }
+        }
+      },
+      // ✅ Confirmar contraseña (condicional)
+      {
+        name: "confirmPassword",
+        type: "password",
+        label: "Confirmar contraseña",
+        placeholder: "********",
+        dependsOn: {
+          field: "usarPasswordDefault",
+          value: false
+        },
+        validation: {
+          requiredIf: (formData) => !formData.usarPasswordDefault,
+          validate: (value, formData) => {
+            if (formData.usarPasswordDefault) return true;
+            return value === formData.password || "Las contraseñas no coinciden";
+          }
+        }
       }
-    },
-    {
-      name: "confirmPassword",
-      type: "password",
-      label: "Confirmar contraseña *",
-      placeholder: "********",
-      validation: {
-        required: "Confirme su contraseña",
-        validate: (value, formData) => value === formData.password || "Las contraseñas no coinciden"
+    ],
+    submitLabel: "Completar Registro",
+    // Procesar datos antes de enviar
+    beforeSubmit: (formData) => {
+      const processedData = { ...formData };
+      
+      // Si usa contraseña por defecto, asignar "veterinaria123"
+      if (formData.usarPasswordDefault) {
+        processedData.password = "veterinaria123";
       }
       
+      // Eliminar campos auxiliares
+      delete processedData.usarPasswordDefault;
+      delete processedData.confirmPassword;
+      
+      return processedData;
     }
-    
-  ],
-  submitLabel: "Completar Registro"
-}
+  }
 
 };
