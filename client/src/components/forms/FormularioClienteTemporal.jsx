@@ -15,7 +15,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     lastname: '',
     phoneNumber: '',
     email: '',
-    cedula: '',           // ← NUEVO
+    cedula: '',
     nombreMascota: '',
     especie: '',
     doctorId: '',
@@ -81,7 +81,10 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     e.stopPropagation();
     
     const nuevosErrores = [];
+    
+    // ✅ Validaciones actualizadas
     if (!formData.username) nuevosErrores.push('El nombre del dueño es requerido');
+    if (!formData.email) nuevosErrores.push('El correo electrónico es requerido');  // ← NUEVO: Email obligatorio
     if (!formData.cedula) nuevosErrores.push('La cédula es requerida');
     if (!formData.phoneNumber) nuevosErrores.push('El teléfono es requerido');
     if (!formData.nombreMascota) nuevosErrores.push('El nombre de la mascota es requerido');
@@ -89,6 +92,11 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     if (!formData.doctorId) nuevosErrores.push('Debe seleccionar un veterinario');
     if (!formData.fechaCita) nuevosErrores.push('Debe seleccionar una fecha');
     if (!horarioSeleccionado) nuevosErrores.push('Debe seleccionar un horario');
+    
+    // ✅ Validar formato de email si está presente
+    if (formData.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
+      nuevosErrores.push('Ingrese un correo electrónico válido');
+    }
     
     if (nuevosErrores.length > 0) {
       setErrors(nuevosErrores);
@@ -103,8 +111,8 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
         username: formData.username,
         lastname: formData.lastname,
         phoneNumber: formData.phoneNumber,
-        email: formData.email,
-        cedula: formData.cedula,           // ← NUEVO
+        email: formData.email,        // ← Ahora siempre tiene valor
+        cedula: formData.cedula,
         nombreMascota: formData.nombreMascota,
         especie: formData.especie,
         doctorId: formData.doctorId,
@@ -204,15 +212,24 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
           />
         </div>
         
+        {/* ✅ Campo de email - AHORA ES OBLIGATORIO */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email (opcional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Correo electrónico * 
+            <span className="text-red-500 ml-1">(obligatorio)</span>
+          </label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
+            placeholder="cliente@ejemplo.com"
             className="w-full border border-cyan-400 rounded-md px-3 py-2"
+            required
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Se enviará un correo con las credenciales al completar el registro
+          </p>
         </div>
       </div>
 
