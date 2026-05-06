@@ -427,7 +427,7 @@ registerClienteTemporal: {
       type: "select",
       label: "Veterinario *",
       placeholder: "Selecciona un veterinario",
-      options: [], // Se llena dinámicamente
+      options: [],
       validation: { required: "El veterinario es requerido" }
     },
     {
@@ -441,7 +441,7 @@ registerClienteTemporal: {
       type: "select",
       label: "Horario disponible *",
       placeholder: "Selecciona un horario",
-      options: [], // Se llena dinámicamente según doctor y fecha
+      options: [],
       validation: { required: "El horario es requerido" }
     },
     {
@@ -476,7 +476,20 @@ registerClienteTemporal: {
     }
   ],
   submitLabel: "Agendar Cita Rápida",
-  redirect: { path: "/dashboard/clientes-temporales" }
+  redirect: { path: "/dashboard/clientes-temporales" },
+  
+  // ✅ Agrega esto: transforma los datos antes de enviar
+  transformData: (formData) => {
+    return {
+      ...formData,
+      estado: 'temporal'  // 🔥 Asigna estado temporal automáticamente
+    };
+  }
+  
+  // O si prefieres usar defaultValues (alternativa):
+  // defaultValues: {
+  //   estado: 'temporal'
+  // }
 },
 
 completarRegistroCliente: {
@@ -494,7 +507,11 @@ completarRegistroCliente: {
       type: "text",
       label: "Cédula *",
       placeholder: "000000000",
-      validation: { required: "La cédula es requerida" }
+      validation: { 
+        required: "La cédula es requerida",
+        minLength: { value: 5, message: "Mínimo 5 dígitos" },
+        maxLength: { value: 20, message: "Máximo 20 dígitos" }
+      }
     },
     {
       name: "direccion",
@@ -508,12 +525,28 @@ completarRegistroCliente: {
       type: "email",
       label: "Correo electrónico *",
       placeholder: "cliente@ejemplo.com",
-      validation: { required: "El email es requerido" }
-    },
- 
-    
+      validation: { 
+        required: "El email es requerido",
+        pattern: {
+          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+          message: "Ingrese un email válido"
+        }
+      }
+    }
   ],
-  submitLabel: "Completar Registro"
+  submitLabel: "Completar Registro",
+  
+  // ✅ Mensaje de éxito personalizado
+  successMessage: "¡Registro completado! Se ha enviado un correo con las credenciales de acceso.",
+  
+  // ✅ Función para procesar datos antes de enviar (opcional)
+  transformData: (formData) => {
+    return {
+      lastname: formData.lastname,
+      cedula: formData.cedula,
+      direccion: formData.direccion,
+      email: formData.email
+    };
+  }
 }
-
 };

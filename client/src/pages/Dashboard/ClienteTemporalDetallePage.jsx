@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
@@ -46,18 +46,50 @@ function ClienteTemporalDetallePage() {
     }
   }, [id]);
 
-  // Función para completar registro
+  // Función para completar registro con manejo de errores mejorado
   const handleCompletarRegistro = async (data) => {
     setSubmitting(true);
+    setErrors([]);
+    
     try {
-      await completarRegistroClienteTemporalRequest(id, data);
-      toast.success("✅ Cliente registrado completamente");
+      const response = await completarRegistroClienteTemporalRequest(id, data);
+      
+      // Éxito
+      toast.success("✅ ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
+        duration: 5000,
+        position: "top-right"
+      });
+      
       setMostrarModalCompletar(false);
-      // Recargar datos
-      await cargarDatos();
+      await cargarDatos(); // Recargar datos para mostrar el nuevo estado
+      
     } catch (error) {
-      toast.error("❌ Error al completar registro");
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      console.error("Error al completar registro:", error);
+      
+      // Manejo específico de errores del backend
+      if (error.response?.data?.message) {
+        const mensaje = error.response.data.message;
+        
+        if (mensaje.includes('email') || mensaje.includes('Email')) {
+          toast.error("❌ Este correo electrónico ya está registrado por otro usuario");
+          setErrors([{ field: 'email', message: 'Este email ya está registrado' }]);
+        } 
+        else if (mensaje.includes('cédula') || mensaje.includes('cedula') || mensaje.includes('Cédula')) {
+          toast.error("❌ Esta cédula ya está registrada por otro usuario");
+          setErrors([{ field: 'cedula', message: 'Esta cédula ya está registrada' }]);
+        }
+        else if (mensaje.includes('completo')) {
+          toast.warning("⚠️ Este cliente ya está registrado completamente");
+          setMostrarModalCompletar(false);
+        }
+        else {
+          toast.error(`❌ ${mensaje}`);
+          manejarErrorResponse(error, setErrors, setSuccessMessage);
+        }
+      } else {
+        toast.error("❌ Error al completar registro. Intente nuevamente");
+        manejarErrorResponse(error, setErrors, setSuccessMessage);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -164,7 +196,10 @@ function ClienteTemporalDetallePage() {
       {/* Modal para completar registro */}
       <Modal
         isOpen={mostrarModalCompletar}
-        onClose={() => setMostrarModalCompletar(false)}
+        onClose={() => {
+          setMostrarModalCompletar(false);
+          setErrors([]);
+        }}
         title="Completar Registro de Cliente"
         size="lg"
       >
@@ -176,8 +211,9 @@ function ClienteTemporalDetallePage() {
             {...createConfig.completarRegistroCliente}
             layout="grid"
             defaultValues={{
-              username: cliente?.username || '',
-              phoneNumber: cliente?.phoneNumber || '',
+              lastname: cliente?.lastname || '',
+              cedula: cliente?.cedula || '',
+              direccion: cliente?.direccion || '',
               email: cliente?.email || '',
             }}
             onSubmit={handleCompletarRegistro}
