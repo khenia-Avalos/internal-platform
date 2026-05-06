@@ -230,9 +230,6 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     const { id } = req.params;
     const { lastname, cedula, direccion, email } = req.body;
     
-    console.log(`\n========== COMPLETAR REGISTRO ==========`);
-    console.log(`📝 Completando registro para cliente ID: ${id}`);
-    
     const cliente = await Owner.findById(id);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -242,11 +239,11 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'El cliente ya está registrado completamente' });
     }
     
-    // Verificar si el email ya está en uso
+    // ✅ Verificar si el email ya está en uso por OTRO cliente
     if (email) {
       const emailExistente = await Owner.findOne({ 
         email, 
-        _id: { $ne: id } 
+        _id: { $ne: id }  // Excluir el cliente actual
       });
       if (emailExistente) {
         return res.status(400).json({ message: 'El email ya está registrado por otro usuario' });
@@ -254,11 +251,11 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       cliente.email = email;
     }
     
-    // Verificar cédula
+    // ✅ Verificar si la cédula ya está en uso por OTRO cliente
     if (cedula) {
       const cedulaExistente = await Owner.findOne({ 
         cedula, 
-        _id: { $ne: id } 
+        _id: { $ne: id }
       });
       if (cedulaExistente) {
         return res.status(400).json({ message: 'La cédula ya está registrada por otro usuario' });
@@ -269,7 +266,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     // Completar datos
     cliente.lastname = lastname || '';
     cliente.direccion = direccion || '';
-    cliente.estado = 'completo';
+    cliente.estado = 'completo';  // ✅ Cambia a completo
     
     // Asignar contraseña por defecto si no tiene
     const DEFAULT_PASSWORD = "veterinaria123";
@@ -283,22 +280,17 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
-    // ✅ Enviar correo de bienvenida solo si se asignó contraseña nueva y tiene email
+    // Enviar correo de bienvenida
     if (contrasenaAsignada && cliente.email) {
       try {
         await sendWelcomeEmail(cliente.email, cliente.username, DEFAULT_PASSWORD);
-        console.log(`📧 Correo de bienvenida enviado a: ${cliente.email}`);
       } catch (emailError) {
-        console.error(`❌ Error al enviar correo a ${cliente.email}:`, emailError.message);
+        console.error('Error enviando email:', emailError.message);
       }
     }
     
-    console.log(`✅ Cliente ${cliente.username} completado exitosamente`);
-    
     res.json({ 
-      message: contrasenaAsignada && cliente.email 
-        ? `Cliente registrado completamente. Se ha enviado un correo con las credenciales a ${cliente.email}`
-        : 'Cliente registrado completamente',
+      message: 'Cliente registrado completamente',
       cliente: {
         _id: cliente._id,
         username: cliente.username,
@@ -311,7 +303,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error en completarRegistroClienteTemporal:', error);
+    console.error('Error:', error);
     res.status(500).json({ message: error.message });
   }
 };
