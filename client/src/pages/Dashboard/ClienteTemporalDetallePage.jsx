@@ -21,10 +21,16 @@ function ClienteTemporalDetallePage() {
   const [mostrarModalCompletar, setMostrarModalCompletar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Función para mostrar fecha local
+  // ✅ Función para mostrar fecha local CORREGIDA (usa UTC para evitar desfase)
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
-    const [year, month, day] = fechaISO.split('T')[0].split('-');
+    
+    // Crear fecha y usar UTC para evitar problemas de zona horaria
+    const fecha = new Date(fechaISO);
+    const day = fecha.getUTCDate();
+    const month = fecha.getUTCMonth() + 1;
+    const year = fecha.getUTCFullYear();
+    
     return `${day}/${month}/${year}`;
   };
 
@@ -46,12 +52,39 @@ function ClienteTemporalDetallePage() {
     }
   }, [id]);
 
-  // Función para completar registro con manejo de errores mejorado
+  // ✅ Función para completar registro - SOLO se ejecuta desde el formulario del modal
   const handleCompletarRegistro = async (data) => {
     setSubmitting(true);
     setErrors([]);
     
     try {
+      // Validar que los datos requeridos estén presentes
+      if (!data.lastname) {
+        toast.error("❌ El apellido es requerido");
+        setErrors([{ field: 'lastname', message: 'El apellido es requerido' }]);
+        setSubmitting(false);
+        return;
+      }
+      if (!data.cedula) {
+        toast.error("❌ La cédula es requerida");
+        setErrors([{ field: 'cedula', message: 'La cédula es requerida' }]);
+        setSubmitting(false);
+        return;
+      }
+      if (!data.direccion) {
+        toast.error("❌ La dirección es requerida");
+        setErrors([{ field: 'direccion', message: 'La dirección es requerida' }]);
+        setSubmitting(false);
+        return;
+      }
+      if (!data.email) {
+        toast.error("❌ El email es requerido");
+        setErrors([{ field: 'email', message: 'El email es requerido' }]);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Enviar datos al backend
       const response = await completarRegistroClienteTemporalRequest(id, data);
       
       // Éxito
@@ -69,12 +102,13 @@ function ClienteTemporalDetallePage() {
       // Manejo específico de errores del backend
       if (error.response?.data?.message) {
         const mensaje = error.response.data.message;
+        const field = error.response.data.field;
         
-        if (mensaje.includes('email') || mensaje.includes('Email')) {
+        if (mensaje.includes('email') || mensaje.includes('Email') || field === 'email') {
           toast.error("❌ Este correo electrónico ya está registrado por otro usuario");
           setErrors([{ field: 'email', message: 'Este email ya está registrado' }]);
         } 
-        else if (mensaje.includes('cédula') || mensaje.includes('cedula') || mensaje.includes('Cédula')) {
+        else if (mensaje.includes('cédula') || mensaje.includes('cedula') || field === 'cedula') {
           toast.error("❌ Esta cédula ya está registrada por otro usuario");
           setErrors([{ field: 'cedula', message: 'Esta cédula ya está registrada' }]);
         }
@@ -179,7 +213,7 @@ function ClienteTemporalDetallePage() {
             )}
           </div>
 
-          {/* Botón para completar registro si está pendiente */}
+          {/* ✅ Botón para completar registro - SOLO abre el modal, NO guarda */}
           {cliente.estado !== 'completo' && (
             <div className="mt-6 flex justify-end">
               <button
@@ -193,7 +227,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* Modal para completar registro */}
+      {/* ✅ Modal para completar registro - El formulario dentro es el que guarda */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
