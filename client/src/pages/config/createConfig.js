@@ -478,18 +478,13 @@ registerClienteTemporal: {
   submitLabel: "Agendar Cita Rápida",
   redirect: { path: "/dashboard/clientes-temporales" },
   
-  // ✅ Agrega esto: transforma los datos antes de enviar
+  // Transforma los datos antes de enviar
   transformData: (formData) => {
     return {
       ...formData,
-      estado: 'temporal'  // 🔥 Asigna estado temporal automáticamente
+      estado: 'temporal'  // Asigna estado temporal automáticamente
     };
   }
-  
-  // O si prefieres usar defaultValues (alternativa):
-  // defaultValues: {
-  //   estado: 'temporal'
-  // }
 },
 
 completarRegistroCliente: {
