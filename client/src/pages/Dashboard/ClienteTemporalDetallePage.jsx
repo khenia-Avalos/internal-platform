@@ -20,17 +20,15 @@ function ClienteTemporalDetallePage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [mostrarModalCompletar, setMostrarModalCompletar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({}); // Estado para el formulario
 
-  // ✅ Función para mostrar fecha local CORREGIDA (usa UTC para evitar desfase)
+  // Función para mostrar fecha local CORREGIDA
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
-    
-    // Crear fecha y usar UTC para evitar problemas de zona horaria
-    const fecha = new Date(fechaISO);
-    const day = fecha.getUTCDate();
-    const month = fecha.getUTCMonth() + 1;
-    const year = fecha.getUTCFullYear();
-    
+    const fechaPartes = fechaISO.split('T')[0].split('-');
+    const year = fechaPartes[0];
+    const month = fechaPartes[1];
+    const day = fechaPartes[2];
     return `${day}/${month}/${year}`;
   };
 
@@ -39,6 +37,13 @@ function ClienteTemporalDetallePage() {
     try {
       const clienteRes = await getClienteTemporalByIdRequest(id);
       setCliente(clienteRes.data);
+      // Inicializar formData con los datos del cliente
+      setFormData({
+        lastname: clienteRes.data?.lastname || '',
+        cedula: clienteRes.data?.cedula || '',
+        direccion: clienteRes.data?.direccion || '',
+        email: clienteRes.data?.email || '',
+      });
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     } finally {
@@ -52,59 +57,56 @@ function ClienteTemporalDetallePage() {
     }
   }, [id]);
 
-  // ✅ Función para completar registro - SOLO se ejecuta desde el formulario del modal
-  const handleCompletarRegistro = async (data) => {
+  // Función para manejar cambios en el formulario
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpiar error del campo si existe
+    setErrors(prev => prev.filter(err => err.field !== field));
+  };
+
+  // Función para completar registro - SOLO se ejecuta al hacer clic en el botón del modal
+  const handleSubmitCompletar = async () => {
+    // Validar campos requeridos
+    const nuevosErrores = [];
+    
+    if (!formData.lastname) nuevosErrores.push({ field: 'lastname', message: 'El apellido es requerido' });
+    if (!formData.cedula) nuevosErrores.push({ field: 'cedula', message: 'La cédula es requerida' });
+    if (!formData.direccion) nuevosErrores.push({ field: 'direccion', message: 'La dirección es requerida' });
+    if (!formData.email) nuevosErrores.push({ field: 'email', message: 'El email es requerido' });
+    
+    // Validar formato de email
+    if (formData.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
+      nuevosErrores.push({ field: 'email', message: 'Ingrese un email válido' });
+    }
+    
+    if (nuevosErrores.length > 0) {
+      setErrors(nuevosErrores);
+      toast.error("❌ Complete todos los campos requeridos");
+      return;
+    }
+    
     setSubmitting(true);
     setErrors([]);
     
     try {
-      // Validar que los datos requeridos estén presentes
-      if (!data.lastname) {
-        toast.error("❌ El apellido es requerido");
-        setErrors([{ field: 'lastname', message: 'El apellido es requerido' }]);
-        setSubmitting(false);
-        return;
-      }
-      if (!data.cedula) {
-        toast.error("❌ La cédula es requerida");
-        setErrors([{ field: 'cedula', message: 'La cédula es requerida' }]);
-        setSubmitting(false);
-        return;
-      }
-      if (!data.direccion) {
-        toast.error("❌ La dirección es requerida");
-        setErrors([{ field: 'direccion', message: 'La dirección es requerida' }]);
-        setSubmitting(false);
-        return;
-      }
-      if (!data.email) {
-        toast.error("❌ El email es requerido");
-        setErrors([{ field: 'email', message: 'El email es requerido' }]);
-        setSubmitting(false);
-        return;
-      }
+      const response = await completarRegistroClienteTemporalRequest(id, formData);
       
-      // Enviar datos al backend
-      const response = await completarRegistroClienteTemporalRequest(id, data);
-      
-      // Éxito
       toast.success("✅ ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
         duration: 5000,
         position: "top-right"
       });
       
       setMostrarModalCompletar(false);
-      await cargarDatos(); // Recargar datos para mostrar el nuevo estado
+      await cargarDatos(); // Recargar datos
       
     } catch (error) {
       console.error("Error al completar registro:", error);
       
-      // Manejo específico de errores del backend
       if (error.response?.data?.message) {
         const mensaje = error.response.data.message;
         const field = error.response.data.field;
         
-        if (mensaje.includes('email') || mensaje.includes('Email') || field === 'email') {
+        if (mensaje.includes('email') || field === 'email') {
           toast.error("❌ Este correo electrónico ya está registrado por otro usuario");
           setErrors([{ field: 'email', message: 'Este email ya está registrado' }]);
         } 
@@ -118,11 +120,9 @@ function ClienteTemporalDetallePage() {
         }
         else {
           toast.error(`❌ ${mensaje}`);
-          manejarErrorResponse(error, setErrors, setSuccessMessage);
         }
       } else {
         toast.error("❌ Error al completar registro. Intente nuevamente");
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
     } finally {
       setSubmitting(false);
@@ -175,7 +175,6 @@ function ClienteTemporalDetallePage() {
             ]}
           />
           
-          {/* Mostrar direccion solo si está completo */}
           {cliente.estado === 'completo' && cliente.direccion && (
             <div className="mt-4">
               <InfoCard
@@ -187,7 +186,6 @@ function ClienteTemporalDetallePage() {
             </div>
           )}
 
-          {/* Citas temporales */}
           <h3 className="text-xl font-semibold mb-4 mt-6">Citas Agendadas</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
@@ -213,10 +211,10 @@ function ClienteTemporalDetallePage() {
             )}
           </div>
 
-          {/* ✅ Botón para completar registro - SOLO abre el modal, NO guarda */}
           {cliente.estado !== 'completo' && (
             <div className="mt-6 flex justify-end">
               <button
+                type="button"
                 onClick={() => setMostrarModalCompletar(true)}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               >
@@ -227,7 +225,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* ✅ Modal para completar registro - El formulario dentro es el que guarda */}
+      {/* Modal personalizado SIN DynamicForm automático */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
@@ -241,19 +239,94 @@ function ClienteTemporalDetallePage() {
           <p className="text-sm text-gray-600 mb-4">
             Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
           </p>
-          <DynamicForm
-            {...createConfig.completarRegistroCliente}
-            layout="grid"
-            defaultValues={{
-              lastname: cliente?.lastname || '',
-              cedula: cliente?.cedula || '',
-              direccion: cliente?.direccion || '',
-              email: cliente?.email || '',
-            }}
-            onSubmit={handleCompletarRegistro}
-            errors={errors}
-            isSubmitting={submitting}
-          />
+          
+          {/* Formulario manual en lugar de DynamicForm */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Apellido *
+              </label>
+              <input
+                type="text"
+                value={formData.lastname || ''}
+                onChange={(e) => handleFormChange('lastname', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'lastname') ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Ej: Pérez Gómez"
+              />
+              {errors.find(e => e.field === 'lastname') && (
+                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'lastname')?.message}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cédula *
+              </label>
+              <input
+                type="text"
+                value={formData.cedula || ''}
+                onChange={(e) => handleFormChange('cedula', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'cedula') ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="000000000"
+              />
+              {errors.find(e => e.field === 'cedula') && (
+                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'cedula')?.message}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Dirección *
+              </label>
+              <input
+                type="text"
+                value={formData.direccion || ''}
+                onChange={(e) => handleFormChange('direccion', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'direccion') ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="San José, Costa Rica"
+              />
+              {errors.find(e => e.field === 'direccion') && (
+                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'direccion')?.message}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Correo electrónico *
+              </label>
+              <input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => handleFormChange('email', e.target.value)}
+                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'email') ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="cliente@ejemplo.com"
+              />
+              {errors.find(e => e.field === 'email') && (
+                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'email')?.message}</p>
+              )}
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrarModalCompletar(false);
+                  setErrors([]);
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitCompletar}
+                disabled={submitting}
+                className="flex-1 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 font-medium"
+              >
+                {submitting ? "Guardando..." : "Completar Registro"}
+              </button>
+            </div>
+          </div>
         </div>
       </Modal>
     </div>
