@@ -1,20 +1,22 @@
 import bcrypt from 'bcryptjs';
-import Cliente from '../models/owner.model.js';
+import Owner from '../models/owner.model.js';
 import { sendWelcomeEmail } from '../services/authService.js';
 
-
+// ============================================
+// OBTENER TODOS LOS CLIENTES TEMPORALES
+// ============================================
 export const getClientesTemporales = async (req, res) => {
   try {
     console.log('\n========== GET CLIENTES TEMPORALES ==========');
     
     // Primero, mostrar todos los clientes para depurar
-    const todos = await Cliente.find({});
+    const todos = await Owner.find({});
     console.log(`📊 TOTAL CLIENTES EN BD: ${todos.length}`);
     todos.forEach(c => {
-      console.log(`   - ${c.username}: estado=${c.estado}, citasTemporales=${c.citasTemporales?.length || 0}, tel=${c.phoneNumber}`);
+      console.log(`   - ${c.username}: estado=${c.estado}, citasTemporales=${c.citasTemporales?.length || 0}, tel=${c.phoneNumber}, email=${c.email || 'sin email'}, cedula=${c.cedula || 'sin cedula'}`);
     });
     
-    const clientes = await Cliente.find({ 
+    const clientes = await Owner.find({ 
       estado: { $in: ['temporal', 'incompleto'] } 
     }).sort({ createdAt: -1 });
     
@@ -27,6 +29,7 @@ export const getClientesTemporales = async (req, res) => {
       lastname: cliente.lastname || '',
       phoneNumber: cliente.phoneNumber,
       email: cliente.email || '',
+      cedula: cliente.cedula || '',
       estado: cliente.estado,
       citasTemporales: cliente.citasTemporales || [],
       createdAt: cliente.createdAt
@@ -41,11 +44,13 @@ export const getClientesTemporales = async (req, res) => {
   }
 };
 
-
+// ============================================
+// OBTENER CLIENTE TEMPORAL POR ID
+// ============================================
 export const getClienteTemporalById = async (req, res) => {
   try {
     const { id } = req.params;
-    const cliente = await Cliente.findById(id);
+    const cliente = await Owner.findById(id);
     
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -61,17 +66,19 @@ export const getClienteTemporalById = async (req, res) => {
       lastname: cliente.lastname || '',
       phoneNumber: cliente.phoneNumber,
       email: cliente.email || '',
+      cedula: cliente.cedula || '',
       estado: cliente.estado,
       citasTemporales: cliente.citasTemporales || [],
       createdAt: cliente.createdAt
     });
   } catch (error) {
-    console.error('Error en getClienteTemporalById:', error);
+    console.error('❌ Error en getClienteTemporalById:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
-
+// ============================================
+// CREAR CLIENTE TEMPORAL
 // ============================================
 export const createClienteTemporal = async (req, res) => {
   try {
@@ -82,7 +89,7 @@ export const createClienteTemporal = async (req, res) => {
       lastname, 
       phoneNumber, 
       email, 
-      cedula,           // ← NUEVO: cédula como identificador
+      cedula,
       nombreMascota, 
       especie, 
       fechaCita, 
@@ -97,6 +104,7 @@ export const createClienteTemporal = async (req, res) => {
     
     console.log('📝 Datos recibidos:', {
       username,
+      email,
       cedula,
       phoneNumber,
       nombreMascota,
@@ -104,28 +112,41 @@ export const createClienteTemporal = async (req, res) => {
       horaInicio
     });
     
-    // 🔍 Verificar si ya existe un cliente con la misma CÉDULA
-    let clienteExistente = null;
-    
-    if (cedula) {
-      clienteExistente = await Cliente.findOne({ cedula });
-      
-      if (clienteExistente) {
-        console.log(`🔍 Cliente existente encontrado por CÉDULA:`);
-        console.log(`   - ID: ${clienteExistente._id}`);
-        console.log(`   - Nombre: ${clienteExistente.username}`);
-        console.log(`   - Estado actual: ${clienteExistente.estado}`);
-        console.log(`   - Cédula: ${clienteExistente.cedula}`);
-      }
+    // ✅ Validar campos requeridos
+    if (!username) {
+      return res.status(400).json({ message: 'El nombre es requerido', field: 'username' });
+    }
+    if (!email) {
+      return res.status(400).json({ message: 'El correo electrónico es requerido', field: 'email' });
+    }
+    if (!cedula) {
+      return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
+    }
+    if (!phoneNumber) {
+      return res.status(400).json({ message: 'El teléfono es requerido', field: 'phoneNumber' });
+    }
+    if (!nombreMascota) {
+      return res.status(400).json({ message: 'El nombre de la mascota es requerido', field: 'nombreMascota' });
     }
     
-    // Si no encontró por cédula, verificar por teléfono (opcional, como advertencia)
-    if (!clienteExistente && phoneNumber) {
-      const clientePorTelefono = await Cliente.findOne({ phoneNumber });
-      if (clientePorTelefono) {
-        console.log(`⚠️ Advertencia: El teléfono ${phoneNumber} ya pertenece a ${clientePorTelefono.username} (cédula: ${clientePorTelefono.cedula})`);
-        // No bloqueamos, solo advertimos
-      }
+    // ✅ Verificar si ya existe un cliente con el mismo EMAIL
+    const emailExistente = await Owner.findOne({ email });
+    if (emailExistente) {
+      console.log(`⚠️ Email ya registrado: ${email}`);
+      return res.status(400).json({ 
+        message: 'Ya existe un cliente registrado con este email',
+        field: 'email'
+      });
+    }
+    
+    // ✅ Verificar si ya existe un cliente con la misma CÉDULA
+    const cedulaExistente = await Owner.findOne({ cedula });
+    if (cedulaExistente) {
+      console.log(`⚠️ Cédula ya registrada: ${cedula}`);
+      return res.status(400).json({ 
+        message: 'Ya existe un cliente registrado con esta cédula',
+        field: 'cedula'
+      });
     }
     
     const nuevaCitaTemporal = {
@@ -144,68 +165,40 @@ export const createClienteTemporal = async (req, res) => {
       creadaEn: new Date()
     };
     
-    let cliente;
-    let esNuevo = false;
+    // ✅ Crear nuevo cliente temporal con email y cédula
+    const nuevoCliente = new Owner({
+      username,
+      lastname: lastname || '',
+      phoneNumber,
+      email: email,
+      cedula: cedula,
+      estado: 'temporal',
+      citasTemporales: [nuevaCitaTemporal]
+    });
     
-    if (clienteExistente) {
-      // Si ya existe por cédula, agregar la cita temporal
-      clienteExistente.citasTemporales = clienteExistente.citasTemporales || [];
-      clienteExistente.citasTemporales.push(nuevaCitaTemporal);
-      await clienteExistente.save();
-      cliente = clienteExistente;
-      esNuevo = false;
-      console.log(`📝 Cita temporal AGREGADA a cliente existente: ${clienteExistente.username}`);
-    } else {
-      // Validar que la cédula no esté vacía
-      if (!cedula) {
-        return res.status(400).json({ 
-          message: 'La cédula es requerida para crear un cliente temporal',
-          field: 'cedula'
-        });
-      }
-      
-      // Crear nuevo cliente temporal
-      const nuevoCliente = new Cliente({
-        username,
-        lastname: lastname || '',
-        phoneNumber,
-        email: email || null,
-        cedula,  // ← Guardamos la cédula
-        estado: 'temporal',
-        citasTemporales: [nuevaCitaTemporal]
-      });
-      await nuevoCliente.save();
-      cliente = nuevoCliente;
-      esNuevo = true;
-      console.log(`📝 Cliente NUEVO creado: ${username} (cédula: ${cedula}, estado: temporal)`);
-    }
+    await nuevoCliente.save();
     
-    // Obtener el cliente actualizado
-    const clienteActualizado = await Cliente.findById(cliente._id);
-    
-    console.log(`✅ Resultado final:`);
-    console.log(`   - ID: ${clienteActualizado._id}`);
-    console.log(`   - Nombre: ${clienteActualizado.username}`);
-    console.log(`   - Cédula: ${clienteActualizado.cedula}`);
-    console.log(`   - Estado: ${clienteActualizado.estado}`);
-    console.log(`   - Total citas temporales: ${clienteActualizado.citasTemporales?.length || 0}`);
+    console.log(`✅ Cliente NUEVO creado:`);
+    console.log(`   - ID: ${nuevoCliente._id}`);
+    console.log(`   - Nombre: ${nuevoCliente.username}`);
+    console.log(`   - Email: ${nuevoCliente.email}`);
+    console.log(`   - Cédula: ${nuevoCliente.cedula}`);
+    console.log(`   - Estado: ${nuevoCliente.estado}`);
+    console.log(`   - Total citas temporales: ${nuevoCliente.citasTemporales?.length || 0}`);
     
     const respuesta = {
-      message: esNuevo 
-        ? 'Cliente temporal y cita creados exitosamente' 
-        : 'Cita temporal agregada a cliente existente',
+      message: 'Cliente temporal y cita creados exitosamente',
       cliente: {
-        _id: clienteActualizado._id,
-        username: clienteActualizado.username,
-        lastname: clienteActualizado.lastname || '',
-        phoneNumber: clienteActualizado.phoneNumber,
-        email: clienteActualizado.email || '',
-        cedula: clienteActualizado.cedula,
-        estado: clienteActualizado.estado,
-        citasTemporales: clienteActualizado.citasTemporales || [],
-        createdAt: clienteActualizado.createdAt
-      },
-      esNuevo
+        _id: nuevoCliente._id,
+        username: nuevoCliente.username,
+        lastname: nuevoCliente.lastname || '',
+        phoneNumber: nuevoCliente.phoneNumber,
+        email: nuevoCliente.email,
+        cedula: nuevoCliente.cedula,
+        estado: nuevoCliente.estado,
+        citasTemporales: nuevoCliente.citasTemporales || [],
+        createdAt: nuevoCliente.createdAt
+      }
     };
     
     console.log('========== FIN CREATE ==========\n');
@@ -213,22 +206,38 @@ export const createClienteTemporal = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en createClienteTemporal:', error);
-    // Manejar error de cédula duplicada
-    if (error.code === 11000 && error.keyPattern?.cedula) {
-      return res.status(400).json({ 
-        message: 'Ya existe un cliente registrado con esta cédula',
-        field: 'cedula'
-      });
+    
+    // Manejar errores de duplicados
+    if (error.code === 11000) {
+      if (error.keyPattern?.email) {
+        return res.status(400).json({ 
+          message: 'Ya existe un cliente registrado con este email',
+          field: 'email'
+        });
+      }
+      if (error.keyPattern?.cedula) {
+        return res.status(400).json({ 
+          message: 'Ya existe un cliente registrado con esta cédula',
+          field: 'cedula'
+        });
+      }
     }
+    
     res.status(500).json({ message: error.message });
   }
 };
 
-
+// ============================================
+// COMPLETAR REGISTRO DE CLIENTE TEMPORAL
+// ============================================
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
     const { lastname, cedula, direccion, email } = req.body;
+    
+    console.log(`\n========== COMPLETAR REGISTRO ==========`);
+    console.log(`📝 Cliente ID: ${id}`);
+    console.log(`📝 Datos:`, { lastname, cedula, direccion, email });
     
     const cliente = await Owner.findById(id);
     if (!cliente) {
@@ -239,34 +248,50 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'El cliente ya está registrado completamente' });
     }
     
+    // Validar campos requeridos
+    if (!email) {
+      return res.status(400).json({ message: 'El email es requerido', field: 'email' });
+    }
+    if (!cedula) {
+      return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
+    }
+    if (!lastname) {
+      return res.status(400).json({ message: 'El apellido es requerido', field: 'lastname' });
+    }
+    if (!direccion) {
+      return res.status(400).json({ message: 'La dirección es requerida', field: 'direccion' });
+    }
+    
     // ✅ Verificar si el email ya está en uso por OTRO cliente
-    if (email) {
-      const emailExistente = await Owner.findOne({ 
-        email, 
-        _id: { $ne: id }  // Excluir el cliente actual
+    const emailExistente = await Owner.findOne({ 
+      email, 
+      _id: { $ne: id }
+    });
+    if (emailExistente) {
+      return res.status(400).json({ 
+        message: 'El email ya está registrado por otro usuario',
+        field: 'email'
       });
-      if (emailExistente) {
-        return res.status(400).json({ message: 'El email ya está registrado por otro usuario' });
-      }
-      cliente.email = email;
     }
     
     // ✅ Verificar si la cédula ya está en uso por OTRO cliente
-    if (cedula) {
-      const cedulaExistente = await Owner.findOne({ 
-        cedula, 
-        _id: { $ne: id }
+    const cedulaExistente = await Owner.findOne({ 
+      cedula, 
+      _id: { $ne: id }
+    });
+    if (cedulaExistente) {
+      return res.status(400).json({ 
+        message: 'La cédula ya está registrada por otro usuario',
+        field: 'cedula'
       });
-      if (cedulaExistente) {
-        return res.status(400).json({ message: 'La cédula ya está registrada por otro usuario' });
-      }
-      cliente.cedula = cedula;
     }
     
     // Completar datos
-    cliente.lastname = lastname || '';
-    cliente.direccion = direccion || '';
-    cliente.estado = 'completo';  // ✅ Cambia a completo
+    cliente.lastname = lastname;
+    cliente.cedula = cedula;
+    cliente.direccion = direccion;
+    cliente.email = email;
+    cliente.estado = 'completo';
     
     // Asignar contraseña por defecto si no tiene
     const DEFAULT_PASSWORD = "veterinaria123";
@@ -280,17 +305,25 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
+    console.log(`✅ Cliente ${cliente.username} completado exitosamente`);
+    console.log(`   - Email: ${cliente.email}`);
+    console.log(`   - Cédula: ${cliente.cedula}`);
+    console.log(`   - Estado: ${cliente.estado}`);
+    
     // Enviar correo de bienvenida
     if (contrasenaAsignada && cliente.email) {
       try {
         await sendWelcomeEmail(cliente.email, cliente.username, DEFAULT_PASSWORD);
+        console.log(`📧 Correo de bienvenida enviado a: ${cliente.email}`);
       } catch (emailError) {
-        console.error('Error enviando email:', emailError.message);
+        console.error('❌ Error enviando email:', emailError.message);
       }
     }
     
     res.json({ 
-      message: 'Cliente registrado completamente',
+      message: contrasenaAsignada 
+        ? 'Cliente registrado completamente. Se ha enviado un correo con las credenciales de acceso.'
+        : 'Cliente registrado completamente',
       cliente: {
         _id: cliente._id,
         username: cliente.username,
@@ -298,20 +331,24 @@ export const completarRegistroClienteTemporal = async (req, res) => {
         email: cliente.email,
         phoneNumber: cliente.phoneNumber,
         cedula: cliente.cedula,
+        direccion: cliente.direccion,
         estado: cliente.estado
       }
     });
     
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error en completarRegistroClienteTemporal:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
+// ============================================
+// ELIMINAR CLIENTE TEMPORAL
+// ============================================
 export const deleteClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
-    const cliente = await Cliente.findById(id);
+    const cliente = await Owner.findById(id);
     
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -339,7 +376,7 @@ export const convertirCitaTemporal = async (req, res) => {
     const { clienteId, citaTemporalIndex } = req.params;
     const { doctorId, fecha, horaInicio, horaFin, pacienteId } = req.body;
     
-    const cliente = await Cliente.findById(clienteId);
+    const cliente = await Owner.findById(clienteId);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
@@ -371,7 +408,7 @@ export const convertirCitaTemporal = async (req, res) => {
 export const getCitasTemporalesByCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const cliente = await Cliente.findById(id).populate('citasTemporales.doctorId');
+    const cliente = await Owner.findById(id).populate('citasTemporales.doctorId');
     
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
