@@ -151,7 +151,6 @@ export const getDoctoresPublicos = async (req, res) => {
     // Solo devolver campos públicos
     const doctores = await User.find({ 
       role: 'doctor',
-      estado: 'activo' 
     }).select('username lastname especialidad _id');
     
     console.log(` Enviando ${doctores.length} doctores públicos`);
