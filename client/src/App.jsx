@@ -41,7 +41,7 @@ function App() {
                 <Route element={<LayoutWithNavbar />}>
                   <Route path="/" element={<HomePage />} />
                   
-                  {/* 👇 NUEVA RUTA DASHBOARD CON NAVBAR */}
+                  {/*  NUEVA RUTA DASHBOARD CON NAVBAR */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   
                   {/* Rutas protegidas para usuarios autenticados */}
