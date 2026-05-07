@@ -148,7 +148,7 @@ function ClienteTemporalDetallePage() {
       
       await completarRegistroClienteTemporalRequest(id, dataToSend);
       
-      toast.success("✅ ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
+      toast.success(" ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
         duration: 5000,
         position: "top-right"
       });
@@ -166,15 +166,15 @@ function ClienteTemporalDetallePage() {
         if (field) {
           setFieldErrors({ [field]: mensaje });
           setErrors([mensaje]);
-          toast.error(`❌ ${mensaje}`);
+          toast.error(` ${mensaje}`);
         } else {
           setErrors([mensaje]);
-          toast.error(`❌ ${mensaje}`);
+          toast.error(` ${mensaje}`);
         }
       } else {
         const mensajeError = 'Error al completar registro. Intente nuevamente.';
         setErrors([mensajeError]);
-        toast.error(`❌ ${mensajeError}`);
+        toast.error(` ${mensajeError}`);
       }
     } finally {
       setSubmitting(false);
@@ -222,7 +222,7 @@ function ClienteTemporalDetallePage() {
               { label: "Cédula", value: cliente.cedula || 'No registrada' },
               { label: "Teléfono", value: cliente.phoneNumber },
               { label: "Email", value: cliente.email || 'No registrado' },
-              { label: "Estado", value: cliente.estado === 'temporal' ? '⏳ Pendiente de registro' : '✅ Registro completado' },
+              { label: "Estado", value: cliente.estado === 'temporal' ? '⏳ Pendiente de registro' : ' Registro completado' },
               { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
             ]}
           />
@@ -294,8 +294,8 @@ function ClienteTemporalDetallePage() {
       >
         <form onSubmit={(e) => { e.preventDefault(); handleSubmitCompletar(); }} className="space-y-4 bg-white p-6 rounded-lg">
           <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
-            <p className="text-sm text-blue-700">
-              📝 Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
+            <p className="text-sm text-cyan-600">
+               Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema, si los campos ya estan lleno solo dar en completar registro.
             </p>
           </div>
 
@@ -303,7 +303,7 @@ function ClienteTemporalDetallePage() {
           {errors.length > 0 && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
               {errors.map((err, i) => (
-                <p key={i} className="text-sm">❌ {err}</p>
+                <p key={i} className="text-sm"> {err}</p>
               ))}
             </div>
           )}
@@ -392,7 +392,7 @@ function ClienteTemporalDetallePage() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 bg-green-600 text-white py-2.5 rounded-md hover:bg-green-700 transition disabled:opacity-50 font-medium"
+              className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
