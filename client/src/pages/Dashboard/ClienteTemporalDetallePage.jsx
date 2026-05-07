@@ -35,7 +35,7 @@ function ClienteTemporalDetallePage() {
     return `${day}/${month}/${year}`;
   };
 
-  // Validaciones en tiempo real
+  // Validaciones
   const validarEmail = (email) => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     return emailRegex.test(email);
@@ -50,7 +50,6 @@ function ClienteTemporalDetallePage() {
     try {
       const clienteRes = await getClienteTemporalByIdRequest(id);
       setCliente(clienteRes.data);
-      // Inicializar formData con los datos del cliente
       setFormData({
         lastname: clienteRes.data?.lastname || '',
         cedula: clienteRes.data?.cedula || '',
@@ -71,27 +70,21 @@ function ClienteTemporalDetallePage() {
     }
   }, [id]);
 
-  // Función para manejar cambios en el formulario
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error del campo cuando el usuario empieza a escribir
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: null }));
     }
-    // Limpiar errores generales
     setErrors([]);
   };
 
-  // Función para obtener clases de input según si tiene error
   const getInputClass = (fieldName) => {
     const baseClass = "w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition";
     const errorClass = fieldErrors[fieldName] ? "border-red-500 focus:ring-red-500" : "border-cyan-400 focus:border-cyan-500";
     return `${baseClass} ${errorClass}`;
   };
 
-  // Función para completar registro
   const handleSubmitCompletar = async () => {
-    // Limpiar errores anteriores
     setErrors([]);
     setFieldErrors({});
     
@@ -132,7 +125,6 @@ function ClienteTemporalDetallePage() {
       setErrors(nuevosErrores);
       setFieldErrors(nuevosFieldErrors);
       
-      // Enfocar el primer campo con error
       const primerCampoError = Object.keys(nuevosFieldErrors)[0];
       if (primerCampoError) {
         const inputElement = document.querySelector(`[name="${primerCampoError}"]`);
@@ -162,7 +154,7 @@ function ClienteTemporalDetallePage() {
       });
       
       setMostrarModalCompletar(false);
-      await cargarDatos(); // Recargar datos
+      await cargarDatos();
       
     } catch (error) {
       console.error("Error al completar registro:", error);
@@ -171,21 +163,11 @@ function ClienteTemporalDetallePage() {
         const mensaje = error.response.data.message;
         const field = error.response.data.field;
         
-        if (mensaje.includes('email') || field === 'email') {
-          setFieldErrors({ email: mensaje });
+        if (field) {
+          setFieldErrors({ [field]: mensaje });
           setErrors([mensaje]);
           toast.error(`❌ ${mensaje}`);
-        } 
-        else if (mensaje.includes('cédula') || mensaje.includes('cedula') || field === 'cedula') {
-          setFieldErrors({ cedula: mensaje });
-          setErrors([mensaje]);
-          toast.error(`❌ ${mensaje}`);
-        }
-        else if (mensaje.includes('completo')) {
-          toast.warning("⚠️ Este cliente ya está registrado completamente");
-          setMostrarModalCompletar(false);
-        }
-        else {
+        } else {
           setErrors([mensaje]);
           toast.error(`❌ ${mensaje}`);
         }
@@ -299,7 +281,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* Modal para completar registro - Mismo estilo que el formulario principal */}
+      {/* Modal con el MISMO diseño que FormularioClienteTemporal */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
@@ -310,8 +292,7 @@ function ClienteTemporalDetallePage() {
         title="Completar Registro de Cliente"
         size="lg"
       >
-        <div className="p-4 space-y-4">
-          {/* Encabezado informativo */}
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmitCompletar(); }} className="space-y-4 bg-white p-6 rounded-lg">
           <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
             <p className="text-sm text-blue-700">
               📝 Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
@@ -327,75 +308,72 @@ function ClienteTemporalDetallePage() {
             </div>
           )}
 
-          {/* Formulario con el mismo estilo que el formulario principal */}
-          <div className="space-y-4">
-            {/* Apellido */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Apellido *
-                {fieldErrors.lastname && <span className="text-red-500 ml-2 text-xs">{fieldErrors.lastname}</span>}
-              </label>
-              <input
-                type="text"
-                name="lastname"
-                value={formData.lastname || ''}
-                onChange={(e) => handleFormChange('lastname', e.target.value)}
-                className={getInputClass('lastname')}
-                placeholder="Ej: Pérez Gómez"
-              />
-            </div>
+          {/* Apellido */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Apellido *
+              {fieldErrors.lastname && <span className="text-red-500 ml-2 text-xs">{fieldErrors.lastname}</span>}
+            </label>
+            <input
+              type="text"
+              name="lastname"
+              value={formData.lastname || ''}
+              onChange={(e) => handleFormChange('lastname', e.target.value)}
+              className={getInputClass('lastname')}
+              placeholder="Ej: Pérez Gómez"
+            />
+          </div>
 
-            {/* Cédula */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cédula *
-                {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
-              </label>
-              <input
-                type="text"
-                name="cedula"
-                value={formData.cedula || ''}
-                onChange={(e) => handleFormChange('cedula', e.target.value)}
-                className={getInputClass('cedula')}
-                placeholder="000000000"
-              />
-              <p className="text-xs text-gray-400 mt-1">Solo números, 6-12 dígitos</p>
-            </div>
+          {/* Cédula */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cédula *
+              {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
+            </label>
+            <input
+              type="text"
+              name="cedula"
+              value={formData.cedula || ''}
+              onChange={(e) => handleFormChange('cedula', e.target.value)}
+              className={getInputClass('cedula')}
+              placeholder="000000000"
+            />
+            <p className="text-xs text-gray-400 mt-1">Solo números, 6-12 dígitos</p>
+          </div>
 
-            {/* Dirección */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dirección *
-                {fieldErrors.direccion && <span className="text-red-500 ml-2 text-xs">{fieldErrors.direccion}</span>}
-              </label>
-              <input
-                type="text"
-                name="direccion"
-                value={formData.direccion || ''}
-                onChange={(e) => handleFormChange('direccion', e.target.value)}
-                className={getInputClass('direccion')}
-                placeholder="San José, Costa Rica"
-              />
-            </div>
+          {/* Dirección */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dirección *
+              {fieldErrors.direccion && <span className="text-red-500 ml-2 text-xs">{fieldErrors.direccion}</span>}
+            </label>
+            <input
+              type="text"
+              name="direccion"
+              value={formData.direccion || ''}
+              onChange={(e) => handleFormChange('direccion', e.target.value)}
+              className={getInputClass('direccion')}
+              placeholder="San José, Costa Rica"
+            />
+          </div>
 
-            {/* Correo electrónico */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Correo electrónico *
-                {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email || ''}
-                onChange={(e) => handleFormChange('email', e.target.value)}
-                className={getInputClass('email')}
-                placeholder="cliente@ejemplo.com"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Se enviará un correo con las credenciales de acceso
-              </p>
-            </div>
+          {/* Correo electrónico */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Correo electrónico *
+              {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email || ''}
+              onChange={(e) => handleFormChange('email', e.target.value)}
+              className={getInputClass('email')}
+              placeholder="cliente@ejemplo.com"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Se enviará un correo con las credenciales de acceso
+            </p>
           </div>
 
           {/* Botones */}
@@ -412,8 +390,7 @@ function ClienteTemporalDetallePage() {
               Cancelar
             </button>
             <button
-              type="button"
-              onClick={handleSubmitCompletar}
+              type="submit"
               disabled={submitting}
               className="flex-1 bg-green-600 text-white py-2.5 rounded-md hover:bg-green-700 transition disabled:opacity-50 font-medium"
             >
@@ -430,7 +407,7 @@ function ClienteTemporalDetallePage() {
               )}
             </button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );
