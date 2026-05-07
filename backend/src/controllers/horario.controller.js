@@ -1,6 +1,13 @@
 
+
+import mongoose from 'mongoose';
+
 import { manejarError } from '../utils/errorHandler.js'; 
 import Horario from '../models/horario.model.js';
+import User from '../models/user.model.js';      // ← AGREGAR
+import Cita from '../models/cita.model.js';      // ← AGREGAR
+
+
 
 export const getHorariosByDoctorRequest = async (req, res) => {
   try {
@@ -109,23 +116,23 @@ export const deleteHorario = async (req, res) => {
     });
   }
 };
-// OBTENER HORARIOS DISPONIBLES PÚBLICOS (SIN AUTENTICACIÓN)
 export const getHorariosDisponiblesPublicos = async (req, res) => {
   try {
     const { doctorId, fecha } = req.params;
     
     console.log('\n========== GET HORARIOS PUBLICOS ==========');
-    console.log(` Doctor ID: ${doctorId}`);
-    console.log(` Fecha: ${fecha}`);
+    console.log(`📝 Doctor ID: ${doctorId}`);
+    console.log(`📝 Fecha: ${fecha}`);
     
     // Validar formato de fecha
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      return res.status(400).json({ message: 'Fecha inválida' });
+      return res.status(400).json({ message: 'Fecha inválida. Use formato YYYY-MM-DD' });
     }
     
-    // Verificar que el doctor existe y es doctor
+    // Validar que el doctor existe
     const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
     if (!doctor) {
+      console.log('❌ Doctor no encontrado');
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
@@ -134,28 +141,30 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     const fechaObj = new Date(fecha);
     const diaSemana = diasSemana[fechaObj.getDay()];
     
-    console.log(` Día de la semana: ${diaSemana}`);
+    console.log(`📝 Día de la semana: ${diaSemana}`);
     
     // Buscar horario del doctor para ese día
-    const Horario = mongoose.model('Horario');
-    const horario = await Horario.findOne({ doctorId, dia: diaSemana, activo: true });
+    const horario = await Horario.findOne({ 
+      doctorId: doctorId, 
+      dia: diaSemana,
+      activo: true
+    });
     
     if (!horario) {
-      console.log(` No hay horario configurado para ${diaSemana}`);
+      console.log(`⚠️ No hay horario configurado para ${diaSemana}`);
       return res.json([]);
     }
     
-    console.log(` Horario encontrado: ${horario.horaInicio} - ${horario.horaFin}, intervalo: ${horario.intervalo} min`);
+    console.log(`📝 Horario encontrado: ${horario.horaInicio} - ${horario.horaFin}, intervalo: ${horario.intervalo} min`);
     
     // Obtener citas ya agendadas para ese día
-    const Cita = mongoose.model('Cita');
     const citas = await Cita.find({ 
-      doctorId, 
-      fecha,
+      doctorId: doctorId, 
+      fecha: fecha,
       estado: { $ne: 'cancelada' }
     });
     
-    console.log(` Citas existentes: ${citas.length}`);
+    console.log(`📝 Citas existentes: ${citas.length}`);
     
     // Generar bloques de horarios disponibles
     const horariosDisponibles = [];
@@ -176,19 +185,19 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       if (!ocupado) {
         horariosDisponibles.push({
           inicio,
-          fin,
-          disponible: true
+          fin
         });
       }
       
       currentMinutes += intervaloMinutos;
     }
     
-    console.log(`Horarios disponibles: ${horariosDisponibles.length}`);
+    console.log(`✅ Horarios disponibles: ${horariosDisponibles.length}`);
     res.json(horariosDisponibles);
     
   } catch (error) {
-    console.error(' Error en getHorariosDisponiblesPublicos:', error);
+    console.error('❌ Error en getHorariosDisponiblesPublicos:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({ message: 'Error al cargar horarios disponibles' });
   }
 };
