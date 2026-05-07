@@ -140,3 +140,25 @@ export const getDoctorByIdRequest = async (req, res) => {
     });
   }
 };
+
+
+// OBTENER DOCTORES PÚBLICOS (SIN AUTENTICACIÓN)
+
+export const getDoctoresPublicos = async (req, res) => {
+  try {
+    console.log('\n========== GET DOCTORES PUBLICOS ==========');
+    
+    // Solo devolver campos públicos
+    const doctores = await User.find({ 
+      role: 'doctor',
+      estado: 'activo' 
+    }).select('username lastname especialidad _id');
+    
+    console.log(` Enviando ${doctores.length} doctores públicos`);
+    res.json(doctores);
+    
+  } catch (error) {
+    console.error(' Error en getDoctoresPublicos:', error);
+    res.status(500).json({ message: 'Error al cargar veterinarios' });
+  }
+};

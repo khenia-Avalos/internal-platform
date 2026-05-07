@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { getHorariosByDoctorRequest, createHorario,updateHorario,deleteHorario } from '../controllers/horario.controller.js';
+import { getHorariosByDoctorRequest, createHorario,updateHorario,deleteHorario, getHorariosDisponiblesPublicos } from '../controllers/horario.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
 const router = Router();
+//ruta publica para obtener horarios disponibles de un doctor en una fecha específica (sin autenticación)
+router.get('/public/horarios/:doctorId/:fecha', getHorariosDisponiblesPublicos);
 
 // Todas las rutas de horarios requieren autenticación
 router.get('/horarios/doctor/:doctorId', validateToken, getHorariosByDoctorRequest);
