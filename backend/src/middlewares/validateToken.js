@@ -1,12 +1,29 @@
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 import { promisify } from "util";
-import User from "../models/user.model.js"; // ← AÑADE ESTA LÍNEA
+import User from "../models/user.model.js";
 
 const verifyAsync = promisify(jwt.verify);
 
+// ✅ Lista de rutas que NO requieren autenticación (patrones)
+const PUBLIC_PATHS = [
+  '/api/public/doctores',
+  '/api/public/horarios',
+  '/api/clientes-temporales'
+];
+
 export const validateToken = async (req, res, next) => {
   try {
+    // ✅ VERIFICAR PRIMERO: Si la ruta es pública, saltar autenticación
+    const isPublicPath = PUBLIC_PATHS.some(path => req.originalUrl.includes(path));
+    
+    if (isPublicPath) {
+      console.log(`🔓 Ruta pública detectada: ${req.originalUrl} - Saltando autenticación`);
+      return next();
+    }
+    
+    console.log(`🔒 Ruta protegida: ${req.originalUrl} - Verificando token`);
+    
     // 1. PRIMERO verificar cookie HTTP-Only
     let token = req.cookies.token;
     
@@ -14,50 +31,56 @@ export const validateToken = async (req, res, next) => {
     if (!token && req.headers.authorization) {
       const authHeader = req.headers.authorization;
       if (authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7); // Extraer "Bearer token"
+        token = authHeader.substring(7);
       }
     }
     
-    if (!token) return res.status(401).json(["Unauthorized"]);
+    if (!token) {
+      console.log("❌ No token provided");
+      return res.status(401).json({ message: "No autorizado" });
+    }
 
     const decodedUser = await verifyAsync(token, TOKEN_SECRET);
     
-    // ✅ AÑADE ESTAS 4 LÍNEAS:
     const userFound = await User.findById(decodedUser.id).select('role username email');
-    if (!userFound) return res.status(401).json(["Usuario no encontrado"]);
-    req.user = userFound; // ← ESTO ES LO MÁS IMPORTANTE
+    if (!userFound) {
+      console.log("❌ Usuario no encontrado");
+      return res.status(401).json({ message: "Usuario no encontrado" });
+    }
+    
+    req.user = userFound;
     req.user.id = userFound._id;
     
+    console.log(`✅ Usuario autenticado: ${userFound.username} (${userFound.role})`);
     next();
+    
   } catch (error) {
-    return res.status(401).json(["Invalid token"]);
+    console.error("❌ Error en validateToken:", error.message);
+    return res.status(401).json({ message: "Token inválido" });
   }
 };
 
-// ✅ AÑADE ESTA FUNCIÓN COMPLETA AL FINAL:
 export const adminRequired = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
-      return res.status(401).json(["No autorizado"]);
+      return res.status(401).json({ message: "No autorizado" });
     }
     
-    // Buscar usuario en BD para asegurar el role está actualizado
     const user = await User.findById(req.user.id).select('role');
     
     if (!user) {
-      return res.status(401).json(["Usuario no encontrado"]);
+      return res.status(401).json({ message: "Usuario no encontrado" });
     }
     
     if (user.role !== 'admin') {
-      return res.status(403).json(["Acceso denegado. Se requiere rol de administrador"]);
+      return res.status(403).json({ message: "Acceso denegado. Se requiere rol de administrador" });
     }
     
-    // Actualizar req.user con el role de la BD
     req.user.role = user.role;
     
     next();
   } catch (error) {
     console.error("❌ Error en adminRequired:", error);
-    return res.status(500).json(["Error interno del servidor"]);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
