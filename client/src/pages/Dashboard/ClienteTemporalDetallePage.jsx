@@ -1,9 +1,6 @@
 import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
-import { DynamicForm } from "../../components/DynamicForm";
-import { createConfig } from "../config/createConfig";
-import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { 
   getClienteTemporalByIdRequest, 
@@ -17,10 +14,16 @@ function ClienteTemporalDetallePage() {
   const [cliente, setCliente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
   const [mostrarModalCompletar, setMostrarModalCompletar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({}); // Estado para el formulario
+  const [formData, setFormData] = useState({
+    lastname: '',
+    cedula: '',
+    direccion: '',
+    email: ''
+  });
 
   // Función para mostrar fecha local CORREGIDA
   const mostrarFechaLocal = (fechaISO) => {
@@ -30,6 +33,16 @@ function ClienteTemporalDetallePage() {
     const month = fechaPartes[1];
     const day = fechaPartes[2];
     return `${day}/${month}/${year}`;
+  };
+
+  // Validaciones en tiempo real
+  const validarEmail = (email) => {
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    return emailRegex.test(email);
+  };
+
+  const validarCedula = (cedula) => {
+    return /^\d{6,12}$/.test(cedula);
   };
 
   const cargarDatos = async () => {
@@ -45,7 +58,8 @@ function ClienteTemporalDetallePage() {
         email: clienteRes.data?.email || '',
       });
     } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      console.error("Error cargando datos:", error);
+      setErrors(['Error al cargar los datos del cliente']);
     } finally {
       setLoading(false);
     }
@@ -60,36 +74,87 @@ function ClienteTemporalDetallePage() {
   // Función para manejar cambios en el formulario
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error del campo si existe
-    setErrors(prev => prev.filter(err => err.field !== field));
+    // Limpiar error del campo cuando el usuario empieza a escribir
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: null }));
+    }
+    // Limpiar errores generales
+    setErrors([]);
   };
 
-  // Función para completar registro - SOLO se ejecuta al hacer clic en el botón del modal
+  // Función para obtener clases de input según si tiene error
+  const getInputClass = (fieldName) => {
+    const baseClass = "w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition";
+    const errorClass = fieldErrors[fieldName] ? "border-red-500 focus:ring-red-500" : "border-cyan-400 focus:border-cyan-500";
+    return `${baseClass} ${errorClass}`;
+  };
+
+  // Función para completar registro
   const handleSubmitCompletar = async () => {
-    // Validar campos requeridos
+    // Limpiar errores anteriores
+    setErrors([]);
+    setFieldErrors({});
+    
     const nuevosErrores = [];
+    const nuevosFieldErrors = {};
     
-    if (!formData.lastname) nuevosErrores.push({ field: 'lastname', message: 'El apellido es requerido' });
-    if (!formData.cedula) nuevosErrores.push({ field: 'cedula', message: 'La cédula es requerida' });
-    if (!formData.direccion) nuevosErrores.push({ field: 'direccion', message: 'La dirección es requerida' });
-    if (!formData.email) nuevosErrores.push({ field: 'email', message: 'El email es requerido' });
+    // Validar apellido
+    if (!formData.lastname || formData.lastname.trim() === '') {
+      nuevosErrores.push('El apellido es requerido');
+      nuevosFieldErrors.lastname = 'El apellido es requerido';
+    }
     
-    // Validar formato de email
-    if (formData.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
-      nuevosErrores.push({ field: 'email', message: 'Ingrese un email válido' });
+    // Validar cédula
+    if (!formData.cedula || formData.cedula.trim() === '') {
+      nuevosErrores.push('La cédula es requerida');
+      nuevosFieldErrors.cedula = 'La cédula es requerida';
+    } else if (!validarCedula(formData.cedula)) {
+      nuevosErrores.push('La cédula debe contener solo números (6-12 dígitos)');
+      nuevosFieldErrors.cedula = 'La cédula debe tener 6-12 dígitos numéricos';
+    }
+    
+    // Validar dirección
+    if (!formData.direccion || formData.direccion.trim() === '') {
+      nuevosErrores.push('La dirección es requerida');
+      nuevosFieldErrors.direccion = 'La dirección es requerida';
+    }
+    
+    // Validar email
+    if (!formData.email || formData.email.trim() === '') {
+      nuevosErrores.push('El correo electrónico es requerido');
+      nuevosFieldErrors.email = 'El correo electrónico es requerido';
+    } else if (!validarEmail(formData.email)) {
+      nuevosErrores.push('Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com)');
+      nuevosFieldErrors.email = 'Formato de email inválido';
     }
     
     if (nuevosErrores.length > 0) {
       setErrors(nuevosErrores);
-      toast.error("❌ Complete todos los campos requeridos");
+      setFieldErrors(nuevosFieldErrors);
+      
+      // Enfocar el primer campo con error
+      const primerCampoError = Object.keys(nuevosFieldErrors)[0];
+      if (primerCampoError) {
+        const inputElement = document.querySelector(`[name="${primerCampoError}"]`);
+        if (inputElement) {
+          inputElement.focus();
+          inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       return;
     }
     
     setSubmitting(true);
-    setErrors([]);
     
     try {
-      const response = await completarRegistroClienteTemporalRequest(id, formData);
+      const dataToSend = {
+        lastname: formData.lastname.trim(),
+        cedula: formData.cedula.trim(),
+        direccion: formData.direccion.trim(),
+        email: formData.email.toLowerCase().trim()
+      };
+      
+      await completarRegistroClienteTemporalRequest(id, dataToSend);
       
       toast.success("✅ ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
         duration: 5000,
@@ -107,22 +172,27 @@ function ClienteTemporalDetallePage() {
         const field = error.response.data.field;
         
         if (mensaje.includes('email') || field === 'email') {
-          toast.error("❌ Este correo electrónico ya está registrado por otro usuario");
-          setErrors([{ field: 'email', message: 'Este email ya está registrado' }]);
+          setFieldErrors({ email: mensaje });
+          setErrors([mensaje]);
+          toast.error(`❌ ${mensaje}`);
         } 
         else if (mensaje.includes('cédula') || mensaje.includes('cedula') || field === 'cedula') {
-          toast.error("❌ Esta cédula ya está registrada por otro usuario");
-          setErrors([{ field: 'cedula', message: 'Esta cédula ya está registrada' }]);
+          setFieldErrors({ cedula: mensaje });
+          setErrors([mensaje]);
+          toast.error(`❌ ${mensaje}`);
         }
         else if (mensaje.includes('completo')) {
           toast.warning("⚠️ Este cliente ya está registrado completamente");
           setMostrarModalCompletar(false);
         }
         else {
+          setErrors([mensaje]);
           toast.error(`❌ ${mensaje}`);
         }
       } else {
-        toast.error("❌ Error al completar registro. Intente nuevamente");
+        const mensajeError = 'Error al completar registro. Intente nuevamente.';
+        setErrors([mensajeError]);
+        toast.error(`❌ ${mensajeError}`);
       }
     } finally {
       setSubmitting(false);
@@ -215,8 +285,12 @@ function ClienteTemporalDetallePage() {
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
-                onClick={() => setMostrarModalCompletar(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                onClick={() => {
+                  setMostrarModalCompletar(true);
+                  setErrors([]);
+                  setFieldErrors({});
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
               >
                 + Completar Registro
               </button>
@@ -225,107 +299,136 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* Modal personalizado SIN DynamicForm automático */}
+      {/* Modal para completar registro - Mismo estilo que el formulario principal */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
           setMostrarModalCompletar(false);
           setErrors([]);
+          setFieldErrors({});
         }}
         title="Completar Registro de Cliente"
         size="lg"
       >
-        <div className="p-4">
-          <p className="text-sm text-gray-600 mb-4">
-            Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
-          </p>
-          
-          {/* Formulario manual en lugar de DynamicForm */}
+        <div className="p-4 space-y-4">
+          {/* Encabezado informativo */}
+          <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+            <p className="text-sm text-blue-700">
+              📝 Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema.
+            </p>
+          </div>
+
+          {/* Errores generales */}
+          {errors.length > 0 && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+              {errors.map((err, i) => (
+                <p key={i} className="text-sm">❌ {err}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Formulario con el mismo estilo que el formulario principal */}
           <div className="space-y-4">
+            {/* Apellido */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Apellido *
+                {fieldErrors.lastname && <span className="text-red-500 ml-2 text-xs">{fieldErrors.lastname}</span>}
               </label>
               <input
                 type="text"
+                name="lastname"
                 value={formData.lastname || ''}
                 onChange={(e) => handleFormChange('lastname', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'lastname') ? 'border-red-500' : 'border-gray-300'}`}
+                className={getInputClass('lastname')}
                 placeholder="Ej: Pérez Gómez"
               />
-              {errors.find(e => e.field === 'lastname') && (
-                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'lastname')?.message}</p>
-              )}
             </div>
-            
+
+            {/* Cédula */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Cédula *
+                {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
               </label>
               <input
                 type="text"
+                name="cedula"
                 value={formData.cedula || ''}
                 onChange={(e) => handleFormChange('cedula', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'cedula') ? 'border-red-500' : 'border-gray-300'}`}
+                className={getInputClass('cedula')}
                 placeholder="000000000"
               />
-              {errors.find(e => e.field === 'cedula') && (
-                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'cedula')?.message}</p>
-              )}
+              <p className="text-xs text-gray-400 mt-1">Solo números, 6-12 dígitos</p>
             </div>
-            
+
+            {/* Dirección */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Dirección *
+                {fieldErrors.direccion && <span className="text-red-500 ml-2 text-xs">{fieldErrors.direccion}</span>}
               </label>
               <input
                 type="text"
+                name="direccion"
                 value={formData.direccion || ''}
                 onChange={(e) => handleFormChange('direccion', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'direccion') ? 'border-red-500' : 'border-gray-300'}`}
+                className={getInputClass('direccion')}
                 placeholder="San José, Costa Rica"
               />
-              {errors.find(e => e.field === 'direccion') && (
-                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'direccion')?.message}</p>
-              )}
             </div>
-            
+
+            {/* Correo electrónico */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Correo electrónico *
+                {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
               </label>
               <input
                 type="email"
+                name="email"
                 value={formData.email || ''}
                 onChange={(e) => handleFormChange('email', e.target.value)}
-                className={`w-full border rounded-md px-3 py-2 ${errors.find(e => e.field === 'email') ? 'border-red-500' : 'border-gray-300'}`}
+                className={getInputClass('email')}
                 placeholder="cliente@ejemplo.com"
               />
-              {errors.find(e => e.field === 'email') && (
-                <p className="text-red-500 text-xs mt-1">{errors.find(e => e.field === 'email')?.message}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Se enviará un correo con las credenciales de acceso
+              </p>
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setMostrarModalCompletar(false);
+                setErrors([]);
+                setFieldErrors({});
+              }}
+              className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmitCompletar}
+              disabled={submitting}
+              className="flex-1 bg-green-600 text-white py-2.5 rounded-md hover:bg-green-700 transition disabled:opacity-50 font-medium"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Guardando...
+                </span>
+              ) : (
+                "Completar Registro"
               )}
-            </div>
-            
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setMostrarModalCompletar(false);
-                  setErrors([]);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmitCompletar}
-                disabled={submitting}
-                className="flex-1 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 font-medium"
-              >
-                {submitting ? "Guardando..." : "Completar Registro"}
-              </button>
-            </div>
+            </button>
           </div>
         </div>
       </Modal>
