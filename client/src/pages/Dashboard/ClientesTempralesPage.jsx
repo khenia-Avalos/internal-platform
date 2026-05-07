@@ -48,8 +48,8 @@ function ClientesTemporalesPage() {
     getClientesTemporalesRequest,
     setClientesTemporales,
     {
-      onSuccess: () => toast.success("🗑️ Cliente temporal eliminado"),
-      onError: () => toast.error("❌ Error al eliminar cliente temporal")
+      onSuccess: () => toast.success(" Cliente temporal eliminado"),
+      onError: () => toast.error(" Error al eliminar cliente temporal")
     }
   );
 
@@ -67,7 +67,7 @@ function ClientesTemporalesPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-          📞 Clientes Temporales (Agendamiento Rápido)
+           Clientes Temporales (Agendamiento Rápido)
         </h1>
         <p className="text-gray-500 text-sm mb-4">
           Clientes que agendaron cita sin completar registro. Al llegar a la consulta, complete sus datos.
@@ -85,7 +85,7 @@ function ClientesTemporalesPage() {
             onClick={() => setMostrarFormulario(true)}
             className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
           >
-            📞 + Nueva Cita Rápida
+              Nueva Cita Rápida
           </button>
         </div>
       </div>
@@ -95,7 +95,7 @@ function ClientesTemporalesPage() {
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg md:text-xl font-semibold text-gray-700">
-              📝 Agendar Cita Rápida (Datos Mínimos)
+              Agendar Cita Rápida (Datos Mínimos al llegar a la cita se completara el registro para su portal virtual)
             </h2>
             <button
               onClick={() => setMostrarFormulario(false)}
@@ -138,16 +138,16 @@ function ClientesTemporalesPage() {
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     c.estado === 'completo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {c.estado === 'completo' ? '✅ Registrado' : '⏳ Pendiente'}
+                    {c.estado === 'completo' ? ' Registrado' : ' Pendiente'}
                   </span>
                 )
               }
             ]}
             data={clientesFiltrados}
             onRowClick={(record) => navigate(`/clientes-temporales/${record._id}`)}
-            // ✅ ELIMINADO onEdit - No hay botón de editar
+            //  ELIMINADO onEdit - No hay botón de editar
             onDelete={(cliente) => handleDeleteClienteTemporal(cliente._id, cliente.username)}
-            // ✅ Eliminado editLabel
+            //  Eliminado editLabel
           />
         )}
       </div>

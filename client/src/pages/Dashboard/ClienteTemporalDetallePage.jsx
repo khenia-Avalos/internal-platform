@@ -222,7 +222,7 @@ function ClienteTemporalDetallePage() {
               { label: "Cédula", value: cliente.cedula || 'No registrada' },
               { label: "Teléfono", value: cliente.phoneNumber },
               { label: "Email", value: cliente.email || 'No registrado' },
-              { label: "Estado", value: cliente.estado === 'temporal' ? '⏳ Pendiente de registro' : ' Registro completado' },
+              { label: "Estado", value: cliente.estado === 'temporal' ? ' Pendiente de registro' : ' Registro completado' },
               { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
             ]}
           />
