@@ -346,8 +346,7 @@ export const getCitaById = async (req, res) => {
           select: 'username email phoneNumber'
         }
       })
-      .populate('owner', 'username email phoneNumber')  // ← AGREGADO: para cliente temporal
-      .populate('clienteTemporalId', 'username email estado');  // ← AGREGADO
+      .populate('clienteTemporalId', 'username email phoneNumber estado');  // ← Solo este, 'owner' no existe
     
     console.log("🔍 Cita encontrada:", JSON.stringify(cita, null, 2));
     
