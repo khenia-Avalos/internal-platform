@@ -337,6 +337,7 @@ export const getCitaById = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Primero obtener la cita con todos los populates
     const cita = await Cita.findById(id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -346,9 +347,10 @@ export const getCitaById = async (req, res) => {
           select: 'username email phoneNumber'
         }
       })
-      .populate('clienteTemporalId', 'username email phoneNumber estado');  // ← Solo este, 'owner' no existe
+      .populate('clienteTemporalId', 'username email phoneNumber estado direccion'); // ← Asegurar que trae estos campos
     
     console.log("🔍 Cita encontrada:", JSON.stringify(cita, null, 2));
+    console.log("🔍 clienteTemporalId:", cita?.clienteTemporalId);
     
     if (!cita) {
       return res.status(404).json({ message: "Cita no encontrada" });
