@@ -1,10 +1,9 @@
 import bcrypt from 'bcryptjs';
 import Owner from '../models/owner.model.js';
+import Cita from '../models/cita.model.js';
+import Paciente from '../models/paciente.model.js';
 import { sendWelcomeEmail } from '../services/authService.js';
 
-// ============================================
-// FUNCIONES DE VALIDACIÓN
-// ============================================
 
 const validarEmail = (email) => {
   const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -242,26 +241,6 @@ export const createClienteTemporal = async (req, res) => {
     }
     
     // ============================================
-    // CREAR CITA TEMPORAL
-    // ============================================
-    
-    const nuevaCitaTemporal = {
-      fecha: fechaCita,
-      horaInicio,
-      horaFin,
-      notas: notas || '',
-      doctorId: doctorId || null,
-      tipoCita: tipoCita || 'consulta',
-      sintomas: sintomas || '',
-      tiempoSintomas: tiempoSintomas || '',
-      pacienteTemporal: {
-        nombre: nombreMascota.trim(),
-        especie: especie
-      },
-      creadaEn: new Date()
-    };
-    
-    // ============================================
     // CREAR CLIENTE TEMPORAL
     // ============================================
     
@@ -272,12 +251,50 @@ export const createClienteTemporal = async (req, res) => {
       email: email.toLowerCase().trim(),
       cedula: cedula.trim(),
       estado: 'temporal',
-      citasTemporales: [nuevaCitaTemporal]
+      citasTemporales: [{
+        fecha: fechaCita,
+        horaInicio,
+        horaFin,
+        notas: notas || '',
+        doctorId: doctorId || null,
+        tipoCita: tipoCita || 'consulta',
+        sintomas: sintomas || '',
+        tiempoSintomas: tiempoSintomas || '',
+        pacienteTemporal: {
+          nombre: nombreMascota.trim(),
+          especie: especie
+        },
+        creadaEn: new Date()
+      }]
     });
     
     await nuevoCliente.save();
     
-    console.log(`✅ Cliente temporal creado: ${nuevoCliente.username} (${nuevoCliente.email})`);
+    // ============================================
+    // CREAR CITA REAL (en colección Cita)
+    // ============================================
+    
+    const nuevaCita = new Cita({
+      doctorId: doctorId,
+      pacienteId: null,  // Temporal, se asignará después
+      fecha: fechaCita,
+      horaInicio: horaInicio,
+      horaFin: horaFin,
+      motivo: sintomas || '',
+      notas: notas || '',
+      tipoCita: tipoCita || 'consulta',
+      estado: 'pendiente',
+      clienteTemporalId: nuevoCliente._id  // Referencia al cliente temporal
+    });
+    
+    const citaGuardada = await nuevaCita.save();
+    
+    // Actualizar el cliente temporal con el ID de la cita real
+    nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;
+    await nuevoCliente.save();
+    
+    console.log(`✅ Cliente temporal creado: ${nuevoCliente.username}`);
+    console.log(`✅ Cita real creada: ${citaGuardada._id}`);
     
     res.status(201).json({
       message: '✅ Cliente temporal y cita creados exitosamente',
@@ -287,6 +304,12 @@ export const createClienteTemporal = async (req, res) => {
         email: nuevoCliente.email,
         cedula: nuevoCliente.cedula,
         estado: nuevoCliente.estado
+      },
+      cita: {
+        _id: citaGuardada._id,
+        fecha: citaGuardada.fecha,
+        horaInicio: citaGuardada.horaInicio,
+        horaFin: citaGuardada.horaFin
       }
     });
     
@@ -428,7 +451,47 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     }
     
     // ============================================
-    // ACTUALIZAR CLIENTE
+    // 1. CREAR MASCOTA (Paciente)
+    // ============================================
+    
+    // Obtener la primera cita temporal para los datos de la mascota
+    const citaTemporal = cliente.citasTemporales?.[0];
+    let mascotaId = null;
+    
+    if (citaTemporal && citaTemporal.pacienteTemporal) {
+      const nuevaMascota = new Paciente({
+        nombre: citaTemporal.pacienteTemporal.nombre,
+        especie: citaTemporal.pacienteTemporal.especie,
+        ownerId: cliente._id,
+        edad: null,
+        sexo: null,
+        raza: null
+      });
+      
+      const mascotaGuardada = await nuevaMascota.save();
+      mascotaId = mascotaGuardada._id;
+      console.log(`✅ Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
+      
+      // ============================================
+      // 2. ACTUALIZAR LA CITA REAL CON EL PACIENTE
+      // ============================================
+      if (citaTemporal.citaRealId) {
+        const citaReal = await Cita.findById(citaTemporal.citaRealId);
+        if (citaReal) {
+          citaReal.pacienteId = mascotaGuardada._id;
+          citaReal.estado = 'confirmada';
+          await citaReal.save();
+          console.log(`✅ Cita actualizada: ${citaReal._id} con pacienteId: ${mascotaGuardada._id}`);
+        } else {
+          console.log(`⚠️ No se encontró la cita real con ID: ${citaTemporal.citaRealId}`);
+        }
+      }
+    } else {
+      console.log('⚠️ No hay cita temporal o paciente temporal asociado');
+    }
+    
+    // ============================================
+    // 3. ACTUALIZAR CLIENTE
     // ============================================
     
     cliente.lastname = lastname.trim();
@@ -436,6 +499,9 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     cliente.direccion = direccion.trim();
     cliente.email = email.toLowerCase().trim();
     cliente.estado = 'completo';
+    if (mascotaId) {
+      cliente.mascotaId = mascotaId;
+    }
     
     // Asignar contraseña por defecto si no tiene
     const DEFAULT_PASSWORD = "veterinaria123";

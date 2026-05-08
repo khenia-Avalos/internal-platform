@@ -93,9 +93,19 @@ const userSchema = new mongoose.Schema(
                 especie: { type: String, required: true }
             },
             creadaEn: { type: Date, default: Date.now },
-            convertida: { type: Boolean, default: false }
-        }]
-    }, {
+            convertida: { type: Boolean, default: false },  citaRealId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Cita',
+    default: null
+  }
+        }],
+        mascotaId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Paciente',
+            default: null
+        }
+    }, 
+    {
         timestamps: true
     }
 )

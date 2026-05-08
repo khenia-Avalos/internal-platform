@@ -59,7 +59,13 @@ const citaSchema = new mongoose.Schema({
   tokenConfirmacion: {
     type: String,
     default: null
-  }
+  },
+  // Para rastrear la cita temporal
+clienteTemporalId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Owner',
+  default: null
+}
 }, {
   timestamps: true
 });
