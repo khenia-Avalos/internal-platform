@@ -303,6 +303,9 @@ function calcularDuracion(horaInicio, horaFin) {
 // ============================================
 // COMPLETAR REGISTRO DE CLIENTE TEMPORAL
 // ============================================
+// ============================================
+// COMPLETAR REGISTRO DE CLIENTE TEMPORAL
+// ============================================
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
@@ -313,12 +316,14 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     console.log(`\n========== COMPLETAR REGISTRO ==========`);
     console.log(`📝 Cliente ID: ${id}`);
+    console.log(`📝 Datos recibidos:`, { lastname, cedula, direccion, email, raza, edad, sexo, colorPelaje, peso, temperatura });
     
-    // Validaciones básicas
+    // Validar ID
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: 'ID de cliente no válido' });
     }
     
+    // Buscar cliente
     const cliente = await Owner.findById(id);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -328,46 +333,127 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'Este cliente ya está registrado completamente' });
     }
     
-    // Validar campos requeridos del cliente
-    if (!email) return res.status(400).json({ message: 'El email es requerido', field: 'email' });
-    if (!validarEmail(email)) return res.status(400).json({ message: 'Email inválido', field: 'email' });
-    if (!cedula) return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
-    if (!validarCedula(cedula)) return res.status(400).json({ message: 'Cédula inválida (6-12 dígitos)', field: 'cedula' });
-    if (!lastname) return res.status(400).json({ message: 'El apellido es requerido', field: 'lastname' });
-    if (!direccion) return res.status(400).json({ message: 'La dirección es requerida', field: 'direccion' });
+    // ============================================
+    // VALIDACIONES DEL CLIENTE
+    // ============================================
     
-    // Verificar unicidad
-    const emailExistente = await Owner.findOne({ email, _id: { $ne: id } });
-    if (emailExistente) return res.status(400).json({ message: 'Email ya registrado', field: 'email' });
+    if (!email || email.trim() === '') {
+      return res.status(400).json({ message: 'El correo electrónico es requerido', field: 'email' });
+    }
     
-    const cedulaExistente = await Owner.findOne({ cedula, _id: { $ne: id } });
-    if (cedulaExistente) return res.status(400).json({ message: 'Cédula ya registrada', field: 'cedula' });
+    if (!validarEmail(email)) {
+      return res.status(400).json({ message: 'Ingrese un correo electrónico válido', field: 'email' });
+    }
+    
+    if (!cedula || cedula.trim() === '') {
+      return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
+    }
+    
+    if (!validarCedula(cedula)) {
+      return res.status(400).json({ message: 'La cédula debe contener solo números (6-12 dígitos)', field: 'cedula' });
+    }
+    
+    if (!lastname || lastname.trim() === '') {
+      return res.status(400).json({ message: 'El apellido es requerido', field: 'lastname' });
+    }
+    
+    if (!direccion || direccion.trim() === '') {
+      return res.status(400).json({ message: 'La dirección es requerida', field: 'direccion' });
+    }
     
     // ============================================
-    // 1. CREAR MASCOTA (Paciente) - CORREGIDO
+    // VERIFICAR UNICIDAD
     // ============================================
+    
+    // Verificar email único (excluyendo el cliente actual)
+    const emailExistente = await Owner.findOne({ 
+      email: email.toLowerCase().trim(), 
+      _id: { $ne: id }
+    });
+    
+    if (emailExistente) {
+      return res.status(400).json({ 
+        message: `El correo "${email}" ya está registrado por otro usuario`,
+        field: 'email'
+      });
+    }
+    
+    // Verificar cédula única (excluyendo el cliente actual)
+    const cedulaExistente = await Owner.findOne({ 
+      cedula: cedula.trim(), 
+      _id: { $ne: id }
+    });
+    
+    if (cedulaExistente) {
+      return res.status(400).json({ 
+        message: `La cédula "${cedula}" ya está registrada por otro usuario`,
+        field: 'cedula'
+      });
+    }
+    
+    // ============================================
+    // 1. CREAR MASCOTA (Paciente)
+    // ============================================
+    
     const citaTemporal = cliente.citasTemporales?.[0];
     let mascotaId = null;
     
     if (citaTemporal && citaTemporal.pacienteTemporal) {
+      
+      // Validar datos de la mascota temporal
+      if (!citaTemporal.pacienteTemporal.nombre) {
+        return res.status(400).json({ 
+          message: 'El nombre de la mascota es requerido',
+          field: 'nombreMascota'
+        });
+      }
+      
+      if (!citaTemporal.pacienteTemporal.especie) {
+        return res.status(400).json({ 
+          message: 'La especie de la mascota es requerida',
+          field: 'especie'
+        });
+      }
+      
+      // ✅ Normalizar especie (asegurar minúsculas para el enum)
+      let especieNormalizada = citaTemporal.pacienteTemporal.especie.toLowerCase();
+      const especiesValidas = ['perro', 'gato', 'ave', 'conejo', 'otro'];
+      if (!especiesValidas.includes(especieNormalizada)) {
+        especieNormalizada = 'otro';
+      }
+      
+      // ✅ Normalizar sexo (convertir a Macho / Hembra con mayúscula)
+      let sexoNormalizado = '';
+      if (sexo) {
+        const sexoLower = sexo.toLowerCase();
+        if (sexoLower === 'macho') {
+          sexoNormalizado = 'Macho';
+        } else if (sexoLower === 'hembra') {
+          sexoNormalizado = 'Hembra';
+        } else {
+          sexoNormalizado = sexo;
+        }
+      }
+      
       // Construir el objeto peso según tu modelo
       let pesoObj = null;
-      if (peso) {
+      if (peso && !isNaN(parseFloat(peso))) {
         pesoObj = {
           valor: parseFloat(peso),
           unidad: 'kg'
         };
       }
       
+      // Crear la mascota con los campos correctos
       const nuevaMascota = new Paciente({
         // Campos requeridos
         nombre: citaTemporal.pacienteTemporal.nombre,
-        especie: citaTemporal.pacienteTemporal.especie,
+        especie: especieNormalizada,
         ownerId: cliente._id,
         // Campos opcionales
         raza: raza || '',
         edad: edad ? parseInt(edad) : null,
-        sexo: sexo || '',
+        sexo: sexoNormalizado,
         colorPelaje: colorPelaje || '',
         peso: pesoObj,
         temperatura: temperatura ? parseFloat(temperatura) : null,
@@ -377,6 +463,9 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       const mascotaGuardada = await nuevaMascota.save();
       mascotaId = mascotaGuardada._id;
       console.log(`✅ Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
+      console.log(`   - Especie: ${mascotaGuardada.especie}`);
+      console.log(`   - Sexo: ${mascotaGuardada.sexo}`);
+      
     } else {
       return res.status(400).json({ 
         message: 'No se encontró información de la mascota temporal',
@@ -387,6 +476,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     // ============================================
     // 2. ACTUALIZAR CITA REAL (Appointment)
     // ============================================
+    
     if (citaTemporal && citaTemporal.citaRealId) {
       const citaReal = await Cita.findById(citaTemporal.citaRealId);
       if (citaReal) {
@@ -395,22 +485,26 @@ export const completarRegistroClienteTemporal = async (req, res) => {
         citaReal.esCitaTemporal = false;
         await citaReal.save();
         console.log(`✅ Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
+      } else {
+        console.log(`⚠️ No se encontró la cita real con ID: ${citaTemporal.citaRealId}`);
       }
     }
     
     // ============================================
     // 3. COMPLETAR CLIENTE (Owner)
     // ============================================
+    
     cliente.lastname = lastname.trim();
     cliente.cedula = cedula.trim();
     cliente.direccion = direccion.trim();
     cliente.email = email.toLowerCase().trim();
     cliente.estado = 'completo';
+    
     if (mascotaId) {
       cliente.mascotaId = mascotaId;
     }
     
-    // Asignar contraseña por defecto
+    // Asignar contraseña por defecto si no tiene
     const DEFAULT_PASSWORD = "veterinaria123";
     let contrasenaAsignada = false;
     
@@ -421,21 +515,27 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     }
     
     await cliente.save();
+    console.log(`✅ Cliente completado: ${cliente.username}`);
     
-    // Enviar correo de bienvenida
+    // ============================================
+    // 4. ENVIAR CORREO DE BIENVENIDA
+    // ============================================
+    
     if (contrasenaAsignada && cliente.email) {
       try {
         await sendWelcomeEmail(cliente.email, cliente.username, DEFAULT_PASSWORD);
-        console.log(`📧 Correo enviado a: ${cliente.email}`);
+        console.log(`📧 Correo de bienvenida enviado a: ${cliente.email}`);
       } catch (emailError) {
         console.error('❌ Error enviando email:', emailError.message);
       }
     }
     
-    console.log(`✅ Cliente completado: ${cliente.username}`);
+    // ============================================
+    // RESPUESTA
+    // ============================================
     
-    res.json({
-      message: contrasenaAsignada
+    res.json({ 
+      message: contrasenaAsignada 
         ? '✅ Registro completado. Se ha enviado un correo con las credenciales de acceso.'
         : '✅ Registro completado exitosamente',
       cliente: {
@@ -452,7 +552,20 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en completarRegistroClienteTemporal:', error);
-    res.status(500).json({ message: error.message });
+    
+    // Manejar error de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const mensajes = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: mensajes[0],
+        field: Object.keys(error.errors)[0]
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Error al completar el registro. Intente nuevamente.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 // ============================================
