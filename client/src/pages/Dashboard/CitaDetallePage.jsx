@@ -22,17 +22,17 @@ function CitaDetallePage() {
     return `${day}/${month}/${year}`;
   };
 
-  // Función para determinar si la cita es de cliente temporal
-  const esCitaTemporal = () => {
-    return cita?.esCitaTemporal === true || (cita?.clienteTemporalId && !cita?.pacienteId);
-  };
+  // ============================================
+  // FUNCIONES PARA OBTENER DATOS DEL DUEÑO
+  // ============================================
 
   // Obtener el nombre del dueño correctamente
   const obtenerNombreDueño = () => {
-    // Prioridad: owner (cliente temporal) > pacienteId.ownerId (cliente registrado)
-    if (cita?.owner?.username) {
-      return cita.owner.username;
+    // Si es cita de cliente temporal (tiene clienteTemporalId)
+    if (cita?.clienteTemporalId?.username) {
+      return cita.clienteTemporalId.username;
     }
+    // Si es cita de cliente registrado (tiene pacienteId con ownerId)
     if (cita?.pacienteId?.ownerId?.username) {
       return cita.pacienteId.ownerId.username;
     }
@@ -41,8 +41,8 @@ function CitaDetallePage() {
 
   // Obtener el email del dueño correctamente
   const obtenerEmailDueño = () => {
-    if (cita?.owner?.email) {
-      return cita.owner.email;
+    if (cita?.clienteTemporalId?.email) {
+      return cita.clienteTemporalId.email;
     }
     if (cita?.pacienteId?.ownerId?.email) {
       return cita.pacienteId.ownerId.email;
@@ -50,16 +50,36 @@ function CitaDetallePage() {
     return 'No especificado';
   };
 
-  // Obtener el teléfono del dueño
+  // Obtener el teléfono del dueño correctamente
   const obtenerTelefonoDueño = () => {
-    if (cita?.owner?.phoneNumber) {
-      return cita.owner.phoneNumber;
+    if (cita?.clienteTemporalId?.phoneNumber) {
+      return cita.clienteTemporalId.phoneNumber;
     }
     if (cita?.pacienteId?.ownerId?.phoneNumber) {
       return cita.pacienteId.ownerId.phoneNumber;
     }
     return 'No especificado';
   };
+
+  // Detectar si es cita de cliente temporal
+  const esCitaTemporal = () => {
+    return cita?.esCitaTemporal === true || (cita?.clienteTemporalId && !cita?.pacienteId);
+  };
+
+  // Obtener estado de la cita en texto legible
+  const obtenerEstadoTexto = () => {
+    switch (cita?.estado) {
+      case 'pendiente': return '⏳ Pendiente de confirmación';
+      case 'confirmada': return '✅ Confirmada';
+      case 'cancelada': return '❌ Cancelada';
+      case 'completada': return '✔️ Completada';
+      default: return cita?.estado || 'No especificado';
+    }
+  };
+
+  // ============================================
+  // FUNCIONES PARA CAMBIAR ESTADO
+  // ============================================
 
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
@@ -115,6 +135,10 @@ function CitaDetallePage() {
     }
   };
 
+  // ============================================
+  // CARGA DE DATOS
+  // ============================================
+
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
@@ -139,9 +163,13 @@ function CitaDetallePage() {
     setShowReagendarModal(true);
   };
 
-  // Construir los datos dinámicamente para InfoCard
+  // ============================================
+  // CONSTRUIR DATOS PARA INFOCARD
+  // ============================================
+
   const informacionCita = [
     { label: "Doctor", value: cita?.doctorId ? `${cita.doctorId.username} ${cita.doctorId.lastname}` : 'No asignado' },
+    { label: "Especialidad del Doctor", value: cita?.doctorId?.especialidad || 'No especificada' },
     { label: "Título de la cita", value: cita?.titulo || 'Sin título' },
     { label: "Descripción", value: cita?.descripcion || 'No especificada' },
     { label: "Notas Adicionales", value: cita?.notas || 'No especificadas' },
@@ -152,20 +180,14 @@ function CitaDetallePage() {
       label: "Origen de la cita", 
       value: esCitaTemporal() 
         ? '📞 Cliente Temporal (pendiente de completar registro)' 
-        : '✓ Cliente Registrado',
-      badge: esCitaTemporal() ? 'warning' : 'success'
+        : '✓ Cliente Registrado'
     },
     { label: "Dueño", value: obtenerNombreDueño() },
     { label: "Correo del dueño", value: obtenerEmailDueño() },
     { label: "Teléfono del dueño", value: obtenerTelefonoDueño() },
     { label: "Mascota", value: cita?.pacienteId?.nombre || 'No especificada (pendiente de registro)' },
-    { 
-      label: "Estado de la cita", 
-      value: cita?.estado === 'pendiente' ? '⏳ Pendiente de confirmación' :
-              cita?.estado === 'confirmada' ? '✅ Confirmada' :
-              cita?.estado === 'cancelada' ? '❌ Cancelada' :
-              cita?.estado === 'completada' ? '✔️ Completada' : cita?.estado || 'No especificado'
-    }
+    { label: "Especie de la mascota", value: cita?.pacienteId?.especie || 'No especificada' },
+    { label: "Estado de la cita", value: obtenerEstadoTexto() }
   ];
 
   return (
@@ -224,7 +246,7 @@ function CitaDetallePage() {
                 se asignarán automáticamente a esta cita.
               </p>
               <p className="text-orange-600 text-xs mt-2">
-                📌 Datos del cliente temporal: {cita.clienteTemporalId?.username || cita.owner?.username || 'No disponible'}
+                📌 Datos del cliente temporal: {cita.clienteTemporalId?.username || 'No disponible'}
               </p>
             </div>
           )}
@@ -238,7 +260,23 @@ function CitaDetallePage() {
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-blue-700"><strong>Nombre:</strong> {cita.clienteTemporalId.username}</p>
                 <p className="text-blue-700"><strong>Email:</strong> {cita.clienteTemporalId.email}</p>
+                <p className="text-blue-700"><strong>Teléfono:</strong> {cita.clienteTemporalId.phoneNumber || 'No registrado'}</p>
                 <p className="text-blue-700"><strong>Estado:</strong> {cita.clienteTemporalId.estado === 'temporal' ? '⏳ Pendiente de registro' : '✅ Registrado'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Información de la mascota si existe */}
+          {cita.pacienteId && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-green-800 text-sm font-medium">
+                🐾 Información de la Mascota
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
+                <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
+                <p className="text-green-700"><strong>Raza:</strong> {cita.pacienteId.raza || 'No especificada'}</p>
+                <p className="text-green-700"><strong>Edad:</strong> {cita.pacienteId.edad || 'No especificada'} años</p>
               </div>
             </div>
           )}
