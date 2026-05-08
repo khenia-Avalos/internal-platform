@@ -122,126 +122,73 @@ export const createClienteTemporal = async (req, res) => {
     } = req.body;
     
     // ============================================
-    // VALIDACIONES ESPECÍFICAS
+    // VALIDACIONES
     // ============================================
     
-    // 1. Validar nombre
     if (!username || username.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El nombre del dueño es requerido',
-        field: 'username'
-      });
+      return res.status(400).json({ message: 'El nombre del dueño es requerido', field: 'username' });
     }
     
-    // 2. Validar email
     if (!email || email.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El correo electrónico es requerido',
-        field: 'email'
-      });
+      return res.status(400).json({ message: 'El correo electrónico es requerido', field: 'email' });
     }
     
     if (!validarEmail(email)) {
-      return res.status(400).json({ 
-        message: 'Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com)',
-        field: 'email'
-      });
+      return res.status(400).json({ message: 'Ingrese un correo electrónico válido', field: 'email' });
     }
     
-    // 3. Validar cédula
     if (!cedula || cedula.trim() === '') {
-      return res.status(400).json({ 
-        message: 'La cédula es requerida',
-        field: 'cedula'
-      });
+      return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
     }
     
     if (!validarCedula(cedula)) {
-      return res.status(400).json({ 
-        message: 'La cédula debe contener solo números (6-12 dígitos)',
-        field: 'cedula'
-      });
+      return res.status(400).json({ message: 'La cédula debe contener solo números (6-12 dígitos)', field: 'cedula' });
     }
     
-    // 4. Validar teléfono
     if (!phoneNumber || phoneNumber.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El número de teléfono es requerido',
-        field: 'phoneNumber'
-      });
+      return res.status(400).json({ message: 'El número de teléfono es requerido', field: 'phoneNumber' });
     }
     
     if (!validarTelefono(phoneNumber)) {
-      return res.status(400).json({ 
-        message: 'El teléfono debe incluir código de país. Ejemplos: +50676486781 o +506 7098 3832',
-        field: 'phoneNumber'
-      });
+      return res.status(400).json({ message: 'El teléfono debe incluir código de país', field: 'phoneNumber' });
     }
     
-    // 5. Validar nombre de mascota
     if (!nombreMascota || nombreMascota.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El nombre de la mascota es requerido',
-        field: 'nombreMascota'
-      });
+      return res.status(400).json({ message: 'El nombre de la mascota es requerido', field: 'nombreMascota' });
     }
     
-    // 6. Validar especie
     if (!especie || especie.trim() === '') {
-      return res.status(400).json({ 
-        message: 'La especie de la mascota es requerida',
-        field: 'especie'
-      });
+      return res.status(400).json({ message: 'La especie de la mascota es requerida', field: 'especie' });
     }
     
-    // 7. Validar doctor
     if (!doctorId) {
-      return res.status(400).json({ 
-        message: 'Debe seleccionar un veterinario',
-        field: 'doctorId'
-      });
+      return res.status(400).json({ message: 'Debe seleccionar un veterinario', field: 'doctorId' });
     }
     
-    // 8. Validar fecha
     if (!fechaCita) {
-      return res.status(400).json({ 
-        message: 'La fecha de la cita es requerida',
-        field: 'fechaCita'
-      });
+      return res.status(400).json({ message: 'La fecha de la cita es requerida', field: 'fechaCita' });
     }
     
-    // 9. Validar horario
     if (!horaInicio || !horaFin) {
-      return res.status(400).json({ 
-        message: 'Debe seleccionar un horario disponible',
-        field: 'horario'
-      });
+      return res.status(400).json({ message: 'Debe seleccionar un horario disponible', field: 'horario' });
     }
     
     // ============================================
-    // VALIDACIONES DE UNICIDAD
+    // VERIFICAR UNICIDAD
     // ============================================
     
-    // Verificar email único
     const emailExistente = await Owner.findOne({ email: email.toLowerCase().trim() });
     if (emailExistente) {
-      return res.status(400).json({ 
-        message: `El correo "${email}" ya está registrado. Use otro email.`,
-        field: 'email'
-      });
+      return res.status(400).json({ message: `El correo "${email}" ya está registrado`, field: 'email' });
     }
     
-    // Verificar cédula única
     const cedulaExistente = await Owner.findOne({ cedula: cedula.trim() });
     if (cedulaExistente) {
-      return res.status(400).json({ 
-        message: `La cédula "${cedula}" ya está registrada. Verifique sus datos.`,
-        field: 'cedula'
-      });
+      return res.status(400).json({ message: `La cédula "${cedula}" ya está registrada`, field: 'cedula' });
     }
     
     // ============================================
-    // CREAR CLIENTE TEMPORAL
+    // 1. CREAR CLIENTE TEMPORAL (Owner)
     // ============================================
     
     const nuevoCliente = new Owner({
@@ -271,30 +218,43 @@ export const createClienteTemporal = async (req, res) => {
     await nuevoCliente.save();
     
     // ============================================
-    // CREAR CITA REAL (en colección Cita)
+    // 2. CREAR CITA REAL (Appointment)
     // ============================================
+    
+    // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD si es necesario
+    let fechaFormateada = fechaCita;
+    if (fechaCita.includes('/')) {
+      const [dia, mes, año] = fechaCita.split('/');
+      fechaFormateada = `${año}-${mes}-${dia}`;
+    }
     
     const nuevaCita = new Cita({
       doctorId: doctorId,
-      pacienteId: null,  // Temporal, se asignará después
-      fecha: fechaCita,
+      pacienteId: null,  // Se asignará al completar registro
+      fecha: fechaFormateada,
       horaInicio: horaInicio,
       horaFin: horaFin,
       motivo: sintomas || '',
       notas: notas || '',
       tipoCita: tipoCita || 'consulta',
       estado: 'pendiente',
-      clienteTemporalId: nuevoCliente._id  // Referencia al cliente temporal
+      // Datos adicionales para tu modelo Cita
+      title: tipoCita === 'consulta' ? 'Consulta médica' : 'Estética',
+      pet: null,  // Se asignará al completar registro
+      owner: nuevoCliente._id,
+      veterinarian: doctorId,
+      userId: doctorId,
+      duration: calcularDuracion(horaInicio, horaFin)
     });
     
     const citaGuardada = await nuevaCita.save();
     
-    // Actualizar el cliente temporal con el ID de la cita real
+    // Guardar referencia de la cita en el cliente temporal
     nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;
     await nuevoCliente.save();
     
     console.log(`✅ Cliente temporal creado: ${nuevoCliente.username}`);
-    console.log(`✅ Cita real creada: ${citaGuardada._id}`);
+    console.log(`✅ Cita creada: ${citaGuardada._id}`);
     
     res.status(201).json({
       message: '✅ Cliente temporal y cita creados exitosamente',
@@ -316,38 +276,26 @@ export const createClienteTemporal = async (req, res) => {
   } catch (error) {
     console.error('❌ Error en createClienteTemporal:', error);
     
-    // Manejar errores de duplicados de MongoDB
     if (error.code === 11000) {
       if (error.keyPattern?.email) {
-        return res.status(400).json({ 
-          message: 'Este correo electrónico ya está registrado. Use otro email.',
-          field: 'email'
-        });
+        return res.status(400).json({ message: 'Este correo electrónico ya está registrado', field: 'email' });
       }
       if (error.keyPattern?.cedula) {
-        return res.status(400).json({ 
-          message: 'Esta cédula ya está registrada. Verifique sus datos.',
-          field: 'cedula'
-        });
+        return res.status(400).json({ message: 'Esta cédula ya está registrada', field: 'cedula' });
       }
     }
     
-    // Error de validación de Mongoose
-    if (error.name === 'ValidationError') {
-      const mensajes = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        message: mensajes[0],
-        field: Object.keys(error.errors)[0]
-      });
-    }
-    
-    res.status(500).json({ 
-      message: 'Error interno del servidor. Intente nuevamente.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
+// Función auxiliar para calcular duración
+function calcularDuracion(horaInicio, horaFin) {
+  const [h1, m1] = horaInicio.split(':').map(Number);
+  const [h2, m2] = horaFin.split(':').map(Number);
+  const minutos = (h2 * 60 + m2) - (h1 * 60 + m1);
+  return minutos;
+}
 // ============================================
 // COMPLETAR REGISTRO DE CLIENTE TEMPORAL
 // ============================================
@@ -359,12 +307,11 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     console.log(`\n========== COMPLETAR REGISTRO ==========`);
     console.log(`📝 Cliente ID: ${id}`);
     
-    // Validar ID
+    // Validaciones básicas
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: 'ID de cliente no válido' });
     }
     
-    // Buscar cliente
     const cliente = await Owner.findById(id);
     if (!cliente) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -374,126 +321,64 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'Este cliente ya está registrado completamente' });
     }
     
-    // ============================================
-    // VALIDACIONES
-    // ============================================
+    // Validar campos requeridos
+    if (!email) return res.status(400).json({ message: 'El email es requerido', field: 'email' });
+    if (!validarEmail(email)) return res.status(400).json({ message: 'Email inválido', field: 'email' });
+    if (!cedula) return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
+    if (!validarCedula(cedula)) return res.status(400).json({ message: 'Cédula inválida (6-12 dígitos)', field: 'cedula' });
+    if (!lastname) return res.status(400).json({ message: 'El apellido es requerido', field: 'lastname' });
+    if (!direccion) return res.status(400).json({ message: 'La dirección es requerida', field: 'direccion' });
     
-    if (!email || email.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El correo electrónico es requerido',
-        field: 'email'
-      });
-    }
+    // Verificar unicidad
+    const emailExistente = await Owner.findOne({ email, _id: { $ne: id } });
+    if (emailExistente) return res.status(400).json({ message: 'Email ya registrado', field: 'email' });
     
-    if (!validarEmail(email)) {
-      return res.status(400).json({ 
-        message: 'Ingrese un correo electrónico válido',
-        field: 'email'
-      });
-    }
-    
-    if (!cedula || cedula.trim() === '') {
-      return res.status(400).json({ 
-        message: 'La cédula es requerida',
-        field: 'cedula'
-      });
-    }
-    
-    if (!validarCedula(cedula)) {
-      return res.status(400).json({ 
-        message: 'La cédula debe contener solo números (6-12 dígitos)',
-        field: 'cedula'
-      });
-    }
-    
-    if (!lastname || lastname.trim() === '') {
-      return res.status(400).json({ 
-        message: 'El apellido es requerido',
-        field: 'lastname'
-      });
-    }
-    
-    if (!direccion || direccion.trim() === '') {
-      return res.status(400).json({ 
-        message: 'La dirección es requerida',
-        field: 'direccion'
-      });
-    }
+    const cedulaExistente = await Owner.findOne({ cedula, _id: { $ne: id } });
+    if (cedulaExistente) return res.status(400).json({ message: 'Cédula ya registrada', field: 'cedula' });
     
     // ============================================
-    // VERIFICAR UNICIDAD
+    // 1. CREAR MASCOTA (Paciente / Pet)
     // ============================================
-    
-    // Verificar email único (excluyendo el cliente actual)
-    const emailExistente = await Owner.findOne({ 
-      email: email.toLowerCase().trim(), 
-      _id: { $ne: id }
-    });
-    
-    if (emailExistente) {
-      return res.status(400).json({ 
-        message: `El correo "${email}" ya está registrado por otro usuario`,
-        field: 'email'
-      });
-    }
-    
-    // Verificar cédula única (excluyendo el cliente actual)
-    const cedulaExistente = await Owner.findOne({ 
-      cedula: cedula.trim(), 
-      _id: { $ne: id }
-    });
-    
-    if (cedulaExistente) {
-      return res.status(400).json({ 
-        message: `La cédula "${cedula}" ya está registrada por otro usuario`,
-        field: 'cedula'
-      });
-    }
-    
-    // ============================================
-    // 1. CREAR MASCOTA (Paciente)
-    // ============================================
-    
-    // Obtener la primera cita temporal para los datos de la mascota
     const citaTemporal = cliente.citasTemporales?.[0];
     let mascotaId = null;
     
     if (citaTemporal && citaTemporal.pacienteTemporal) {
       const nuevaMascota = new Paciente({
-        nombre: citaTemporal.pacienteTemporal.nombre,
-        especie: citaTemporal.pacienteTemporal.especie,
-        ownerId: cliente._id,
-        edad: null,
-        sexo: null,
-        raza: null
+        name: citaTemporal.pacienteTemporal.nombre,
+        species: citaTemporal.pacienteTemporal.especie,
+        owner: cliente._id,
+        userId: cliente._id,
+        status: 'active'
+        // Otros campos opcionales se pueden agregar después
       });
       
       const mascotaGuardada = await nuevaMascota.save();
       mascotaId = mascotaGuardada._id;
-      console.log(`✅ Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
-      
-      // ============================================
-      // 2. ACTUALIZAR LA CITA REAL CON EL PACIENTE
-      // ============================================
-      if (citaTemporal.citaRealId) {
-        const citaReal = await Cita.findById(citaTemporal.citaRealId);
-        if (citaReal) {
-          citaReal.pacienteId = mascotaGuardada._id;
-          citaReal.estado = 'confirmada';
-          await citaReal.save();
-          console.log(`✅ Cita actualizada: ${citaReal._id} con pacienteId: ${mascotaGuardada._id}`);
-        } else {
-          console.log(`⚠️ No se encontró la cita real con ID: ${citaTemporal.citaRealId}`);
-        }
-      }
-    } else {
-      console.log('⚠️ No hay cita temporal o paciente temporal asociado');
+      console.log(`✅ Mascota creada: ${mascotaGuardada.name} (ID: ${mascotaGuardada._id})`);
     }
     
     // ============================================
-    // 3. ACTUALIZAR CLIENTE
+    // 2. ACTUALIZAR CITA REAL (Appointment)
     // ============================================
+    let citaActualizada = null;
     
+    if (citaTemporal && citaTemporal.citaRealId) {
+      const citaReal = await Cita.findById(citaTemporal.citaRealId);
+      if (citaReal) {
+        citaReal.pacienteId = mascotaId;
+        citaReal.pet = mascotaId;
+        citaReal.owner = cliente._id;
+        citaReal.estado = 'confirmada';
+        citaReal.status = 'scheduled';
+        await citaReal.save();
+        citaActualizada = citaReal;
+        console.log(`✅ Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
+      }
+    }
+    
+    // ============================================
+    // 3. COMPLETAR CLIENTE (Owner)
+    // ============================================
     cliente.lastname = lastname.trim();
     cliente.cedula = cedula.trim();
     cliente.direccion = direccion.trim();
@@ -503,7 +388,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       cliente.mascotaId = mascotaId;
     }
     
-    // Asignar contraseña por defecto si no tiene
+    // Asignar contraseña por defecto
     const DEFAULT_PASSWORD = "veterinaria123";
     let contrasenaAsignada = false;
     
@@ -515,8 +400,6 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
     await cliente.save();
     
-    console.log(`✅ Cliente completado: ${cliente.username}`);
-    
     // Enviar correo de bienvenida
     if (contrasenaAsignada && cliente.email) {
       try {
@@ -527,8 +410,10 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       }
     }
     
-    res.json({ 
-      message: contrasenaAsignada 
+    console.log(`✅ Cliente completado: ${cliente.username}`);
+    
+    res.json({
+      message: contrasenaAsignada
         ? '✅ Registro completado. Se ha enviado un correo con las credenciales de acceso.'
         : '✅ Registro completado exitosamente',
       cliente: {
@@ -545,18 +430,9 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en completarRegistroClienteTemporal:', error);
-    
-    if (error.name === 'ValidationError') {
-      const mensajes = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ message: mensajes[0] });
-    }
-    
-    res.status(500).json({ 
-      message: 'Error al completar el registro. Intente nuevamente.'
-    });
+    res.status(500).json({ message: error.message });
   }
 };
-
 // ============================================
 // ELIMINAR CLIENTE TEMPORAL
 // ============================================
