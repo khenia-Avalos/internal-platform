@@ -19,10 +19,19 @@ function ClienteTemporalDetallePage() {
   const [mostrarModalCompletar, setMostrarModalCompletar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
+    // Datos del cliente
     lastname: '',
     cedula: '',
     direccion: '',
-    email: ''
+    email: '',
+    // Datos de la mascota
+    raza: '',
+    edad: '',
+    sexo: '',
+    colorPelaje: '',
+    peso: '',
+    temperatura: '',
+    antecedentesMedicos: ''
   });
 
   // Función para mostrar fecha local CORREGIDA
@@ -45,6 +54,22 @@ function ClienteTemporalDetallePage() {
     return /^\d{6,12}$/.test(cedula);
   };
 
+  const validarPeso = (peso) => {
+    if (!peso) return true;
+    return /^\d+(\.\d{1,2})?$/.test(peso);
+  };
+
+  const validarTemperatura = (temp) => {
+    if (!temp) return true;
+    return /^\d+(\.\d{1,1})?$/.test(temp);
+  };
+
+  const validarEdad = (edad) => {
+    if (!edad) return true;
+    const num = parseInt(edad);
+    return !isNaN(num) && num >= 0 && num <= 50;
+  };
+
   const cargarDatos = async () => {
     setLoading(true);
     try {
@@ -55,6 +80,13 @@ function ClienteTemporalDetallePage() {
         cedula: clienteRes.data?.cedula || '',
         direccion: clienteRes.data?.direccion || '',
         email: clienteRes.data?.email || '',
+        raza: '',
+        edad: '',
+        sexo: '',
+        colorPelaje: '',
+        peso: '',
+        temperatura: '',
+        antecedentesMedicos: ''
       });
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -91,6 +123,10 @@ function ClienteTemporalDetallePage() {
     const nuevosErrores = [];
     const nuevosFieldErrors = {};
     
+    // ============================================
+    // VALIDACIONES DEL CLIENTE
+    // ============================================
+    
     // Validar apellido
     if (!formData.lastname || formData.lastname.trim() === '') {
       nuevosErrores.push('El apellido es requerido');
@@ -121,6 +157,41 @@ function ClienteTemporalDetallePage() {
       nuevosFieldErrors.email = 'Formato de email inválido';
     }
     
+    // ============================================
+    // VALIDACIONES DE LA MASCOTA
+    // ============================================
+    
+    // Validar raza (opcional)
+    if (formData.raza && formData.raza.length > 50) {
+      nuevosErrores.push('La raza no puede tener más de 50 caracteres');
+      nuevosFieldErrors.raza = 'Máximo 50 caracteres';
+    }
+    
+    // Validar edad
+    if (formData.edad && !validarEdad(formData.edad)) {
+      nuevosErrores.push('Ingrese una edad válida (0-50 años)');
+      nuevosFieldErrors.edad = 'Edad inválida (0-50 años)';
+    }
+    
+    // Validar sexo
+    const sexosValidos = ['macho', 'hembra', 'Macho', 'Hembra', 'M', 'H'];
+    if (formData.sexo && !sexosValidos.includes(formData.sexo)) {
+      nuevosErrores.push('El sexo debe ser Macho o Hembra');
+      nuevosFieldErrors.sexo = 'Seleccione Macho o Hembra';
+    }
+    
+    // Validar peso
+    if (formData.peso && !validarPeso(formData.peso)) {
+      nuevosErrores.push('Ingrese un peso válido (ejemplo: 8.5)');
+      nuevosFieldErrors.peso = 'Formato de peso inválido';
+    }
+    
+    // Validar temperatura
+    if (formData.temperatura && !validarTemperatura(formData.temperatura)) {
+      nuevosErrores.push('Ingrese una temperatura válida (ejemplo: 38.5)');
+      nuevosFieldErrors.temperatura = 'Formato de temperatura inválido';
+    }
+    
     if (nuevosErrores.length > 0) {
       setErrors(nuevosErrores);
       setFieldErrors(nuevosFieldErrors);
@@ -140,15 +211,24 @@ function ClienteTemporalDetallePage() {
     
     try {
       const dataToSend = {
+        // Datos del cliente
         lastname: formData.lastname.trim(),
         cedula: formData.cedula.trim(),
         direccion: formData.direccion.trim(),
-        email: formData.email.toLowerCase().trim()
+        email: formData.email.toLowerCase().trim(),
+        // Datos de la mascota
+        raza: formData.raza || '',
+        edad: formData.edad ? parseInt(formData.edad) : null,
+        sexo: formData.sexo || '',
+        colorPelaje: formData.colorPelaje || '',
+        peso: formData.peso ? parseFloat(formData.peso) : null,
+        temperatura: formData.temperatura ? parseFloat(formData.temperatura) : null,
+        antecedentesMedicos: formData.antecedentesMedicos || ''
       };
       
       await completarRegistroClienteTemporalRequest(id, dataToSend);
       
-      toast.success(" ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
+      toast.success("✅ ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
         duration: 5000,
         position: "top-right"
       });
@@ -166,15 +246,15 @@ function ClienteTemporalDetallePage() {
         if (field) {
           setFieldErrors({ [field]: mensaje });
           setErrors([mensaje]);
-          toast.error(` ${mensaje}`);
+          toast.error(`❌ ${mensaje}`);
         } else {
           setErrors([mensaje]);
-          toast.error(` ${mensaje}`);
+          toast.error(`❌ ${mensaje}`);
         }
       } else {
         const mensajeError = 'Error al completar registro. Intente nuevamente.';
         setErrors([mensajeError]);
-        toast.error(` ${mensajeError}`);
+        toast.error(`❌ ${mensajeError}`);
       }
     } finally {
       setSubmitting(false);
@@ -222,7 +302,7 @@ function ClienteTemporalDetallePage() {
               { label: "Cédula", value: cliente.cedula || 'No registrada' },
               { label: "Teléfono", value: cliente.phoneNumber },
               { label: "Email", value: cliente.email || 'No registrado' },
-              { label: "Estado", value: cliente.estado === 'temporal' ? ' Pendiente de registro' : ' Registro completado' },
+              { label: "Estado", value: cliente.estado === 'temporal' ? '⏳ Pendiente de registro' : '✅ Registro completado' },
               { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
             ]}
           />
@@ -281,7 +361,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* Modal con el MISMO diseño que FormularioClienteTemporal */}
+      {/* Modal con todos los campos para completar registro */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
@@ -292,10 +372,10 @@ function ClienteTemporalDetallePage() {
         title="Completar Registro de Cliente"
         size="lg"
       >
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmitCompletar(); }} className="space-y-4 bg-white p-6 rounded-lg">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmitCompletar(); }} className="space-y-4 bg-white p-6 rounded-lg max-h-[70vh] overflow-y-auto">
           <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
             <p className="text-sm text-cyan-600">
-               Complete los datos faltantes para que el cliente pueda iniciar sesión en el sistema, si los campos ya estan lleno solo dar en completar registro.
+              📝 Complete los datos faltantes. Los campos marcados con * son obligatorios.
             </p>
           </div>
 
@@ -303,10 +383,17 @@ function ClienteTemporalDetallePage() {
           {errors.length > 0 && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
               {errors.map((err, i) => (
-                <p key={i} className="text-sm"> {err}</p>
+                <p key={i} className="text-sm">❌ {err}</p>
               ))}
             </div>
           )}
+
+          {/* ============================================ */}
+          {/* SECCIÓN: DATOS DEL CLIENTE */}
+          {/* ============================================ */}
+          <div className="border-b border-gray-200 pb-2 mb-2">
+            <h3 className="text-md font-semibold text-gray-700">📋 Datos del Cliente</h3>
+          </div>
 
           {/* Apellido */}
           <div>
@@ -374,6 +461,138 @@ function ClienteTemporalDetallePage() {
             <p className="text-xs text-gray-400 mt-1">
               Se enviará un correo con las credenciales de acceso
             </p>
+          </div>
+
+          {/* ============================================ */}
+          {/* SECCIÓN: DATOS DE LA MASCOTA */}
+          {/* ============================================ */}
+          <div className="border-b border-gray-200 pb-2 mt-4 mb-2">
+            <h3 className="text-md font-semibold text-gray-700">🐾 Datos de la Mascota</h3>
+            <p className="text-xs text-gray-400">Completa la información de tu mascota</p>
+          </div>
+
+          {/* Raza */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Raza
+              {fieldErrors.raza && <span className="text-red-500 ml-2 text-xs">{fieldErrors.raza}</span>}
+            </label>
+            <input
+              type="text"
+              name="raza"
+              value={formData.raza || ''}
+              onChange={(e) => handleFormChange('raza', e.target.value)}
+              className={getInputClass('raza')}
+              placeholder="Ej: Golden Retriever, Pastor Alemán"
+            />
+          </div>
+
+          {/* Edad */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Edad (años)
+              {fieldErrors.edad && <span className="text-red-500 ml-2 text-xs">{fieldErrors.edad}</span>}
+            </label>
+            <input
+              type="number"
+              name="edad"
+              value={formData.edad || ''}
+              onChange={(e) => handleFormChange('edad', e.target.value)}
+              className={getInputClass('edad')}
+              placeholder="Ej: 3"
+              min="0"
+              max="50"
+              step="1"
+            />
+          </div>
+
+          {/* Sexo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sexo
+              {fieldErrors.sexo && <span className="text-red-500 ml-2 text-xs">{fieldErrors.sexo}</span>}
+            </label>
+            <select
+              name="sexo"
+              value={formData.sexo || ''}
+              onChange={(e) => handleFormChange('sexo', e.target.value)}
+              className={getInputClass('sexo')}
+            >
+              <option value="">Seleccione el sexo</option>
+              <option value="macho">Macho</option>
+              <option value="hembra">Hembra</option>
+            </select>
+          </div>
+
+          {/* Color de Pelaje */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Color de Pelaje
+              {fieldErrors.colorPelaje && <span className="text-red-500 ml-2 text-xs">{fieldErrors.colorPelaje}</span>}
+            </label>
+            <input
+              type="text"
+              name="colorPelaje"
+              value={formData.colorPelaje || ''}
+              onChange={(e) => handleFormChange('colorPelaje', e.target.value)}
+              className={getInputClass('colorPelaje')}
+              placeholder="Ej: Blanco, Negro, Café, Manchado"
+            />
+          </div>
+
+          {/* Peso */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Peso (kg)
+              {fieldErrors.peso && <span className="text-red-500 ml-2 text-xs">{fieldErrors.peso}</span>}
+            </label>
+            <input
+              type="number"
+              name="peso"
+              value={formData.peso || ''}
+              onChange={(e) => handleFormChange('peso', e.target.value)}
+              className={getInputClass('peso')}
+              placeholder="Ej: 8.5"
+              step="0.1"
+              min="0"
+              max="100"
+            />
+          </div>
+
+          {/* Temperatura */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Temperatura (°C)
+              {fieldErrors.temperatura && <span className="text-red-500 ml-2 text-xs">{fieldErrors.temperatura}</span>}
+            </label>
+            <input
+              type="number"
+              name="temperatura"
+              value={formData.temperatura || ''}
+              onChange={(e) => handleFormChange('temperatura', e.target.value)}
+              className={getInputClass('temperatura')}
+              placeholder="Ej: 38.5"
+              step="0.1"
+              min="35"
+              max="42"
+            />
+          </div>
+
+          {/* Antecedentes Médicos */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Antecedentes Médicos
+              {fieldErrors.antecedentesMedicos && <span className="text-red-500 ml-2 text-xs">{fieldErrors.antecedentesMedicos}</span>}
+            </label>
+            <textarea
+              name="antecedentesMedicos"
+              value={formData.antecedentesMedicos || ''}
+              onChange={(e) => handleFormChange('antecedentesMedicos', e.target.value)}
+              rows={3}
+              className={getInputClass('antecedentesMedicos')}
+              placeholder="Ej: Alergias, enfermedades previas, cirugías, medicamentos actuales..."
+            />
+            <p className="text-xs text-gray-400 mt-1">Información relevante sobre la salud de tu mascota</p>
           </div>
 
           {/* Botones */}
