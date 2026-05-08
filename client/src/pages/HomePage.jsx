@@ -43,7 +43,7 @@ function HomePage() {
   // Función para manejar el éxito del formulario
   const handleFormSuccess = () => {
     setMostrarFormulario(false);
-    toast.success("✅ Cita agendada exitosamente", {
+    toast.success(" Cita agendada exitosamente", {
       duration: 5000,
       position: "top-right"
     });
@@ -58,10 +58,10 @@ function HomePage() {
         {/* Encabezado */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            AgendaPro+
-          </h1>
+Veterinaria El Exito         
+ </h1>
           <p className="text-lg text-gray-600 mb-8">
-            Agenda tu cita de manera fácil y rápida
+            Agenda tu cita con nosotros de manera fácil y rápida
           </p>
           
           {/* Botón para mostrar/ocultar el formulario */}
