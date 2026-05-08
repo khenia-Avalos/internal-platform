@@ -70,6 +70,10 @@ clienteTemporalId: {
   type: mongoose.Schema.Types.ObjectId,
   ref: 'Owner',
   default: null
+},
+pacienteTemporal: {
+  nombre: { type: String, default: null },
+  especie: { type: String, default: null }
 }
 }, {
   timestamps: true

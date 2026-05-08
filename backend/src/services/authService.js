@@ -69,38 +69,18 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
   const horaInicio = cita.horaInicio;
   const horaFin = cita.horaFin;
   
-  // Obtener nombre de la mascota (temporal o real)
+  // ✅ Obtener nombre de la mascota (temporal o real)
   let nombreMascota = 'No especificada';
-  let especieMascota = '';
-  
   if (cita.pacienteId?.nombre) {
     nombreMascota = cita.pacienteId.nombre;
-    especieMascota = cita.pacienteId.especie || '';
   } else if (cita.pacienteTemporal?.nombre) {
     nombreMascota = cita.pacienteTemporal.nombre;
-    especieMascota = cita.pacienteTemporal.especie || '';
-  } else if (cita.pacienteId?.name) {
-    nombreMascota = cita.pacienteId.name;
   }
-  
-  // Construir texto de mascota
-  const textoMascota = especieMascota 
-    ? `${nombreMascota} (${especieMascota})`
-    : nombreMascota;
   
   // URLs con token para confirmar y cancelar
   const confirmarUrl = `${FRONTEND_URL}/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const cancelarUrl = `${FRONTEND_URL}/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const whatsappUrl = `https://wa.me/50670932898?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}%20a%20las%20${horaInicio}`;
-  
-  // Si es cita temporal, mostrar advertencia
-  const advertenciaTemporal = cita.esCitaTemporal ? `
-    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; margin: 15px 0; border-radius: 5px;">
-      <p style="color: #856404; margin: 0; font-size: 13px;">
-         Esta cita fue agendada de forma rápida. Los datos de la mascota se completarán cuando termines tu registro.
-      </p>
-    </div>
-  ` : '';
   
   return `
 <!DOCTYPE html>
@@ -132,17 +112,14 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
                 <p><strong> Fecha:</strong> ${fecha}</p>
                 <p><strong> Horario:</strong> ${horaInicio} - ${horaFin}</p>
                 <p><strong> Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
-                <p><strong> Mascota:</strong> ${textoMascota}</p>
+                <p><strong> Mascota:</strong> ${nombreMascota}</p>
                 <p><strong> Motivo:</strong> ${cita.motivo || 'Consulta general'}</p>
-                <p><strong> Tipo:</strong> ${cita.tipoCita === 'consulta' ? 'Consulta médica' : 'Estética'}</p>
             </div>
-            
-            ${advertenciaTemporal}
             
             <div class="actions">
                 <a href="${confirmarUrl}" class="button"> Confirmar Cita</a>
                 <a href="${cancelarUrl}" class="button button-cancel"> Cancelar Cita</a>
-                <a href="${whatsappUrl}" class="button button-wa" target="_blank">📱 Reagendar por WhatsApp</a>
+                <a href="${whatsappUrl}" class="button button-wa" target="_blank"> Reagendar por WhatsApp</a>
             </div>
             
             <p><strong>Importante:</strong> Si necesitas modificar tu cita, puedes usar los botones de arriba.</p>
@@ -159,50 +136,30 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
 getAppointmentTextTemplate(nombreCliente, cita) {
   const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
   
-  // Obtener nombre de la mascota (temporal o real)
+  // ✅ Obtener nombre de la mascota (temporal o real)
   let nombreMascota = 'No especificada';
-  let especieMascota = '';
-  
   if (cita.pacienteId?.nombre) {
     nombreMascota = cita.pacienteId.nombre;
-    especieMascota = cita.pacienteId.especie || '';
   } else if (cita.pacienteTemporal?.nombre) {
     nombreMascota = cita.pacienteTemporal.nombre;
-    especieMascota = cita.pacienteTemporal.especie || '';
-  } else if (cita.pacienteId?.name) {
-    nombreMascota = cita.pacienteId.name;
   }
   
-  const textoMascota = especieMascota 
-    ? `${nombreMascota} (${especieMascota})`
-    : nombreMascota;
-  
-  const textoAdvertencia = cita.esCitaTemporal ? `
- Nota: Esta cita fue agendada de forma rápida. Recuerda completar el registro de tu mascota en el sistema.
-` : '';
-  
-  return ` CONFIRMACIÓN DE CITA
+  return `CONFIRMACIÓN DE CITA
 
 Hola ${nombreCliente},
 
 Tu cita ha sido agendada exitosamente.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- Fecha: ${fecha}
- Horario: ${cita.horaInicio} - ${cita.horaFin}
- Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
- Mascota: ${textoMascota}
- Motivo: ${cita.motivo || 'Consulta general'}
- Tipo: ${cita.tipoCita === 'consulta' ? 'Consulta médica' : 'Estética'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fecha: ${fecha}
+Horario: ${cita.horaInicio} - ${cita.horaFin}
+Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
+Mascota: ${nombreMascota}
+Motivo: ${cita.motivo || 'Consulta general'}
 
-${textoAdvertencia}
-🔗 Para confirmar o cancelar tu cita, visita tu panel en:
-${FRONTEND_URL}/citas
+Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
 
 © ${new Date().getFullYear()} Clínica Veterinaria.`;
 }
-
 
 
 

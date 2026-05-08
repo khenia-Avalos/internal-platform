@@ -242,7 +242,11 @@ export const createClienteTemporal = async (req, res) => {
       veterinarian: doctorId,
       duration: calcularDuracion(horaInicio, horaFin),
       esCitaTemporal: true,
-      clienteTemporalId: nuevoCliente._id
+      clienteTemporalId: nuevoCliente._id,
+        pacienteTemporal: {
+    nombre: nombreMascota.trim(),
+    especie: especie
+  }
     });
     
     const citaGuardada = await nuevaCita.save();
