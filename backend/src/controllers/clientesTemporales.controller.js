@@ -306,7 +306,10 @@ function calcularDuracion(horaInicio, horaFin) {
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
-    const { lastname, cedula, direccion, email } = req.body;
+    const { 
+      lastname, cedula, direccion, email,
+      raza, edad, sexo, colorPelaje, peso, temperatura, antecedentesMedicos 
+    } = req.body;
     
     console.log(`\n========== COMPLETAR REGISTRO ==========`);
     console.log(`📝 Cliente ID: ${id}`);
@@ -325,7 +328,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'Este cliente ya está registrado completamente' });
     }
     
-    // Validar campos requeridos
+    // Validar campos requeridos del cliente
     if (!email) return res.status(400).json({ message: 'El email es requerido', field: 'email' });
     if (!validarEmail(email)) return res.status(400).json({ message: 'Email inválido', field: 'email' });
     if (!cedula) return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
@@ -341,42 +344,56 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     if (cedulaExistente) return res.status(400).json({ message: 'Cédula ya registrada', field: 'cedula' });
     
     // ============================================
-    // 1. CREAR MASCOTA (Paciente / Pet)
+    // 1. CREAR MASCOTA (Paciente) - CORREGIDO
     // ============================================
     const citaTemporal = cliente.citasTemporales?.[0];
     let mascotaId = null;
     
     if (citaTemporal && citaTemporal.pacienteTemporal) {
+      // Construir el objeto peso según tu modelo
+      let pesoObj = null;
+      if (peso) {
+        pesoObj = {
+          valor: parseFloat(peso),
+          unidad: 'kg'
+        };
+      }
+      
       const nuevaMascota = new Paciente({
-        name: citaTemporal.pacienteTemporal.nombre,
-        species: citaTemporal.pacienteTemporal.especie,
-        owner: cliente._id,
-        userId: cliente._id,
-        status: 'active'
-        // Otros campos opcionales se pueden agregar después
+        // Campos requeridos
+        nombre: citaTemporal.pacienteTemporal.nombre,
+        especie: citaTemporal.pacienteTemporal.especie,
+        ownerId: cliente._id,
+        // Campos opcionales
+        raza: raza || '',
+        edad: edad ? parseInt(edad) : null,
+        sexo: sexo || '',
+        colorPelaje: colorPelaje || '',
+        peso: pesoObj,
+        temperatura: temperatura ? parseFloat(temperatura) : null,
+        antecedentesMedicos: antecedentesMedicos || ''
       });
       
       const mascotaGuardada = await nuevaMascota.save();
       mascotaId = mascotaGuardada._id;
-      console.log(`✅ Mascota creada: ${mascotaGuardada.name} (ID: ${mascotaGuardada._id})`);
+      console.log(`✅ Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
+    } else {
+      return res.status(400).json({ 
+        message: 'No se encontró información de la mascota temporal',
+        field: 'nombreMascota'
+      });
     }
     
     // ============================================
     // 2. ACTUALIZAR CITA REAL (Appointment)
     // ============================================
-    let citaActualizada = null;
-    
     if (citaTemporal && citaTemporal.citaRealId) {
       const citaReal = await Cita.findById(citaTemporal.citaRealId);
       if (citaReal) {
         citaReal.pacienteId = mascotaId;
-        citaReal.pet = mascotaId;
-        citaReal.owner = cliente._id;
         citaReal.estado = 'confirmada';
-            citaReal.esCitaTemporal = false; 
-        citaReal.status = 'scheduled';
+        citaReal.esCitaTemporal = false;
         await citaReal.save();
-        citaActualizada = citaReal;
         console.log(`✅ Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
       }
     }
