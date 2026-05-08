@@ -69,7 +69,6 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
   const horaInicio = cita.horaInicio;
   const horaFin = cita.horaFin;
   
-  // ✅ Obtener nombre de la mascota (temporal o real)
   let nombreMascota = 'No especificada';
   if (cita.pacienteId?.nombre) {
     nombreMascota = cita.pacienteId.nombre;
@@ -77,9 +76,10 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
     nombreMascota = cita.pacienteTemporal.nombre;
   }
   
-  // URLs con token para confirmar y cancelar
-  const confirmarUrl = `${FRONTEND_URL}/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
-  const cancelarUrl = `${FRONTEND_URL}/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+  // ✅ CORREGIDO: Apuntar directamente al BACKEND
+  const BACKEND_URL = "https://el-exito-internal-platform.onrender.com/api";
+  const confirmarUrl = `${BACKEND_URL}/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+  const cancelarUrl = `${BACKEND_URL}/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const whatsappUrl = `https://wa.me/50670932898?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}%20a%20las%20${horaInicio}`;
   
   return `
