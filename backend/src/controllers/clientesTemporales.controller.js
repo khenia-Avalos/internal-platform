@@ -96,81 +96,245 @@ export const getClienteTemporalById = async (req, res) => {
   }
 };
 
-// ============================================
-// CREAR CLIENTE TEMPORAL
-// ============================================
-// ============================================
-// 2. CREAR CITA REAL (Appointment)
-// ============================================
 
-// Convertir fecha de DD/MM/YYYY a YYYY-MM-DD si es necesario
-let fechaFormateada = fechaCita;
-if (fechaCita.includes('/')) {
-  const [dia, mes, año] = fechaCita.split('/');
-  fechaFormateada = `${año}-${mes}-${dia}`;
-}
-
-const nuevaCita = new Cita({
-  doctorId: doctorId,
-  pacienteId: null,  // Se asignará al completar registro
-  fecha: fechaFormateada,
-  horaInicio: horaInicio,
-  horaFin: horaFin,
-  motivo: sintomas || '',
-  notas: notas || '',
-  tipoCita: tipoCita || 'consulta',
-  estado: 'pendiente',
-  title: tipoCita === 'consulta' ? 'Consulta médica' : 'Estética',
-  owner: nuevoCliente._id,
-  veterinarian: doctorId,
-  duration: calcularDuracion(horaInicio, horaFin),
-  esCitaTemporal: true,
-  clienteTemporalId: nuevoCliente._id
-});
-
-const citaGuardada = await nuevaCita.save();
-
-// ============================================
-// 3. ENVIAR CORREO DE CONFIRMACIÓN DE CITA
-// ============================================
-
-// Volver a buscar la cita con populate para tener los datos completos
-const citaConDatos = await Cita.findById(citaGuardada._id)
-  .populate('doctorId', 'username lastname especialidad')
-  .populate({
-    path: 'pacienteId',
-    populate: {
-      path: 'ownerId',
-      select: 'username email'
-    }
-  });
-
-// Generar token de confirmación
-const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
-citaGuardada.tokenConfirmacion = tokenConfirmacion;
-await citaGuardada.save();
-
-// Enviar correo de confirmación
-if (email) {
-  console.log("📧 Intentando enviar correo de confirmación a:", email);
+export const createClienteTemporal = async (req, res) => {
   try {
-    await sendAppointmentConfirmationEmail(
-      email,
-      username || "Cliente",
-      citaConDatos
-    );
-    console.log("✅ Correo de confirmación enviado exitosamente a:", email);
-  } catch (emailError) {
-    console.error("❌ Error enviando correo de confirmación:", emailError.message);
+    console.log('\n========== CREATE CLIENTE TEMPORAL ==========');
+    
+    const { 
+      username, 
+      lastname, 
+      phoneNumber, 
+      email, 
+      cedula,
+      nombreMascota, 
+      especie, 
+      fechaCita, 
+      horaInicio, 
+      horaFin, 
+      doctorId, 
+      tipoCita, 
+      sintomas, 
+      tiempoSintomas, 
+      notas
+    } = req.body;
+    
+    // ============================================
+    // VALIDACIONES
+    // ============================================
+    
+    if (!username || username.trim() === '') {
+      return res.status(400).json({ message: 'El nombre del dueño es requerido', field: 'username' });
+    }
+    
+    if (!email || email.trim() === '') {
+      return res.status(400).json({ message: 'El correo electrónico es requerido', field: 'email' });
+    }
+    
+    if (!validarEmail(email)) {
+      return res.status(400).json({ message: 'Ingrese un correo electrónico válido', field: 'email' });
+    }
+    
+    if (!cedula || cedula.trim() === '') {
+      return res.status(400).json({ message: 'La cédula es requerida', field: 'cedula' });
+    }
+    
+    if (!validarCedula(cedula)) {
+      return res.status(400).json({ message: 'La cédula debe contener solo números (6-12 dígitos)', field: 'cedula' });
+    }
+    
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      return res.status(400).json({ message: 'El número de teléfono es requerido', field: 'phoneNumber' });
+    }
+    
+    if (!validarTelefono(phoneNumber)) {
+      return res.status(400).json({ message: 'El teléfono debe incluir código de país', field: 'phoneNumber' });
+    }
+    
+    if (!nombreMascota || nombreMascota.trim() === '') {
+      return res.status(400).json({ message: 'El nombre de la mascota es requerido', field: 'nombreMascota' });
+    }
+    
+    if (!especie || especie.trim() === '') {
+      return res.status(400).json({ message: 'La especie de la mascota es requerida', field: 'especie' });
+    }
+    
+    if (!doctorId) {
+      return res.status(400).json({ message: 'Debe seleccionar un veterinario', field: 'doctorId' });
+    }
+    
+    if (!fechaCita) {
+      return res.status(400).json({ message: 'La fecha de la cita es requerida', field: 'fechaCita' });
+    }
+    
+    if (!horaInicio || !horaFin) {
+      return res.status(400).json({ message: 'Debe seleccionar un horario disponible', field: 'horario' });
+    }
+    
+    // ============================================
+    // VERIFICAR UNICIDAD
+    // ============================================
+    
+    const emailExistente = await Owner.findOne({ email: email.toLowerCase().trim() });
+    if (emailExistente) {
+      return res.status(400).json({ message: `El correo "${email}" ya está registrado`, field: 'email' });
+    }
+    
+    const cedulaExistente = await Owner.findOne({ cedula: cedula.trim() });
+    if (cedulaExistente) {
+      return res.status(400).json({ message: `La cédula "${cedula}" ya está registrada`, field: 'cedula' });
+    }
+    
+    // ============================================
+    // 1. CREAR CLIENTE TEMPORAL (Owner)
+    // ============================================
+    
+    const nuevoCliente = new Owner({
+      username: username.trim(),
+      lastname: lastname || '',
+      phoneNumber: phoneNumber.trim(),
+      email: email.toLowerCase().trim(),
+      cedula: cedula.trim(),
+      estado: 'temporal',
+      citasTemporales: [{
+        fecha: fechaCita,
+        horaInicio,
+        horaFin,
+        notas: notas || '',
+        doctorId: doctorId || null,
+        tipoCita: tipoCita || 'consulta',
+        sintomas: sintomas || '',
+        tiempoSintomas: tiempoSintomas || '',
+        pacienteTemporal: {
+          nombre: nombreMascota.trim(),
+          especie: especie
+        },
+        creadaEn: new Date()
+      }]
+    });
+    
+    await nuevoCliente.save();
+    
+    // ============================================
+    // 2. CREAR CITA REAL (Appointment)
+    // ============================================
+    
+    // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD si es necesario
+    let fechaFormateada = fechaCita;
+    if (fechaCita.includes('/')) {
+      const [dia, mes, año] = fechaCita.split('/');
+      fechaFormateada = `${año}-${mes}-${dia}`;
+    }
+    
+    const nuevaCita = new Cita({
+      doctorId: doctorId,
+      pacienteId: null,
+      fecha: fechaFormateada,
+      horaInicio: horaInicio,
+      horaFin: horaFin,
+      motivo: sintomas || '',
+      notas: notas || '',
+      tipoCita: tipoCita || 'consulta',
+      estado: 'pendiente',
+      title: tipoCita === 'consulta' ? 'Consulta médica' : 'Estética',
+      owner: nuevoCliente._id,
+      veterinarian: doctorId,
+      duration: calcularDuracion(horaInicio, horaFin),
+      esCitaTemporal: true,
+      clienteTemporalId: nuevoCliente._id
+    });
+    
+    const citaGuardada = await nuevaCita.save();
+    console.log(`✅ Cita creada: ${citaGuardada._id}`);
+    
+    // ============================================
+    // 3. ENVIAR CORREO DE CONFIRMACIÓN DE CITA
+    // ============================================
+    
+    // Volver a buscar la cita con populate para tener los datos completos
+    const citaConDatos = await Cita.findById(citaGuardada._id)
+      .populate('doctorId', 'username lastname especialidad')
+      .populate({
+        path: 'pacienteId',
+        populate: {
+          path: 'ownerId',
+          select: 'username email'
+        }
+      });
+    
+    // Generar token de confirmación
+    const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
+    citaGuardada.tokenConfirmacion = tokenConfirmacion;
+    await citaGuardada.save();
+    
+    // Enviar correo de confirmación de cita
+    if (email) {
+      console.log("📧 Intentando enviar correo de confirmación a:", email);
+      try {
+        await sendAppointmentConfirmationEmail(
+          email,
+          username || "Cliente",
+          citaConDatos
+        );
+        console.log("✅ Correo de confirmación enviado exitosamente a:", email);
+      } catch (emailError) {
+        console.error("❌ Error enviando correo de confirmación:", emailError.message);
+      }
+    }
+    
+    // ============================================
+    // 4. GUARDAR REFERENCIA DE LA CITA EN EL CLIENTE TEMPORAL
+    // ============================================
+    
+    nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;
+    await nuevoCliente.save();
+    
+    console.log(`✅ Cliente temporal creado: ${nuevoCliente.username}`);
+    
+    // ============================================
+    // RESPUESTA
+    // ============================================
+    
+    res.status(201).json({
+      message: '✅ Cliente temporal y cita creados exitosamente. Se ha enviado un correo de confirmación.',
+      cliente: {
+        _id: nuevoCliente._id,
+        username: nuevoCliente.username,
+        email: nuevoCliente.email,
+        cedula: nuevoCliente.cedula,
+        estado: nuevoCliente.estado
+      },
+      cita: {
+        _id: citaGuardada._id,
+        fecha: citaGuardada.fecha,
+        horaInicio: citaGuardada.horaInicio,
+        horaFin: citaGuardada.horaFin
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en createClienteTemporal:', error);
+    
+    if (error.code === 11000) {
+      if (error.keyPattern?.email) {
+        return res.status(400).json({ message: 'Este correo electrónico ya está registrado', field: 'email' });
+      }
+      if (error.keyPattern?.cedula) {
+        return res.status(400).json({ message: 'Esta cédula ya está registrada', field: 'cedula' });
+      }
+    }
+    
+    res.status(500).json({ message: error.message });
   }
+};
+
+// Función auxiliar para calcular duración
+function calcularDuracion(horaInicio, horaFin) {
+  const [h1, m1] = horaInicio.split(':').map(Number);
+  const [h2, m2] = horaFin.split(':').map(Number);
+  const minutos = (h2 * 60 + m2) - (h1 * 60 + m1);
+  return minutos;
 }
-
-// Guardar referencia de la cita en el cliente temporal
-nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;
-await nuevoCliente.save();
-
-console.log(`✅ Cliente temporal creado: ${nuevoCliente.username}`);
-console.log(`✅ Cita creada: ${citaGuardada._id}`);
 
 // Función auxiliar para calcular duración
 function calcularDuracion(horaInicio, horaFin) {
