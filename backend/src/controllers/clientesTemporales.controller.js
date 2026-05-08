@@ -244,7 +244,10 @@ export const createClienteTemporal = async (req, res) => {
       owner: nuevoCliente._id,
       veterinarian: doctorId,
       userId: doctorId,
-      duration: calcularDuracion(horaInicio, horaFin)
+      owner: nuevoCliente._id,        // ← AGREGAR: referencia al dueño
+  veterinarian: doctorId,  
+      duration: calcularDuracion(horaInicio, horaFin),
+        esCitaTemporal: true 
     });
     
     const citaGuardada = await nuevaCita.save();
@@ -369,6 +372,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
         citaReal.pet = mascotaId;
         citaReal.owner = cliente._id;
         citaReal.estado = 'confirmada';
+            citaReal.esCitaTemporal = false; 
         citaReal.status = 'scheduled';
         await citaReal.save();
         citaActualizada = citaReal;

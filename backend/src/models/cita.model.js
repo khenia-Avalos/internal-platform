@@ -60,6 +60,11 @@ const citaSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+   esCitaTemporal: {
+    type: Boolean,
+    default: false,
+    description: 'True = cita de cliente temporal, False = cita de cliente registrado'
+  },
   // Para rastrear la cita temporal
 clienteTemporalId: {
   type: mongoose.Schema.Types.ObjectId,

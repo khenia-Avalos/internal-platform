@@ -343,9 +343,11 @@ export const getCitaById = async (req, res) => {
         path: 'pacienteId',
         populate: {
           path: 'ownerId',
-          select: 'username email'
+          select: 'username email phoneNumber'
         }
-      });
+      })
+      .populate('owner', 'username email phoneNumber')  // ← AGREGADO: para cliente temporal
+      .populate('clienteTemporalId', 'username email estado');  // ← AGREGADO
     
     console.log("🔍 Cita encontrada:", JSON.stringify(cita, null, 2));
     
