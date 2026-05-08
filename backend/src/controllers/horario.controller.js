@@ -130,34 +130,40 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     }
     
     // Validar que el doctor existe
+    const User = await import('../models/user.model.js').then(m => m.default);
     const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
     if (!doctor) {
       console.log('❌ Doctor no encontrado');
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
-    // Obtener el día de la semana
-    const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    // ✅ Obtener el NÚMERO del día (0 = domingo, 1 = lunes, ..., 6 = sábado)
     const fechaObj = new Date(fecha);
-    const diaSemana = diasSemana[fechaObj.getDay()];
+    const numeroDia = fechaObj.getDay(); // ← Esto devuelve 0, 1, 2, 3, 4, 5, 6
     
-    console.log(`📝 Día de la semana: ${diaSemana}`);
+    // Array para referencia (solo para logs)
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const nombreDia = diasSemana[numeroDia];
     
-    // Buscar horario del doctor para ese día
+    console.log(`📝 Día: ${nombreDia} (número: ${numeroDia})`);
+    
+    // ✅ Buscar horario usando el NÚMERO del día
+    const Horario = await import('../models/horario.model.js').then(m => m.default);
     const horario = await Horario.findOne({ 
       doctorId: doctorId, 
-      dia: diaSemana,
+      dia: numeroDia,  // ← Ahora enviamos un número, no un string
       activo: true
     });
     
     if (!horario) {
-      console.log(`⚠️ No hay horario configurado para ${diaSemana}`);
+      console.log(`⚠️ No hay horario configurado para ${nombreDia}`);
       return res.json([]);
     }
     
     console.log(`📝 Horario encontrado: ${horario.horaInicio} - ${horario.horaFin}, intervalo: ${horario.intervalo} min`);
     
     // Obtener citas ya agendadas para ese día
+    const Cita = await import('../models/cita.model.js').then(m => m.default);
     const citas = await Cita.find({ 
       doctorId: doctorId, 
       fecha: fecha,
@@ -175,18 +181,15 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     let currentMinutes = horaInicio * 60 + minInicio;
     const finMinutes = horaFin * 60 + minFin;
     
+    // Crear Set de horarios ocupados para búsqueda más eficiente
+    const horariosOcupados = new Set(citas.map(cita => cita.horaInicio));
+    
     while (currentMinutes + intervaloMinutos <= finMinutes) {
       const inicio = `${Math.floor(currentMinutes / 60).toString().padStart(2, '0')}:${(currentMinutes % 60).toString().padStart(2, '0')}`;
       const fin = `${Math.floor((currentMinutes + intervaloMinutos) / 60).toString().padStart(2, '0')}:${((currentMinutes + intervaloMinutos) % 60).toString().padStart(2, '0')}`;
       
-      // Verificar si el horario está ocupado
-      const ocupado = citas.some(cita => cita.horaInicio === inicio);
-      
-      if (!ocupado) {
-        horariosDisponibles.push({
-          inicio,
-          fin
-        });
+      if (!horariosOcupados.has(inicio)) {
+        horariosDisponibles.push({ inicio, fin });
       }
       
       currentMinutes += intervaloMinutos;
