@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import Owner from '../models/owner.model.js';
 import Cita from '../models/cita.model.js';
-import Paciente from '../models/paciente.model.js';
+import Paciente from '../models/pacientes.model.js';
 import { sendWelcomeEmail } from '../services/authService.js';
 
 
