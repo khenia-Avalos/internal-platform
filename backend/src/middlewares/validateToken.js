@@ -9,7 +9,9 @@ const verifyAsync = promisify(jwt.verify);
 const PUBLIC_PATHS = [
   '/api/public/doctores',
   '/api/public/horarios',
-  '/api/clientes-temporales'
+  '/api/clientes-temporales',
+  '/api/confirmar-cita',
+  '/api/cancelar-cita',
 ];
 
 export const validateToken = async (req, res, next) => {
