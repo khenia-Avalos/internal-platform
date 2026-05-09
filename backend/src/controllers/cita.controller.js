@@ -7,6 +7,8 @@ import Pausa from '../models/pausa.model.js';
 import { sendAppointmentConfirmationEmail } from '../services/authService.js';
 import { createAccessToken } from '../libs/jwt.js';
 import { FRONTEND_URL } from '../config.js';
+import { renderizarPagina } from '../utils/htmlRenderer.js';
+
 
 import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
@@ -373,146 +375,80 @@ export const confirmarCitaConToken = async (req, res) => {
     const { token } = req.query;
     
     // Verificar el token
-    let decoded;
     try {
-      decoded = jwt.verify(token, TOKEN_SECRET);
+      jwt.verify(token, TOKEN_SECRET);
     } catch (error) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Enlace inválido</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Enlace inválido o expirado</h1>
-            <p>El enlace de confirmación no es válido o ha caducado.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(400).send(renderizarPagina(
+        'Enlace inválido',
+        'El enlace de confirmación no es válido o ha caducado.',
+        'error'
+      ));
     }
     
     // Buscar la cita
     const cita = await Cita.findById(id);
     
     if (!cita) {
-      return res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Cita no encontrada</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Cita no encontrada</h1>
-            <p>La cita que intentas confirmar no existe.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(404).send(renderizarPagina(
+        'Cita no encontrada',
+        'La cita que intentas confirmar no existe.',
+        'error'
+      ));
     }
     
     // Verificar que el token coincida
     if (cita.tokenConfirmacion !== token) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Token inválido</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Token inválido</h1>
-            <p>El token de confirmación no es válido.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(400).send(renderizarPagina(
+        'Token inválido',
+        'El token de confirmación no es válido.',
+        'error'
+      ));
+    }
+    
+    // Verificar si ya está cancelada
+    if (cita.estado === 'cancelada') {
+      return res.status(400).send(renderizarPagina(
+        'Cita cancelada',
+        'Esta cita ya fue cancelada y no puede ser confirmada.',
+        'advertencia'
+      ));
     }
     
     // Verificar si ya está confirmada
     if (cita.estado === 'confirmada') {
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Cita ya confirmada</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .warning { color: orange; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="warning"> Cita ya confirmada</h1>
-            <p>Esta cita ya había sido confirmada anteriormente.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.send(renderizarPagina(
+        'Cita ya confirmada',
+        'Esta cita ya había sido confirmada anteriormente.',
+        'advertencia'
+      ));
+    }
+    
+    // Verificar si ya está completada
+    if (cita.estado === 'completada') {
+      return res.status(400).send(renderizarPagina(
+        'Cita completada',
+        'Esta cita ya ha sido completada.',
+        'info'
+      ));
     }
     
     // Confirmar la cita
     cita.estado = 'confirmada';
     await cita.save();
     
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <meta charset="utf-8">
-          <title>Cita Confirmada</title>
-          <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .success { color: green; }
-              .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-          </style>
-      </head>
-      <body>
-          <h1 class="success"> Cita Confirmada</h1>
-          <p>Tu cita ha sido confirmada exitosamente.</p>
-          <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-      </body>
-      </html>
-    `);
+    res.send(renderizarPagina(
+      'Cita Confirmada',
+      'Tu cita ha sido confirmada exitosamente.',
+      'exito'
+    ));
     
   } catch (error) {
     console.error("Error en confirmarCitaConToken:", error);
-    res.status(500).send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <meta charset="utf-8">
-          <title>Error</title>
-          <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .error { color: red; }
-          </style>
-      </head>
-      <body>
-          <h1 class="error"> Error</h1>
-          <p>Ocurrió un error al confirmar la cita.</p>
-          <a href="${FRONTEND_URL}/citas">Volver a mis citas</a>
-      </body>
-      </html>
-    `);
+    res.status(500).send(renderizarPagina(
+      'Error',
+      'Ocurrió un error al confirmar la cita.',
+      'error'
+    ));
   }
 };
 
@@ -522,146 +458,79 @@ export const cancelarCitaConToken = async (req, res) => {
     const { token } = req.query;
     
     // Verificar el token
-    let decoded;
     try {
-      decoded = jwt.verify(token, TOKEN_SECRET);
+      jwt.verify(token, TOKEN_SECRET);
     } catch (error) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Enlace inválido</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Enlace inválido o expirado</h1>
-            <p>El enlace de cancelación no es válido o ha caducado.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(400).send(renderizarPagina(
+        'Enlace inválido',
+        'El enlace de cancelación no es válido o ha caducado.',
+        'error'
+      ));
     }
     
     // Buscar la cita
     const cita = await Cita.findById(id);
     
     if (!cita) {
-      return res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Cita no encontrada</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Cita no encontrada</h1>
-            <p>La cita que intentas cancelar no existe.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(404).send(renderizarPagina(
+        'Cita no encontrada',
+        'La cita que intentas cancelar no existe.',
+        'error'
+      ));
     }
     
     // Verificar que el token coincida
     if (cita.tokenConfirmacion !== token) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Token inválido</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .error { color: red; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="error"> Token inválido</h1>
-            <p>El token de cancelación no es válido.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.status(400).send(renderizarPagina(
+        'Token inválido',
+        'El token de cancelación no es válido.',
+        'error'
+      ));
+    }
+    
+    // Verificar si ya está confirmada
+    if (cita.estado === 'confirmada') {
+      return res.status(400).send(renderizarPagina(
+        'Cita confirmada',
+        'Esta cita ya fue confirmada y no puede ser cancelada.',
+        'advertencia'
+      ));
     }
     
     // Verificar si ya está cancelada
     if (cita.estado === 'cancelada') {
-      return res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Cita ya cancelada</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                .warning { color: orange; }
-                .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1 class="warning"> Cita ya cancelada</h1>
-            <p>Esta cita ya había sido cancelada anteriormente.</p>
-            <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-        </body>
-        </html>
-      `);
+      return res.send(renderizarPagina(
+        'Cita ya cancelada',
+        'Esta cita ya había sido cancelada anteriormente.',
+        'advertencia'
+      ));
+    }
+    
+    // Verificar si ya está completada
+    if (cita.estado === 'completada') {
+      return res.status(400).send(renderizarPagina(
+        'Cita completada',
+        'Esta cita ya ha sido completada.',
+        'info'
+      ));
     }
     
     // Cancelar la cita
     cita.estado = 'cancelada';
     await cita.save();
     
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <meta charset="utf-8">
-          <title>Cita Cancelada</title>
-          <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .success { color: green; }
-              .button { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-          </style>
-      </head>
-      <body>
-          <h1 class="success"> Cita Cancelada</h1>
-          <p>Tu cita ha sido cancelada exitosamente.</p>
-          <a href="${FRONTEND_URL}/citas" class="button">Volver a mis citas</a>
-      </body>
-      </html>
-    `);
+    res.send(renderizarPagina(
+      'Cita Cancelada',
+      'Tu cita ha sido cancelada exitosamente.',
+      'exito'
+    ));
     
   } catch (error) {
     console.error("Error en cancelarCitaConToken:", error);
-    res.status(500).send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <meta charset="utf-8">
-          <title>Error</title>
-          <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              .error { color: red; }
-          </style>
-      </head>
-      <body>
-          <h1 class="error"> Error</h1>
-          <p>Ocurrió un error al cancelar la cita.</p>
-          <a href="${FRONTEND_URL}/citas">Volver a mis citas</a>
-      </body>
-      </html>
-    `);
+    res.status(500).send(renderizarPagina(
+      'Error',
+      'Ocurrió un error al cancelar la cita.',
+      'error'
+    ));
   }
 };
-
