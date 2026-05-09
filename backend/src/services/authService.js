@@ -77,9 +77,9 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
   }
   
   // ✅ CORREGIDO: Apuntar directamente al BACKEND
-  const BACKEND_URL = "https://el-exito-internal-platform.onrender.com/api";
-  const confirmarUrl = `${BACKEND_URL}/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
-  const cancelarUrl = `${BACKEND_URL}/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+ const BACKEND_URL = "https://el-exito-internal-platform.onrender.com";
+  const confirmarUrl = `${BACKEND_URL}/api/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
+  const cancelarUrl = `${BACKEND_URL}/api/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const whatsappUrl = `https://wa.me/50670932898?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}%20a%20las%20${horaInicio}`;
   
   return `
