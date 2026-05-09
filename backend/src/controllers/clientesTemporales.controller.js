@@ -243,20 +243,28 @@ export const createClienteTemporal = async (req, res) => {
       duration: calcularDuracion(horaInicio, horaFin),
       esCitaTemporal: true,
       clienteTemporalId: nuevoCliente._id,
-        pacienteTemporal: {
-    nombre: nombreMascota.trim(),
-    especie: especie
-  }
+      pacienteTemporal: {
+        nombre: nombreMascota.trim(),
+        especie: especie
+      }
     });
     
     const citaGuardada = await nuevaCita.save();
     console.log(`✅ Cita creada: ${citaGuardada._id}`);
     
     // ============================================
-    // 3. ENVIAR CORREO DE CONFIRMACIÓN DE CITA
+    // 3. GENERAR Y GUARDAR TOKEN (PRIMERO)
     // ============================================
     
-    // Volver a buscar la cita con populate para tener los datos completos
+    const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
+    citaGuardada.tokenConfirmacion = tokenConfirmacion;
+    await citaGuardada.save();
+    console.log("✅ Token generado y guardado");
+    
+    // ============================================
+    // 4. BUSCAR CITA CON POPULATE (AHORA CON TOKEN)
+    // ============================================
+    
     const citaConDatos = await Cita.findById(citaGuardada._id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -267,12 +275,10 @@ export const createClienteTemporal = async (req, res) => {
         }
       });
     
-    // Generar token de confirmación
-    const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
-    citaGuardada.tokenConfirmacion = tokenConfirmacion;
-    await citaGuardada.save();
+    // ============================================
+    // 5. ENVIAR CORREO DE CONFIRMACIÓN
+    // ============================================
     
-    // Enviar correo de confirmación de cita
     if (email) {
       console.log("📧 Intentando enviar correo de confirmación a:", email);
       try {
@@ -288,7 +294,7 @@ export const createClienteTemporal = async (req, res) => {
     }
     
     // ============================================
-    // 4. GUARDAR REFERENCIA DE LA CITA EN EL CLIENTE TEMPORAL
+    // 6. GUARDAR REFERENCIA DE LA CITA EN EL CLIENTE TEMPORAL
     // ============================================
     
     nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;

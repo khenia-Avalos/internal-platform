@@ -72,7 +72,13 @@ export const createCita = async (req, res) => {
     const citaGuardada = await nuevaCita.save();
     console.log(" Cita guardada con ID:", citaGuardada._id);
 
-    // Volver a buscar la cita con populate
+    // ✅ 1. PRIMERO: Generar y guardar el token
+    const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
+    citaGuardada.tokenConfirmacion = tokenConfirmacion;
+    await citaGuardada.save();
+    console.log("✅ Token generado y guardado");
+
+    // ✅ 2. SEGUNDO: Volver a buscar la cita con populate (AHORA con token incluido)
     const citaConDatos = await Cita.findById(citaGuardada._id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -82,13 +88,8 @@ export const createCita = async (req, res) => {
           select: 'username email'
         }
       });
-
-    // Generar token
-    const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
-    citaGuardada.tokenConfirmacion = tokenConfirmacion;
-    await citaGuardada.save();
     
-    // Enviar correo de confirmación
+    // ✅ 3. TERCERO: Enviar correo de confirmación
     if (correo) {
       console.log(" Intentando enviar correo a:", correo);
       try {
