@@ -348,39 +348,37 @@ const [tiempoSintomas, setTiempoSintomas] = useState(cita?.tiempoSintomas || '')
           className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
         />
       </div>
-       {/* Síntomas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
-          <select
-            name="sintomas"
-            value={formData.sintomas}
-            onChange={handleChange}
-            className="w-full border border-cyan-400 rounded-md px-3 py-2"
-          >
-            <option value="">Selecciona un síntoma (opcional)</option>
-            <option value="vomito">Vómito</option>
-            <option value="Diarrea">Diarrea</option>
-            <option value="Falta de apetito">Falta de apetito</option>
-            <option value="tos">Tos</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">¿Hace cuánto comenzaron?</label>
-          <input
-            type="text"
-            name="tiempoSintomas"
-            value={formData.tiempoSintomas}
-            onChange={handleChange}
-            placeholder="Ej: 2 días, 1 semana..."
-            className="w-full border border-cyan-400 rounded-md px-3 py-2"
-          />
-        </div>
-      </div>
-
-      <div></div>
+     {/* Síntomas */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
+    <select
+      value={sintomas}
+      onChange={(e) => setSintomas(e.target.value)}
+      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+    >
+      <option value="">Selecciona un síntoma (opcional)</option>
+      <option value="vomito">Vómito</option>
+      <option value="Diarrea">Diarrea</option>
+      <option value="Falta de apetito">Falta de apetito</option>
+      <option value="tos">Tos</option>
+      <option value="fiebre">Fiebre</option>
+      <option value="decaimiento">Decaimiento</option>
+      <option value="otro">Otro</option>
+    </select>
+  </div>
+  
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">¿Hace cuánto comenzaron los síntomas?</label>
+    <input
+      type="text"
+      value={tiempoSintomas}
+      onChange={(e) => setTiempoSintomas(e.target.value)}
+      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+      placeholder="Ej: 2 días, 1 semana..."
+    />
+  </div>
+</div>
 
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
