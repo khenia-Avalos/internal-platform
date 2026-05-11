@@ -6,17 +6,17 @@ import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => {
-  console.log(" COMPONENTE FORMULARIO CITA - RENDERIZADO");
-  console.log(" isEdit:", isEdit);
-  console.log(" cita:", cita);
+  console.log("📋 COMPONENTE FORMULARIO CITA - RENDERIZADO");
+  console.log("📋 isEdit:", isEdit);
+  console.log("📋 cita:", cita);
   
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
   const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');
   const [horario, setHorario] = useState(null);
-  const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || '');
-  const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || '');
+  const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || cita?.ownerId || '');
+  const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || cita?.pacienteId || '');
   const [correo, setCorreo] = useState(cita?.pacienteId?.ownerId?.email || cita?.correo || '');
   const [titulo, setTitulo] = useState(cita?.titulo || '');
   const [tipoCita, setTipoCita] = useState(cita?.tipoCita || 'consulta');
@@ -29,24 +29,27 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [fecha, setFecha] = useState(() => {
     if (cita?.fecha) {
       const fechaStr = cita.fecha.split('T')[0];
-      console.log(" Fecha inicial desde cita:", fechaStr);
+      console.log("📅 Fecha inicial desde cita:", fechaStr);
       return fechaStr;
     }
     return '';
   });
 
+  // Cargar doctores y dueños al iniciar
   useEffect(() => {
-    console.log(" useEffect - cargando doctores y dueños");
+    console.log("🔄 useEffect - cargando doctores y dueños");
     cargarDoctores();
     cargarDuenos();
   }, []);
 
+  // Cargar mascotas cuando cambia el dueño
   useEffect(() => {
-    console.log(" useEffect - duenoId cambió a:", duenoId);
+    console.log("🔄 useEffect - duenoId cambió a:", duenoId);
     if (duenoId) {
       cargarMascotas(duenoId);
     } else {
       setMascotas([]);
+      setMascotaId(''); // Resetear mascota cuando cambia el dueño
     }
   }, [duenoId]);
 
@@ -54,8 +57,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
     try {
       const res = await getDoctoresRequest();
       setDoctores(res.data);
-      console.log(" Doctores cargados:", res.data.length);
+      console.log("👨‍⚕️ Doctores cargados:", res.data.length);
     } catch (error) {
+      console.error("❌ Error cargando doctores:", error);
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -63,54 +67,54 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const cargarDuenos = async () => {
     try {
       const res = await getClientesRequest();
+      console.log("📊 Respuesta de getClientesRequest:", res);
+      console.log("📊 Dueños recibidos:", res.data);
       setDuenos(res.data);
-      console.log(" Dueños cargados:", res.data.length);
+      console.log("👤 Dueños cargados:", res.data.length);
     } catch (error) {
+      console.error("❌ Error cargando dueños:", error);
       manejarErrorResponse(error, setErrors);
     }
   };
 
   const cargarMascotas = async (ownerId) => {
     try {
+      console.log("🔍 Buscando mascotas para ownerId:", ownerId);
       const res = await getPacienteByOwnerRequest(ownerId);
+      console.log("📊 Mascotas recibidas:", res.data);
       setMascotas(res.data);
-      console.log(" Mascotas cargadas para dueño", ownerId, ":", res.data.length);
+      console.log("🐾 Mascotas cargadas para dueño", ownerId, ":", res.data.length);
     } catch (error) {
+      console.error("❌ Error cargando mascotas:", error);
       manejarErrorResponse(error, setErrors);
+      setMascotas([]);
     }
   };
 
-  // MANEJADOR DE SELECCIÓN DE HORARIO - SOLO guarda el horario
   const handleSelectHorario = (horarioSeleccionado) => {
-    console.log(" HANDLE_SELECT_HORARIO - EJECUTADO");
-    console.log(" Horario seleccionado:", horarioSeleccionado);
-    console.log(" Este es SOLO un callback de selección - NO debe enviar el formulario");
+    console.log("⏰ HANDLE_SELECT_HORARIO - EJECUTADO");
+    console.log("⏰ Horario seleccionado:", horarioSeleccionado);
     setHorario(horarioSeleccionado);
   };
 
-  // MANEJADOR DE ENVÍO DEL FORMULARIO - SOLO se ejecuta al hacer clic en el botón
   const handleSubmit = async (e) => {
-    console.log("HANDLE_SUBMIT - EJECUTADO");
-    console.log(" Evento recibido:", e);
-    console.log(" Tipo de evento:", e.type);
-    console.log(" ¿Quién llamó a handleSubmit?");
-    
+    console.log("📤 HANDLE_SUBMIT - EJECUTADO");
     e.preventDefault();
     e.stopPropagation();
     
-    console.log(" Validando campos...");
-    console.log(" isEdit:", isEdit);
-    console.log(" horario:", horario);
-    console.log(" mascotaId:", mascotaId);
+    console.log("✅ Validando campos...");
+    console.log("✅ isEdit:", isEdit);
+    console.log("✅ horario:", horario);
+    console.log("✅ mascotaId:", mascotaId);
     
     if (!isEdit && !horario) {
-      console.log(" Error: No hay horario seleccionado");
+      console.log("❌ Error: No hay horario seleccionado");
       setErrors(["Por favor selecciona un horario"]);
       return;
     }
     
     if (!mascotaId) {
-      console.log(" Error: No hay mascota seleccionada");
+      console.log("❌ Error: No hay mascota seleccionada");
       setErrors(["Por favor selecciona una mascota"]);
       return;
     }
@@ -133,16 +137,15 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       datosCita.horaFin = horario.fin;
     }
     
-    console.log(" Datos a enviar:", JSON.stringify(datosCita, null, 2));
-    console.log(" Fecha seleccionada por usuario:", fecha);
+    console.log("📦 Datos a enviar:", JSON.stringify(datosCita, null, 2));
     
     setLoading(true);
     setErrors([]);
     
     try {
-      console.log("📤 Llamando a onSubmit...");
+      console.log("🚀 Llamando a onSubmit...");
       await onSubmit(datosCita);
-      console.log(" onSubmit completado con éxito");
+      console.log("✅ onSubmit completado con éxito");
       
       if (!isEdit) {
         console.log("🧹 Limpiando formulario...");
@@ -161,38 +164,32 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       }
       
     } catch (error) {
-      console.error(" Error en onSubmit:", error);
+      console.error("❌ Error en onSubmit:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
-      console.log("handleSubmit finalizado");
     }
   };
 
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
-      {console.log(" RENDERIZANDO FORMULARIO - isEdit:", isEdit)}
-      
       <h2 className="text-xl font-semibold mb-4">
-        {isEdit ? ' Editar Cita' : '+ Nueva Cita'}
+        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
       </h2>
 
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {errors.map((err, i) => <p key={i}> {err}</p>)}
+          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
         </div>
       )}
 
       {!isEdit && (
         <>
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
             <select
               value={doctorId}
-              onChange={(e) => {
-                console.log(" Veterinario cambiado a:", e.target.value);
-                setDoctorId(e.target.value);
-              }}
+              onChange={(e) => setDoctorId(e.target.value)}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             >
@@ -205,21 +202,18 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             </select>
           </div>
 
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
             <input
               type="date"
               value={fecha}
-              onChange={(e) => {
-                console.log(" Fecha cambiada a:", e.target.value);
-                setFecha(e.target.value);
-              }}
+              onChange={(e) => setFecha(e.target.value)}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             />
           </div>
 
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
             <HorariosDisponibles
               doctorId={doctorId}
@@ -228,7 +222,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
-                 Horario seleccionado: {horario.inicio} - {horario.fin}
+                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
               </p>
             )}
           </div>
@@ -236,32 +230,31 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       )}
 
       {isEdit && cita && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
           <p className="text-sm text-gray-600">
-             <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
+            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
           </p>
           <p className="text-sm text-gray-600">
-            <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
+            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
           </p>
           <p className="text-sm text-gray-600">
-             <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
+            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
           </p>
         </div>
       )}
 
-      <div className="mb-4">
+      {/* Select de Dueños */}
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
         <select
           value={duenoId}
           onChange={(e) => {
-            const duenoIdSeleccionado = e.target.value;
-            console.log("👤 Dueño seleccionado:", duenoIdSeleccionado);
-            setDuenoId(duenoIdSeleccionado);
-            const duenoSeleccionado = duenos.find(d => d._id === duenoIdSeleccionado);
+            const nuevoDuenoId = e.target.value;
+            console.log("👤 Dueño seleccionado:", nuevoDuenoId);
+            setDuenoId(nuevoDuenoId);
+            const duenoSeleccionado = duenos.find(d => d._id === nuevoDuenoId);
             if (duenoSeleccionado) {
               setCorreo(duenoSeleccionado.email || '');
-            } else {
-              setCorreo('');
             }
           }}
           className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
@@ -274,15 +267,19 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
             </option>
           ))}
         </select>
+        {duenos.length === 0 && (
+          <p className="text-xs text-amber-600 mt-1">⚠️ No hay dueños registrados. Debes crear un cliente primero.</p>
+        )}
       </div>
 
+      {/* Select de Mascotas - Solo se muestra si hay un dueño seleccionado */}
       {duenoId && (
-        <div className="mb-4">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
           <select
             value={mascotaId}
             onChange={(e) => {
-              console.log(" Mascota seleccionada:", e.target.value);
+              console.log("🐾 Mascota seleccionada:", e.target.value);
               setMascotaId(e.target.value);
             }}
             className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
@@ -295,10 +292,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
               </option>
             ))}
           </select>
+          {mascotas.length === 0 && (
+            <p className="text-xs text-amber-600 mt-1">⚠️ Este dueño no tiene mascotas registradas.</p>
+          )}
         </div>
       )}
 
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
         <input
           type="email"
@@ -309,7 +309,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         />
       </div>
 
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
         <select
           value={tipoCita}
@@ -324,7 +324,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         </select>
       </div>
 
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
         <input
           type="text"
@@ -334,7 +334,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         />
       </div>
 
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
         <textarea
           value={descripcion}
@@ -344,8 +344,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         />
       </div>
 
-      {/* Síntomas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
           <select
@@ -376,7 +375,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         </div>
       </div>
 
-      <div className="mb-4">
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
         <textarea
           value={notas}
@@ -390,7 +389,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         <button
           type="submit"
           disabled={loading}
-          onClick={() => console.log(" BOTÓN CLICKEADO - type=submit")}
           className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
         >
           {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
@@ -398,10 +396,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         {onCancel && (
           <button
             type="button"
-            onClick={() => {
-              console.log("Botón Cancelar clickeado");
-              onCancel();
-            }}
+            onClick={onCancel}
             className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
           >
             Cancelar
