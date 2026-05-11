@@ -159,13 +159,50 @@ export const updateCita = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     
-    const citaActualizada = await Cita.findByIdAndUpdate(id, data, { new: true });
-    
-    if (!citaActualizada) {
+    // Obtener la cita actual
+    const cita = await Cita.findById(id);
+    if (!cita) {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
     
+    // ✅ Si se intenta CANCELAR desde el dashboard
+    if (data.estado === 'cancelada') {
+      const fechaCita = new Date(cita.fecha);
+      const ahora = new Date();
+      
+      // Combinar fecha y hora
+      const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
+      fechaCita.setHours(horaInicio, minutoInicio, 0, 0);
+      
+      const horasDiferencia = (fechaCita - ahora) / (1000 * 60 * 60);
+      const limiteHoras = 2;
+      
+      if (horasDiferencia < 0) {
+        return res.status(400).json({ message: "No se puede cancelar una cita que ya ha pasado" });
+      }
+      
+      if (horasDiferencia < limiteHoras && horasDiferencia > 0) {
+        const horasRestantes = Math.floor(horasDiferencia);
+        const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
+        return res.status(400).json({ 
+          message: `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos.`
+        });
+      }
+    }
+    
+    // ✅ Si se intenta CONFIRMAR, verificar que no esté cancelada
+    if (data.estado === 'confirmada' && cita.estado === 'cancelada') {
+      return res.status(400).json({ message: "No se puede confirmar una cita cancelada" });
+    }
+    
+    // ✅ Si se intenta COMPLETAR, verificar que no esté cancelada
+    if (data.estado === 'completada' && cita.estado === 'cancelada') {
+      return res.status(400).json({ message: "No se puede completar una cita cancelada" });
+    }
+    
+    const citaActualizada = await Cita.findByIdAndUpdate(id, data, { new: true });
     res.json(citaActualizada);
+    
   } catch (error) {
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ message: errorResponse.message });
@@ -485,6 +522,35 @@ export const cancelarCitaConToken = async (req, res) => {
         'Token inválido',
         'El token de cancelación no es válido.',
         'error'
+      ));
+    }
+    
+    // ✅ VALIDACIÓN DE TIEMPO: Verificar si faltan menos de 2 horas
+    const fechaCita = new Date(cita.fecha);
+    const ahora = new Date();
+    
+    // Combinar fecha y hora para comparar correctamente
+    const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
+    fechaCita.setHours(horaInicio, minutoInicio, 0, 0);
+    
+    const horasDiferencia = (fechaCita - ahora) / (1000 * 60 * 60);
+    const limiteHoras = 2; // 2 horas antes
+    
+    if (horasDiferencia < 0) {
+      return res.status(400).send(renderizarPagina(
+        'Cita ya pasada',
+        'No se puede cancelar una cita que ya ha pasado.',
+        'error'
+      ));
+    }
+    
+    if (horasDiferencia < limiteHoras && horasDiferencia > 0) {
+      const horasRestantes = Math.floor(horasDiferencia);
+      const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
+      return res.status(400).send(renderizarPagina(
+        'Cancelación no permitida',
+        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos.`,
+        'advertencia'
       ));
     }
     
