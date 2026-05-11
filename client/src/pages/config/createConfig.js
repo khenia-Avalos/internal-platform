@@ -57,16 +57,7 @@
             message: "Email inválido"
           }
         }
-      },
-      {
-        name: "password",
-        type: "password",
-        label: "Contraseña",
-        placeholder: "••••••••",
-        showToggle: true,
-        validation: {
-          required: "La contraseña es requerida"
-        }
+      
       },
   {
   name: "especialidad",
