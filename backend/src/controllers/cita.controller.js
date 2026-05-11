@@ -525,7 +525,25 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // ✅ VALIDACIÓN DE TIEMPO: Verificar si faltan menos de 2 horas
+    // ✅ VERIFICAR SI YA ESTÁ CANCELADA
+    if (cita.estado === 'cancelada') {
+      return res.send(renderizarPagina(
+        'Cita ya cancelada',
+        'Esta cita ya había sido cancelada anteriormente.',
+        'advertencia'
+      ));
+    }
+    
+    // ✅ VERIFICAR SI YA ESTÁ COMPLETADA
+    if (cita.estado === 'completada') {
+      return res.status(400).send(renderizarPagina(
+        'Cita completada',
+        'Esta cita ya ha sido completada.',
+        'info'
+      ));
+    }
+    
+    // ✅ VALIDACIÓN DE TIEMPO (2 horas antes) - PERMITE CANCELAR TANTO PENDIENTE COMO CONFIRMADA
     const fechaCita = new Date(cita.fecha);
     const ahora = new Date();
     
@@ -549,39 +567,17 @@ export const cancelarCitaConToken = async (req, res) => {
       const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
       return res.status(400).send(renderizarPagina(
         'Cancelación no permitida',
-        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos.`,
+        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clínica.`,
         'advertencia'
       ));
     }
     
-    // Verificar si ya está confirmada
-    if (cita.estado === 'confirmada') {
-      return res.status(400).send(renderizarPagina(
-        'Cita confirmada',
-        'Esta cita ya fue confirmada y no puede ser cancelada.',
-        'advertencia'
-      ));
-    }
+    // ❌ ELIMINAR ESTA VALIDACIÓN - No debe bloquear citas confirmadas
+    // if (cita.estado === 'confirmada') {
+    //   return res.status(400).send(renderizarPagina(...));
+    // }
     
-    // Verificar si ya está cancelada
-    if (cita.estado === 'cancelada') {
-      return res.send(renderizarPagina(
-        'Cita ya cancelada',
-        'Esta cita ya había sido cancelada anteriormente.',
-        'advertencia'
-      ));
-    }
-    
-    // Verificar si ya está completada
-    if (cita.estado === 'completada') {
-      return res.status(400).send(renderizarPagina(
-        'Cita completada',
-        'Esta cita ya ha sido completada.',
-        'info'
-      ));
-    }
-    
-    // Cancelar la cita
+    // Cancelar la cita (pendiente o confirmada)
     cita.estado = 'cancelada';
     await cita.save();
     
