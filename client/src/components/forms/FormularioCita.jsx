@@ -25,6 +25,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fecha, setFecha] = useState(() => {
+
+    const [sintomas, setSintomas] = useState(cita?.sintomas || '');
+const [tiempoSintomas, setTiempoSintomas] = useState(cita?.tiempoSintomas || '');
+
+
+
     if (cita?.fecha) {
       const fechaStr = cita.fecha.split('T')[0];
       console.log(" Fecha inicial desde cita:", fechaStr);
@@ -120,13 +126,16 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
       tipoCita,
       descripcion,
       notas, 
-      correo
+      correo,
+      sintomas,
+      tiempoSintomas
     };
     
     if (!isEdit) {
       datosCita.fecha = fecha;
       datosCita.horaInicio = horario.inicio;
       datosCita.horaFin = horario.fin;
+      
     }
     
     console.log(" Datos a enviar:", JSON.stringify(datosCita, null, 2));
@@ -152,6 +161,8 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
         setDescripcion('');
         setNotas('');
         setCorreo('');
+         setSintomas('');
+  setTiempoSintomas('');
       }
       
     } catch (error) {
@@ -337,6 +348,39 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel }) => 
           className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
         />
       </div>
+       {/* Síntomas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
+          <select
+            name="sintomas"
+            value={formData.sintomas}
+            onChange={handleChange}
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
+          >
+            <option value="">Selecciona un síntoma (opcional)</option>
+            <option value="vomito">Vómito</option>
+            <option value="Diarrea">Diarrea</option>
+            <option value="Falta de apetito">Falta de apetito</option>
+            <option value="tos">Tos</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">¿Hace cuánto comenzaron?</label>
+          <input
+            type="text"
+            name="tiempoSintomas"
+            value={formData.tiempoSintomas}
+            onChange={handleChange}
+            placeholder="Ej: 2 días, 1 semana..."
+            className="w-full border border-cyan-400 rounded-md px-3 py-2"
+          />
+        </div>
+      </div>
+
+      <div></div>
 
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
