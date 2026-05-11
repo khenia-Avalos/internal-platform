@@ -113,7 +113,7 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
                 <p><strong> Horario:</strong> ${horaInicio} - ${horaFin}</p>
                 <p><strong> Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
                 <p><strong> Mascota:</strong> ${nombreMascota}</p>
-                <p><strong> Motivo:</strong> ${cita.motivo || 'Consulta general'}</p>
+                <p><strong> Tipo de Cita:</strong> ${cita.tipoCita || 'Consulta general'}</p>
             </div>
             
             <div class="actions">
@@ -154,7 +154,7 @@ Fecha: ${fecha}
 Horario: ${cita.horaInicio} - ${cita.horaFin}
 Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
 Mascota: ${nombreMascota}
-Motivo: ${cita.motivo || 'Consulta general'}
+Tipo de Cita: ${cita.tipoCita || 'Consulta general'}
 
 Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
 
