@@ -108,7 +108,9 @@ function CitaDetallePage() {
       setCita({ ...cita, estado: nuevoEstado });
       toast.success(mensajeExito, { duration: 3000 });
     } catch (error) {
-      toast.error(mensajeError);
+      // Mostrar mensaje de error específico si viene del backend
+      const mensajeErrorBackend = error.response?.data?.message || mensajeError;
+      toast.error(mensajeErrorBackend);
       manejarErrorResponse(error, setErrors);
     } finally {
       setUpdating(false);
@@ -281,6 +283,9 @@ function CitaDetallePage() {
             </div>
           )}
           
+          {/* ============================================ */}
+          {/* BOTONES DE ACCIÓN - CON CANCELAR PARA CONFIRMADAS */}
+          {/* ============================================ */}
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>
@@ -315,6 +320,14 @@ function CitaDetallePage() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                 >
                   ✔️ Marcar como Completada
+                </button>
+                {/* ✅ NUEVO: Botón de cancelar para citas confirmadas */}
+                <button 
+                  onClick={() => cambiarEstado('cancelada')} 
+                  disabled={updating}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  ❌ Cancelar Cita
                 </button>
                 <button 
                   onClick={abrirModalReagendar}
