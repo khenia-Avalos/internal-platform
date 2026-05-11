@@ -74,7 +74,17 @@ clienteTemporalId: {
 pacienteTemporal: {
   nombre: { type: String, default: null },
   especie: { type: String, default: null }
-}
+},
+ sintomas: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  tiempoSintomas: {
+    type: String,
+    trim: true,
+    default: ''
+  },
 }, {
   timestamps: true
 });
