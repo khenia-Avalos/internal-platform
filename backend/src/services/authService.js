@@ -313,6 +313,138 @@ Si no solicitaste este cambio, puedes ignorar este email.
     throw error;
   }
 }
+async sendWelcomeEmailDoctor(toEmail, username, temporaryPassword) {
+  try {
+    const subject = "Bienvenido a El Éxito - Doctor";
+    const html = this.getWelcomeDoctorHtmlTemplate(username, toEmail, temporaryPassword);
+    const text = this.getWelcomeDoctorTextTemplate(username, toEmail, temporaryPassword);
+
+    if (!sgMail) {
+      throw new Error("SendGrid no está configurado");
+    }
+
+    const msg = {
+      to: toEmail,
+      from: {
+        email: SENDGRID_FROM_EMAIL,
+        name: "El Éxito - Clínica Veterinaria",
+      },
+      subject: subject,
+      html: html,
+      text: text,
+      trackingSettings: {
+        openTracking: { enable: true },
+      },
+      category: "welcome-doctor",
+    };
+
+    const response = await sgMail.send(msg);
+
+    return {
+      success: true,
+      service: "sendgrid",
+      messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
+    };
+  } catch (error) {
+    console.error("❌ Error enviando email de bienvenida a doctor:", error.message);
+    if (error.response) {
+      console.error("Detalles SendGrid:", error.response.body);
+    }
+    throw error;
+  }
+}
+
+getWelcomeDoctorHtmlTemplate(username, email, temporaryPassword) {
+  const plataformaUrl = "https://internal-platform.onrender.com";
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { margin: 0; font-size: 28px; }
+        .header p { margin: 10px 0 0; opacity: 0.9; }
+        .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { text-align: center; margin-bottom: 20px; font-size: 48px; }
+        .info-box { background: #f0f9ff; border-left: 4px solid #0891b2; padding: 15px 20px; margin: 20px 0; border-radius: 5px; }
+        .password-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 5px; }
+        .password { font-family: 'Courier New', monospace; font-size: 20px; font-weight: bold; color: #d97706; letter-spacing: 1px; }
+        .button { display: inline-block; background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+        .warning { background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 15px; margin: 20px 0; font-size: 13px; color: #dc2626; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👨‍⚕️</div>
+            <h1>¡Bienvenido a El Éxito!</h1>
+            <p>Clínica Veterinaria</p>
+        </div>
+        <div class="content">
+            <h2>Dr/a. ${username},</h2>
+            <p>¡Su perfil de doctor ha sido creado exitosamente en nuestra plataforma de gestión veterinaria!</p>
+            
+            <div class="info-box">
+                <strong>📧 Su usuario (email):</strong> ${email}
+            </div>
+            
+            <div class="password-box">
+                <strong>🔑 Contraseña temporal:</strong><br>
+                <span class="password">${temporaryPassword}</span>
+            </div>
+            
+            <p>Por razones de seguridad, le recomendamos cambiar su contraseña la primera vez que ingrese al sistema.</p>
+            
+            <div style="text-align: center;">
+                <a href="${plataformaUrl}" class="button">🔗 Acceder a la Plataforma</a>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Importante:</strong><br>
+                • No comparta su contraseña con nadie<br>
+                • Cambie su contraseña en su primer acceso<br>
+                • Si no solicitó esta cuenta, por favor ignore este mensaje
+            </div>
+        </div>
+        <div class="footer">
+            <p><strong>El Éxito - Clínica Veterinaria</strong></p>
+            <p>© ${new Date().getFullYear()} Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+getWelcomeDoctorTextTemplate(username, email, temporaryPassword) {
+  const plataformaUrl = "https://internal-platform.onrender.com";
+  
+  return `
+BIENVENIDO A EL ÉXITO - CLÍNICA VETERINARIA
+
+Dr/a. ${username},
+
+Su perfil de doctor ha sido creado exitosamente.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📧 USUARIO: ${email}
+🔑 CONTRASEÑA TEMPORAL: ${temporaryPassword}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 ACCEDER A LA PLATAFORMA: ${plataformaUrl}
+
+⚠️ RECOMENDACIONES:
+• Cambie su contraseña en su primer acceso
+• No comparta su contraseña
+
+© ${new Date().getFullYear()} El Éxito - Clínica Veterinaria
+`;
+}
 
 getWelcomeHtmlTemplate(username, email, temporaryPassword) {
   const plataformaUrl = "https://internal-platform.onrender.com";
@@ -521,6 +653,18 @@ export const sendWelcomeEmail = async (email, username, temporaryPassword) => {
     return {
       success: false,
       message: "Error enviando correo de bienvenida",
+    };
+  }
+};
+export const sendWelcomeEmailDoctor = async (email, username, temporaryPassword) => {
+  try {
+    const result = await emailService.sendWelcomeEmailDoctor(email, username, temporaryPassword);
+    return result;
+  } catch (error) {
+    console.error("Error en sendWelcomeEmailDoctor:", error);
+    return {
+      success: false,
+      message: "Error enviando correo de bienvenida al doctor",
     };
   }
 };

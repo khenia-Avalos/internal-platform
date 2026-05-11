@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js';  
 import Horario from '../models/horario.model.js';
 import { getHorarioPorDefecto } from '../../config/horariosPorDefecto.js';
+import { sendWelcomeEmailDoctor } from '../services/authService.js';
 
 
 // Obtener todos los doctores
@@ -18,36 +19,40 @@ export const getDoctores = async (req, res) => {
 };
 
 // Crear un nuevo doctor
+// Crear un nuevo doctor
 export const createDoctor = async (req, res) => {
   try {
-    const { username, lastname, email, password, phoneNumber, especialidad } = req.body;
-const existeDoctor = await User.findOne({ email });  
-
+    const { username, lastname, email, phoneNumber, especialidad } = req.body; // ← Eliminado password
+    
     // Verificar si ya existe el email
+    const existeDoctor = await User.findOne({ email });
     if (existeDoctor) {
-  const error = new Error("El email ya está registrado");
-  error.name = 'CustomError';
-  error.status = 400;
-  throw error;
-}
-
-    // Encriptar password
+      const error = new Error("El email ya está registrado");
+      error.name = 'CustomError';
+      error.status = 400;
+      throw error;
+    }
+    
+    // ✅ Contraseña predeterminada para doctores
+    const DEFAULT_PASSWORD = "veteDocElExito123";
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, salt);
+    
     const newDoctor = new User({
       username,
       lastname,
       email,
-      password: hashedPassword, 
+      password: hashedPassword,
       phoneNumber,
       role: "doctor",
       especialidad
     });
-
+    
     const savedDoctor = await newDoctor.save();
+    
+    // ✅ Crear horarios por defecto según especialidad
     const horarioConfig = getHorarioPorDefecto(especialidad);
-     const horariosPorDefecto = horarioConfig.dias.map(dia => ({
+    const horariosPorDefecto = horarioConfig.dias.map(dia => ({
       doctorId: savedDoctor._id,
       dia,
       horaInicio: horarioConfig.horaInicio,
@@ -55,19 +60,30 @@ const existeDoctor = await User.findOne({ email });
       intervalo: horarioConfig.intervalo,
       activo: horarioConfig.activo
     }));
-        await Horario.insertMany(horariosPorDefecto);
-
+    await Horario.insertMany(horariosPorDefecto);
+    
+    // ✅ Enviar correo de bienvenida al doctor
+    try {
+      await sendWelcomeEmailDoctor(email, username, DEFAULT_PASSWORD);
+      console.log(`📧 Correo de bienvenida enviado al doctor: ${email}`);
+    } catch (emailError) {
+      console.error("❌ Error enviando correo:", emailError.message);
+    }
     
     // No enviar password en la respuesta
     const doctorResponse = savedDoctor.toObject();
     delete doctorResponse.password;
     
-    res.status(201).json(doctorResponse);
+    res.status(201).json({
+      message: "Doctor creado exitosamente. Se ha enviado un correo con las credenciales.",
+      doctor: doctorResponse
+    });
+    
   } catch (error) {
-   const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
