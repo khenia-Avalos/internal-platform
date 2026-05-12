@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
-import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
+import { useAuth } from "../../hooks/useAuth";
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
@@ -13,7 +13,7 @@ import { updateHorarioRequest } from "/src/api/horarios";
 import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest } from "/src/api/pausas";
 
 function DoctorDetallePage() {
-  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -28,6 +28,11 @@ function DoctorDetallePage() {
 
   const isDoctorViewingSelf = user?.role === 'doctor' && user?._id === id;
   const isAdmin = user?.role === 'admin';
+  
+  console.log("🔍 DoctorDetallePage - user:", user);
+  console.log("🔍 isAdmin:", isAdmin);
+  console.log("🔍 isDoctorViewingSelf:", isDoctorViewingSelf);
+  console.log("🔍 Mostrar pausas:", isAdmin || isDoctorViewingSelf);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -37,8 +42,8 @@ function DoctorDetallePage() {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
         
-        // ✅ Solo cargar horarios si es admin o si el doctor ve su propio perfil
-        if (isAdmin || isDoctorViewingSelf) {
+        // Solo cargar horarios si es admin
+        if (isAdmin) {
           const horariosRes = await getHorariosByDoctorRequest(id);
           setHorarios(horariosRes.data);
         }
@@ -52,19 +57,28 @@ function DoctorDetallePage() {
     if (id) {
       cargarDatos();
     }
-  }, [id, isAdmin, isDoctorViewingSelf]);
+  }, [id, isAdmin]);
 
-  // Cargar pausa activa
+  // Cargar pausa activa - para admin y para el doctor viendo su propio perfil
   useEffect(() => {
     let isMounted = true;
     
     const cargarPausaActiva = async () => {
+      // ✅ Solo cargar pausa si es admin o el doctor viendo su propio perfil
+      if (!isAdmin && !isDoctorViewingSelf) {
+        console.log("⏭️ No cargar pausa - no es admin ni el propio doctor");
+        return;
+      }
+      
       try {
+        console.log("🔄 Cargando pausa activa para doctor:", id);
         const res = await getPausasActivasRequest(id);
         if (isMounted) {
-          if (res.data.length > 0) {
+          if (res.data && res.data.length > 0) {
+            console.log("✅ Pausa activa encontrada:", res.data[0]);
             setPausaActiva(res.data[0]);
           } else {
+            console.log("❌ No hay pausa activa");
             setPausaActiva(null);
           }
         }
@@ -80,7 +94,7 @@ function DoctorDetallePage() {
     return () => {
       isMounted = false;
     };
-  }, [id, location.key]);
+  }, [id, isAdmin, isDoctorViewingSelf]);
 
   const getNombreDia = (dia) => {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -116,6 +130,7 @@ function DoctorDetallePage() {
 
   const iniciarPausa = async () => {
     try {
+      console.log("🍽️ Iniciando pausa para doctor:", id);
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
       setPausaActiva(res.data);
       setSuccessMessage("Almuerzo iniciado");
@@ -127,6 +142,7 @@ function DoctorDetallePage() {
 
   const terminarPausa = async () => {
     try {
+      console.log("🍽️ Terminando pausa:", pausaActiva._id);
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
       setSuccessMessage("Almuerzo terminado");
@@ -178,10 +194,10 @@ function DoctorDetallePage() {
             ]}
           />
 
-          {/* ✅ SECCIÓN PAUSAS - Visible para admin y para el doctor viendo su propio perfil */}
+          {/* ✅ SECCIÓN PAUSAS - Siempre visible para admin y para el doctor viendo su propio perfil */}
           {(isAdmin || isDoctorViewingSelf) && (
-            <>
-              <div className="flex justify-between items-center mt-8 mb-4">
+            <div className="mt-8">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-700">🍽️ Control de Almuerzo</h2>
                 <div className="flex gap-3">
                   {!pausaActiva ? (
@@ -201,10 +217,17 @@ function DoctorDetallePage() {
                   )}
                 </div>
               </div>
-            </>
+              {pausaActiva && (
+                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2">
+                  <p className="text-sm text-yellow-800">
+                    ⏳ Almuerzo iniciado a las: {new Date(pausaActiva.inicio).toLocaleTimeString()}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* ✅ SECCIÓN HORARIOS - SOLO para admin (oculto para doctor) */}
+          {/* ✅ SECCIÓN HORARIOS - SOLO para admin */}
           {isAdmin && horarios.length > 0 && (
             <>
               <div className="flex justify-between items-center mt-8 mb-4">

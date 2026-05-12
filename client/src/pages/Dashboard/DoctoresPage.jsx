@@ -7,7 +7,7 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { useNavigate } from 'react-router';
-import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
+import { useAuth } from "../../hooks/useAuth";
 
 import { 
   getDoctoresRequest, 
@@ -20,7 +20,7 @@ import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function DoctoresPage() {
-  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [doctores, setDoctores] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -30,37 +30,29 @@ function DoctoresPage() {
   const [successMessage, setSuccessMessage] = useState(""); 
 
   const isDoctor = user?.role === 'doctor';
-
-  const handleCreateDoctor = async (data) => {
-    try {
-      await createDoctorRequest(data);
-      setMostrarFormulario(false);
-      const response = await getDoctoresRequest();
-      setDoctores(response.data);
-      setSuccessMessage("Doctor creado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-       manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
+  const doctorId = user?._id || user?.id;
 
   useEffect(() => {
     const obtenerDoctores = async () => {
       try {
         const response = await getDoctoresRequest();
-        // Si es doctor, solo mostrar su propio perfil
-        if (isDoctor && user?._id) {
-          const doctorActual = response.data.filter(d => d._id === user._id);
+        
+        // ✅ Si es doctor, filtrar solo su perfil
+        if (isDoctor && doctorId) {
+          console.log("👨‍⚕️ Doctor logueado, filtrando solo su perfil. ID:", doctorId);
+          const doctorActual = response.data.filter(d => d._id === doctorId);
           setDoctores(doctorActual);
         } else {
+          console.log("👑 Admin, mostrando todos los doctores");
           setDoctores(response.data);
         }
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
     };
+    
     obtenerDoctores();
-  }, [isDoctor, user]);
+  }, [isDoctor, doctorId]); // ← Dependencias correctas
 
   const doctoresFiltrados = doctores.filter(doctor => {
     const texto = busqueda.toLowerCase();
@@ -98,7 +90,7 @@ function DoctoresPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isDoctor ? '👨‍⚕️ Mi Información' : '📋 Gestión de Doctores'}
+          {isDoctor ? '👨‍⚕️ Mi Perfil' : '📋 Gestión de Doctores'}
         </h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
@@ -109,7 +101,6 @@ function DoctoresPage() {
               placeholder="Buscar doctor por nombre, email, especialidad..."
             />
           </div>
-          {/* ✅ Ocultar botón "Nuevo Doctor" para rol doctor */}
           {!isDoctor && (
             <button
               onClick={() => setMostrarFormulario(true)}
@@ -121,7 +112,7 @@ function DoctoresPage() {
         </div>
       </div>
 
-      {/* Formulario de creación - oculto para doctor */}
+      {/* Formulario de creación - solo admin */}
       {mostrarFormulario && !isDoctor && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -139,29 +130,6 @@ function DoctoresPage() {
             onSubmit={handleCreateDoctor}
             errors={errors}
             successMessage={successMessage}
-          />
-        </div>
-      )}
-
-      {/* Formulario de edición - oculto para doctor */}
-      {showEditForm && !isDoctor && (
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Doctor</h2>
-            <button
-              onClick={handleCancel}
-              className="text-gray-400 hover:text-gray-600 transition text-xl"
-            >
-              ✕
-            </button>
-          </div>
-          <DynamicForm
-            {...editConfig.editDoctor}
-            layout="grid"
-            defaultValues={doctorSeleccionado}
-            errors={editErrors}
-            successMessage={editSuccessMessage}
-            onSubmit={handleUpdate}
           />
         </div>
       )}
@@ -195,7 +163,6 @@ function DoctoresPage() {
             ]}
             data={doctoresFiltrados}
             onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
-            // ✅ Deshabilitar editar y eliminar para rol doctor
             onEdit={!isDoctor ? (doctor) => {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
