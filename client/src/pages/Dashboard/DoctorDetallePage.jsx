@@ -26,19 +26,8 @@ function DoctorDetallePage() {
   const [horarioEditando, setHorarioEditando] = useState(null);
   const [pausaActiva, setPausaActiva] = useState(null);
 
-  // ✅ Logs para depurar
-  console.log("🔍 user completo:", user);
-  console.log("🔍 user?._id:", user?._id);
-  console.log("🔍 id de la URL:", id);
-  console.log("🔍 user?.role:", user?.role);
-  
-  // ✅ Comparar correctamente los IDs
-  const isDoctorViewingSelf = user?.role === 'doctor' && String(user?._id) === String(id);
+  const isDoctor = user?.role === 'doctor';
   const isAdmin = user?.role === 'admin';
-  
-  console.log("🔍 isDoctorViewingSelf:", isDoctorViewingSelf);
-  console.log("🔍 isAdmin:", isAdmin);
-  console.log("🔍 Mostrar pausas:", isAdmin || isDoctorViewingSelf);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -47,9 +36,8 @@ function DoctorDetallePage() {
       try {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
-        console.log("📋 Doctor cargado:", doctorRes.data);
         
-        // Solo cargar horarios si es admin
+        // ✅ Solo cargar horarios si es ADMIN (para el doctor NO se muestran)
         if (isAdmin) {
           const horariosRes = await getHorariosByDoctorRequest(id);
           setHorarios(horariosRes.data);
@@ -66,27 +54,17 @@ function DoctorDetallePage() {
     }
   }, [id, isAdmin]);
 
-  // Cargar pausa activa - para admin y para el doctor viendo su propio perfil
+  // ✅ Cargar pausa activa - siempre (tanto para admin como para doctor)
   useEffect(() => {
     let isMounted = true;
     
     const cargarPausaActiva = async () => {
-      // ✅ Solo cargar pausa si es admin o el doctor viendo su propio perfil
-      if (!isAdmin && !isDoctorViewingSelf) {
-        console.log("⏭️ No cargar pausa - no es admin ni el propio doctor");
-        return;
-      }
-      
       try {
-        console.log("🔄 Cargando pausa activa para doctor:", id);
         const res = await getPausasActivasRequest(id);
-        console.log("📊 Respuesta de pausas:", res);
         if (isMounted) {
           if (res.data && res.data.length > 0) {
-            console.log("✅ Pausa activa encontrada:", res.data[0]);
             setPausaActiva(res.data[0]);
           } else {
-            console.log("❌ No hay pausa activa");
             setPausaActiva(null);
           }
         }
@@ -102,7 +80,7 @@ function DoctorDetallePage() {
     return () => {
       isMounted = false;
     };
-  }, [id, isAdmin, isDoctorViewingSelf]);
+  }, [id, location.key]);
 
   const getNombreDia = (dia) => {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -138,27 +116,22 @@ function DoctorDetallePage() {
 
   const iniciarPausa = async () => {
     try {
-      console.log("🍽️ Iniciando pausa para doctor:", id);
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
-      console.log("📊 Respuesta al iniciar pausa:", res);
       setPausaActiva(res.data);
       setSuccessMessage("Almuerzo iniciado");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("❌ Error al iniciar pausa:", error);
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
 
   const terminarPausa = async () => {
     try {
-      console.log("🍽️ Terminando pausa:", pausaActiva._id);
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
       setSuccessMessage("Almuerzo terminado");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
-      console.error("❌ Error al terminar pausa:", error);
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
@@ -205,48 +178,38 @@ function DoctorDetallePage() {
             ]}
           />
 
-          {/* ✅ SECCIÓN PAUSAS - Siempre visible para admin y para el doctor viendo su propio perfil */}
-          {(isAdmin || isDoctorViewingSelf) && (
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">🍽️ Control de Almuerzo</h2>
-                <div className="flex gap-3">
-                  {!pausaActiva ? (
-                    <button
-                      onClick={iniciarPausa}
-                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
-                    >
-                      Iniciar Almuerzo
-                    </button>
-                  ) : (
-                    <button
-                      onClick={terminarPausa}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                    >
-                      Volver del Almuerzo
-                    </button>
-                  )}
-                </div>
-              </div>
-              {pausaActiva && (
-                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2">
-                  <p className="text-sm text-yellow-800">
-                    ⏳ Almuerzo iniciado a las: {new Date(pausaActiva.inicio).toLocaleTimeString()}
-                  </p>
-                </div>
+          {/* ✅ SECCIÓN PAUSAS - Visible para todos (admin y doctor) */}
+          <div className="flex justify-between items-center mt-8 mb-4">
+            <h2 className="text-xl font-semibold text-gray-700">🍽️ Control de Almuerzo</h2>
+            <div className="flex gap-3">
+              {!pausaActiva ? (
+                <button
+                  onClick={iniciarPausa}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+                >
+                  Iniciar Almuerzo
+                </button>
+              ) : (
+                <button
+                  onClick={terminarPausa}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  Volver del Almuerzo
+                </button>
               )}
             </div>
-          )}
-
-          {/* ✅ Si no es admin ni el propio doctor, mostrar mensaje */}
-          {!isAdmin && !isDoctorViewingSelf && (
-            <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500">No tienes permisos para ver esta información.</p>
+          </div>
+          
+          {pausaActiva && (
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2 mb-4">
+              <p className="text-sm text-yellow-800">
+                ⏳ Almuerzo iniciado a las: {new Date(pausaActiva.inicio).toLocaleTimeString()}
+              </p>
             </div>
           )}
 
-          {/* ✅ SECCIÓN HORARIOS - SOLO para admin */}
-          {isAdmin && horarios.length > 0 && (
+          {/* ✅ SECCIÓN HORARIOS - SOLO para admin (oculta para doctor) */}
+          {isAdmin && (
             <>
               <div className="flex justify-between items-center mt-8 mb-4">
                 <h2 className="text-xl font-semibold text-gray-700">📅 Horarios</h2>
