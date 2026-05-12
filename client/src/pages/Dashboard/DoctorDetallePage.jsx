@@ -26,12 +26,18 @@ function DoctorDetallePage() {
   const [horarioEditando, setHorarioEditando] = useState(null);
   const [pausaActiva, setPausaActiva] = useState(null);
 
-  const isDoctorViewingSelf = user?.role === 'doctor' && user?._id === id;
+  // ✅ Logs para depurar
+  console.log("🔍 user completo:", user);
+  console.log("🔍 user?._id:", user?._id);
+  console.log("🔍 id de la URL:", id);
+  console.log("🔍 user?.role:", user?.role);
+  
+  // ✅ Comparar correctamente los IDs
+  const isDoctorViewingSelf = user?.role === 'doctor' && String(user?._id) === String(id);
   const isAdmin = user?.role === 'admin';
   
-  console.log("🔍 DoctorDetallePage - user:", user);
-  console.log("🔍 isAdmin:", isAdmin);
   console.log("🔍 isDoctorViewingSelf:", isDoctorViewingSelf);
+  console.log("🔍 isAdmin:", isAdmin);
   console.log("🔍 Mostrar pausas:", isAdmin || isDoctorViewingSelf);
 
   useEffect(() => {
@@ -41,6 +47,7 @@ function DoctorDetallePage() {
       try {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
+        console.log("📋 Doctor cargado:", doctorRes.data);
         
         // Solo cargar horarios si es admin
         if (isAdmin) {
@@ -73,6 +80,7 @@ function DoctorDetallePage() {
       try {
         console.log("🔄 Cargando pausa activa para doctor:", id);
         const res = await getPausasActivasRequest(id);
+        console.log("📊 Respuesta de pausas:", res);
         if (isMounted) {
           if (res.data && res.data.length > 0) {
             console.log("✅ Pausa activa encontrada:", res.data[0]);
@@ -132,10 +140,12 @@ function DoctorDetallePage() {
     try {
       console.log("🍽️ Iniciando pausa para doctor:", id);
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
+      console.log("📊 Respuesta al iniciar pausa:", res);
       setPausaActiva(res.data);
       setSuccessMessage("Almuerzo iniciado");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
+      console.error("❌ Error al iniciar pausa:", error);
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
@@ -148,6 +158,7 @@ function DoctorDetallePage() {
       setSuccessMessage("Almuerzo terminado");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
+      console.error("❌ Error al terminar pausa:", error);
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
@@ -224,6 +235,13 @@ function DoctorDetallePage() {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ✅ Si no es admin ni el propio doctor, mostrar mensaje */}
+          {!isAdmin && !isDoctorViewingSelf && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center">
+              <p className="text-gray-500">No tienes permisos para ver esta información.</p>
             </div>
           )}
 
