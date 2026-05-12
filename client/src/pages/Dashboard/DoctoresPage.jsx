@@ -7,9 +7,7 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { useNavigate } from 'react-router';
-
-
-
+import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
 
 import { 
   getDoctoresRequest, 
@@ -22,6 +20,7 @@ import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function DoctoresPage() {
+  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
   const navigate = useNavigate();
   const [doctores, setDoctores] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -29,6 +28,8 @@ function DoctoresPage() {
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState(""); 
+
+  const isDoctor = user?.role === 'doctor';
 
   const handleCreateDoctor = async (data) => {
     try {
@@ -40,7 +41,6 @@ function DoctoresPage() {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
        manejarErrorResponse(error, setErrors, setSuccessMessage);
-
     }
   };
 
@@ -48,13 +48,19 @@ function DoctoresPage() {
     const obtenerDoctores = async () => {
       try {
         const response = await getDoctoresRequest();
-        setDoctores(response.data);
+        // Si es doctor, solo mostrar su propio perfil
+        if (isDoctor && user?._id) {
+          const doctorActual = response.data.filter(d => d._id === user._id);
+          setDoctores(doctorActual);
+        } else {
+          setDoctores(response.data);
+        }
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       }
     };
     obtenerDoctores();
-  }, []);
+  }, [isDoctor, user]);
 
   const doctoresFiltrados = doctores.filter(doctor => {
     const texto = busqueda.toLowerCase();
@@ -90,11 +96,11 @@ function DoctoresPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Cabecera - Versión móvil primero */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4"> Gestión de Doctores</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+          {isDoctor ? '👨‍⚕️ Mi Información' : '📋 Gestión de Doctores'}
+        </h1>
         
-        {/* Barra de búsqueda y botón - Apilados en móvil, fila en desktop */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <SearchBar 
@@ -103,66 +109,62 @@ function DoctoresPage() {
               placeholder="Buscar doctor por nombre, email, especialidad..."
             />
           </div>
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
-          >
-            + Nuevo Doctor
-          </button>
+          {/* ✅ Ocultar botón "Nuevo Doctor" para rol doctor */}
+          {!isDoctor && (
+            <button
+              onClick={() => setMostrarFormulario(true)}
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
+            >
+              + Nuevo Doctor
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Contenedor de formularios - Se desplazan hacia abajo sin tapar */}
-      <div className="space-y-6 mb-6">
-        {/* Formulario de creación */}
-        {mostrarFormulario && (
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
-              <button
-                onClick={() => setMostrarFormulario(false)}
-                className="text-gray-400 hover:text-gray-600 transition text-xl"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <DynamicForm
-              {...createConfig.registerDoctor}
-                              layout="grid"
-
-              onSubmit={handleCreateDoctor}
-              errors={errors}
-              successMessage={successMessage}
-            />
+      {/* Formulario de creación - oculto para doctor */}
+      {mostrarFormulario && !isDoctor && (
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Crear Nuevo Doctor</h2>
+            <button
+              onClick={() => setMostrarFormulario(false)}
+              className="text-gray-400 hover:text-gray-600 transition text-xl"
+            >
+              ✕
+            </button>
           </div>
-        )}
+          <DynamicForm
+            {...createConfig.registerDoctor}
+            layout="grid"
+            onSubmit={handleCreateDoctor}
+            errors={errors}
+            successMessage={successMessage}
+          />
+        </div>
+      )}
 
-        {/* Formulario de edición */}
-        {showEditForm && (
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Doctor</h2>
-              <button
-                onClick={handleCancel}
-                className="text-gray-400 hover:text-gray-600 transition text-xl"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <DynamicForm
-              {...editConfig.editDoctor}
-                              layout="grid"
-
-              defaultValues={doctorSeleccionado}
-              errors={editErrors}
-              successMessage={editSuccessMessage}
-              onSubmit={handleUpdate}
-            />
+      {/* Formulario de edición - oculto para doctor */}
+      {showEditForm && !isDoctor && (
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Doctor</h2>
+            <button
+              onClick={handleCancel}
+              className="text-gray-400 hover:text-gray-600 transition text-xl"
+            >
+              ✕
+            </button>
           </div>
-        )}
-      </div>
+          <DynamicForm
+            {...editConfig.editDoctor}
+            layout="grid"
+            defaultValues={doctorSeleccionado}
+            errors={editErrors}
+            successMessage={editSuccessMessage}
+            onSubmit={handleUpdate}
+          />
+        </div>
+      )}
 
       {/* Tabla de doctores */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
@@ -192,14 +194,16 @@ function DoctoresPage() {
               { header: "Especialidad", accessor: "especialidad" }
             ]}
             data={doctoresFiltrados}
-              onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
-            onEdit={(doctor) => {
+            onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
+            // ✅ Deshabilitar editar y eliminar para rol doctor
+            onEdit={!isDoctor ? (doctor) => {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
-            }}
-onDelete={(doctor) => {
-  handleDeleteDoctor(doctor._id, doctor.username);
-}}    />
+            } : undefined}
+            onDelete={!isDoctor ? (doctor) => {
+              handleDeleteDoctor(doctor._id, doctor.username);
+            } : undefined}
+          />
         )}
       </div>
     </div>

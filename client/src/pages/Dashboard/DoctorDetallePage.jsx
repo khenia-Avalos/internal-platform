@@ -1,5 +1,6 @@
-import { useParams, useNavigate, Link, useLocation } from 'react-router';
-import { useState, useEffect } from 'react'; // ← ELIMINÉ useRef
+import { useParams, useNavigate, useLocation } from 'react-router';
+import { useState, useEffect } from 'react';
+import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
@@ -12,6 +13,7 @@ import { updateHorarioRequest } from "/src/api/horarios";
 import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest } from "/src/api/pausas";
 
 function DoctorDetallePage() {
+  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -23,7 +25,10 @@ function DoctorDetallePage() {
   const [horarios, setHorarios] = useState([]);
   const [horarioEditando, setHorarioEditando] = useState(null);
   const [pausaActiva, setPausaActiva] = useState(null);
-  
+
+  const isDoctorViewingSelf = user?.role === 'doctor' && user?._id === id;
+  const isAdmin = user?.role === 'admin';
+
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
@@ -31,8 +36,12 @@ function DoctorDetallePage() {
       try {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
-        const horariosRes = await getHorariosByDoctorRequest(id);
-        setHorarios(horariosRes.data);
+        
+        // ✅ Solo cargar horarios si es admin o si el doctor ve su propio perfil
+        if (isAdmin || isDoctorViewingSelf) {
+          const horariosRes = await getHorariosByDoctorRequest(id);
+          setHorarios(horariosRes.data);
+        }
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       } finally {
@@ -43,55 +52,35 @@ function DoctorDetallePage() {
     if (id) {
       cargarDatos();
     }
-  }, [id]);
+  }, [id, isAdmin, isDoctorViewingSelf]);
 
-  // ✅ UN SOLO useEffect para cargar la pausa activa
-// Cargar pausa activa - VERSIÓN CON LOGS
-useEffect(() => {
-  let isMounted = true;
-  
-  console.log(" [1] useEffect ejecutándose para doctor:", id);
-  console.log(" [2] location.key actual:", location.key);
-  
-  const cargarPausaActiva = async () => {
-    console.log(" [3] Iniciando cargarPausaActiva...");
-    try {
-      console.log(" [4] Haciendo petición a getPausasActivasRequest...");
-      const res = await getPausasActivasRequest(id);
-      console.log(" [5] Petición completada. Respuesta:", res);
-      console.log(" [6] res.data:", res.data);
-      console.log(" [7] res.data.length:", res.data.length);
-      
-      if (isMounted) {
-        if (res.data.length > 0) {
-          console.log("[8] Pausa activa ENCONTRADA:", res.data[0]);
-          console.log(" [9] Llamando a setPausaActiva con:", res.data[0]);
-          setPausaActiva(res.data[0]);
-        } else {
-          console.log(" [10] No hay pausa activa");
-          console.log(" [11] Llamando a setPausaActiva con: null");
-          setPausaActiva(null);
+  // Cargar pausa activa
+  useEffect(() => {
+    let isMounted = true;
+    
+    const cargarPausaActiva = async () => {
+      try {
+        const res = await getPausasActivasRequest(id);
+        if (isMounted) {
+          if (res.data.length > 0) {
+            setPausaActiva(res.data[0]);
+          } else {
+            setPausaActiva(null);
+          }
         }
-      } else {
-        console.log(" [12] Componente desmontado, ignorando respuesta");
+      } catch (error) {
+        console.error("Error cargando pausa:", error);
       }
-    } catch (error) {
-      console.error("[13] Error en cargarPausaActiva:", error);
+    };
+    
+    if (id) {
+      cargarPausaActiva();
     }
-  };
-  
-  if (id) {
-    console.log("🔄 [14] id existe, llamando a cargarPausaActiva()");
-    cargarPausaActiva();
-  } else {
-    console.log(" [15] id no existe, saltando carga");
-  }
-  
-  return () => {
-    console.log("🧹 [16] Limpiando useEffect, isMounted = false");
-    isMounted = false;
-  };
-}, [id, location.key]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [id, location.key]);
 
   const getNombreDia = (dia) => {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -146,7 +135,7 @@ useEffect(() => {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
-console.log(" [RENDER] pausaActiva actual es:", pausaActiva);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <button
@@ -188,50 +177,60 @@ console.log(" [RENDER] pausaActiva actual es:", pausaActiva);
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
-          <div className="flex justify-between items-center mt-8 mb-4">
-            <h2 className="text-xl font-semibold text-gray-700">Horarios</h2>
-          </div>
-       
-          <DataTable
-            columns={[
-              { header: "Día", accessor: "diaNombre" },
-              { header: "Hora Inicio", accessor: "horaInicio" },
-              { header: "Hora Fin", accessor: "horaFin" },
-              { header: "Intervalo", accessor: "intervaloTexto" },
-              { 
-                header: "Estado", 
-                accessor: "estadoTexto",
-                render: (horario) => (
-                  <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
-                    {horario.estadoTexto}
-                  </span>
-                )
-              }
-            ]}
-            data={horariosFormateados}
-            onEdit={handleEditHorario}  
-          />
 
-          <div className="flex justify-between items-center mt-8 mb-4">
-            <h2 className="text-xl font-semibold text-gray-700">Pausas</h2>
-            <div className="flex gap-3">
-              {!pausaActiva ? (
-                <button
-                  onClick={iniciarPausa}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
-                >
-                  Iniciar Almuerzo
-                </button>
-              ) : (
-                <button
-                  onClick={terminarPausa}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                >
-                  Volver del Almuerzo
-                </button>
-              )}
-            </div>
-          </div>
+          {/* ✅ SECCIÓN PAUSAS - Visible para admin y para el doctor viendo su propio perfil */}
+          {(isAdmin || isDoctorViewingSelf) && (
+            <>
+              <div className="flex justify-between items-center mt-8 mb-4">
+                <h2 className="text-xl font-semibold text-gray-700">🍽️ Control de Almuerzo</h2>
+                <div className="flex gap-3">
+                  {!pausaActiva ? (
+                    <button
+                      onClick={iniciarPausa}
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+                    >
+                      Iniciar Almuerzo
+                    </button>
+                  ) : (
+                    <button
+                      onClick={terminarPausa}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                    >
+                      Volver del Almuerzo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ✅ SECCIÓN HORARIOS - SOLO para admin (oculto para doctor) */}
+          {isAdmin && horarios.length > 0 && (
+            <>
+              <div className="flex justify-between items-center mt-8 mb-4">
+                <h2 className="text-xl font-semibold text-gray-700">📅 Horarios</h2>
+              </div>
+              <DataTable
+                columns={[
+                  { header: "Día", accessor: "diaNombre" },
+                  { header: "Hora Inicio", accessor: "horaInicio" },
+                  { header: "Hora Fin", accessor: "horaFin" },
+                  { header: "Intervalo", accessor: "intervaloTexto" },
+                  { 
+                    header: "Estado", 
+                    accessor: "estadoTexto",
+                    render: (horario) => (
+                      <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+                        {horario.estadoTexto}
+                      </span>
+                    )
+                  }
+                ]}
+                data={horariosFormateados}
+                onEdit={handleEditHorario}  
+              />
+            </>
+          )}
         </>
       )}
 

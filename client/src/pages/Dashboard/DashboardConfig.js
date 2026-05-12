@@ -47,7 +47,7 @@ export const dashboardModules = {
   [ROLES.DOCTOR]: [
      {
     id: "citas",
-    name: "Citas",
+    name: " Mis Citas",
     component: CitasPage,
   },
   {
@@ -58,13 +58,17 @@ export const dashboardModules = {
     id:"perfil",
     name:"Perfil",
     component:PerfilPage
+  },  {
+    id: "doctores",  
+    name: "Mi Información",
+    component: DoctoresPage,
   }
 
   ],
   [ROLES.CLIENTE]: [
      {
     id: "citas",
-    name: "Citas",
+    name: " Mis Citas",
     component: CitasPage,
   },
  {
