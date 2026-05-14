@@ -30,49 +30,41 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   const [fecha, setFecha] = useState(() => {
     if (cita?.fecha) {
       const fechaStr = cita.fecha.split('T')[0];
-      console.log("📅 Fecha inicial desde cita:", fechaStr);
       return fechaStr;
     }
     return '';
   });
 
-  // ✅ PRECARGAR DATOS DEL CLIENTE SI EXISTEN (para rol cliente)
+  // ✅ Precargar datos del cliente
   useEffect(() => {
     if (datosPrecargados && !isEdit) {
       console.log("📋 Precargando datos del cliente:", datosPrecargados);
       if (datosPrecargados.duenoId) {
         setDuenoId(datosPrecargados.duenoId);
+        if (!datosPrecargados.mascotas || datosPrecargados.mascotas.length === 0) {
+          cargarMascotas(datosPrecargados.duenoId);
+        } else {
+          setMascotas(datosPrecargados.mascotas);
+        }
       }
       if (datosPrecargados.correo) {
         setCorreo(datosPrecargados.correo);
       }
-      if (datosPrecargados.mascotas && datosPrecargados.mascotas.length > 0) {
-        setMascotas(datosPrecargados.mascotas);
-      }
     }
   }, [datosPrecargados, isEdit]);
 
-  // Cargar doctores
   useEffect(() => {
-    console.log("🔄 useEffect - cargando doctores");
     cargarDoctores();
   }, []);
 
-  // Cargar dueños (solo para admin, no para clientes con datos precargados)
   useEffect(() => {
     if (!datosPrecargados && !isEdit) {
-      console.log("🔄 useEffect - cargando dueños");
       cargarDuenos();
     }
   }, [datosPrecargados, isEdit]);
 
-  // Cargar mascotas cuando cambia el dueño (si no hay datos precargados)
   useEffect(() => {
     if (duenoId && !datosPrecargados) {
-      console.log("🔄 useEffect - duenoId cambió a:", duenoId);
-      cargarMascotas(duenoId);
-    } else if (duenoId && datosPrecargados && mascotas.length === 0) {
-      // Si hay datos precargados pero no mascotas, cargarlas
       cargarMascotas(duenoId);
     }
   }, [duenoId, datosPrecargados]);
@@ -81,7 +73,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     try {
       const res = await getDoctoresRequest();
       setDoctores(res.data);
-      console.log("👨‍⚕️ Doctores cargados:", res.data.length);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
@@ -91,7 +82,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     try {
       const res = await getClientesRequest();
       setDuenos(res.data);
-      console.log("👤 Dueños cargados:", res.data.length);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
@@ -99,41 +89,28 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
   const cargarMascotas = async (ownerId) => {
     try {
-      console.log("🔍 Buscando mascotas para ownerId:", ownerId);
       const res = await getPacienteByOwnerRequest(ownerId);
       setMascotas(res.data);
-      console.log("🐾 Mascotas cargadas para dueño", ownerId, ":", res.data.length);
     } catch (error) {
-      console.error("❌ Error cargando mascotas:", error);
       manejarErrorResponse(error, setErrors);
       setMascotas([]);
     }
   };
 
   const handleSelectHorario = (horarioSeleccionado) => {
-    console.log("⏰ HANDLE_SELECT_HORARIO - EJECUTADO");
-    console.log("⏰ Horario seleccionado:", horarioSeleccionado);
     setHorario(horarioSeleccionado);
   };
 
   const handleSubmit = async (e) => {
-    console.log("📤 HANDLE_SUBMIT - EJECUTADO");
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("✅ Validando campos...");
-    console.log("✅ isEdit:", isEdit);
-    console.log("✅ horario:", horario);
-    console.log("✅ mascotaId:", mascotaId);
-    
     if (!isEdit && !horario) {
-      console.log("❌ Error: No hay horario seleccionado");
       setErrors(["Por favor selecciona un horario"]);
       return;
     }
     
     if (!mascotaId) {
-      console.log("❌ Error: No hay mascota seleccionada");
       setErrors(["Por favor selecciona una mascota"]);
       return;
     }
@@ -156,19 +133,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       datosCita.horaFin = horario.fin;
     }
     
-    console.log("📦 Datos a enviar:", JSON.stringify(datosCita, null, 2));
-    console.log("📅 Fecha seleccionada por usuario:", fecha);
-    
     setLoading(true);
     setErrors([]);
     
     try {
-      console.log("🚀 Llamando a onSubmit...");
       await onSubmit(datosCita);
-      console.log("✅ onSubmit completado con éxito");
       
       if (!isEdit) {
-        console.log("🧹 Limpiando formulario...");
         setDoctorId('');
         setHorario(null);
         if (!datosPrecargados) {
@@ -192,14 +163,11 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
-      console.log("handleSubmit finalizado");
     }
   };
 
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
-      {console.log("🎨 RENDERIZANDO FORMULARIO - isEdit:", isEdit)}
-      
       <h2 className="text-xl font-semibold mb-4">
         {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
       </h2>
@@ -216,10 +184,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
             <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
             <select
               value={doctorId}
-              onChange={(e) => {
-                console.log("👨‍⚕️ Veterinario cambiado a:", e.target.value);
-                setDoctorId(e.target.value);
-              }}
+              onChange={(e) => setDoctorId(e.target.value)}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             >
@@ -237,10 +202,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
             <input
               type="date"
               value={fecha}
-              onChange={(e) => {
-                console.log("📅 Fecha cambiada a:", e.target.value);
-                setFecha(e.target.value);
-              }}
+              onChange={(e) => setFecha(e.target.value)}
               className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
               required
             />
@@ -264,19 +226,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">
-            📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}
-          </p>
-          <p className="text-sm text-gray-600">
-            ⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}
-          </p>
-          <p className="text-sm text-gray-600">
-            👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}
-          </p>
+          <p className="text-sm text-gray-600">📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}</p>
+          <p className="text-sm text-gray-600">⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}</p>
+          <p className="text-sm text-gray-600">👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}</p>
         </div>
       )}
 
-      {/* Select de Dueños - Oculto si hay datos precargados (cliente) */}
       {!datosPrecargados && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
@@ -284,7 +239,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
             value={duenoId}
             onChange={(e) => {
               const nuevoDuenoId = e.target.value;
-              console.log("👤 Dueño seleccionado:", nuevoDuenoId);
               setDuenoId(nuevoDuenoId);
               const duenoSeleccionado = duenos.find(d => d._id === nuevoDuenoId);
               if (duenoSeleccionado) {
@@ -301,34 +255,22 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
               </option>
             ))}
           </select>
-          {duenos.length === 0 && (
-            <p className="text-xs text-amber-600 mt-1">⚠️ No hay dueños registrados. Debes crear un cliente primero.</p>
-          )}
         </div>
       )}
 
-      {/* Mostrar información del dueño si hay datos precargados */}
       {datosPrecargados && (
         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-700">
-            <strong>👤 Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}
-          </p>
-          <p className="text-sm text-gray-700">
-            <strong>📧 Correo:</strong> {datosPrecargados.correo || 'No especificado'}
-          </p>
+          <p className="text-sm text-gray-700"><strong>👤 Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}</p>
+          <p className="text-sm text-gray-700"><strong>📧 Correo:</strong> {datosPrecargados.correo || 'No especificado'}</p>
         </div>
       )}
 
-      {/* Select de Mascotas */}
       {(duenoId || datosPrecargados) && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
           <select
             value={mascotaId}
-            onChange={(e) => {
-              console.log("🐾 Mascota seleccionada:", e.target.value);
-              setMascotaId(e.target.value);
-            }}
+            onChange={(e) => setMascotaId(e.target.value)}
             className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
             required
           >
@@ -392,7 +334,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
         />
       </div>
 
-      {/* Síntomas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>

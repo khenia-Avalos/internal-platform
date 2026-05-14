@@ -11,9 +11,9 @@ import {
   deleteCita,
   getCitasRequest,
   getCitasByDoctorRequest,
-  getCitasByPacienteRequest  // ← NUEVA IMPORTACIÓN
+  getCitasByPacienteRequest
 } from "/src/api/cita";
-import { getPacienteByOwnerRequest } from "/src/api/pacientes"; // ← PARA OBTENER MASCOTAS DEL CLIENTE
+import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { DataTable } from "../../components/DataTable";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 import { useDelete } from "../../hooks/useDelete";
@@ -27,21 +27,23 @@ function CitasPage() {
   const [errors, setErrors] = useState([]);
   const [fechaFiltro, setFechaFiltro] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
-  const [mascotasCliente, setMascotasCliente] = useState([]); // ← NUEVO: para precargar mascotas del cliente
+  const [mascotasCliente, setMascotasCliente] = useState([]);
   const navigate = useNavigate();
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
-  // Función para mostrar fecha sin conversión de zona horaria
+  console.log("🔄 user en CitasPage:", user);
+  console.log("🔄 user?._id:", user?._id);
+  console.log("🔄 user?.role:", user?.role);
+
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return '';
     const [year, month, day] = fechaISO.split('T')[0].split('-');
     return `${day}/${month}/${year}`;
   };
 
-  // Cargar mascotas del cliente (para precargar el formulario)
   const cargarMascotasCliente = async () => {
     if (isClient && user?._id) {
       try {
@@ -72,7 +74,6 @@ function CitasPage() {
   };
 
   const handleUpdateCita = async (data) => {
-    console.log("🔄 handleUpdateCita RECIBIÓ:", data);
     try {
       await updateCita(citaSeleccionada._id, data);
       await cargarCitas();
@@ -91,18 +92,16 @@ function CitasPage() {
     }
   };
 
-  // ✅ FUNCIÓN PARA CARGAR CITAS SEGÚN EL ROL
   const cargarCitas = async () => {
     try {
       let response;
       
-      if (isDoctor) {
-        const doctorId = user._id || user.id;
+      if (isDoctor && user?._id) {
+        const doctorId = user._id;
         console.log("👨‍⚕️ Cargando citas para doctor:", doctorId);
         response = await getCitasByDoctorRequest(doctorId);
       } 
-      else if (isClient) {
-        // ✅ Para clientes: obtener todas las mascotas y luego las citas de cada una
+      else if (isClient && user?._id) {
         const mascotasRes = await getPacienteByOwnerRequest(user._id);
         const mascotas = mascotasRes.data;
         
@@ -111,18 +110,15 @@ function CitasPage() {
           const citasRes = await getCitasByPacienteRequest(mascota._id);
           todasLasCitas = [...todasLasCitas, ...citasRes.data];
         }
-        
-        // Ordenar por fecha
         todasLasCitas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         response = { data: todasLasCitas };
       } 
       else {
-        // Admin: cargar todas las citas
         console.log("👑 Cargando todas las citas");
         response = await getCitasRequest();
       }
       
-      setCitas(response.data);
+      setCitas(response.data || []);
     } catch (error) {
       console.error("❌ Error cargando citas:", error);
       manejarErrorResponse(error, setErrors);
@@ -130,7 +126,7 @@ function CitasPage() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && user._id) {
       cargarCitas();
       if (isClient) {
         cargarMascotasCliente();
@@ -179,7 +175,6 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {/* Mostrar botón "Nueva Cita" para admin y clientes */}
           {(isAdmin || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
@@ -191,7 +186,6 @@ function CitasPage() {
         </div>
       </div>
 
-      {/* Formulario de creación */}
       {mostrarFormulario && (isAdmin || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -202,18 +196,16 @@ function CitasPage() {
             onSubmit={handleCreateCita} 
             cita={null} 
             isEdit={false}
-            // ✅ Pasar datos precargados si es cliente
-            datosPrecargados={isClient ? {
+            datosPrecargados={isClient && user?._id ? {
               duenoId: user._id,
               correo: user.email,
-              duenoNombre: `${user.username} ${user.lastname || ''}`,
+              duenoNombre: `${user.username || ''} ${user.lastname || ''}`,
               mascotas: mascotasCliente
             } : null}
           />
         </div>
       )}
 
-      {/* Formulario de edición - solo para admin */}
       {showEditForm && citaSeleccionada && isAdmin && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -224,7 +216,6 @@ function CitasPage() {
         </div>
       )}
 
-      {/* Tabla */}
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         {citas.length === 0 ? (
           <div className="text-center py-16">
