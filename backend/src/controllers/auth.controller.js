@@ -1,5 +1,5 @@
 import User from "../models/user.model.js";
-import Owner from "../models/owner.model.js"; // ← IMPORTAR Owner
+import Owner from "../models/owner.model.js";
 import bcrypt from "bcryptjs";
 import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
@@ -22,8 +22,8 @@ export const register = async (req, res) => {
   const { email, password, username, lastname, phoneNumber } = req.body;
   const errors = [];
   if (!username) errors.push("Username is required");
-    if (!lastname) errors.push("Last name is required"); // ← AÑADE
-  if (!phoneNumber) errors.push("Phone number is required"); // ← AÑADE
+  if (!lastname) errors.push("Last name is required");
+  if (!phoneNumber) errors.push("Phone number is required");
   if (!email) errors.push("Email is required");
   if (!password) errors.push("Password is required");
 
@@ -34,38 +34,39 @@ export const register = async (req, res) => {
   try {
     const userFound = await User.findOne({ email });
     if(userFound)
-      return res.status(400).json([" the email is already in use"]);
+      return res.status(400).json(["the email is already in use"]);
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = new User({//objeto en memoria
+    const newUser = new User({
       username,
       email,
-       lastname,      // ← AÑADE
-      phoneNumber,   // ← AÑADE
+      lastname,
+      phoneNumber,
       password: passwordHash,
     });
-    const userSaved = await newUser.save();//guardar en bd 
+    const userSaved = await newUser.save();
     const token = await createAccessToken({ id: userSaved._id });
 
-    res.cookie("token", token, cookieOptions);//para establecer el token como cookie en el navegador
+    res.cookie("token", token, cookieOptions);
 
-  res.json({
-  id: userSaved._id,
-  username: userSaved.username,
-     lastname: userSaved.lastname,    // ← AÑADE
-      phoneNumber: userSaved.phoneNumber, // ← AÑADE
-  email: userSaved.email,
-        role: userSaved.role,             // ← NUEVO
-
-  createdAt: userSaved.createdAt,
-  updatedAt: userSaved.updatedAt,
-  accessToken: token,  
-});
+    res.json({
+      _id: userSaved._id,
+      id: userSaved._id,
+      username: userSaved.username,
+      lastname: userSaved.lastname,
+      phoneNumber: userSaved.phoneNumber,
+      email: userSaved.email,
+      role: userSaved.role,
+      createdAt: userSaved.createdAt,
+      updatedAt: userSaved.updatedAt,
+      accessToken: token,  
+    });
   } catch (error) {
-      const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
@@ -104,8 +105,6 @@ export const login = async (req, res) => {
     console.log("✅ Rol:", esOwner ? 'client' : userFound.role);
     console.log("✅ Estado del usuario:", userFound.estado || 'No aplica');
     
-    // Verificar contraseña
-    console.log("🔍 Verificando contraseña...");
     const isMatch = await bcrypt.compare(password, userFound.password);
     console.log("🔍 ¿Contraseña válida?", isMatch);
     
@@ -114,20 +113,19 @@ export const login = async (req, res) => {
       return res.status(400).json(["Credenciales inválidas"]);
     }
     
-    // ✅ VERIFICAR SI EL CLIENTE ESTÁ ACTIVO (solo para Owners)
     if (esOwner && userFound.estado !== 'completo') {
       console.log("❌ Cuenta incompleta. Estado:", userFound.estado);
       return res.status(400).json(["Cuenta pendiente de completar registro. Revisa tu correo para activar tu cuenta."]);
     }
 
     const token = await createAccessToken({ id: userFound._id });
-
     res.cookie("token", token, cookieOptions);
     
     console.log("✅ Login exitoso para:", userFound.email);
 
     res.json({
-      id: userFound._id,       
+      _id: userFound._id,
+      id: userFound._id,
       username: userFound.username,
       lastname: userFound.lastname || '',
       phoneNumber: userFound.phoneNumber || '',
@@ -138,6 +136,7 @@ export const login = async (req, res) => {
       updatedAt: userFound.updatedAt,
       accessToken: token,  
     });
+    
   } catch (error) {
     console.error("❌ Error en login:", error);
     const errorResponse = manejarError(error);
@@ -154,11 +153,9 @@ export const logout = (req, res) => {
 
 export const profile = async (req, res) => {
   try {
-    // ✅ BUSCAR PRIMERO EN User
     let userFound = await User.findById(req.user.id);
     let esOwner = false;
     
-    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner
     if (!userFound) {
       userFound = await Owner.findById(req.user.id);
       esOwner = true;
@@ -167,6 +164,7 @@ export const profile = async (req, res) => {
     if (!userFound) return res.status(404).json(["User not found"]);
 
     return res.json({
+      _id: userFound._id,
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
@@ -185,18 +183,14 @@ export const profile = async (req, res) => {
   }
 };
 
-//ESTUDIAR ESTA PARTE DONDE EL TOKEN DEBE SER VERIFCADO PARA OBTENER LOS DATOS DEL USUARIO Y MOSTRARLOS EN EL PERFIL, ASÍ COMO PARA PROTEGER RUTAS QUE REQUIERAN AUTENTICACIÓN Y 
-//SABER A QUE CORREO ENVIAR EL LINK DE RESETEO DE CONTRASEÑA, YA QUE EL TOKEN CONTIENE EL ID DEL USUARIO Y CON ESO SE PUEDE OBTENER SU CORREO PARA ENVIAR EL EMAIL DE RESETEO DE CONTRASEÑA
-
 export const verifyToken = async (req, res) => {
 
-  let token = req.cookies.token;//busca token en cookies
+  let token = req.cookies.token;
 
- 
-  if (!token && req.headers.authorization) {//si no esta en cookies busca en headers
+  if (!token && req.headers.authorization) {
     const authHeader = req.headers.authorization;
     if (authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7);//elimina "Bearer " para obtener el token
+      token = authHeader.substring(7);
     }
   }
 
@@ -205,11 +199,9 @@ export const verifyToken = async (req, res) => {
   try {
     const decoded = jwt.verify(token, TOKEN_SECRET);
 
-    // ✅ BUSCAR PRIMERO EN User
     let userFound = await User.findById(decoded.id);
     let esOwner = false;
     
-    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner
     if (!userFound) {
       userFound = await Owner.findById(decoded.id);
       esOwner = true;
@@ -217,21 +209,22 @@ export const verifyToken = async (req, res) => {
     
     if (!userFound) return res.status(401).json(["Unauthorized"]);
     
-   return res.json({
-  id: userFound._id,
-  username: userFound.username,
-     lastname: userFound.lastname || '',    // ← AÑADE
-    phoneNumber: userFound.phoneNumber || '',
-  email: userFound.email,
-        role: esOwner ? 'client' : userFound.role,
-  ...(esOwner && { estado: userFound.estado }),
-
-});
+    return res.json({
+      _id: userFound._id,
+      id: userFound._id,
+      username: userFound.username,
+      lastname: userFound.lastname || '',
+      phoneNumber: userFound.phoneNumber || '',
+      email: userFound.email,
+      role: esOwner ? 'client' : userFound.role,
+      ...(esOwner && { estado: userFound.estado }),
+    });
   } catch (error) {
-  const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });  }
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
 };
 
 export const forgotPassword = async (req, res) => {
@@ -241,7 +234,6 @@ export const forgotPassword = async (req, res) => {
   if (!email) return res.status(400).json(["Email is required"]);
 
   try {
-    // ✅ Buscar en ambas colecciones
     let user = await User.findOne({ email });
     let esOwner = false;
     
@@ -255,44 +247,38 @@ export const forgotPassword = async (req, res) => {
     console.log("📨 Respuesta de sendResetPasswordEmail:", response);
 
     if (NODE_ENV === "development") {
-   
       const devResponse = {
         success: true,
         message: response.message || "Password reset processed",
       };
-
       if (response.debug && response.debug.resetLink) {
         devResponse.debug = {
           note: "Solo visible en desarrollo",
           resetLink: response.debug.resetLink,
           service: response.debug.service,
         };
-
-
         if (response.debug.previewUrl) {
           devResponse.debug.previewUrl = response.debug.previewUrl;
         }
       }
-
       return res.status(200).json(devResponse);
     } else {
       return res.status(200).json({
         success: true,
-        message:
-          "If an account exists with this email, you will receive password reset instructions.",
+        message: "If an account exists with this email, you will receive password reset instructions.",
       });
     }
   } catch (error) {
-      const errorResponse = manejarError(error);
-  return res.status(200).json({
-    success: true,
-    message: "If an account exists with this email, you will receive password reset instructions.",
-  });
+    const errorResponse = manejarError(error);
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists with this email, you will receive password reset instructions.",
+    });
   }
 };
 
 export const resetPassword = async (req, res) => {
-  const { token, password } = req.body;//token del email y nueva contraseña
+  const { token, password } = req.body;
 
   const errors = [];
   if (!token) errors.push("Token is required");
@@ -309,14 +295,12 @@ export const resetPassword = async (req, res) => {
   try {
     const decoded = jwt.verify(token, TOKEN_SECRET);
 
-    // ✅ BUSCAR PRIMERO EN User
     let user = await User.findOne({
       _id: decoded.id,
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() }, 
     });
     
-    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner
     if (!user) {
       user = await Owner.findOne({
         _id: decoded.id,
@@ -337,9 +321,9 @@ export const resetPassword = async (req, res) => {
 
     return res.status(200).json(["Password reset successfully"]);
   } catch (error) {
-      const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
