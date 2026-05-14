@@ -3,21 +3,23 @@ import { useState, useEffect } from "react";
 import { toast, Toaster } from 'sonner';
 import { SearchBar } from "../../components/SearchBar";
 import { useNavigate } from 'react-router';
-import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
+import { useAuth } from "../../hooks/useAuth";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { 
   createCita,
   updateCita,
   deleteCita,
   getCitasRequest,
-  getCitasByDoctorRequest  // ← IMPORTAR NUEVA FUNCIÓN
+  getCitasByDoctorRequest,
+  getCitasByPacienteRequest  // ← NUEVA IMPORTACIÓN
 } from "/src/api/cita";
+import { getPacienteByOwnerRequest } from "/src/api/pacientes"; // ← PARA OBTENER MASCOTAS DEL CLIENTE
 import { DataTable } from "../../components/DataTable";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 import { useDelete } from "../../hooks/useDelete";
 
 function CitasPage() {
-  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+  const { user } = useAuth();
   const [citas, setCitas] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [citaSeleccionada, setCitaSeleccionada] = useState(null);
@@ -25,7 +27,12 @@ function CitasPage() {
   const [errors, setErrors] = useState([]);
   const [fechaFiltro, setFechaFiltro] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
+  const [mascotasCliente, setMascotasCliente] = useState([]); // ← NUEVO: para precargar mascotas del cliente
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor';
+  const isClient = user?.role === 'client';
 
   // Función para mostrar fecha sin conversión de zona horaria
   const mostrarFechaLocal = (fechaISO) => {
@@ -34,11 +41,24 @@ function CitasPage() {
     return `${day}/${month}/${year}`;
   };
 
+  // Cargar mascotas del cliente (para precargar el formulario)
+  const cargarMascotasCliente = async () => {
+    if (isClient && user?._id) {
+      try {
+        const res = await getPacienteByOwnerRequest(user._id);
+        setMascotasCliente(res.data);
+        console.log("🐾 Mascotas del cliente:", res.data);
+      } catch (error) {
+        console.error("Error cargando mascotas del cliente:", error);
+      }
+    }
+  };
+
   const handleCreateCita = async (data) => {
     try {
       await createCita(data);
       setMostrarFormulario(false);
-      await cargarCitas(); // ← USAR FUNCIÓN CENTRALIZADA
+      await cargarCitas();
       
       toast.success('✅ Cita creada exitosamente', {
         description: `${data.tipoCita} - ${data.fecha} a las ${data.horaInicio}`,
@@ -55,7 +75,7 @@ function CitasPage() {
     console.log("🔄 handleUpdateCita RECIBIÓ:", data);
     try {
       await updateCita(citaSeleccionada._id, data);
-      await cargarCitas(); // ← USAR FUNCIÓN CENTRALIZADA
+      await cargarCitas();
       
       toast.success('✅ Cita actualizada exitosamente', {
         description: `Datos generales actualizados`,
@@ -71,26 +91,38 @@ function CitasPage() {
     }
   };
 
-  // ✅ FUNCIÓN CENTRALIZADA PARA CARGAR CITAS SEGÚN EL ROL
+  // ✅ FUNCIÓN PARA CARGAR CITAS SEGÚN EL ROL
   const cargarCitas = async () => {
     try {
       let response;
       
-      // Si es doctor, cargar solo sus citas
-      if (user?.role === 'doctor') {
+      if (isDoctor) {
         const doctorId = user._id || user.id;
         console.log("👨‍⚕️ Cargando citas para doctor:", doctorId);
         response = await getCitasByDoctorRequest(doctorId);
-      } else {
-        // Admin o usuario normal, cargar todas las citas
+      } 
+      else if (isClient) {
+        // ✅ Para clientes: obtener todas las mascotas y luego las citas de cada una
+        const mascotasRes = await getPacienteByOwnerRequest(user._id);
+        const mascotas = mascotasRes.data;
+        
+        let todasLasCitas = [];
+        for (const mascota of mascotas) {
+          const citasRes = await getCitasByPacienteRequest(mascota._id);
+          todasLasCitas = [...todasLasCitas, ...citasRes.data];
+        }
+        
+        // Ordenar por fecha
+        todasLasCitas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        response = { data: todasLasCitas };
+      } 
+      else {
+        // Admin: cargar todas las citas
         console.log("👑 Cargando todas las citas");
         response = await getCitasRequest();
       }
       
-      const citasOrdenadas = response.data.sort((a, b) => 
-        new Date(b.fecha) - new Date(a.fecha)
-      );
-      setCitas(citasOrdenadas);
+      setCitas(response.data);
     } catch (error) {
       console.error("❌ Error cargando citas:", error);
       manejarErrorResponse(error, setErrors);
@@ -100,8 +132,11 @@ function CitasPage() {
   useEffect(() => {
     if (user) {
       cargarCitas();
+      if (isClient) {
+        cargarMascotasCliente();
+      }
     }
-  }, [user]); // ← Recargar cuando cambie el usuario
+  }, [user]);
 
   const citasFiltradas = citas.filter(cita => {
     const texto = busqueda.toLowerCase();
@@ -116,7 +151,7 @@ function CitasPage() {
 
   const { handleDelete: handleDeleteCita } = useDelete(
     deleteCita,
-    cargarCitas, // ← USAR FUNCIÓN CENTRALIZADA
+    cargarCitas,
     setCitas,
     {
       onSuccess: () => toast.success('🗑️ Cita eliminada exitosamente'),
@@ -130,7 +165,9 @@ function CitasPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {user?.role === 'doctor' ? '📅 Mis Citas' : '📋 Gestión de citas'}
+          {isDoctor && '📅 Mis Citas'}
+          {isClient && '📅 Mis Citas'}
+          {isAdmin && '📋 Gestión de citas'}
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
@@ -142,8 +179,8 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {/* Mostrar botón "Nueva Cita" solo para admin, no para doctores */}
-          {user?.role !== 'doctor' && (
+          {/* Mostrar botón "Nueva Cita" para admin y clientes */}
+          {(isAdmin || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
@@ -154,19 +191,30 @@ function CitasPage() {
         </div>
       </div>
 
-      {/* Formulario de creación - solo para admin */}
-      {mostrarFormulario && user?.role !== 'doctor' && (
+      {/* Formulario de creación */}
+      {mostrarFormulario && (isAdmin || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
             <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
-          <FormularioCita onSubmit={handleCreateCita} cita={null} isEdit={false} />
+          <FormularioCita 
+            onSubmit={handleCreateCita} 
+            cita={null} 
+            isEdit={false}
+            // ✅ Pasar datos precargados si es cliente
+            datosPrecargados={isClient ? {
+              duenoId: user._id,
+              correo: user.email,
+              duenoNombre: `${user.username} ${user.lastname || ''}`,
+              mascotas: mascotasCliente
+            } : null}
+          />
         </div>
       )}
 
       {/* Formulario de edición - solo para admin */}
-      {showEditForm && citaSeleccionada && user?.role !== 'doctor' && (
+      {showEditForm && citaSeleccionada && isAdmin && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Editar Cita</h2>
@@ -181,6 +229,9 @@ function CitasPage() {
         {citas.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-gray-500">No hay citas registradas</p>
+            {isClient && (
+              <p className="text-gray-400 mt-2">Haz clic en "+ Nueva Cita" para agendar tu primera cita</p>
+            )}
           </div>
         ) : citasFiltradas.length === 0 ? (
           <div className="text-center py-16">
@@ -197,17 +248,13 @@ function CitasPage() {
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-            onEdit={(cita) => { 
-              if (user?.role !== 'doctor') {
-                setCitaSeleccionada(cita); 
-                setShowEditForm(true);
-              }
-            }}
-            onDelete={(cita) => {
-              if (user?.role !== 'doctor') {
-                handleDeleteCita(cita._id);
-              }
-            }}
+            onEdit={isAdmin ? (cita) => { 
+              setCitaSeleccionada(cita); 
+              setShowEditForm(true);
+            } : undefined}
+            onDelete={isAdmin ? (cita) => {
+              handleDeleteCita(cita._id);
+            } : undefined}
           />
         )}
       </div>
