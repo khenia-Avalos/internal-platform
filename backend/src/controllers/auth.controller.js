@@ -70,7 +70,8 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  console.log(req.body);
+  console.log("📞 LOGIN INICIADO");
+  console.log("📞 Body recibido:", req.body);
 
   const { email, password } = req.body;
   const errors = [];
@@ -78,32 +79,52 @@ export const login = async (req, res) => {
   if (!password) errors.push("Password is required");
 
   if (errors.length > 0) {
+    console.log("❌ Errores de validación:", errors);
     return res.status(400).json(errors);
   }
+  
   try {
-    // ✅ BUSCAR PRIMERO EN User (doctores, admins)
-    let userFound = await User.findOne({ email });
-    let esOwner = false;
+    console.log("🔍 Buscando en Owner primero...");
+    let userFound = await Owner.findOne({ email });
+    let esOwner = true;
     
-    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner (clientes)
     if (!userFound) {
-      userFound = await Owner.findOne({ email });
-      esOwner = true;
+      console.log("🔍 No encontrado en Owner, buscando en User...");
+      userFound = await User.findOne({ email });
+      esOwner = false;
     }
-
-    if (!userFound) return res.status(400).json(["invalid email or password"]);
-
+    
+    if (!userFound) {
+      console.log("❌ Usuario no encontrado en ninguna colección");
+      return res.status(400).json(["Credenciales inválidas"]);
+    }
+    
+    console.log("✅ Usuario encontrado en:", esOwner ? "Owner" : "User");
+    console.log("✅ Email:", userFound.email);
+    console.log("✅ Rol:", esOwner ? 'client' : userFound.role);
+    console.log("✅ Estado del usuario:", userFound.estado || 'No aplica');
+    
+    // Verificar contraseña
+    console.log("🔍 Verificando contraseña...");
     const isMatch = await bcrypt.compare(password, userFound.password);
-    if (!isMatch) return res.status(400).json(["invalid email or password"]);
+    console.log("🔍 ¿Contraseña válida?", isMatch);
+    
+    if (!isMatch) {
+      console.log("❌ Contraseña incorrecta");
+      return res.status(400).json(["Credenciales inválidas"]);
+    }
     
     // ✅ VERIFICAR SI EL CLIENTE ESTÁ ACTIVO (solo para Owners)
     if (esOwner && userFound.estado !== 'completo') {
+      console.log("❌ Cuenta incompleta. Estado:", userFound.estado);
       return res.status(400).json(["Cuenta pendiente de completar registro. Revisa tu correo para activar tu cuenta."]);
     }
 
     const token = await createAccessToken({ id: userFound._id });
 
     res.cookie("token", token, cookieOptions);
+    
+    console.log("✅ Login exitoso para:", userFound.email);
 
     res.json({
       id: userFound._id,       
@@ -118,10 +139,12 @@ export const login = async (req, res) => {
       accessToken: token,  
     });
   } catch (error) {
-  const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });  }
+    console.error("❌ Error en login:", error);
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
 };
 
 export const logout = (req, res) => {
@@ -155,10 +178,11 @@ export const profile = async (req, res) => {
       updatedAt: userFound.updatedAt,
     });
   } catch (error) {
-  const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });  }
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
 };
 
 //ESTUDIAR ESTA PARTE DONDE EL TOKEN DEBE SER VERIFCADO PARA OBTENER LOS DATOS DEL USUARIO Y MOSTRARLOS EN EL PERFIL, ASÍ COMO PARA PROTEGER RUTAS QUE REQUIERAN AUTENTICACIÓN Y 
