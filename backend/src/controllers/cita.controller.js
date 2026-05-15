@@ -125,7 +125,8 @@ export const getCitasByDoctor = async (req, res) => {
     const { doctorId } = req.params;
     
     const citas = await Cita.find({ doctorId })
-      .populate('pacienteId', 'nombre especie raza') // ✅ datos de la mascota
+      .populate('doctorId', 'username lastname especialidad') // ✅ AGREGAR ESTO
+      .populate('pacienteId', 'nombre especie raza')
       .sort({ fecha: -1, horaInicio: 1 });
     
     res.json(citas);
