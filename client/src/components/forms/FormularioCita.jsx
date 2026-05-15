@@ -35,6 +35,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     return '';
   });
 
+  // Determinar si es cliente (tiene datos precargados)
+  const esCliente = !!datosPrecargados;
+
   // ✅ Precargar datos del cliente
   useEffect(() => {
     if (datosPrecargados && !isEdit) {
@@ -69,10 +72,24 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     }
   }, [duenoId, datosPrecargados]);
 
+  // ✅ Cargar doctores con filtro para clientes
   const cargarDoctores = async () => {
     try {
       const res = await getDoctoresRequest();
-      setDoctores(res.data);
+      let doctoresData = res.data;
+      
+      // ✅ Si es cliente, filtrar solo Medicina General y Groomer
+      if (esCliente) {
+        doctoresData = doctoresData.filter(doctor => 
+          doctor.especialidad === 'Medicina General' || 
+          doctor.especialidad === 'Groomer'
+        );
+        console.log("👨‍⚕️ Doctores filtrados para cliente:", doctoresData.length);
+      } else {
+        console.log("👨‍⚕️ Doctores cargados:", doctoresData.length);
+      }
+      
+      setDoctores(doctoresData);
     } catch (error) {
       manejarErrorResponse(error, setErrors);
     }
@@ -195,6 +212,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
                 </option>
               ))}
             </select>
+            {esCliente && doctores.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">⚠️ No hay veterinarios disponibles para el tipo de cita seleccionado.</p>
+            )}
           </div>
 
           <div>
