@@ -5,8 +5,10 @@ import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getCitaByIdRequest, updateCita } from "/src/api/cita";
 import { FormularioCita } from "../../components/forms/FormularioCita";
+import { useAuth } from "../../hooks/useAuth";
 
 function CitaDetallePage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const [cita, setCita] = useState(null);
@@ -15,31 +17,25 @@ function CitaDetallePage() {
   const [updating, setUpdating] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
 
-  // Función para mostrar fecha sin conversión de zona horaria
+  const isAdmin = user?.role === 'admin';
+  const isClient = user?.role === 'client';
+
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
     const [year, month, day] = fechaISO.split('T')[0].split('-');
     return `${day}/${month}/${year}`;
   };
 
-  // ============================================
-  // FUNCIONES PARA OBTENER DATOS DEL DUEÑO
-  // ============================================
-
-  // Obtener el nombre del dueño correctamente
   const obtenerNombreDueño = () => {
-    // Si es cita de cliente temporal (tiene clienteTemporalId)
     if (cita?.clienteTemporalId?.username) {
       return cita.clienteTemporalId.username;
     }
-    // Si es cita de cliente registrado (tiene pacienteId con ownerId)
     if (cita?.pacienteId?.ownerId?.username) {
       return cita.pacienteId.ownerId.username;
     }
     return 'No especificado';
   };
 
-  // Obtener el email del dueño correctamente
   const obtenerEmailDueño = () => {
     if (cita?.clienteTemporalId?.email) {
       return cita.clienteTemporalId.email;
@@ -50,7 +46,6 @@ function CitaDetallePage() {
     return 'No especificado';
   };
 
-  // Obtener el teléfono del dueño correctamente
   const obtenerTelefonoDueño = () => {
     if (cita?.clienteTemporalId?.phoneNumber) {
       return cita.clienteTemporalId.phoneNumber;
@@ -61,12 +56,10 @@ function CitaDetallePage() {
     return 'No especificado';
   };
 
-  // Detectar si es cita de cliente temporal
   const esCitaTemporal = () => {
     return cita?.esCitaTemporal === true || (cita?.clienteTemporalId && !cita?.pacienteId);
   };
 
-  // Obtener estado de la cita en texto legible
   const obtenerEstadoTexto = () => {
     switch (cita?.estado) {
       case 'pendiente': return '⏳ Pendiente de confirmación';
@@ -76,10 +69,6 @@ function CitaDetallePage() {
       default: return cita?.estado || 'No especificado';
     }
   };
-
-  // ============================================
-  // FUNCIONES PARA CAMBIAR ESTADO
-  // ============================================
 
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
@@ -108,7 +97,6 @@ function CitaDetallePage() {
       setCita({ ...cita, estado: nuevoEstado });
       toast.success(mensajeExito, { duration: 3000 });
     } catch (error) {
-      // Mostrar mensaje de error específico si viene del backend
       const mensajeErrorBackend = error.response?.data?.message || mensajeError;
       toast.error(mensajeErrorBackend);
       manejarErrorResponse(error, setErrors);
@@ -137,16 +125,11 @@ function CitaDetallePage() {
     }
   };
 
-  // ============================================
-  // CARGA DE DATOS
-  // ============================================
-
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
       try {
         const citaRes = await getCitaByIdRequest(id);
-        console.log("📋 Datos de la cita recibidos:", citaRes.data);
         setCita(citaRes.data);
       } catch (error) {
         console.error("Error cargando cita:", error);
@@ -164,10 +147,6 @@ function CitaDetallePage() {
   const abrirModalReagendar = () => {
     setShowReagendarModal(true);
   };
-
-  // ============================================
-  // CONSTRUIR DATOS PARA INFOCARD
-  // ============================================
 
   const informacionCita = [
     { label: "Doctor", value: cita?.doctorId ? `${cita.doctorId.username} ${cita.doctorId.lastname}` : 'No asignado' },
@@ -232,33 +211,18 @@ function CitaDetallePage() {
 
       {!loading && cita && (
         <>
-          <InfoCard
-            title="Información de la cita"
-            data={informacionCita}
-          />
+          <InfoCard title="Información de la cita" data={informacionCita} />
 
-          {/* Advertencia para clientes temporales */}
           {esCitaTemporal() && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-orange-50 border border-orange-300 rounded-lg">
-              <p className="text-orange-800 text-sm font-medium">
-                ⚠️ Esta es una cita de <strong>Cliente Temporal</strong>
-              </p>
-              <p className="text-orange-700 text-sm mt-1">
-                El cliente aún no ha completado su registro. Cuando lo haga, la mascota y los datos completos 
-                se asignarán automáticamente a esta cita.
-              </p>
-              <p className="text-orange-600 text-xs mt-2">
-                📌 Datos del cliente temporal: {cita.clienteTemporalId?.username || 'No disponible'}
-              </p>
+              <p className="text-orange-800 text-sm font-medium">⚠️ Esta es una cita de <strong>Cliente Temporal</strong></p>
+              <p className="text-orange-700 text-sm mt-1">El cliente aún no ha completado su registro. Cuando lo haga, la mascota y los datos completos se asignarán automáticamente a esta cita.</p>
             </div>
           )}
 
-          {/* Información del cliente temporal si existe */}
           {cita.clienteTemporalId && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm font-medium">
-                📋 Información del Cliente Temporal
-              </p>
+              <p className="text-blue-800 text-sm font-medium">📋 Información del Cliente Temporal</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-blue-700"><strong>Nombre:</strong> {cita.clienteTemporalId.username}</p>
                 <p className="text-blue-700"><strong>Email:</strong> {cita.clienteTemporalId.email}</p>
@@ -268,12 +232,9 @@ function CitaDetallePage() {
             </div>
           )}
 
-          {/* Información de la mascota si existe */}
           {cita.pacienteId && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium">
-                🐾 Información de la Mascota
-              </p>
+              <p className="text-green-800 text-sm font-medium">🐾 Información de la Mascota</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
                 <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
@@ -284,11 +245,12 @@ function CitaDetallePage() {
           )}
           
           {/* ============================================ */}
-          {/* BOTONES DE ACCIÓN - CON CANCELAR PARA CONFIRMADAS */}
+          {/* BOTONES DE ACCIÓN SEGÚN ROL */}
           {/* ============================================ */}
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>
+                {/* ✅ Cliente puede confirmar */}
                 <button 
                   onClick={() => cambiarEstado('confirmada')} 
                   disabled={updating}
@@ -296,6 +258,7 @@ function CitaDetallePage() {
                 >
                   ✅ Confirmar Cita
                 </button>
+                {/* ✅ Cliente puede cancelar */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
@@ -303,6 +266,7 @@ function CitaDetallePage() {
                 >
                   ❌ Cancelar Cita
                 </button>
+                {/* ✅ Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -314,14 +278,17 @@ function CitaDetallePage() {
             
             {cita.estado === 'confirmada' && (
               <>
-                <button 
-                  onClick={() => cambiarEstado('completada')} 
-                  disabled={updating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  ✔️ Marcar como Completada
-                </button>
-                {/* ✅ NUEVO: Botón de cancelar para citas confirmadas */}
+                {/* ❌ Marcar como Completada - SOLO para ADMIN (oculto para cliente) */}
+                {isAdmin && (
+                  <button 
+                    onClick={() => cambiarEstado('completada')} 
+                    disabled={updating}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    ✔️ Marcar como Completada
+                  </button>
+                )}
+                {/* ✅ Cliente puede cancelar (si está confirmada y tiene tiempo) */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
@@ -329,6 +296,7 @@ function CitaDetallePage() {
                 >
                   ❌ Cancelar Cita
                 </button>
+                {/* ✅ Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -348,34 +316,16 @@ function CitaDetallePage() {
         </>
       )}
 
-      {/* Modal para reagendar */}
       {showReagendarModal && (
         <>
-          <div 
-            className="fixed inset-0 z-50 bg-black bg-opacity-50"
-            onClick={() => setShowReagendarModal(false)}
-          />
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowReagendarModal(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div 
-              className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowReagendarModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
-              >
-                ✕
-              </button>
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setShowReagendarModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10">✕</button>
               <div className="p-6">
                 <h2 className="text-xl font-bold mb-4 text-gray-800">📅 Reagendar Cita</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  Cita actual: {mostrarFechaLocal(cita.fecha)} a las {cita.horaInicio}
-                </p>
-                <FormularioCita 
-                  onSubmit={handleReagendar}
-                  cita={cita}
-                  isEdit={false}
-                />
+                <p className="text-sm text-gray-500 mb-4">Cita actual: {mostrarFechaLocal(cita.fecha)} a las {cita.horaInicio}</p>
+                <FormularioCita onSubmit={handleReagendar} cita={cita} isEdit={false} />
               </div>
             </div>
           </div>

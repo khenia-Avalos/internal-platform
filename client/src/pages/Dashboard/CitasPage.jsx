@@ -34,10 +34,6 @@ function CitasPage() {
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
-  console.log("🔄 user en CitasPage:", user);
-  console.log("🔄 user?._id:", user?._id);
-  console.log("🔄 user?.role:", user?.role);
-
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return '';
     const [year, month, day] = fechaISO.split('T')[0].split('-');
@@ -98,7 +94,6 @@ function CitasPage() {
       
       if (isDoctor && user?._id) {
         const doctorId = user._id;
-        console.log("👨‍⚕️ Cargando citas para doctor:", doctorId);
         response = await getCitasByDoctorRequest(doctorId);
       } 
       else if (isClient && user?._id) {
@@ -114,7 +109,6 @@ function CitasPage() {
         response = { data: todasLasCitas };
       } 
       else {
-        console.log("👑 Cargando todas las citas");
         response = await getCitasRequest();
       }
       
@@ -239,6 +233,7 @@ function CitasPage() {
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
+            // ✅ Editar y Eliminar SOLO para admin
             onEdit={isAdmin ? (cita) => { 
               setCitaSeleccionada(cita); 
               setShowEditForm(true);
