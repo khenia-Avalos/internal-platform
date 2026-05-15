@@ -2,10 +2,11 @@ import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 import { promisify } from "util";
 import User from "../models/user.model.js";
+import Owner from "../models/owner.model.js"; // ← IMPORTAR Owner
 
 const verifyAsync = promisify(jwt.verify);
 
-// ✅ Lista de rutas que NO requieren autenticación (patrones)
+// ✅ Lista de rutas que NO requieren autenticación
 const PUBLIC_PATHS = [
   '/api/public/doctores',
   '/api/public/horarios',
@@ -44,9 +45,21 @@ export const validateToken = async (req, res, next) => {
 
     const decodedUser = await verifyAsync(token, TOKEN_SECRET);
     
-    const userFound = await User.findById(decodedUser.id).select('role username email');
+    // ✅ PRIMERO buscar en User (doctores, admins)
+    let userFound = await User.findById(decodedUser.id).select('role username email phoneNumber lastname');
+    
+    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner (clientes)
     if (!userFound) {
-      console.log("❌ Usuario no encontrado");
+      userFound = await Owner.findById(decodedUser.id).select('username email phoneNumber lastname estado');
+      if (userFound) {
+        // Los owners son clientes
+        userFound.role = 'client';
+        console.log("✅ Usuario encontrado en Owner (cliente):", userFound.username);
+      }
+    }
+    
+    if (!userFound) {
+      console.log("❌ Usuario no encontrado en ninguna colección. ID:", decodedUser.id);
       return res.status(401).json({ message: "Usuario no encontrado" });
     }
     
@@ -68,7 +81,16 @@ export const adminRequired = async (req, res, next) => {
       return res.status(401).json({ message: "No autorizado" });
     }
     
-    const user = await User.findById(req.user.id).select('role');
+    // Buscar en User primero
+    let user = await User.findById(req.user.id).select('role');
+    
+    // Si no está en User, buscar en Owner
+    if (!user) {
+      const owner = await Owner.findById(req.user.id).select('role');
+      if (owner) {
+        user = { role: 'client' };
+      }
+    }
     
     if (!user) {
       return res.status(401).json({ message: "Usuario no encontrado" });
