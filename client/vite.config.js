@@ -7,13 +7,18 @@ export default defineConfig({
   plugins: [react(),
     tailwindcss(),
   ],
-  server:{
-    proxy:{
-      "/api":{
-        changeOrigin:true,
-        secure:false,
+  base: '/', // ← Asegurar que la base es correcta
+  server: {
+    proxy: {
+      "/api": {
+        target: 'https://el-exito-internal-platform.onrender.com',
+        changeOrigin: true,
+        secure: false,
       }
     }
+  },
+  preview: {
+    port: 3000,
+    strictPort: true,
   }
-  
 })
