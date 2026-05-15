@@ -77,7 +77,7 @@ export const dashboardModules = {
     component:PerfilPage
   }, {
     id: "pacientes",
-    name: "Pacientes",
+    name: "Mis Mascotas",
     component: PacientesPage,
   },
   
