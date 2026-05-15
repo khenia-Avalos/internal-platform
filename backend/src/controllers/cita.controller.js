@@ -125,8 +125,8 @@ export const getCitasByDoctor = async (req, res) => {
     const { doctorId } = req.params;
     
     const citas = await Cita.find({ doctorId })
-      .populate('pacienteId', 'nombre especie raza') // datos de la mascota
-      .sort({ fecha: -1, horaInicio: 1 }); // más recientes primero
+      .populate('pacienteId', 'nombre especie raza') // ✅ datos de la mascota
+      .sort({ fecha: -1, horaInicio: 1 });
     
     res.json(citas);
   } catch (error) {
@@ -143,6 +143,7 @@ export const getCitasByPaciente = async (req, res) => {
     
     const citas = await Cita.find({ pacienteId })
       .populate('doctorId', 'username lastname especialidad')
+      .populate('pacienteId', 'nombre especie raza') // ✅ AGREGADO: para mostrar nombre de la mascota
       .sort({ fecha: -1, horaInicio: 1 });
     
     res.json(citas);
@@ -208,6 +209,7 @@ export const updateCita = async (req, res) => {
     res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
+
 export const deleteCita = async (req, res) => {
   try {
     const { id } = req.params;
@@ -571,11 +573,6 @@ export const cancelarCitaConToken = async (req, res) => {
         'advertencia'
       ));
     }
-    
-    // ❌ ELIMINAR ESTA VALIDACIÓN - No debe bloquear citas confirmadas
-    // if (cita.estado === 'confirmada') {
-    //   return res.status(400).send(renderizarPagina(...));
-    // }
     
     // Cancelar la cita (pendiente o confirmada)
     cita.estado = 'cancelada';
