@@ -75,7 +75,11 @@ export const dashboardModules = {
     id:"perfil",
     name:"Perfil",
     component:PerfilPage
-  }
+  }, {
+    id: "pacientes",
+    name: "Pacientes",
+    component: PacientesPage,
+  },
   
   ]
 };

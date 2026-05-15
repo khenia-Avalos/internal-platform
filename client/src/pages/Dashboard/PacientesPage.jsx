@@ -7,7 +7,7 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { useNavigate } from "react-router";
-
+import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
 
 import {
   getPacienteRequest,
@@ -15,14 +15,14 @@ import {
   updatePacienteRequest,
   deletePacienteRequest
 } from "/src/api/pacientes";
-// Importar la API de owners para obtener los dueños
-import { getClientesRequest } from "/src/api/clientes"; // ← NUEVO PASO 4
+import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
-   const navigate = useNavigate();
+  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+  const navigate = useNavigate();
 
   const [pacientes, setPacientes] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -30,54 +30,66 @@ function PacientesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [clientes, setClientes] = useState([]);
 
-  // PASO 4: Estado para guardar los dueños (owners)
-  const [clientes, setClientes] = useState([]); // ← NUEVO
+  const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor';
+  const isClient = user?.role === 'client';
 
-  // PASO 4: useEffect para cargar los dueños desde la API
+  // Cargar dueños (solo necesario para admin y doctor)
   useEffect(() => {
-    const obtenerClientes = async () => {
-      try {
-        const response = await getClientesRequest();
-        // Transformar los dueños al formato que espera react-select { value, label }
-        const clientesOptions = response.data.map(cliente => ({
-          value: cliente._id,
-          label: `${cliente.username} ${cliente.lastname} (${cliente.email})` // ← Se muestra en el select
-        }));
-        setClientes(clientesOptions);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-      }
-    };
-    obtenerClientes();
-  }, []); // Se ejecuta solo una vez al montar el componente
+    if (isAdmin || isDoctor) {
+      const obtenerClientes = async () => {
+        try {
+          const response = await getClientesRequest();
+          const clientesOptions = response.data.map(cliente => ({
+            value: cliente._id,
+            label: `${cliente.username} ${cliente.lastname} (${cliente.email})`
+          }));
+          setClientes(clientesOptions);
+        } catch (error) {
+          manejarErrorResponse(error, setErrors, setSuccessMessage);
+        }
+      };
+      obtenerClientes();
+    }
+  }, [isAdmin, isDoctor]);
 
   const handleCreatePaciente = async (data) => {
     try {
       await createPacienteRequest(data);
       setMostrarFormulario(false);
-      const response = await getPacienteRequest();
-      setPacientes(response.data);
+      await cargarPacientes();
       setSuccessMessage("Paciente creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
 
+  // ✅ FUNCIÓN PARA CARGAR PACIENTES SEGÚN EL ROL
+  const cargarPacientes = async () => {
+    try {
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      // Si es cliente, filtrar solo sus mascotas
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
+      }
+      
+      setPacientes(pacientesData);
+    } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
 
   useEffect(() => {
-    const obtenerPacientes = async () => {
-      try {
-        const response = await getPacienteRequest();
-        setPacientes(response.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors, setSuccessMessage);
-
-      }
-    };
-    obtenerPacientes();
-  }, []);
+    if (user) {
+      cargarPacientes();
+    }
+  }, [user]);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
@@ -85,9 +97,10 @@ function PacientesPage() {
       paciente.nombre?.toLowerCase().includes(texto) ||
       paciente.especie?.toLowerCase().includes(texto) ||
       paciente.raza?.toLowerCase().includes(texto) ||
-      paciente.ownerId?.username?.toLowerCase().includes(texto) // Buscar también por nombre de dueño
+      paciente.ownerId?.username?.toLowerCase().includes(texto)
     );
   });
+
   const pacientesConDueño = pacientesFiltrados.map(paciente => ({
     ...paciente,
     nombreDueño: paciente.ownerId?.username || "Sin dueño"
@@ -95,7 +108,7 @@ function PacientesPage() {
 
   const { handleDelete: handleDeletePaciente } = useDelete(
     deletePacienteRequest,
-    getPacienteRequest,
+    cargarPacientes,
     setPacientes
   );
 
@@ -108,7 +121,7 @@ function PacientesPage() {
     handleCancel
   } = useEdit(
     updatePacienteRequest,
-    getPacienteRequest,
+    cargarPacientes,
     setPacientes,
     editConfig.paciente,
     null
@@ -116,34 +129,37 @@ function PacientesPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Cabecera */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Gestión de mascotas/pacientes</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+          {isClient ? '🐾 Mis Mascotas' : '📋 Gestión de mascotas/pacientes'}
+        </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <SearchBar
               value={busqueda}
               onChange={setBusqueda}
-              placeholder="Buscar paciente por nombre, raza y dueño."
+              placeholder="Buscar paciente por nombre, raza y dueño..."
             />
           </div>
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
-          >
-            + Nuevo Paciente
-          </button>
+          {/* ✅ Cliente también puede crear mascotas */}
+          {(isAdmin || isDoctor || isClient) && (
+            <button
+              onClick={() => setMostrarFormulario(true)}
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
+            >
+              + Nueva Mascota
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Contenedor de formularios */}
       <div className="space-y-6 mb-6">
         {/* Formulario de creación */}
         {mostrarFormulario && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Paciente</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nueva Mascota</h2>
               <button
                 onClick={() => setMostrarFormulario(false)}
                 className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -155,8 +171,11 @@ function PacientesPage() {
             <DynamicForm
               {...createConfig.registerPaciente}
               layout="grid"
-              // PASO 5: Pasar las opciones de dueños como customProps
-              customProps={{ ownerOptions: clientes }} 
+              customProps={{ 
+                ownerOptions: clientes,
+                // ✅ Si es cliente, pasar su ID como valor por defecto
+                defaultOwnerId: isClient ? user?._id : null
+              }}
               onSubmit={handleCreatePaciente}
               errors={errors}
               successMessage={successMessage}
@@ -164,8 +183,8 @@ function PacientesPage() {
           </div>
         )}
 
-        {/* Formulario de edición */}
-        {showEditForm && (
+        {/* Formulario de edición - solo para admin y doctor */}
+        {showEditForm && (isAdmin || isDoctor) && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Paciente</h2>
@@ -181,8 +200,7 @@ function PacientesPage() {
               {...editConfig.editpaciente}
               layout="grid"
               defaultValues={pacienteSeleccionado}
-              // También pasar customProps al formulario de edición
-              customProps={{ ownerOptions: clientes }} // ← NUEVO (opcional, si editar también necesita el select)
+              customProps={{ ownerOptions: clientes }}
               errors={editErrors}
               successMessage={editSuccessMessage}
               onSubmit={handleUpdate}
@@ -191,13 +209,12 @@ function PacientesPage() {
         )}
       </div>
 
-      {/* Tabla de pacientes */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
         {pacientes.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay pacientes registrados</p>
-            <p className="text-gray-400 mt-2">Haz clic en "Nuevo Paciente" para comenzar</p>
+            <p className="text-gray-400 mt-2">Haz clic en "Nueva Mascota" para comenzar</p>
           </div>
         ) : pacientesFiltrados.length === 0 ? (
           <div className="text-center py-16 px-4">
@@ -222,17 +239,18 @@ function PacientesPage() {
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
             data={pacientesConDueño}
-onRowClick={(paciente) => {
-
-  navigate(`/pacientes/${paciente._id}`);
-}}            onEdit={(paciente) => {
-
+            onRowClick={(paciente) => {
+              navigate(`/pacientes/${paciente._id}`);
+            }}
+            // ✅ Editar y Eliminar SOLO para admin y doctor
+            onEdit={(isAdmin || isDoctor) ? (paciente) => {
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
-            }}
-            onDelete={(paciente) => {
+            } : undefined}
+            onDelete={(isAdmin || isDoctor) ? (paciente) => {
               handleDeletePaciente(paciente._id, paciente.nombre);
-            }} />
+            } : undefined}
+          />
         )}
       </div>
     </div>
