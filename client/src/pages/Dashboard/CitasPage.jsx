@@ -169,7 +169,8 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {(isAdmin || isClient) && (
+          {/* ✅ AHORA DOCTOR TAMBIÉN PUEDE CREAR CITAS */}
+          {(isAdmin || isDoctor || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
@@ -180,7 +181,8 @@ function CitasPage() {
         </div>
       </div>
 
-      {mostrarFormulario && (isAdmin || isClient) && (
+      {/* ✅ Formulario de creación - disponible para admin, doctor y cliente */}
+      {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
@@ -200,6 +202,7 @@ function CitasPage() {
         </div>
       )}
 
+      {/* Formulario de edición - solo para admin */}
       {showEditForm && citaSeleccionada && isAdmin && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -233,7 +236,6 @@ function CitasPage() {
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-            // ✅ Editar y Eliminar SOLO para admin
             onEdit={isAdmin ? (cita) => { 
               setCitaSeleccionada(cita); 
               setShowEditForm(true);

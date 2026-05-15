@@ -7,7 +7,7 @@ import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { useNavigate } from "react-router";
-import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
+import { useAuth } from "../../hooks/useAuth";
 
 import {
   getPacienteRequest,
@@ -21,7 +21,7 @@ import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
-  const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [pacientes, setPacientes] = useState([]);
@@ -67,13 +67,11 @@ function PacientesPage() {
     }
   };
 
-  // ✅ FUNCIÓN PARA CARGAR PACIENTES SEGÚN EL ROL
   const cargarPacientes = async () => {
     try {
       const response = await getPacienteRequest();
       let pacientesData = response.data;
       
-      // Si es cliente, filtrar solo sus mascotas
       if (isClient && user?._id) {
         pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
         console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
@@ -142,7 +140,6 @@ function PacientesPage() {
               placeholder="Buscar paciente por nombre, raza y dueño..."
             />
           </div>
-          {/* ✅ Cliente también puede crear mascotas */}
           {(isAdmin || isDoctor || isClient) && (
             <button
               onClick={() => setMostrarFormulario(true)}
@@ -155,7 +152,6 @@ function PacientesPage() {
       </div>
 
       <div className="space-y-6 mb-6">
-        {/* Formulario de creación */}
         {mostrarFormulario && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
@@ -173,7 +169,6 @@ function PacientesPage() {
               layout="grid"
               customProps={{ 
                 ownerOptions: clientes,
-                // ✅ Si es cliente, pasar su ID como valor por defecto
                 defaultOwnerId: isClient ? user?._id : null
               }}
               onSubmit={handleCreatePaciente}
@@ -183,7 +178,6 @@ function PacientesPage() {
           </div>
         )}
 
-        {/* Formulario de edición - solo para admin y doctor */}
         {showEditForm && (isAdmin || isDoctor) && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
@@ -239,15 +233,14 @@ function PacientesPage() {
               { header: "Color Pelaje", accessor: "colorPelaje" }
             ]}
             data={pacientesConDueño}
-            onRowClick={(paciente) => {
-              navigate(`/pacientes/${paciente._id}`);
-            }}
-            // ✅ Editar y Eliminar SOLO para admin y doctor
+            onRowClick={(paciente) => navigate(`/pacientes/${paciente._id}`)}
+            // ✅ Doctor: solo puede EDITAR (no eliminar)
             onEdit={(isAdmin || isDoctor) ? (paciente) => {
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
             } : undefined}
-            onDelete={(isAdmin || isDoctor) ? (paciente) => {
+            // ✅ Eliminar: SOLO para admin
+            onDelete={isAdmin ? (paciente) => {
               handleDeletePaciente(paciente._id, paciente.nombre);
             } : undefined}
           />
