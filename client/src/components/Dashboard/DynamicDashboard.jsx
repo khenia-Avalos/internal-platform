@@ -11,6 +11,7 @@ userRole,
 }) => {
 //EL ORDEN DE LAS LINEAS IMPORTA
 const [activeModule, setActiveModule] = useState(null);
+const [mobileOpen, setMobileOpen] = useState(false); // ✅ NUEVO: para sidebar en móvil
   const location = useLocation();
     const navigate = useNavigate();
 const activeModuleObj = modules.find(m => m.id === activeModule);//busca el modulo activo en el arrray de modulos
@@ -33,11 +34,23 @@ console.log(" userRole recibido:", userRole);
   return(
   <div className="flex h-screen bg-gray-100">
 
+  {/* ✅ Botón para abrir sidebar en móvil */}
+  <button
+    onClick={() => setMobileOpen(true)}
+    className="fixed top-4 left-4 z-20 p-2 rounded-md bg-cyan-600 text-white md:hidden"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
   <Sidebar 
   modules={modules}
     userRole={userRole}
     activeModule={activeModule}
     setActiveModule={setActiveModule}//el sidebar llamara a esta funcion para cambiar el modulo activo cuando el usuaurio elija un modulo
+    mobileOpen={mobileOpen}
+    setMobileOpen={setMobileOpen}
   />
       <div className="flex-1 overflow-auto">
         
