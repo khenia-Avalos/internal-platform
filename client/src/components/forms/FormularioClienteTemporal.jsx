@@ -265,11 +265,11 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">📞 Agendar Cita Rápida</h2>
+      <h2 className="text-xl font-semibold mb-4"> Agendar Cita </h2>
       
       <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
         <p className="text-sm text-blue-700">
-          ⚡ Agendamiento rápido - La cédula será su identificador único.
+           Agendamiento rápido - La cédula será su identificador único.
         </p>
       </div>
 
@@ -277,7 +277,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
           {errors.map((err, i) => (
-            <p key={i} className="text-sm">❌ {err}</p>
+            <p key={i} className="text-sm">{err}</p>
           ))}
         </div>
       )}
@@ -391,12 +391,12 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             className={getInputClass('especie')}
           >
             <option value="">Selecciona una especie</option>
-            <option value="perro">Perro 🐕</option>
-            <option value="gato">Gato 🐈</option>
-            <option value="conejo">Conejo 🐇</option>
-            <option value="ave">Ave 🐦</option>
-            <option value="hámster">Hámster 🐹</option>
-            <option value="tortuga">Tortuga 🐢</option>
+            <option value="perro">Perro </option>
+            <option value="gato">Gato </option>
+            <option value="conejo">Conejo </option>
+            <option value="ave">Ave </option>
+            <option value="hámster">Hámster </option>
+            <option value="tortuga">Tortuga </option>
             <option value="otro">Otro</option>
           </select>
         </div>
@@ -412,8 +412,8 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             onChange={handleChange}
             className="w-full border border-cyan-400 rounded-md px-3 py-2"
           >
-            <option value="consulta">Consulta médica 🩺</option>
-            <option value="estetica">Estética (baño/corte) ✂️</option>
+            <option value="consulta">Consulta médica </option>
+            <option value="estetica">Estética (baño/corte) </option>
           </select>
         </div>
         
@@ -484,7 +484,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
           )}
           {horarioSeleccionado && (
             <p className="text-sm text-green-600 mt-1">
-              ✅ Horario seleccionado: {horarioSeleccionado.inicio} - {horarioSeleccionado.fin}
+               Horario seleccionado: {horarioSeleccionado.inicio} - {horarioSeleccionado.fin}
             </p>
           )}
         </div>
@@ -549,7 +549,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
               Agendando...
             </span>
           ) : (
-            "Agendar Cita Rápida"
+            "Agendar Cita"
           )}
         </button>
         {onCancel && (

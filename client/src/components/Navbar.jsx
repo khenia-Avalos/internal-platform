@@ -6,7 +6,7 @@ function Navbar() {
 
   return (
     <nav className="bg-white my-3 flex justify-between items-center py-3 px-4 md:py-5 md:px-10 rounded-lg shadow-sm">
-      <Link to={isAuthenticated ? "/tasks" : "/"}>
+      <Link to={isAuthenticated ? "/" : "/login"}>
         <h1 className="text-xl md:text-2xl font-bold text-cyan-600 hover:text-cyan-700 transition">
           El Éxito
         </h1>

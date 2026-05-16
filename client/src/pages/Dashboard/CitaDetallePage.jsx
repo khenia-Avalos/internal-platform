@@ -62,10 +62,10 @@ function CitaDetallePage() {
 
   const obtenerEstadoTexto = () => {
     switch (cita?.estado) {
-      case 'pendiente': return '⏳ Pendiente de confirmación';
-      case 'confirmada': return '✅ Confirmada';
-      case 'cancelada': return '❌ Cancelada';
-      case 'completada': return '✔️ Completada';
+      case 'pendiente': return ' Pendiente de confirmación';
+      case 'confirmada': return ' Confirmada';
+      case 'cancelada': return ' Cancelada';
+      case 'completada': return ' Completada';
       default: return cita?.estado || 'No especificado';
     }
   };
@@ -77,16 +77,16 @@ function CitaDetallePage() {
     
     if (nuevoEstado === 'confirmada') {
       mensajeConfirmacion = '¿Estás seguro de confirmar esta cita?';
-      mensajeExito = '✅ Cita confirmada exitosamente';
-      mensajeError = '❌ Error al confirmar la cita';
+      mensajeExito = ' Cita confirmada exitosamente';
+      mensajeError = ' Error al confirmar la cita';
     } else if (nuevoEstado === 'cancelada') {
       mensajeConfirmacion = '¿Estás seguro de cancelar esta cita?';
-      mensajeExito = '❌ Cita cancelada';
-      mensajeError = '❌ Error al cancelar la cita';
+      mensajeExito = ' Cita cancelada';
+      mensajeError = ' Error al cancelar la cita';
     } else if (nuevoEstado === 'completada') {
       mensajeConfirmacion = '¿Estás seguro de marcar esta cita como completada?';
-      mensajeExito = '✔️ Cita marcada como completada';
-      mensajeError = '❌ Error al marcar la cita como completada';
+      mensajeExito = ' Cita marcada como completada';
+      mensajeError = ' Error al marcar la cita como completada';
     }
     
     if (!window.confirm(mensajeConfirmacion)) return;
@@ -106,21 +106,21 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log("📅 Reagendando cita:", data);
+    console.log(" Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
       
-      toast.success('✅ Cita reagendada exitosamente', {
+      toast.success(' Cita reagendada exitosamente', {
         description: `Nueva fecha: ${mostrarFechaLocal(data.fecha)} a las ${data.horaInicio}`,
         duration: 4000,
       });
       
       setShowReagendarModal(false);
     } catch (error) {
-      console.error("❌ Error en reagendar:", error);
-      toast.error('❌ Error al reagendar la cita');
+      console.error(" Error en reagendar:", error);
+      toast.error(' Error al reagendar la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -160,8 +160,8 @@ function CitaDetallePage() {
     { 
       label: "Origen de la cita", 
       value: esCitaTemporal() 
-        ? '📞 Cliente Temporal (pendiente de completar registro)' 
-        : '✓ Cliente Registrado'
+        ? ' Cliente Temporal (pendiente de completar registro)' 
+        : ' Cliente Registrado'
     },
     { label: "Dueño", value: obtenerNombreDueño() },
     { label: "Correo del dueño", value: obtenerEmailDueño() },
@@ -215,26 +215,26 @@ function CitaDetallePage() {
 
           {esCitaTemporal() && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-orange-50 border border-orange-300 rounded-lg">
-              <p className="text-orange-800 text-sm font-medium">⚠️ Esta es una cita de <strong>Cliente Temporal</strong></p>
+              <p className="text-orange-800 text-sm font-medium"> Esta es una cita de <strong>Cliente Temporal</strong></p>
               <p className="text-orange-700 text-sm mt-1">El cliente aún no ha completado su registro. Cuando lo haga, la mascota y los datos completos se asignarán automáticamente a esta cita.</p>
             </div>
           )}
 
           {cita.clienteTemporalId && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm font-medium">📋 Información del Cliente Temporal</p>
+              <p className="text-blue-800 text-sm font-medium"> Información del Cliente Temporal</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-blue-700"><strong>Nombre:</strong> {cita.clienteTemporalId.username}</p>
                 <p className="text-blue-700"><strong>Email:</strong> {cita.clienteTemporalId.email}</p>
                 <p className="text-blue-700"><strong>Teléfono:</strong> {cita.clienteTemporalId.phoneNumber || 'No registrado'}</p>
-                <p className="text-blue-700"><strong>Estado:</strong> {cita.clienteTemporalId.estado === 'temporal' ? '⏳ Pendiente de registro' : '✅ Registrado'}</p>
+                <p className="text-blue-700"><strong>Estado:</strong> {cita.clienteTemporalId.estado === 'temporal' ? 'Pendiente de registro' : ' Registrado'}</p>
               </div>
             </div>
           )}
 
           {cita.pacienteId && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium">🐾 Información de la Mascota</p>
+              <p className="text-green-800 text-sm font-medium"> Información de la Mascota</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
                 <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
@@ -250,67 +250,67 @@ function CitaDetallePage() {
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>
-                {/* ✅ Cliente puede confirmar */}
+                {/*  Cliente puede confirmar */}
                 <button 
                   onClick={() => cambiarEstado('confirmada')} 
                   disabled={updating}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                 >
-                  ✅ Confirmar Cita
+                   Confirmar Cita
                 </button>
-                {/* ✅ Cliente puede cancelar */}
+                {/*  Cliente puede cancelar */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                 >
-                  ❌ Cancelar Cita
+                   Cancelar Cita
                 </button>
-                {/* ✅ Cliente puede reagendar */}
+                {/*  Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
-                  📅 Reagendar Cita
+                   Reagendar Cita
                 </button>
               </>
             )}
             
             {cita.estado === 'confirmada' && (
               <>
-                {/* ❌ Marcar como Completada - SOLO para ADMIN (oculto para cliente) */}
+                {/*  Marcar como Completada - SOLO para ADMIN (oculto para cliente) */}
                 {isAdmin && (
                   <button 
                     onClick={() => cambiarEstado('completada')} 
                     disabled={updating}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                   >
-                    ✔️ Marcar como Completada
+                     Marcar como Completada
                   </button>
                 )}
-                {/* ✅ Cliente puede cancelar (si está confirmada y tiene tiempo) */}
+                {/*  Cliente puede cancelar (si está confirmada y tiene tiempo) */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                 >
-                  ❌ Cancelar Cita
+                   Cancelar Cita
                 </button>
-                {/* ✅ Cliente puede reagendar */}
+                {/*  Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
-                  📅 Reagendar Cita
+                   Reagendar Cita
                 </button>
               </>
             )}
             
             {cita.estado === 'cancelada' && (
-              <p className="text-red-600 font-medium">❌ Esta cita ha sido cancelada</p>
+              <p className="text-red-600 font-medium"> Esta cita ha sido cancelada</p>
             )}
             {cita.estado === 'completada' && (
-              <p className="text-green-600 font-medium">✔️ Esta cita ya fue completada</p>
+              <p className="text-green-600 font-medium"> Esta cita ya fue completada</p>
             )}
           </div>
         </>
@@ -323,7 +323,7 @@ function CitaDetallePage() {
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setShowReagendarModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10">✕</button>
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-gray-800">📅 Reagendar Cita</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-800"> Reagendar Cita</h2>
                 <p className="text-sm text-gray-500 mb-4">Cita actual: {mostrarFechaLocal(cita.fecha)} a las {cita.horaInicio}</p>
                 <FormularioCita onSubmit={handleReagendar} cita={cita} isEdit={false} />
               </div>
