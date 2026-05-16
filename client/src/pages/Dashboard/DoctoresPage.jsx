@@ -32,12 +32,26 @@ function DoctoresPage() {
   const isDoctor = user?.role === 'doctor';
   const doctorId = user?._id || user?.id;
 
+  // ✅ FUNCIÓN PARA CREAR DOCTOR
+  const handleCreateDoctor = async (data) => {
+    try {
+      await createDoctorRequest(data);
+      setMostrarFormulario(false);
+      const response = await getDoctoresRequest();
+      setDoctores(response.data);
+      setSuccessMessage("Doctor creado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   useEffect(() => {
     const obtenerDoctores = async () => {
       try {
         const response = await getDoctoresRequest();
         
-        // ✅ Si es doctor, filtrar solo su perfil
+        //  Si es doctor, filtrar solo su perfil
         if (isDoctor && doctorId) {
           console.log("👨‍⚕️ Doctor logueado, filtrando solo su perfil. ID:", doctorId);
           const doctorActual = response.data.filter(d => d._id === doctorId);
@@ -52,7 +66,7 @@ function DoctoresPage() {
     };
     
     obtenerDoctores();
-  }, [isDoctor, doctorId]); // ← Dependencias correctas
+  }, [isDoctor, doctorId]);
 
   const doctoresFiltrados = doctores.filter(doctor => {
     const texto = busqueda.toLowerCase();
@@ -127,7 +141,7 @@ function DoctoresPage() {
           <DynamicForm
             {...createConfig.registerDoctor}
             layout="grid"
-            onSubmit={handleCreateDoctor}
+            onSubmit={handleCreateDoctor}  // ✅ Ahora está definida
             errors={errors}
             successMessage={successMessage}
           />
