@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gradient-to-br from-white to-cyan-400 text-black min-h-screen;
+  @apply bg-gradient-to-br from-white to-cyan-400 text-black min-h-screen m-0 p-0;
+}
+
+/* ✅ Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+  body {
+    @apply overflow-x-hidden;
+  }
 }

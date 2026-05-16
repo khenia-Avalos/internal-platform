@@ -34,10 +34,10 @@ console.log(" userRole recibido:", userRole);
   return(
   <div className="flex h-screen bg-gray-100">
 
-  {/* ✅ Botón para abrir sidebar en móvil */}
+  {/* ✅ Botón para abrir sidebar en móvil - ajustado para no interferir con Navbar */}
   <button
     onClick={() => setMobileOpen(true)}
-    className="fixed top-4 left-4 z-20 p-2 rounded-md bg-cyan-600 text-white md:hidden"
+    className="fixed top-20 left-4 z-20 p-2 rounded-md bg-cyan-600 text-white md:hidden shadow-md"
   >
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

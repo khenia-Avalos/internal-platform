@@ -25,7 +25,8 @@ function App() {
       <AuthProvider>
         <TaskProvider>
           <BrowserRouter>
-            <main className="container mx-auto px-10">
+            {/* ✅ QUITAR container y px-10 para que el dashboard ocupe toda la pantalla */}
+            <main className="min-h-screen">
               <Routes>
                 {/* Rutas sin Navbar */}
                 <Route element={<LayoutWithoutNavbar />}>
@@ -34,30 +35,23 @@ function App() {
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/clientes-temporales/:id" element={<ClienteTemporalDetallePage />} />
-
                 </Route>
 
                 {/* Rutas con Navbar */}
                 <Route element={<LayoutWithNavbar />}>
                   <Route path="/" element={<HomePage />} />
-                  
-                  {/*  NUEVA RUTA DASHBOARD CON NAVBAR */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   
-                  {/* Rutas protegidas para usuarios autenticados */}
+                  {/* Rutas protegidas */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/tasks" element={<TasksPage />} />
                     <Route path="/add-task" element={<TaskFormPage />} />
                     <Route path="/tasks/:id" element={<TaskFormPage />} />
-                      <Route path="/clientes/:id" element={<ClienteDetallePage />} /> 
-                                            <Route path="/citas/:id" element={<CitaDetallePage />} /> 
-
-                        <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
-                        <Route path="/doctores/:id" element={<DoctorDetallePage />} /> 
-
-
+                    <Route path="/clientes/:id" element={<ClienteDetallePage />} /> 
+                    <Route path="/citas/:id" element={<CitaDetallePage />} /> 
+                    <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
+                    <Route path="/doctores/:id" element={<DoctorDetallePage />} /> 
                   </Route>
-                  
                 </Route>
                 
                 {/* Ruta 404 */}
