@@ -32,7 +32,7 @@ function DoctoresPage() {
   const isDoctor = user?.role === 'doctor';
   const doctorId = user?._id || user?.id;
 
-  // ✅ FUNCIÓN PARA CREAR DOCTOR
+  //  FUNCIÓN PARA CREAR DOCTOR
   const handleCreateDoctor = async (data) => {
     try {
       await createDoctorRequest(data);
@@ -53,11 +53,11 @@ function DoctoresPage() {
         
         //  Si es doctor, filtrar solo su perfil
         if (isDoctor && doctorId) {
-          console.log("👨‍⚕️ Doctor logueado, filtrando solo su perfil. ID:", doctorId);
+          console.log(" Doctor logueado, filtrando solo su perfil. ID:", doctorId);
           const doctorActual = response.data.filter(d => d._id === doctorId);
           setDoctores(doctorActual);
         } else {
-          console.log("👑 Admin, mostrando todos los doctores");
+          console.log("Admin, mostrando todos los doctores");
           setDoctores(response.data);
         }
       } catch (error) {
@@ -104,7 +104,7 @@ function DoctoresPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isDoctor ? '👨‍⚕️ Mi Perfil' : '📋 Gestión de Doctores'}
+          {isDoctor ? ' Mi Perfil' : ' Gestión de Doctores'}
         </h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
@@ -130,7 +130,7 @@ function DoctoresPage() {
       {mostrarFormulario && !isDoctor && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Crear Nuevo Doctor</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
             <button
               onClick={() => setMostrarFormulario(false)}
               className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -141,7 +141,7 @@ function DoctoresPage() {
           <DynamicForm
             {...createConfig.registerDoctor}
             layout="grid"
-            onSubmit={handleCreateDoctor}  // ✅ Ahora está definida
+            onSubmit={handleCreateDoctor}  //  Ahora está definida
             errors={errors}
             successMessage={successMessage}
           />
