@@ -90,19 +90,19 @@ export const deletePaciente = async (req, res) => {
     
     const pacienteEliminado = await Paciente.findByIdAndDelete(id);
     
-   if (!pacienteActualizado) {
-  const error = new Error("Paciente no encontrado");
-  error.name = 'CustomError';
-  error.status = 404;
-  throw error;
-}
+    if (!pacienteEliminado) {  // ← Cambiar pacienteActualizado por pacienteEliminado
+      const error = new Error("Paciente no encontrado");
+      error.name = 'CustomError';
+      error.status = 404;
+      throw error;
+    }
     
     res.json({ message: "Paciente eliminado correctamente" });
   } catch (error) {
     const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 }
 
