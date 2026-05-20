@@ -48,14 +48,14 @@ function DoctoresPage() {
     }
   };
 
-  // ✅ Función para editar doctor (manual)
+  // Función para editar doctor (manual)
   const handleEditDoctor = (doctor) => {
     console.log("✏️ Editando doctor:", doctor);
     setDoctorSeleccionado(doctor);
     setShowEditForm(true);
   };
 
-  // ✅ Función para actualizar doctor (manual)
+  //  Función para actualizar doctor (manual)
   const handleUpdateDoctor = async (data) => {
     setLoading(true);
     try {
@@ -79,11 +79,11 @@ function DoctoresPage() {
         const response = await getDoctoresRequest();
         
         if (isDoctor && doctorId) {
-          console.log("👨‍⚕️ Doctor logueado, filtrando solo su perfil. ID:", doctorId);
+          console.log(" Doctor logueado, filtrando solo su perfil. ID:", doctorId);
           const doctorActual = response.data.filter(d => d._id === doctorId);
           setDoctores(doctorActual);
         } else {
-          console.log("👑 Admin, mostrando todos los doctores");
+          console.log(" Admin, mostrando todos los doctores");
           setDoctores(response.data);
         }
       } catch (error) {
@@ -115,7 +115,7 @@ function DoctoresPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isDoctor ? '👨‍⚕️ Mi Perfil' : '📋 Gestión de Doctores'}
+          {isDoctor ? ' Mi Perfil' : ' Gestión de Doctores'}
         </h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
@@ -141,7 +141,7 @@ function DoctoresPage() {
       {mostrarFormulario && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Crear Nuevo Doctor</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
             <button
               onClick={() => setMostrarFormulario(false)}
               className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -159,11 +159,11 @@ function DoctoresPage() {
         </div>
       )}
 
-      {/* ✅ Formulario de edición - manual */}
+      {/*  Formulario de edición - manual */}
       {showEditForm && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Doctor</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Doctor</h2>
             <button
               onClick={() => {
                 setShowEditForm(false);
