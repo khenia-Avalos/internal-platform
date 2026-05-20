@@ -17,7 +17,6 @@ import {
 } from "/src/api/pacientes";
 import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
-import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
@@ -31,6 +30,7 @@ function PacientesPage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [clientes, setClientes] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
@@ -64,6 +64,24 @@ function PacientesPage() {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
+  //  FUNCIÓN PARA ELIMINAR PACIENTE (corregida)
+  const handleDeletePaciente = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
+    
+    setIsDeleting(true);
+    try {
+      await deletePacienteRequest(id);
+      //  Recargar la lista inmediatamente después de eliminar
+      await cargarPacientes();
+      setSuccessMessage("Paciente eliminado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -104,12 +122,6 @@ function PacientesPage() {
     nombreDueño: paciente.ownerId?.username || "Sin dueño"
   }));
 
-  const { handleDelete: handleDeletePaciente } = useDelete(
-    deletePacienteRequest,
-    cargarPacientes,
-    setPacientes
-  );
-
   const {
     showForm: showEditForm,
     errors: editErrors,
@@ -129,7 +141,7 @@ function PacientesPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isClient ? '🐾 Mis Mascotas' : '📋 Gestión de mascotas/pacientes'}
+          {isClient ? '🐾 Mis Mascotas' : ' Gestión de mascotas/pacientes'}
         </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -234,12 +246,10 @@ function PacientesPage() {
             ]}
             data={pacientesConDueño}
             onRowClick={(paciente) => navigate(`/pacientes/${paciente._id}`)}
-            // ✅ Doctor: solo puede EDITAR (no eliminar)
             onEdit={(isAdmin || isDoctor) ? (paciente) => {
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
             } : undefined}
-            // ✅ Eliminar: SOLO para admin
             onDelete={isAdmin ? (paciente) => {
               handleDeletePaciente(paciente._id, paciente.nombre);
             } : undefined}

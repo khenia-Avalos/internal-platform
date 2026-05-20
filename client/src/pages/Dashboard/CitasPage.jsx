@@ -58,13 +58,13 @@ function CitasPage() {
       setMostrarFormulario(false);
       await cargarCitas();
       
-      toast.success('✅ Cita creada exitosamente', {
+      toast.success(' Cita creada exitosamente', {
         description: `${data.tipoCita} - ${data.fecha} a las ${data.horaInicio}`,
         duration: 3000,
       });
       
     } catch (error) {
-      toast.error('❌ Error al crear la cita');
+      toast.error(' Error al crear la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -74,7 +74,7 @@ function CitasPage() {
       await updateCita(citaSeleccionada._id, data);
       await cargarCitas();
       
-      toast.success('✅ Cita actualizada exitosamente', {
+      toast.success(' Cita actualizada exitosamente', {
         description: `Datos generales actualizados`,
         duration: 3000,
       });
@@ -82,8 +82,8 @@ function CitasPage() {
       setShowEditForm(false);
       setCitaSeleccionada(null);
     } catch (error) {
-      console.error("❌ ERROR:", error);
-      toast.error('❌ Error al actualizar la cita');
+      console.error(" ERROR:", error);
+      toast.error(' Error al actualizar la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -114,7 +114,7 @@ function CitasPage() {
       
       setCitas(response.data || []);
     } catch (error) {
-      console.error("❌ Error cargando citas:", error);
+      console.error(" Error cargando citas:", error);
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -144,8 +144,8 @@ function CitasPage() {
     cargarCitas,
     setCitas,
     {
-      onSuccess: () => toast.success('🗑️ Cita eliminada exitosamente'),
-      onError: () => toast.error('❌ Error al eliminar la cita')
+      onSuccess: () => toast.success(' Cita eliminada exitosamente'),
+      onError: () => toast.error(' Error al eliminar la cita')
     }
   );
 
@@ -155,9 +155,9 @@ function CitasPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isDoctor && '📅 Mis Citas'}
-          {isClient && '📅 Mis Citas'}
-          {isAdmin && '📋 Gestión de citas'}
+          {isDoctor && ' Mis Citas'}
+          {isClient && ' Mis Citas'}
+          {isAdmin && ' Gestión de citas'}
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
@@ -169,7 +169,7 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {/* ✅ AHORA DOCTOR TAMBIÉN PUEDE CREAR CITAS */}
+          {/*  AHORA DOCTOR TAMBIÉN PUEDE CREAR CITAS */}
           {(isAdmin || isDoctor || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
@@ -181,7 +181,7 @@ function CitasPage() {
         </div>
       </div>
 
-      {/* ✅ Formulario de creación - disponible para admin, doctor y cliente */}
+      {/*  Formulario de creación - disponible para admin, doctor y cliente */}
       {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
