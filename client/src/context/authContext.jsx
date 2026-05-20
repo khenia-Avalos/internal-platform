@@ -1,6 +1,5 @@
 import { createContext, useEffect, useState , useContext} from "react";
 
-
 import {
   loginRequest,
   logoutRequest,
@@ -10,14 +9,12 @@ import {
 
 export const AuthContext = createContext();
 
-
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState([]);
-  const [authChecked, setAuthChecked] = useState(false); // ✅ NUEVO
+  const [authChecked, setAuthChecked] = useState(false);
 
   const signup = async (user) => {
     try {
@@ -25,18 +22,17 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
-  
       return { ok: true };
     } catch (error) {
-     const errorData = error.response?.data;
+      const errorData = error.response?.data;
       const errorMessage = errorData 
         ? (Array.isArray(errorData) ? errorData : [errorData])
         : ["Registration failed. Please try again."];
-      
       setErrors(errorMessage);
       return { ok: false };
     }
   };
+
   const signin = async (user) => {
     setLoading(true);
     try {
@@ -44,43 +40,36 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data);
       setIsAuthenticated(true);
       setErrors([]);
-     
- return { 
+      return { 
         ok: true,
-        data: res.data // Asegúrate de devolver data
+        data: res.data
       };
     } catch (error) {
-    // MANEJO SEGURO DEL ERROR
       const errorData = error.response?.data;
       const errorMessage = errorData 
         ? (Array.isArray(errorData) ? errorData : [errorData])
         : ["Login failed. Check your credentials."];
-      
       setErrors(errorMessage);
-      return { ok: false , 
-        error: errorMessage
-      };
+      return { ok: false, error: errorMessage };
     } finally {
       setLoading(false);
-      setAuthChecked(true); // ✅ Marcar liso
+      setAuthChecked(true);
     }
   };
+
   const logout = async () => {
     setLoading(true);
     try {
       await logoutRequest();
       setUser(null);
       setIsAuthenticated(false);
-   localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
-    
-    setTimeout(() => {
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      setTimeout(() => {
         window.location.href = "/";
       }, 50);
-    
-    return { ok: true };
+      return { ok: true };
     } catch (error) {
-     // MANEJO SEGURO DEL ERROR
       const errorMessage = error.response?.data || ["Logout failed"];
       setErrors(Array.isArray(errorMessage) ? errorMessage : [errorMessage]);
       return { ok: false };
@@ -109,7 +98,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.log("Error verificando token:", error.message);
-        // Si es 401, simplemente no estamos autenticados
         if (error.response?.status !== 401) {
           console.error("Error inesperado:", error);
         }
@@ -117,7 +105,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       } finally {
         setLoading(false);
-        setAuthChecked(true); // ✅ Marcar que la verificación ha terminado
+        setAuthChecked(true);
       }
     };
     checkLogin();
@@ -127,16 +115,17 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,  // ✅ AGREGAR setUser al Provider
         signup,
         signin,
         logout,
         isAuthenticated,
         errors,
         loading,
-        authChecked, // ✅ NUEVO
+        authChecked,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}; 
+};
