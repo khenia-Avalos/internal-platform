@@ -17,7 +17,6 @@ import {
 } from "/src/api/pacientes";
 import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
-import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
@@ -89,6 +88,28 @@ function PacientesPage() {
     }
   }, [user]);
 
+  // ✅ FUNCIÓN DE ELIMINACIÓN MANUAL (igual que en ClientesPage)
+  const handleDeletePaciente = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
+    
+    try {
+      await deletePacienteRequest(id);
+      // ✅ Recargar después de eliminar
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+      }
+      
+      setPacientes(pacientesData);
+      setSuccessMessage("Paciente eliminado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
     return (
@@ -104,13 +125,6 @@ function PacientesPage() {
     nombreDueño: paciente.ownerId?.username || "Sin dueño"
   }));
 
-  //  CORREGIDO: igual que en ClientesPage, usando getPacienteRequest directamente
-  const { handleDelete: handleDeletePaciente } = useDelete(
-    deletePacienteRequest,
-    getPacienteRequest,  // ← Cambiado: usar getPacienteRequest directamente
-    setPacientes
-  );
-
   const {
     showForm: showEditForm,
     errors: editErrors,
@@ -120,27 +134,17 @@ function PacientesPage() {
     handleCancel
   } = useEdit(
     updatePacienteRequest,
-    getPacienteRequest,  // ← También corregir aquí
+    getPacienteRequest,
     setPacientes,
     editConfig.paciente,
     null
   );
 
-  // Después de cargar, aplicar filtro de cliente si es necesario
-  useEffect(() => {
-    if (pacientes.length > 0 && isClient && user?._id) {
-      const filtrados = pacientes.filter(p => p.ownerId?._id === user._id);
-      if (filtrados.length !== pacientes.length) {
-        setPacientes(filtrados);
-      }
-    }
-  }, [pacientes, isClient, user?._id]);
-
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isClient ? ' Mis Mascotas' : ' Gestión de mascotas/pacientes'}
+          {isClient ? '🐾 Mis Mascotas' : '📋 Gestión de mascotas/pacientes'}
         </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
