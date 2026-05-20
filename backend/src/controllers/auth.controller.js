@@ -71,8 +71,8 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  console.log("📞 LOGIN INICIADO");
-  console.log("📞 Body recibido:", req.body);
+  console.log(" LOGIN INICIADO");
+  console.log(" Body recibido:", req.body);
 
   const { email, password } = req.body;
   const errors = [];
@@ -80,48 +80,48 @@ export const login = async (req, res) => {
   if (!password) errors.push("Password is required");
 
   if (errors.length > 0) {
-    console.log("❌ Errores de validación:", errors);
+    console.log(" Errores de validación:", errors);
     return res.status(400).json(errors);
   }
   
   try {
-    console.log("🔍 Buscando en Owner primero...");
+    console.log(" Buscando en Owner primero...");
     let userFound = await Owner.findOne({ email });
     let esOwner = true;
     
     if (!userFound) {
-      console.log("🔍 No encontrado en Owner, buscando en User...");
+      console.log(" No encontrado en Owner, buscando en User...");
       userFound = await User.findOne({ email });
       esOwner = false;
     }
     
     if (!userFound) {
-      console.log("❌ Usuario no encontrado en ninguna colección");
+      console.log(" Usuario no encontrado en ninguna colección");
       return res.status(400).json(["Credenciales inválidas"]);
     }
     
-    console.log("✅ Usuario encontrado en:", esOwner ? "Owner" : "User");
-    console.log("✅ Email:", userFound.email);
-    console.log("✅ Rol:", esOwner ? 'client' : userFound.role);
-    console.log("✅ Estado del usuario:", userFound.estado || 'No aplica');
+    console.log(" Usuario encontrado en:", esOwner ? "Owner" : "User");
+    console.log(" Email:", userFound.email);
+    console.log(" Rol:", esOwner ? 'client' : userFound.role);
+    console.log(" Estado del usuario:", userFound.estado || 'No aplica');
     
     const isMatch = await bcrypt.compare(password, userFound.password);
-    console.log("🔍 ¿Contraseña válida?", isMatch);
+    console.log(" ¿Contraseña válida?", isMatch);
     
     if (!isMatch) {
-      console.log("❌ Contraseña incorrecta");
+      console.log(" Contraseña incorrecta");
       return res.status(400).json(["Credenciales inválidas"]);
     }
     
     if (esOwner && userFound.estado !== 'completo') {
-      console.log("❌ Cuenta incompleta. Estado:", userFound.estado);
+      console.log(" Cuenta incompleta. Estado:", userFound.estado);
       return res.status(400).json(["Cuenta pendiente de completar registro. Revisa tu correo para activar tu cuenta."]);
     }
 
     const token = await createAccessToken({ id: userFound._id });
     res.cookie("token", token, cookieOptions);
     
-    console.log("✅ Login exitoso para:", userFound.email);
+    console.log(" Login exitoso para:", userFound.email);
 
     res.json({
       _id: userFound._id,
@@ -138,7 +138,7 @@ export const login = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("❌ Error en login:", error);
+    console.error(" Error en login:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
@@ -228,7 +228,7 @@ export const verifyToken = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-  console.log("📧 Forgot password request:", req.body.email);
+  console.log(" Forgot password request:", req.body.email);
   const { email } = req.body;
 
   if (!email) return res.status(400).json(["Email is required"]);
@@ -244,7 +244,7 @@ export const forgotPassword = async (req, res) => {
   
     const response = await sendResetPasswordEmail(email);
 
-    console.log("📨 Respuesta de sendResetPasswordEmail:", response);
+    console.log(" Respuesta de sendResetPasswordEmail:", response);
 
     if (NODE_ENV === "development") {
       const devResponse = {

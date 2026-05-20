@@ -33,7 +33,7 @@ export const createDoctor = async (req, res) => {
       throw error;
     }
     
-    // ✅ Contraseña predeterminada para doctores
+    //  Contraseña predeterminada para doctores
     const DEFAULT_PASSWORD = "veteDocElExito123";
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, salt);
@@ -50,7 +50,7 @@ export const createDoctor = async (req, res) => {
     
     const savedDoctor = await newDoctor.save();
     
-    // ✅ Crear horarios por defecto según especialidad
+    //  Crear horarios por defecto según especialidad
     const horarioConfig = getHorarioPorDefecto(especialidad);
     const horariosPorDefecto = horarioConfig.dias.map(dia => ({
       doctorId: savedDoctor._id,
@@ -62,12 +62,12 @@ export const createDoctor = async (req, res) => {
     }));
     await Horario.insertMany(horariosPorDefecto);
     
-    // ✅ Enviar correo de bienvenida al doctor
+    //  Enviar correo de bienvenida al doctor
     try {
       await sendWelcomeEmailDoctor(email, username, DEFAULT_PASSWORD);
-      console.log(`📧 Correo de bienvenida enviado al doctor: ${email}`);
+      console.log(` Correo de bienvenida enviado al doctor: ${email}`);
     } catch (emailError) {
-      console.error("❌ Error enviando correo:", emailError.message);
+      console.error(" Error enviando correo:", emailError.message);
     }
     
     // No enviar password en la respuesta

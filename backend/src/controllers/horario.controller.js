@@ -121,8 +121,8 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     const { doctorId, fecha } = req.params;
     
     console.log('\n========== GET HORARIOS PUBLICOS ==========');
-    console.log(`📝 Doctor ID: ${doctorId}`);
-    console.log(`📝 Fecha: ${fecha}`);
+    console.log(` Doctor ID: ${doctorId}`);
+    console.log(` Fecha: ${fecha}`);
     
     // Validar formato de fecha
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
@@ -133,11 +133,11 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     const User = await import('../models/user.model.js').then(m => m.default);
     const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
     if (!doctor) {
-      console.log('❌ Doctor no encontrado');
+      console.log(' Doctor no encontrado');
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
-    // ✅ Obtener el NÚMERO del día (0 = domingo, 1 = lunes, ..., 6 = sábado)
+    //  Obtener el NÚMERO del día (0 = domingo, 1 = lunes, ..., 6 = sábado)
     const fechaObj = new Date(fecha);
     const numeroDia = fechaObj.getDay(); // ← Esto devuelve 0, 1, 2, 3, 4, 5, 6
     
@@ -145,9 +145,9 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const nombreDia = diasSemana[numeroDia];
     
-    console.log(`📝 Día: ${nombreDia} (número: ${numeroDia})`);
+    console.log(` Día: ${nombreDia} (número: ${numeroDia})`);
     
-    // ✅ Buscar horario usando el NÚMERO del día
+    //  Buscar horario usando el NÚMERO del día
     const Horario = await import('../models/horario.model.js').then(m => m.default);
     const horario = await Horario.findOne({ 
       doctorId: doctorId, 
@@ -156,11 +156,11 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     });
     
     if (!horario) {
-      console.log(`⚠️ No hay horario configurado para ${nombreDia}`);
+      console.log(` No hay horario configurado para ${nombreDia}`);
       return res.json([]);
     }
     
-    console.log(`📝 Horario encontrado: ${horario.horaInicio} - ${horario.horaFin}, intervalo: ${horario.intervalo} min`);
+    console.log(` Horario encontrado: ${horario.horaInicio} - ${horario.horaFin}, intervalo: ${horario.intervalo} min`);
     
     // Obtener citas ya agendadas para ese día
     const Cita = await import('../models/cita.model.js').then(m => m.default);
@@ -170,7 +170,7 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       estado: { $ne: 'cancelada' }
     });
     
-    console.log(`📝 Citas existentes: ${citas.length}`);
+    console.log(` Citas existentes: ${citas.length}`);
     
     // Generar bloques de horarios disponibles
     const horariosDisponibles = [];
@@ -195,11 +195,11 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       currentMinutes += intervaloMinutos;
     }
     
-    console.log(`✅ Horarios disponibles: ${horariosDisponibles.length}`);
+    console.log(` Horarios disponibles: ${horariosDisponibles.length}`);
     res.json(horariosDisponibles);
     
   } catch (error) {
-    console.error('❌ Error en getHorariosDisponiblesPublicos:', error);
+    console.error(' Error en getHorariosDisponiblesPublicos:', error);
     console.error('Stack:', error.stack);
     res.status(500).json({ message: 'Error al cargar horarios disponibles' });
   }

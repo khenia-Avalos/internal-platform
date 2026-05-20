@@ -44,12 +44,12 @@ export const createCliente = async (req, res) => {
 
     const savedCliente = await newCliente.save();
     
-    // ✅ Enviar correo de bienvenida
+    //  Enviar correo de bienvenida
     try {
       await sendWelcomeEmail(email, username, DEFAULT_PASSWORD);
-      console.log(`📧 Correo de bienvenida enviado a: ${email}`);
+      console.log(` Correo de bienvenida enviado a: ${email}`);
     } catch (emailError) {
-      console.error(`❌ Error al enviar correo a ${email}:`, emailError.message);
+      console.error(` Error al enviar correo a ${email}:`, emailError.message);
     }
     
     // No enviar password en la respuesta
