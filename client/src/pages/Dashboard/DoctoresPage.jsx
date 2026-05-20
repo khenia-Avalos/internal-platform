@@ -1,7 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
-import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
@@ -17,7 +16,6 @@ import {
 } from "/src/api/doctores";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
-import { useEdit } from "../../hooks/useEdit";
 
 function DoctoresPage() {
   const { user } = useAuth();
@@ -25,9 +23,13 @@ function DoctoresPage() {
   const [doctores, setDoctores] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false); // ✅ Estado manual para edición
   const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
-  const [successMessage, setSuccessMessage] = useState(""); 
+  const [editErrors, setEditErrors] = useState([]);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [editSuccessMessage, setEditSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
@@ -43,6 +45,31 @@ function DoctoresPage() {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
+  // ✅ Función para editar doctor (manual)
+  const handleEditDoctor = (doctor) => {
+    console.log("✏️ Editando doctor:", doctor);
+    setDoctorSeleccionado(doctor);
+    setShowEditForm(true);
+  };
+
+  // ✅ Función para actualizar doctor (manual)
+  const handleUpdateDoctor = async (data) => {
+    setLoading(true);
+    try {
+      await updateDoctorRequest(doctorSeleccionado._id, data);
+      const response = await getDoctoresRequest();
+      setDoctores(response.data);
+      setEditSuccessMessage("Doctor actualizado exitosamente");
+      setTimeout(() => setEditSuccessMessage(""), 3000);
+      setShowEditForm(false);
+      setDoctorSeleccionado(null);
+    } catch (error) {
+      manejarErrorResponse(error, setEditErrors, setEditSuccessMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,26 +110,6 @@ function DoctoresPage() {
     getDoctoresRequest,
     setDoctores
   );
-
-  console.log("🔍 ANTES de useEdit - doctorSeleccionado:", doctorSeleccionado);
-
-  const {
-    showForm: showEditForm,
-    errors: editErrors,
-    successMessage: editSuccessMessage,
-    handleEdit,
-    handleUpdate,
-    handleCancel
-  } = useEdit(
-    updateDoctorRequest,
-    getDoctoresRequest,
-    setDoctores,
-    editConfig.doctor,
-    null
-  );
-
-  console.log("🔍 DESPUÉS de useEdit - showEditForm:", showEditForm);
-  console.log("🔍 DESPUÉS de useEdit - handleEdit:", handleEdit);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -152,14 +159,17 @@ function DoctoresPage() {
         </div>
       )}
 
-      {/* Formulario de edición */}
-      {console.log("🎨 Renderizando - showEditForm vale:", showEditForm)}
-      {showEditForm && (
+      {/* ✅ Formulario de edición - manual */}
+      {showEditForm && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Doctor</h2>
             <button
-              onClick={handleCancel}
+              onClick={() => {
+                setShowEditForm(false);
+                setDoctorSeleccionado(null);
+                setEditErrors([]);
+              }}
               className="text-gray-400 hover:text-gray-600 transition text-xl"
             >
               ✕
@@ -171,7 +181,8 @@ function DoctoresPage() {
             defaultValues={doctorSeleccionado}
             errors={editErrors}
             successMessage={editSuccessMessage}
-            onSubmit={handleUpdate}
+            onSubmit={handleUpdateDoctor}
+            isLoading={loading}
           />
         </div>
       )}
@@ -206,16 +217,9 @@ function DoctoresPage() {
             data={doctoresFiltrados}
             onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
             onEdit={isAdmin ? (doctor) => {
-              console.log("🟢🟢🟢 BOTÓN EDITAR CLICKEADO 🟢🟢🟢");
-              console.log("🟢 Doctor seleccionado:", doctor);
-              console.log("🟢 setDoctorSeleccionado antes:", doctorSeleccionado);
-              setDoctorSeleccionado(doctor);
-              console.log("🟢 handleEdit es:", handleEdit);
-              handleEdit(doctor);
-              console.log("🟢 Después de handleEdit - showEditForm debería ser true");
+              handleEditDoctor(doctor);
             } : undefined}
             onDelete={isAdmin ? (doctor) => {
-              console.log("🔴 BOTÓN ELIMINAR CLICKEADO:", doctor);
               handleDeleteDoctor(doctor._id, doctor.username);
             } : undefined}
           />
