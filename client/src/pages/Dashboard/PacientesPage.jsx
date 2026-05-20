@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // ← Agregar useCallback
 import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
@@ -36,6 +36,47 @@ function PacientesPage() {
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
+  // FUNCIÓN PARA CARGAR PACIENTES (usando useCallback para mantener referencia)
+  const cargarPacientes = useCallback(async () => {
+    try {
+      console.log(" Cargando pacientes...");
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
+      }
+      
+      setPacientes(pacientesData);
+      console.log(" Pacientes cargados:", pacientesData.length);
+    } catch (error) {
+      console.error(" Error cargando pacientes:", error);
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  }, [isClient, user?._id]);
+
+  //  FUNCIÓN PARA ELIMINAR PACIENTE
+  const handleDeletePaciente = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
+    
+    setIsDeleting(true);
+    try {
+      console.log(" Eliminando paciente:", id);
+      await deletePacienteRequest(id);
+      console.log(" Paciente eliminado, recargando lista...");
+      //  Recargar la lista inmediatamente después de eliminar
+      await cargarPacientes();
+      setSuccessMessage("Paciente eliminado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Error eliminando paciente:", error);
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Cargar dueños (solo necesario para admin y doctor)
   useEffect(() => {
     if (isAdmin || isDoctor) {
@@ -67,45 +108,11 @@ function PacientesPage() {
     }
   };
 
-  //  FUNCIÓN PARA ELIMINAR PACIENTE (corregida)
-  const handleDeletePaciente = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
-    
-    setIsDeleting(true);
-    try {
-      await deletePacienteRequest(id);
-      //  Recargar la lista inmediatamente después de eliminar
-      await cargarPacientes();
-      setSuccessMessage("Paciente eliminado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const cargarPacientes = async () => {
-    try {
-      const response = await getPacienteRequest();
-      let pacientesData = response.data;
-      
-      if (isClient && user?._id) {
-        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
-        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
-      }
-      
-      setPacientes(pacientesData);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       cargarPacientes();
     }
-  }, [user]);
+  }, [user, cargarPacientes]);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
