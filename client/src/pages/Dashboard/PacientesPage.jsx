@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect, useCallback } from "react"; // ← Agregar useCallback
+import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
 import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
@@ -17,6 +17,7 @@ import {
 } from "/src/api/pacientes";
 import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
+import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
@@ -30,52 +31,10 @@ function PacientesPage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [clientes, setClientes] = useState([]);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
-
-  // FUNCIÓN PARA CARGAR PACIENTES (usando useCallback para mantener referencia)
-  const cargarPacientes = useCallback(async () => {
-    try {
-      console.log(" Cargando pacientes...");
-      const response = await getPacienteRequest();
-      let pacientesData = response.data;
-      
-      if (isClient && user?._id) {
-        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
-        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
-      }
-      
-      setPacientes(pacientesData);
-      console.log(" Pacientes cargados:", pacientesData.length);
-    } catch (error) {
-      console.error(" Error cargando pacientes:", error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  }, [isClient, user?._id]);
-
-  //  FUNCIÓN PARA ELIMINAR PACIENTE
-  const handleDeletePaciente = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
-    
-    setIsDeleting(true);
-    try {
-      console.log(" Eliminando paciente:", id);
-      await deletePacienteRequest(id);
-      console.log(" Paciente eliminado, recargando lista...");
-      //  Recargar la lista inmediatamente después de eliminar
-      await cargarPacientes();
-      setSuccessMessage("Paciente eliminado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      console.error("Error eliminando paciente:", error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   // Cargar dueños (solo necesario para admin y doctor)
   useEffect(() => {
@@ -108,11 +67,27 @@ function PacientesPage() {
     }
   };
 
+  const cargarPacientes = async () => {
+    try {
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
+      }
+      
+      setPacientes(pacientesData);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       cargarPacientes();
     }
-  }, [user, cargarPacientes]);
+  }, [user]);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
@@ -129,6 +104,13 @@ function PacientesPage() {
     nombreDueño: paciente.ownerId?.username || "Sin dueño"
   }));
 
+  //  CORREGIDO: igual que en ClientesPage, usando getPacienteRequest directamente
+  const { handleDelete: handleDeletePaciente } = useDelete(
+    deletePacienteRequest,
+    getPacienteRequest,  // ← Cambiado: usar getPacienteRequest directamente
+    setPacientes
+  );
+
   const {
     showForm: showEditForm,
     errors: editErrors,
@@ -138,17 +120,27 @@ function PacientesPage() {
     handleCancel
   } = useEdit(
     updatePacienteRequest,
-    cargarPacientes,
+    getPacienteRequest,  // ← También corregir aquí
     setPacientes,
     editConfig.paciente,
     null
   );
 
+  // Después de cargar, aplicar filtro de cliente si es necesario
+  useEffect(() => {
+    if (pacientes.length > 0 && isClient && user?._id) {
+      const filtrados = pacientes.filter(p => p.ownerId?._id === user._id);
+      if (filtrados.length !== pacientes.length) {
+        setPacientes(filtrados);
+      }
+    }
+  }, [pacientes, isClient, user?._id]);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isClient ? '🐾 Mis Mascotas' : ' Gestión de mascotas/pacientes'}
+          {isClient ? ' Mis Mascotas' : ' Gestión de mascotas/pacientes'}
         </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
