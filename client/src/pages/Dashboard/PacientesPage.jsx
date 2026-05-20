@@ -1,7 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { DynamicForm } from "../../components/DynamicForm";
-import { formConfig } from "../config/formConfig"
 import { editConfig } from "../config/editConfig"
 import { createConfig } from "../config/createConfig"
 import { SearchBar } from "../../components/SearchBar";
@@ -17,7 +16,6 @@ import {
 } from "/src/api/pacientes";
 import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
-import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
@@ -36,7 +34,7 @@ function PacientesPage() {
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
-  // Cargar dueños (solo necesario para admin y doctor)
+  // Cargar dueños
   useEffect(() => {
     if (isAdmin || isDoctor) {
       const obtenerClientes = async () => {
@@ -55,6 +53,37 @@ function PacientesPage() {
     }
   }, [isAdmin, isDoctor]);
 
+  //  Función para cargar pacientes (igual que antes)
+  const cargarPacientes = async () => {
+    try {
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+      }
+      
+      setPacientes(pacientesData);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
+  //  Función para eliminar - HECHA A MANO, SIN useDelete
+  const handleDeletePaciente = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
+    
+    try {
+      await deletePacienteRequest(id);
+      //  Recargar los datos MANUALMENTE después de eliminar
+      await cargarPacientes();
+      setSuccessMessage("Paciente eliminado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   const handleCreatePaciente = async (data) => {
     try {
       await createPacienteRequest(data);
@@ -67,44 +96,11 @@ function PacientesPage() {
     }
   };
 
-  const cargarPacientes = async () => {
-    try {
-      const response = await getPacienteRequest();
-      let pacientesData = response.data;
-      
-      if (isClient && user?._id) {
-        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
-        console.log("🐾 Cliente - Mostrando solo sus mascotas:", pacientesData.length);
-      }
-      
-      setPacientes(pacientesData);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       cargarPacientes();
     }
   }, [user]);
-
-  // ✅ CORREGIDO: Usar getPacienteRequest en lugar de cargarPacientes
-  const { handleDelete: handleDeletePaciente } = useDelete(
-    deletePacienteRequest,
-    getPacienteRequest,  // ← Cambiado: igual que en ClientesPage
-    setPacientes
-  );
-
-  // ✅ Agregar este useEffect para mantener el filtro de cliente después de eliminar
-  useEffect(() => {
-    if (isClient && user?._id && pacientes.length > 0) {
-      const filtrados = pacientes.filter(p => p.ownerId?._id === user._id);
-      if (filtrados.length !== pacientes.length) {
-        setPacientes(filtrados);
-      }
-    }
-  }, [pacientes, isClient, user?._id]);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
@@ -140,7 +136,7 @@ function PacientesPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isClient ? '🐾 Mis Mascotas' : '📋 Gestión de mascotas/pacientes'}
+          {isClient ? ' Mis Mascotas' : ' Gestión de mascotas/pacientes'}
         </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
