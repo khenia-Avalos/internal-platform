@@ -34,7 +34,7 @@ function PacientesPage() {
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
-  // Cargar dueños
+  // Cargar dueños (solo necesario para admin y doctor)
   useEffect(() => {
     if (isAdmin || isDoctor) {
       const obtenerClientes = async () => {
@@ -53,60 +53,6 @@ function PacientesPage() {
     }
   }, [isAdmin, isDoctor]);
 
-  // ✅ Función para cargar pacientes CON LOGS
-  const cargarPacientes = async () => {
-    console.log("🔄 cargarPacientes - INICIO");
-    try {
-      const response = await getPacienteRequest();
-      console.log("🔄 cargarPacientes - Respuesta recibida:", response.data.length, "pacientes");
-      let pacientesData = response.data;
-      
-      if (isClient && user?._id) {
-        console.log("🔄 cargarPacientes - Aplicando filtro para cliente:", user?._id);
-        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
-        console.log("🔄 cargarPacientes - Después del filtro:", pacientesData.length, "pacientes");
-      }
-      
-      setPacientes(pacientesData);
-      console.log("🔄 cargarPacientes - Estado actualizado");
-    } catch (error) {
-      console.error("🔄 cargarPacientes - ERROR:", error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-    console.log("🔄 cargarPacientes - FIN");
-  };
-
-  // ✅ Función para eliminar CON LOGS
-  const handleDeletePaciente = async (id, nombre) => {
-    console.log("1️⃣ Iniciando eliminación de:", nombre, "ID:", id);
-    
-    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) {
-      console.log("2️⃣ Usuario canceló la eliminación");
-      return;
-    }
-    
-    console.log("3️⃣ Usuario confirmó eliminación");
-    
-    try {
-      console.log("4️⃣ Llamando a deletePacienteRequest...");
-      await deletePacienteRequest(id);
-      console.log("5️⃣ Eliminación exitosa en el backend");
-      
-      console.log("6️⃣ Llamando a cargarPacientes()...");
-      await cargarPacientes();
-      console.log("7️⃣ cargarPacientes() completado");
-      
-      console.log("8️⃣ Actualizando mensaje de éxito");
-      setSuccessMessage("Paciente eliminado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      
-      console.log("9️⃣ Eliminación completada");
-    } catch (error) {
-      console.error("🔴 Error en eliminación:", error);
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
-
   const handleCreatePaciente = async (data) => {
     try {
       await createPacienteRequest(data);
@@ -119,11 +65,41 @@ function PacientesPage() {
     }
   };
 
+  const cargarPacientes = async () => {
+    try {
+      const response = await getPacienteRequest();
+      let pacientesData = response.data;
+      
+      if (isClient && user?._id) {
+        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+      }
+      
+      setPacientes(pacientesData);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       cargarPacientes();
     }
   }, [user]);
+
+  // ✅ FUNCIÓN DE ELIMINACIÓN MANUAL (igual que en ClientesPage)
+  const handleDeletePaciente = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
+    
+    try {
+      await deletePacienteRequest(id);
+      // ✅ Recargar los datos después de eliminar
+      await cargarPacientes();
+      setSuccessMessage("Paciente eliminado exitosamente");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
