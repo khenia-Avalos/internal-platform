@@ -17,6 +17,7 @@ import {
 } from "/src/api/pacientes";
 import { getClientesRequest } from "/src/api/clientes";
 import { DataTable } from "../../components/DataTable";
+import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
 
 function PacientesPage() {
@@ -88,27 +89,22 @@ function PacientesPage() {
     }
   }, [user]);
 
-  // ✅ FUNCIÓN DE ELIMINACIÓN MANUAL (igual que en ClientesPage)
-  const handleDeletePaciente = async (id, nombre) => {
-    if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
-    
-    try {
-      await deletePacienteRequest(id);
-      // ✅ Recargar después de eliminar
-      const response = await getPacienteRequest();
-      let pacientesData = response.data;
-      
-      if (isClient && user?._id) {
-        pacientesData = pacientesData.filter(paciente => paciente.ownerId?._id === user._id);
+  // ✅ CORREGIDO: Usar getPacienteRequest en lugar de cargarPacientes
+  const { handleDelete: handleDeletePaciente } = useDelete(
+    deletePacienteRequest,
+    getPacienteRequest,  // ← Cambiado: igual que en ClientesPage
+    setPacientes
+  );
+
+  // ✅ Agregar este useEffect para mantener el filtro de cliente después de eliminar
+  useEffect(() => {
+    if (isClient && user?._id && pacientes.length > 0) {
+      const filtrados = pacientes.filter(p => p.ownerId?._id === user._id);
+      if (filtrados.length !== pacientes.length) {
+        setPacientes(filtrados);
       }
-      
-      setPacientes(pacientesData);
-      setSuccessMessage("Paciente eliminado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
-  };
+  }, [pacientes, isClient, user?._id]);
 
   const pacientesFiltrados = pacientes.filter(paciente => {
     const texto = busqueda.toLowerCase();
