@@ -29,7 +29,7 @@ function DoctoresPage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState(""); 
 
-  const isAdmin = user?.role === 'admin';  // ← Cambiar a isAdmin
+  const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const doctorId = user?._id || user?.id;
 
@@ -52,11 +52,11 @@ function DoctoresPage() {
         const response = await getDoctoresRequest();
         
         if (isDoctor && doctorId) {
-          console.log(" Doctor logueado, filtrando solo su perfil. ID:", doctorId);
+          console.log("👨‍⚕️ Doctor logueado, filtrando solo su perfil. ID:", doctorId);
           const doctorActual = response.data.filter(d => d._id === doctorId);
           setDoctores(doctorActual);
         } else {
-          console.log(" Admin, mostrando todos los doctores");
+          console.log("👑 Admin, mostrando todos los doctores");
           setDoctores(response.data);
         }
       } catch (error) {
@@ -84,6 +84,8 @@ function DoctoresPage() {
     setDoctores
   );
 
+  console.log("🔍 ANTES de useEdit - doctorSeleccionado:", doctorSeleccionado);
+
   const {
     showForm: showEditForm,
     errors: editErrors,
@@ -99,11 +101,14 @@ function DoctoresPage() {
     null
   );
 
+  console.log("🔍 DESPUÉS de useEdit - showEditForm:", showEditForm);
+  console.log("🔍 DESPUÉS de useEdit - handleEdit:", handleEdit);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isDoctor ? ' Mi Perfil' : ' Gestión de Doctores'}
+          {isDoctor ? '👨‍⚕️ Mi Perfil' : '📋 Gestión de Doctores'}
         </h1>
         
         <div className="flex flex-col sm:flex-row gap-3">
@@ -114,7 +119,6 @@ function DoctoresPage() {
               placeholder="Buscar doctor por nombre, email, especialidad..."
             />
           </div>
-          {/*  Mostrar botón "Nuevo Doctor" solo para admin */}
           {isAdmin && (
             <button
               onClick={() => setMostrarFormulario(true)}
@@ -130,7 +134,7 @@ function DoctoresPage() {
       {mostrarFormulario && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Crear Nuevo Doctor</h2>
             <button
               onClick={() => setMostrarFormulario(false)}
               className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -144,6 +148,30 @@ function DoctoresPage() {
             onSubmit={handleCreateDoctor}
             errors={errors}
             successMessage={successMessage}
+          />
+        </div>
+      )}
+
+      {/* Formulario de edición */}
+      {console.log("🎨 Renderizando - showEditForm vale:", showEditForm)}
+      {showEditForm && (
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Doctor</h2>
+            <button
+              onClick={handleCancel}
+              className="text-gray-400 hover:text-gray-600 transition text-xl"
+            >
+              ✕
+            </button>
+          </div>
+          <DynamicForm
+            {...editConfig.editDoctor}
+            layout="grid"
+            defaultValues={doctorSeleccionado}
+            errors={editErrors}
+            successMessage={editSuccessMessage}
+            onSubmit={handleUpdate}
           />
         </div>
       )}
@@ -177,13 +205,17 @@ function DoctoresPage() {
             ]}
             data={doctoresFiltrados}
             onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
-            // Editar disponible para admin
             onEdit={isAdmin ? (doctor) => {
+              console.log("🟢🟢🟢 BOTÓN EDITAR CLICKEADO 🟢🟢🟢");
+              console.log("🟢 Doctor seleccionado:", doctor);
+              console.log("🟢 setDoctorSeleccionado antes:", doctorSeleccionado);
               setDoctorSeleccionado(doctor);
+              console.log("🟢 handleEdit es:", handleEdit);
               handleEdit(doctor);
+              console.log("🟢 Después de handleEdit - showEditForm debería ser true");
             } : undefined}
-            //  Eliminar disponible para admin
             onDelete={isAdmin ? (doctor) => {
+              console.log("🔴 BOTÓN ELIMINAR CLICKEADO:", doctor);
               handleDeleteDoctor(doctor._id, doctor.username);
             } : undefined}
           />
