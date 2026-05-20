@@ -29,10 +29,10 @@ function DoctoresPage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState(""); 
 
+  const isAdmin = user?.role === 'admin';  // ← Cambiar a isAdmin
   const isDoctor = user?.role === 'doctor';
   const doctorId = user?._id || user?.id;
 
-  //  FUNCIÓN PARA CREAR DOCTOR
   const handleCreateDoctor = async (data) => {
     try {
       await createDoctorRequest(data);
@@ -51,13 +51,12 @@ function DoctoresPage() {
       try {
         const response = await getDoctoresRequest();
         
-        //  Si es doctor, filtrar solo su perfil
         if (isDoctor && doctorId) {
           console.log(" Doctor logueado, filtrando solo su perfil. ID:", doctorId);
           const doctorActual = response.data.filter(d => d._id === doctorId);
           setDoctores(doctorActual);
         } else {
-          console.log("Admin, mostrando todos los doctores");
+          console.log(" Admin, mostrando todos los doctores");
           setDoctores(response.data);
         }
       } catch (error) {
@@ -115,7 +114,8 @@ function DoctoresPage() {
               placeholder="Buscar doctor por nombre, email, especialidad..."
             />
           </div>
-          {!isDoctor && (
+          {/*  Mostrar botón "Nuevo Doctor" solo para admin */}
+          {isAdmin && (
             <button
               onClick={() => setMostrarFormulario(true)}
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
@@ -127,7 +127,7 @@ function DoctoresPage() {
       </div>
 
       {/* Formulario de creación - solo admin */}
-      {mostrarFormulario && !isDoctor && (
+      {mostrarFormulario && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Doctor</h2>
@@ -141,7 +141,7 @@ function DoctoresPage() {
           <DynamicForm
             {...createConfig.registerDoctor}
             layout="grid"
-            onSubmit={handleCreateDoctor}  //  Ahora está definida
+            onSubmit={handleCreateDoctor}
             errors={errors}
             successMessage={successMessage}
           />
@@ -177,11 +177,13 @@ function DoctoresPage() {
             ]}
             data={doctoresFiltrados}
             onRowClick={(doctor) => navigate(`/doctores/${doctor._id}`)}
-            onEdit={!isDoctor ? (doctor) => {
+            // Editar disponible para admin
+            onEdit={isAdmin ? (doctor) => {
               setDoctorSeleccionado(doctor);
               handleEdit(doctor);
             } : undefined}
-            onDelete={!isDoctor ? (doctor) => {
+            //  Eliminar disponible para admin
+            onDelete={isAdmin ? (doctor) => {
               handleDeleteDoctor(doctor._id, doctor.username);
             } : undefined}
           />

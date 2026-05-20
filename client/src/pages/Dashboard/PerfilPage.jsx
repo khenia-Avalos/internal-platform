@@ -23,7 +23,7 @@ function PerfilPage() {
       const userId = user._id || user.id;
       let response;
       
-      // ✅ Según el rol, usar la API correspondiente
+      //  Según el rol, usar la API correspondiente
       if (user.role === 'client') {
         response = await updateClienteRequest(userId, data);
       } else if (user.role === 'doctor') {
@@ -33,7 +33,7 @@ function PerfilPage() {
         response = await updateDoctorRequest(userId, data);
       }
       
-      // ✅ Actualizar el usuario en el contexto
+      //  Actualizar el usuario en el contexto
       setUser(response.data);
       
       setSuccessMessage("Perfil actualizado correctamente");
