@@ -86,13 +86,13 @@ function PacientesPage() {
     }
   }, [user]);
 
-  // ✅ FUNCIÓN DE ELIMINACIÓN MANUAL (igual que en ClientesPage)
+  //  FUNCIÓN DE ELIMINACIÓN MANUAL (igual que en ClientesPage)
   const handleDeletePaciente = async (id, nombre) => {
     if (!window.confirm(`¿Estás seguro de eliminar a "${nombre}"?`)) return;
     
     try {
       await deletePacienteRequest(id);
-      // ✅ Recargar los datos después de eliminar
+      //  Recargar los datos después de eliminar
       await cargarPacientes();
       setSuccessMessage("Paciente eliminado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -135,7 +135,7 @@ function PacientesPage() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-          {isClient ? '🐾 Mis Mascotas' : '📋 Gestión de mascotas/pacientes'}
+          {isClient ? ' Mis Mascotas' : ' Gestión de mascotas/pacientes'}
         </h1>
 
         <div className="flex flex-col sm:flex-row gap-3">
