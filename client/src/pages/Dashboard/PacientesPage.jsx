@@ -199,8 +199,12 @@ function PacientesPage() {
     <DynamicForm
       {...editConfig.editpaciente}
       layout="grid"
-      customProps={{ ownerOptions: clientes }}
-      defaultValues={{
+customProps={{ 
+  ownerOptions: pacienteSeleccionado?.ownerId ? [{
+    value: pacienteSeleccionado.ownerId._id,
+    label: `${pacienteSeleccionado.ownerId.username} ${pacienteSeleccionado.ownerId.lastname || ''}`
+  }] : []
+}}      defaultValues={{
         ...pacienteSeleccionado,
         peso: pacienteSeleccionado?.peso?.valor || '',
         pesoUnidad: pacienteSeleccionado?.peso?.unidad || 'kg'

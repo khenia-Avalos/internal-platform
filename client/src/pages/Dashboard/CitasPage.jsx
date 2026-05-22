@@ -203,15 +203,25 @@ function CitasPage() {
       )}
 
       {/* Formulario de edición - solo para admin */}
-      {showEditForm && citaSeleccionada && isAdmin && (
-        <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Editar Cita</h2>
-            <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
-          </div>
-          <FormularioCita onSubmit={handleUpdateCita} cita={citaSeleccionada} isEdit={true} />
-        </div>
-      )}
+     {/* Formulario de edición - solo para admin */}
+{showEditForm && citaSeleccionada && isAdmin && (
+  <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-xl font-semibold">✏️ Editar Cita</h2>
+      <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <FormularioCita 
+      onSubmit={handleUpdateCita} 
+      cita={citaSeleccionada} 
+      isEdit={true}
+      datosPrecargados={{
+        duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
+        duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
+        correo: citaSeleccionada?.pacienteId?.ownerId?.email
+      }}
+    />
+  </div>
+)}
 
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         {citas.length === 0 ? (
