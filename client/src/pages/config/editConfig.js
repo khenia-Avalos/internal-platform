@@ -188,11 +188,11 @@ editpaciente: {
       label: "Dueño",
       isSearchable: true,
       options: [],
+      disabled: true, // ← Campo de solo lectura
       validation: { required: "El dueño es requerido" }
     }
   ],
   submitLabel: "Actualizar Paciente",
-  // ✅ Transformar datos antes de enviar al backend
   transformData: (formData) => {
     // Convertir peso y pesoUnidad en objeto peso
     if (formData.peso) {
@@ -248,6 +248,15 @@ editHorario: {
 editCita: {
   title: "Editar Cita",
   fields: [
+    {
+      name: "ownerId",
+      type: "select",
+      label: "Dueño de la mascota",
+      isSearchable: true,
+      options: [],
+      disabled: true, // ← Solo lectura
+      validation: { required: "El dueño es requerido" }
+    },
     {
       name: "tipoCita",
       type: "select",
