@@ -28,6 +28,15 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
   });
   const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
 
+  // Obtener fecha actual en formato YYYY-MM-DD para el min del input
+  const obtenerFechaMinima = () => {
+    const hoy = new Date();
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Cargar doctores públicos (sin autenticación)
   useEffect(() => {
     const cargarDoctores = async () => {
@@ -160,11 +169,20 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       nuevosErrores.push('Debe seleccionar un veterinario');
       nuevosFieldErrors.doctorId = 'Seleccione un veterinario';
     }
-    
-    // Validar fecha
+  
+    //  Validar fecha (que no sea pasada)
     if (!formData.fechaCita) {
       nuevosErrores.push('La fecha de la cita es requerida');
       nuevosFieldErrors.fechaCita = 'Seleccione una fecha';
+    } else {
+      const fechaSeleccionada = new Date(formData.fechaCita);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      if (fechaSeleccionada < hoy) {
+        nuevosErrores.push('No se pueden agendar citas para fechas pasadas');
+        nuevosFieldErrors.fechaCita = 'Seleccione una fecha futura';
+      }
     }
     
     // Validar horario
@@ -211,11 +229,11 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
         notas: formData.notas || ''
       };
       
-      console.log("📝 Datos a enviar:", datosEnvio);
+      console.log(" Datos a enviar:", datosEnvio);
       
       await createClienteTemporalRequest(datosEnvio);
       
-      toast.success('✅ ¡Cita agendada exitosamente! Se ha enviado un correo de confirmación.', {
+      toast.success(' ¡Cita agendada exitosamente! Se ha enviado un correo de confirmación.', {
         duration: 5000,
         position: "top-right"
       });
@@ -223,7 +241,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       if (onSuccess) onSuccess();
       
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error(' Error:', error);
       
       // Manejar error específico del backend
       if (error.response?.data?.message) {
@@ -245,11 +263,11 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
           setErrors([mensaje]);
         }
         
-        toast.error(`❌ ${mensaje}`, { duration: 5000 });
+        toast.error(` ${mensaje}`, { duration: 5000 });
       } else {
         const mensajeError = 'Error al agendar cita. Intente nuevamente.';
         setErrors([mensajeError]);
-        toast.error(`❌ ${mensajeError}`);
+        toast.error(` ${mensajeError}`);
       }
     } finally {
       setLoading(false);
@@ -277,7 +295,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
           {errors.map((err, i) => (
-            <p key={i} className="text-sm">{err}</p>
+            <p key={i} className="text-sm"> {err}</p>
           ))}
         </div>
       )}
@@ -449,6 +467,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
             name="fechaCita"
             value={formData.fechaCita}
             onChange={handleChange}
+            min={obtenerFechaMinima()} //  Esto deshabilita fechas pasadas en el calendario
             className={getInputClass('fechaCita')}
           />
         </div>
