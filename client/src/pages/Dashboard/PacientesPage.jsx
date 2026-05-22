@@ -184,29 +184,34 @@ function PacientesPage() {
           </div>
         )}
 
-        {showEditForm && (isAdmin || isDoctor) && (
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Paciente</h2>
-              <button
-                onClick={handleCancel}
-                className="text-gray-400 hover:text-gray-600 transition text-xl"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-            <DynamicForm
-              {...editConfig.editpaciente}
-              layout="grid"
-              defaultValues={pacienteSeleccionado}
-              customProps={{ ownerOptions: clientes }}
-              errors={editErrors}
-              successMessage={editSuccessMessage}
-              onSubmit={handleUpdate}
-            />
-          </div>
-        )}
+      {showEditForm && (isAdmin || isDoctor) && (
+  <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Paciente</h2>
+      <button
+        onClick={handleCancel}
+        className="text-gray-400 hover:text-gray-600 transition text-xl"
+        aria-label="Cerrar"
+      >
+        ✕
+      </button>
+    </div>
+    <DynamicForm
+      {...editConfig.editpaciente}
+      layout="grid"
+      customProps={{ ownerOptions: clientes }}
+      defaultValues={{
+        ...pacienteSeleccionado,
+        peso: pacienteSeleccionado?.peso?.valor || '',
+        pesoUnidad: pacienteSeleccionado?.peso?.unidad || 'kg'
+      }}
+      errors={editErrors}
+      successMessage={editSuccessMessage}
+      onSubmit={handleUpdate}
+    />
+  </div>
+)}
+       
       </div>
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">

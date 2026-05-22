@@ -119,99 +119,93 @@ editpaciente: {
   title: "Editar Paciente",
   fields: [
     {
-        name: "nombre",
-        type: "text",
-        label: "Nombre",
-        placeholder: "Tu nombre",
-        validation: {
-          required: "El nombre es requerido"
-        }
-      },
+      name: "nombre",
+      type: "text",
+      label: "Nombre",
+      placeholder: "Tu nombre",
+      validation: { required: "El nombre es requerido" }
+    },
     {
-  name: "especie",
-  type: "select",
-  label: "Especie",
-  options: ['perro', 'gato', 'ave', 'conejo', 'otro'],
-  validation: { required: "La especie es requerida" }
-},
-      {
-        name: "raza",
-        type: "text",
-        label: "Raza",
-        placeholder: "Raza del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "edad",
-        type: "number",
-        label: "Edad",
-        placeholder: "Edad del paciente",
-        validation: {
-          required: "La edad es requerida"
-        }
-      },
-      {
-        name: "sexo",
-        type: "select",
-        label: "Sexo",
-        options: ["Macho", "Hembra"],
-        validation: {
-          required: "El sexo es requerido"
-        }
-      },
-      {
-        name: "colorPelaje",
-        type: "text",
-        label: "Color de pelaje",
-        placeholder: "Color de pelaje del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "peso",
-        type: "text",
-        label: "Peso",
-        placeholder: "Peso del paciente",
-        validation: {
-        }
-      },
-           {
-        name: "pesoUnidad",
-        type: "select",
-        label: "Peso",
-        placeholder: "Peso del paciente",
-        options: ["kg", "lb", "g"],
-        validation: {
-        }
-      },
-      {
-        name: "temperatura",
-        type: "number",
-        label: "Temperatura",
-        placeholder: "Temperatura del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "antecedentesMedicos",
-        type: "textarea",
-        label: "Antecedentes Médicos",
-        placeholder: "Antecedentes médicos del paciente",
-        validation: {
-        
-        }
-      },
-      {
-  name: "ownerId",
-  type: "select",
-  label: "Dueño",
-  isSearchable: true,  
-  options: [],  // ← Se llenará desde la BD
-  validation: { required: "El dueño es requerido" }
-}
+      name: "especie",
+      type: "select",
+      label: "Especie",
+      options: ['perro', 'gato', 'ave', 'conejo', 'otro'],
+      validation: { required: "La especie es requerida" }
+    },
+    {
+      name: "raza",
+      type: "text",
+      label: "Raza",
+      placeholder: "Raza del paciente"
+    },
+    {
+      name: "edad",
+      type: "number",
+      label: "Edad",
+      placeholder: "Edad del paciente",
+      validation: { required: "La edad es requerida" }
+    },
+    {
+      name: "sexo",
+      type: "select",
+      label: "Sexo",
+      options: ["Macho", "Hembra"],
+      validation: { required: "El sexo es requerido" }
+    },
+    {
+      name: "colorPelaje",
+      type: "text",
+      label: "Color de pelaje",
+      placeholder: "Color de pelaje del paciente"
+    },
+    {
+      name: "peso",
+      type: "text",
+      label: "Peso",
+      placeholder: "Peso del paciente"
+    },
+    {
+      name: "pesoUnidad",
+      type: "select",
+      label: "Unidad de peso",
+      options: ["kg", "lb", "g"]
+    },
+    {
+      name: "temperatura",
+      type: "number",
+      label: "Temperatura",
+      placeholder: "Temperatura del paciente"
+    },
+    {
+      name: "antecedentesMedicos",
+      type: "textarea",
+      label: "Antecedentes Médicos",
+      placeholder: "Antecedentes médicos del paciente"
+    },
+    {
+      name: "ownerId",
+      type: "select",
+      label: "Dueño",
+      isSearchable: true,
+      options: [],
+      validation: { required: "El dueño es requerido" }
+    }
   ],
-  submitLabel: "Actualizar Paciente"
+  submitLabel: "Actualizar Paciente",
+  // ✅ Transformar datos antes de enviar al backend
+  transformData: (formData) => {
+    // Convertir peso y pesoUnidad en objeto peso
+    if (formData.peso) {
+      return {
+        ...formData,
+        peso: {
+          valor: parseFloat(formData.peso),
+          unidad: formData.pesoUnidad || 'kg'
+        }
+      };
+    }
+    return formData;
+  }
 },
 //para edithorario se crea en backend en horario por defecto, luego se edita solo hora inicio, fin, intervalo y activo, el doctor no se puede cambiar, ni el dia, para no complicar la logica de horarios
 
