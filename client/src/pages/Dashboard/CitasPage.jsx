@@ -210,6 +210,17 @@ function CitasPage() {
       <h2 className="text-xl font-semibold">✏️ Editar Cita</h2>
       <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
     </div>
+    
+    {/* Mostrar información de la mascota actual */}
+    <div className="bg-gray-50 p-3 rounded-lg mb-4 border border-gray-200">
+      <p className="text-sm text-gray-700">
+        <strong>🐾 Mascota actual:</strong> {citaSeleccionada?.pacienteId?.nombre} ({citaSeleccionada?.pacienteId?.especie})
+      </p>
+      <p className="text-sm text-gray-700 mt-1">
+        <strong>👤 Dueño:</strong> {citaSeleccionada?.pacienteId?.ownerId?.username} {citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}
+      </p>
+    </div>
+    
     <FormularioCita 
       onSubmit={handleUpdateCita} 
       cita={citaSeleccionada} 
@@ -217,7 +228,8 @@ function CitasPage() {
       datosPrecargados={{
         duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
         duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
-        correo: citaSeleccionada?.pacienteId?.ownerId?.email
+        correo: citaSeleccionada?.pacienteId?.ownerId?.email,
+        mascotas: [] // No cargamos mascotas porque en edición no se puede cambiar la mascota
       }}
     />
   </div>
