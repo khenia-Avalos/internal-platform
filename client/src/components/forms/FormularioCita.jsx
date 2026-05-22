@@ -35,91 +35,140 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     return '';
   });
 
-  // ✅ Determinar si es cliente (solo para creación)
-  const esCliente = !!datosPrecargados && !isEdit;
+  // ============================================
+  // FUNCIONES AUXILIARES
+  // ============================================
 
-  // ✅ useEffect 1: Cargar doctores UNA SOLA VEZ al montar el componente
+  const cargarDoctores = async () => {
+    try {
+      console.log("🔍 Cargando doctores...");
+      const res = await getDoctoresRequest();
+      let doctoresData = res.data || [];
+      setDoctores(doctoresData);
+      console.log("✅ Doctores cargados:", doctoresData.length);
+    } catch (error) {
+      console.error("❌ Error cargando doctores:", error);
+      manejarErrorResponse(error, setErrors);
+    }
+  };
+
+  const cargarDuenos = async () => {
+    try {
+      const res = await getClientesRequest();
+      setDuenos(res.data);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors);
+    }
+  };
+
+  const cargarMascotas = async (ownerId) => {
+    try {
+      console.log("🔍 Cargando mascotas para ownerId:", ownerId);
+      const res = await getPacienteByOwnerRequest(ownerId);
+      console.log("📊 Mascotas recibidas:", res.data?.length || 0);
+      setMascotas(res.data || []);
+      return res.data || [];
+    } catch (error) {
+      console.error("❌ Error cargando mascotas:", error);
+      manejarErrorResponse(error, setErrors);
+      setMascotas([]);
+      return [];
+    }
+  };
+
+  // ============================================
+  // USEEFFECTS
+  // ============================================
+
+  // 1. Cargar doctores al montar
   useEffect(() => {
-    const cargarDoctores = async () => {
-      try {
-        console.log("🔍 Cargando doctores...");
-        const res = await getDoctoresRequest();
-        let doctoresData = res.data || [];
-        
-        // Solo aplicar filtro si es cliente Y es creación
-        if (esCliente) {
-          doctoresData = doctoresData.filter(doctor => 
-            doctor.especialidad === 'Medicina General' || 
-            doctor.especialidad === 'Groomer'
-          );
-          console.log("👨‍⚕️ Doctores filtrados para cliente:", doctoresData.length);
-        }
-        
-        setDoctores(doctoresData);
-      } catch (error) {
-        console.error("❌ Error cargando doctores:", error);
-        manejarErrorResponse(error, setErrors);
-      }
-    };
-    
     cargarDoctores();
-  }, [esCliente]); // ← Solo se ejecuta cuando esCliente cambia
+  }, []);
 
-  // ✅ useEffect 2: Cargar dueños solo si es admin/doctor (sin datos precargados)
+  // 2. Cargar dueños solo en creación y sin datos precargados
   useEffect(() => {
-    const cargarDuenos = async () => {
-      try {
-        const res = await getClientesRequest();
-        setDuenos(res.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors);
-      }
-    };
-    
     if (!datosPrecargados && !isEdit) {
       cargarDuenos();
     }
   }, [datosPrecargados, isEdit]);
 
-  // ✅ useEffect 3: Precargar datos del cliente (solo para creación)
+  // 3. PRECARGAR DATOS (tanto en creación como en edición)
   useEffect(() => {
-    if (datosPrecargados && !isEdit) {
-      console.log("📋 Precargando datos del cliente:", datosPrecargados);
+    if (datosPrecargados) {
+      console.log("📋 Precargando datos (isEdit=" + isEdit + "):", datosPrecargados);
       
+      // Setear dueño
       if (datosPrecargados.duenoId) {
         setDuenoId(datosPrecargados.duenoId);
       }
+      
+      // Setear correo
       if (datosPrecargados.correo) {
         setCorreo(datosPrecargados.correo);
       }
+      
+      // Setear mascotaId si viene
       if (datosPrecargados.mascotaId) {
         setMascotaId(datosPrecargados.mascotaId);
       }
+      
+      // Cargar mascotas del dueño
+      if (datosPrecargados.duenoId) {
+        cargarMascotas(datosPrecargados.duenoId).then(mascotasData => {
+          // Si tenemos mascotaId precargada, asegurarnos que esté en la lista y seleccionada
+          if (datosPrecargados.mascotaId && mascotasData.length > 0) {
+            const mascotaExiste = mascotasData.some(m => m._id === datosPrecargados.mascotaId);
+            if (mascotaExiste) {
+              setMascotaId(datosPrecargados.mascotaId);
+            }
+          }
+        });
+      }
+      
+      // Si vienen mascotas precargadas
       if (datosPrecargados.mascotas && datosPrecargados.mascotas.length > 0) {
         setMascotas(datosPrecargados.mascotas);
       }
     }
-  }, [datosPrecargados, isEdit]);
+  }, [datosPrecargados]);
 
-  // ✅ useEffect 4: Cargar mascotas cuando cambia el dueño
+  // 4. Cargar mascotas cuando cambia el dueño (solo en creación o cuando no hay datos precargados)
   useEffect(() => {
-    const cargarMascotas = async (ownerId) => {
-      try {
-        const res = await getPacienteByOwnerRequest(ownerId);
-        setMascotas(res.data);
-      } catch (error) {
-        manejarErrorResponse(error, setErrors);
-        setMascotas([]);
-      }
-    };
-    
-    // Solo cargar mascotas si:
-    // 1. Hay dueño seleccionado
-    // 2. No es edición O no hay datos precargados
-    if (duenoId && (!isEdit || !datosPrecargados)) {
+    if (duenoId && !datosPrecargados) {
       cargarMascotas(duenoId);
     }
-  }, [duenoId, isEdit, datosPrecargados]);
+  }, [duenoId, datosPrecargados]);
+
+  // 5. En edición, si tenemos cita, cargar sus datos
+  useEffect(() => {
+    if (isEdit && cita) {
+      console.log("📋 Editando cita, cargando datos de la cita:", cita);
+      
+      if (cita.doctorId?._id || cita.doctorId) {
+        setDoctorId(cita.doctorId?._id || cita.doctorId);
+      }
+      if (cita.pacienteId?.ownerId?._id) {
+        setDuenoId(cita.pacienteId.ownerId._id);
+      }
+      if (cita.pacienteId?._id) {
+        setMascotaId(cita.pacienteId._id);
+      }
+      if (cita.pacienteId?.ownerId?.email) {
+        setCorreo(cita.pacienteId.ownerId.email);
+      }
+      if (cita.titulo) setTitulo(cita.titulo);
+      if (cita.tipoCita) setTipoCita(cita.tipoCita);
+      if (cita.descripcion) setDescripcion(cita.descripcion);
+      if (cita.notas) setNotas(cita.notas);
+      if (cita.sintomas) setSintomas(cita.sintomas);
+      if (cita.tiempoSintomas) setTiempoSintomas(cita.tiempoSintomas);
+      
+      // Cargar mascotas del dueño
+      if (cita.pacienteId?.ownerId?._id) {
+        cargarMascotas(cita.pacienteId.ownerId._id);
+      }
+    }
+  }, [isEdit, cita]);
 
   const handleSelectHorario = (horarioSeleccionado) => {
     setHorario(horarioSeleccionado);
@@ -282,7 +331,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
         </div>
       )}
 
-      {datosPrecargados && !isEdit && (
+      {datosPrecargados && (
         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
           <p className="text-sm text-gray-700"><strong>👤 Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}</p>
           <p className="text-sm text-gray-700"><strong>📧 Correo:</strong> {datosPrecargados.correo || 'No especificado'}</p>
@@ -319,7 +368,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
           onChange={(e) => setCorreo(e.target.value)}
           className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           required
-          disabled={!!datosPrecargados && !isEdit}
+          disabled={!!datosPrecargados}
         />
       </div>
 
