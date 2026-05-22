@@ -4,15 +4,18 @@ import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
 // Obtener todos los pacientes
 export const getPaciente = async (req, res) => {
   try {
-    const pacientes = await Paciente.find().populate('ownerId', 'username lastname email phoneNumber'); 
+    const pacientes = await Paciente.find()
+      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); // ← Agregar cedula y direccion
+    
     console.log("PRIMER PACIENTE CON POPULATE:", JSON.stringify(pacientes[0], null, 2));
 
     res.json(pacientes);
   } catch (error) {
-  const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });  }
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
 };
 
 
@@ -139,7 +142,7 @@ export const getPacienteById = async (req, res) => {
     const { id } = req.params;
     
     const paciente = await Paciente.findById(id)
-      .populate('ownerId', 'username lastname email phoneNumber');
+      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); // ← Agregar cedula y direccion
     
     if (!paciente) {
       return res.status(404).json({ message: "Paciente no encontrado" });
