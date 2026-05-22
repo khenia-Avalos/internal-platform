@@ -249,12 +249,21 @@ editCita: {
   title: "Editar Cita",
   fields: [
     {
+      name: "pacienteId",
+      type: "select",
+      label: "Mascota",
+      isSearchable: true,
+      options: [],
+      disabled: true, // ← Solo lectura, no se puede cambiar la mascota
+      validation: { required: "La mascota es requerida" }
+    },
+    {
       name: "ownerId",
       type: "select",
       label: "Dueño de la mascota",
       isSearchable: true,
       options: [],
-      disabled: true, // ← Solo lectura
+      disabled: true,
       validation: { required: "El dueño es requerido" }
     },
     {

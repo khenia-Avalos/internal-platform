@@ -55,22 +55,25 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       }
     }
   }, [datosPrecargados, isEdit]);
-
-  useEffect(() => {
-    cargarDoctores();
-  }, []);
-
-  useEffect(() => {
-    if (!datosPrecargados && !isEdit) {
-      cargarDuenos();
+useEffect(() => {
+  if (datosPrecargados) {
+    console.log("📋 Precargando datos:", datosPrecargados);
+    if (datosPrecargados.duenoId) {
+      setDuenoId(datosPrecargados.duenoId);
+      if (!datosPrecargados.mascotas || datosPrecargados.mascotas.length === 0) {
+        cargarMascotas(datosPrecargados.duenoId);
+      } else {
+        setMascotas(datosPrecargados.mascotas);
+      }
     }
-  }, [datosPrecargados, isEdit]);
-
-  useEffect(() => {
-    if (duenoId && !datosPrecargados) {
-      cargarMascotas(duenoId);
+    if (datosPrecargados.mascotaId) {
+      setMascotaId(datosPrecargados.mascotaId);
     }
-  }, [duenoId, datosPrecargados]);
+    if (datosPrecargados.correo) {
+      setCorreo(datosPrecargados.correo);
+    }
+  }
+}, [datosPrecargados]); // ← Quitar la condición !isEdit
 
   // ✅ Cargar doctores con filtro para clientes
   const cargarDoctores = async () => {
