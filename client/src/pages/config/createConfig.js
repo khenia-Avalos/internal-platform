@@ -298,17 +298,20 @@ registerCita: {
   title: "Agendar Cita",
   fields: [
     {
-      name: "titulo",
-      type: "text",
-      label: "Título de la cita",
-      placeholder: "Ej: Consulta general",
-      validation: { required: "El título es requerido" }
+      name: "ownerId",
+      type: "select",
+      label: "Dueño de la mascota",
+      options: [], // se llena desde BD
+      isSearchable: true,
+      validation: { required: "El dueño es requerido" }
     },
     {
-      name: "fecha",
-      type: "date",
-      label: "Fecha",
-      validation: { required: "La fecha es requerida" }
+      name: "pacienteId",
+      type: "select",
+      label: "Mascota",
+      options: [], // se llena según el dueño seleccionado
+      isSearchable: true,
+      validation: { required: "La mascota es requerida" }
     },
     {
       name: "doctorId",
@@ -317,6 +320,12 @@ registerCita: {
       options: [], // se llena desde BD
       isSearchable: true,
       validation: { required: "El veterinario es requerido" }
+    },
+    {
+      name: "fecha",
+      type: "date",
+      label: "Fecha",
+      validation: { required: "La fecha es requerida" }
     },
     {
       name: "tipoCita",
@@ -329,6 +338,13 @@ registerCita: {
         { value: "estetica", label: "Estética (baño, corte)" }
       ],
       validation: { required: "El tipo de cita es requerido" }
+    },
+    {
+      name: "titulo",
+      type: "text",
+      label: "Título de la cita",
+      placeholder: "Ej: Consulta general",
+      validation: { required: "El título es requerido" }
     },
     {
       name: "descripcion",
