@@ -1,430 +1,266 @@
-import { useState, useEffect } from 'react';
-import { HorariosDisponibles } from '../HorariosDisponibles';
-import { getDoctoresRequest } from '../../api/doctores';
-import { getClientesRequest } from '../../api/clientes';
-import { getPacienteByOwnerRequest } from '../../api/pacientes';
+import React from "react";
+import { useState, useEffect } from "react";
+import { toast, Toaster } from 'sonner';
+import { SearchBar } from "../../components/SearchBar";
+import { useNavigate } from 'react-router';
+import { useAuth } from "../../hooks/useAuth";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+import { 
+  createCita,
+  updateCita,
+  deleteCita,
+  getCitasRequest,
+  getCitasByDoctorRequest,
+  getCitasByPacienteRequest
+} from "/src/api/cita";
+import { getPacienteByOwnerRequest } from "/src/api/pacientes";
+import { DataTable } from "../../components/DataTable";
+import { FormularioCita } from "../../components/forms/FormularioCita";
+import { useDelete } from "../../hooks/useDelete";
 
-export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datosPrecargados = null }) => {
-  console.log("📋 COMPONENTE FORMULARIO CITA - RENDERIZADO");
-  console.log("📋 isEdit:", isEdit);
-  console.log("📋 cita:", cita);
-  console.log("📋 datosPrecargados:", datosPrecargados);
-  
-  const [doctores, setDoctores] = useState([]);
-  const [duenos, setDuenos] = useState([]);
-  const [mascotas, setMascotas] = useState([]);
-  const [doctorId, setDoctorId] = useState(cita?.doctorId?._id || cita?.doctorId || '');
-  const [horario, setHorario] = useState(null);
-  const [duenoId, setDuenoId] = useState(cita?.pacienteId?.ownerId?._id || '');
-  const [mascotaId, setMascotaId] = useState(cita?.pacienteId?._id || '');
-  const [correo, setCorreo] = useState(cita?.pacienteId?.ownerId?.email || cita?.correo || '');
-  const [titulo, setTitulo] = useState(cita?.titulo || '');
-  const [tipoCita, setTipoCita] = useState(cita?.tipoCita || 'consulta');
-  const [descripcion, setDescripcion] = useState(cita?.descripcion || '');
-  const [notas, setNotas] = useState(cita?.notas || '');
+function CitasPage() {
+  const { user } = useAuth();
+  const [citas, setCitas] = useState([]);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [citaSeleccionada, setCitaSeleccionada] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
   const [errors, setErrors] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [sintomas, setSintomas] = useState(cita?.sintomas || '');
-  const [tiempoSintomas, setTiempoSintomas] = useState(cita?.tiempoSintomas || '');
-  const [fecha, setFecha] = useState(() => {
-    if (cita?.fecha) {
-      const fechaStr = cita.fecha.split('T')[0];
-      return fechaStr;
+  const [fechaFiltro, setFechaFiltro] = useState("");
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [mascotasCliente, setMascotasCliente] = useState([]);
+  const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor';
+  const isClient = user?.role === 'client';
+
+  const mostrarFechaLocal = (fechaISO) => {
+    if (!fechaISO) return '';
+    const [year, month, day] = fechaISO.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const cargarMascotasCliente = async () => {
+    if (isClient && user?._id) {
+      try {
+        const res = await getPacienteByOwnerRequest(user._id);
+        setMascotasCliente(res.data);
+        console.log("🐾 Mascotas del cliente:", res.data);
+      } catch (error) {
+        console.error("Error cargando mascotas del cliente:", error);
+      }
     }
-    return '';
+  };
+
+  const handleCreateCita = async (data) => {
+    try {
+      await createCita(data);
+      setMostrarFormulario(false);
+      await cargarCitas();
+      
+      toast.success(' Cita creada exitosamente', {
+        description: `${data.tipoCita} - ${data.fecha} a las ${data.horaInicio}`,
+        duration: 3000,
+      });
+      
+    } catch (error) {
+      toast.error(' Error al crear la cita');
+      manejarErrorResponse(error, setErrors);
+    }
+  };
+
+  const handleUpdateCita = async (data) => {
+    try {
+      await updateCita(citaSeleccionada._id, data);
+      await cargarCitas();
+      
+      toast.success(' Cita actualizada exitosamente', {
+        description: `Datos generales actualizados`,
+        duration: 3000,
+      });
+      
+      setShowEditForm(false);
+      setCitaSeleccionada(null);
+    } catch (error) {
+      console.error(" ERROR:", error);
+      toast.error(' Error al actualizar la cita');
+      manejarErrorResponse(error, setErrors);
+    }
+  };
+
+  const cargarCitas = async () => {
+    try {
+      let response;
+      
+      if (isDoctor && user?._id) {
+        const doctorId = user._id;
+        response = await getCitasByDoctorRequest(doctorId);
+      } 
+      else if (isClient && user?._id) {
+        const mascotasRes = await getPacienteByOwnerRequest(user._id);
+        const mascotas = mascotasRes.data;
+        
+        let todasLasCitas = [];
+        for (const mascota of mascotas) {
+          const citasRes = await getCitasByPacienteRequest(mascota._id);
+          todasLasCitas = [...todasLasCitas, ...citasRes.data];
+        }
+        todasLasCitas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        response = { data: todasLasCitas };
+      } 
+      else {
+        response = await getCitasRequest();
+      }
+      
+      setCitas(response.data || []);
+    } catch (error) {
+      console.error(" Error cargando citas:", error);
+      manejarErrorResponse(error, setErrors);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user._id) {
+      cargarCitas();
+      if (isClient) {
+        cargarMascotasCliente();
+      }
+    }
+  }, [user]);
+
+  const citasFiltradas = citas.filter(cita => {
+    const texto = busqueda.toLowerCase();
+    const matchBusqueda = (
+      cita.doctorId?.username?.toLowerCase().includes(texto) ||
+      cita.doctorId?.lastname?.toLowerCase().includes(texto) ||
+      cita.pacienteId?.nombre?.toLowerCase().includes(texto)
+    );
+    const matchFecha = fechaFiltro ? cita.fecha?.startsWith(fechaFiltro) : true;
+    return matchBusqueda && matchFecha;
   });
 
-  // Determinar si es cliente (tiene datos precargados)
-  const esCliente = !!datosPrecargados && !isEdit;
-
-  // ✅ Precargar datos del cliente (solo para creación, no para edición)
-  useEffect(() => {
-    if (datosPrecargados && !isEdit) {
-      console.log("📋 Precargando datos del cliente:", datosPrecargados);
-      if (datosPrecargados.duenoId) {
-        setDuenoId(datosPrecargados.duenoId);
-        if (!datosPrecargados.mascotas || datosPrecargados.mascotas.length === 0) {
-          cargarMascotas(datosPrecargados.duenoId);
-        } else {
-          setMascotas(datosPrecargados.mascotas);
-        }
-      }
-      if (datosPrecargados.correo) {
-        setCorreo(datosPrecargados.correo);
-      }
-      if (datosPrecargados.mascotaId) {
-        setMascotaId(datosPrecargados.mascotaId);
-      }
+  const { handleDelete: handleDeleteCita } = useDelete(
+    deleteCita,
+    cargarCitas,
+    setCitas,
+    {
+      onSuccess: () => toast.success(' Cita eliminada exitosamente'),
+      onError: () => toast.error(' Error al eliminar la cita')
     }
-  }, [datosPrecargados, isEdit]);
-
-  // Cargar doctores al montar el componente
-  useEffect(() => {
-    cargarDoctores();
-  }, []);
-
-  // Cargar dueños solo si no hay datos precargados y no es edición
-  useEffect(() => {
-    if (!datosPrecargados && !isEdit) {
-      cargarDuenos();
-    }
-  }, [datosPrecargados, isEdit]);
-
-  // Cargar mascotas cuando cambia el dueño (solo si no hay datos precargados)
-  useEffect(() => {
-    if (duenoId && !datosPrecargados) {
-      cargarMascotas(duenoId);
-    }
-  }, [duenoId, datosPrecargados]);
-
-  // ✅ Cargar doctores con logs de depuración
-  const cargarDoctores = async () => {
-    try {
-      console.log("🔍 [FormularioCita] Iniciando carga de doctores...");
-      console.log("🔍 [FormularioCita] esCliente:", esCliente);
-      
-      const res = await getDoctoresRequest();
-      console.log("🔍 [FormularioCita] Respuesta de doctores:", res);
-      console.log("🔍 [FormularioCita] Cantidad de doctores recibidos:", res.data?.length);
-      
-      let doctoresData = res.data || [];
-      
-      // Si es cliente, filtrar solo Medicina General y Groomer
-      if (esCliente) {
-        doctoresData = doctoresData.filter(doctor => 
-          doctor.especialidad === 'Medicina General' || 
-          doctor.especialidad === 'Groomer'
-        );
-        console.log("👨‍⚕️ Doctores filtrados para cliente:", doctoresData.length);
-      }
-      
-      setDoctores(doctoresData);
-      console.log("✅ [FormularioCita] Doctores en estado:", doctoresData.length);
-    } catch (error) {
-      console.error("❌ [FormularioCita] Error cargando doctores:", error);
-      manejarErrorResponse(error, setErrors);
-    }
-  };
-
-  const cargarDuenos = async () => {
-    try {
-      const res = await getClientesRequest();
-      setDuenos(res.data);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors);
-    }
-  };
-
-  const cargarMascotas = async (ownerId) => {
-    try {
-      const res = await getPacienteByOwnerRequest(ownerId);
-      setMascotas(res.data);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors);
-      setMascotas([]);
-    }
-  };
-
-  const handleSelectHorario = (horarioSeleccionado) => {
-    setHorario(horarioSeleccionado);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isEdit && !horario) {
-      setErrors(["Por favor selecciona un horario"]);
-      return;
-    }
-    
-    if (!mascotaId) {
-      setErrors(["Por favor selecciona una mascota"]);
-      return;
-    }
-    
-    const datosCita = {
-      doctorId,
-      pacienteId: mascotaId,
-      titulo,
-      tipoCita,
-      descripcion,
-      notas, 
-      correo,
-      sintomas,
-      tiempoSintomas
-    };
-    
-    if (!isEdit) {
-      datosCita.fecha = fecha;
-      datosCita.horaInicio = horario.inicio;
-      datosCita.horaFin = horario.fin;
-    }
-    
-    setLoading(true);
-    setErrors([]);
-    
-    try {
-      await onSubmit(datosCita);
-      
-      if (!isEdit) {
-        setDoctorId('');
-        setHorario(null);
-        if (!datosPrecargados) {
-          setDuenoId('');
-        }
-        setMascotaId('');
-        setFecha('');
-        setTitulo('');
-        setTipoCita('consulta');
-        setDescripcion('');
-        setNotas('');
-        if (!datosPrecargados) {
-          setCorreo('');
-        }
-        setSintomas('');
-        setTiempoSintomas('');
-      }
-      
-    } catch (error) {
-      console.error("❌ Error en onSubmit:", error);
-      setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  );
 
   return (
-    <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
-      <h2 className="text-xl font-semibold mb-4">
-        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
-      </h2>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <Toaster position="top-right" richColors closeButton duration={3000} />
 
-      {errors.length > 0 && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
-        </div>
-      )}
-
-      {!isEdit && (
-        <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Veterinario *</label>
-            <select
-              value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
-              className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-              required
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+          {isDoctor && ' Mis Citas'}
+          {isClient && ' Mis Citas'}
+          {isAdmin && ' Gestión de citas'}
+        </h1>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <SearchBar value={busqueda} onChange={setBusqueda} placeholder="Buscar cita..." />
+            <input 
+              type="date" 
+              value={fechaFiltro} 
+              onChange={(e) => setFechaFiltro(e.target.value)} 
+              className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
+            />
+          </div>
+          {/*  AHORA DOCTOR TAMBIÉN PUEDE CREAR CITAS */}
+          {(isAdmin || isDoctor || isClient) && (
+            <button 
+              onClick={() => setMostrarFormulario(true)} 
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
             >
-              <option value="">Selecciona un veterinario</option>
-              {doctores.map((doctor) => (
-                <option key={doctor._id} value={doctor._id}>
-                  {doctor.username} {doctor.lastname} - {doctor.especialidad}
-                </option>
-              ))}
-            </select>
-            {doctores.length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">⚠️ No hay veterinarios disponibles. Contacta al administrador.</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Horario disponible *</label>
-            <HorariosDisponibles
-              doctorId={doctorId}
-              fecha={fecha}
-              onSelectHorario={handleSelectHorario}
-            />
-            {horario && (
-              <p className="text-sm text-green-600 mt-1">
-                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
-              </p>
-            )}
-          </div>
-        </>
-      )}
-
-      {isEdit && cita && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}</p>
-          <p className="text-sm text-gray-600">⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}</p>
-          <p className="text-sm text-gray-600">👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}</p>
-        </div>
-      )}
-
-      {!datosPrecargados && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Dueño de la mascota *</label>
-          <select
-            value={duenoId}
-            onChange={(e) => {
-              const nuevoDuenoId = e.target.value;
-              setDuenoId(nuevoDuenoId);
-              const duenoSeleccionado = duenos.find(d => d._id === nuevoDuenoId);
-              if (duenoSeleccionado) {
-                setCorreo(duenoSeleccionado.email || '');
-              }
-            }}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-            required
-          >
-            <option value="">Selecciona un dueño</option>
-            {duenos.map((dueno) => (
-              <option key={dueno._id} value={dueno._id}>
-                {dueno.username} {dueno.lastname} - {dueno.email}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {datosPrecargados && !isEdit && (
-        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-700"><strong>👤 Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}</p>
-          <p className="text-sm text-gray-700"><strong>📧 Correo:</strong> {datosPrecargados.correo || 'No especificado'}</p>
-        </div>
-      )}
-
-      {(duenoId || datosPrecargados) && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mascota *</label>
-          <select
-            value={mascotaId}
-            onChange={(e) => setMascotaId(e.target.value)}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-            required
-          >
-            <option value="">Selecciona una mascota</option>
-            {mascotas.map((mascota) => (
-              <option key={mascota._id} value={mascota._id}>
-                {mascota.nombre} ({mascota.especie})
-              </option>
-            ))}
-          </select>
-          {mascotas.length === 0 && (
-            <p className="text-xs text-amber-600 mt-1">⚠️ Este dueño no tiene mascotas registradas.</p>
+              + Nueva Cita
+            </button>
           )}
         </div>
-      )}
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico *</label>
-        <input
-          type="email"
-          value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-          required
-          disabled={!!datosPrecargados && !isEdit}
-        />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de cita *</label>
-        <select
-          value={tipoCita}
-          onChange={(e) => setTipoCita(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-          required
-        >
-          <option value="consulta">Consulta general</option>
-          <option value="vacunacion">Vacunación</option>
-          <option value="cirugia">Cirugía</option>
-          <option value="estetica">Estética (baño, corte)</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
-        <input
-          type="text"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          rows={3}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
-          <select
-            value={sintomas}
-            onChange={(e) => setSintomas(e.target.value)}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-          >
-            <option value="">Selecciona un síntoma (opcional)</option>
-            <option value="vomito">Vómito</option>
-            <option value="Diarrea">Diarrea</option>
-            <option value="Falta de apetito">Falta de apetito</option>
-            <option value="tos">Tos</option>
-            <option value="fiebre">Fiebre</option>
-            <option value="decaimiento">Decaimiento</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">¿Hace cuánto comenzaron los síntomas?</label>
-          <input
-            type="text"
-            value={tiempoSintomas}
-            onChange={(e) => setTiempoSintomas(e.target.value)}
-            className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-            placeholder="Ej: 2 días, 1 semana..."
+      {/*  Formulario de creación - disponible para admin, doctor y cliente */}
+      {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
+        <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
+            <button onClick={() => setMostrarFormulario(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <FormularioCita 
+            onSubmit={handleCreateCita} 
+            cita={null} 
+            isEdit={false}
+            datosPrecargados={isClient && user?._id ? {
+              duenoId: user._id,
+              correo: user.email,
+              duenoNombre: `${user.username || ''} ${user.lastname || ''}`,
+              mascotas: mascotasCliente
+            } : null}
           />
         </div>
-      </div>
+      )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
-        <textarea
-          value={notas}
-          onChange={(e) => setNotas(e.target.value)}
-          rows={2}
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-        />
-      </div>
+      {/* Formulario de edición - solo para admin */}
+     {/* Formulario de edición - solo para admin */}
+{showEditForm && citaSeleccionada && isAdmin && (
+  <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-xl font-semibold">✏️ Editar Cita</h2>
+      <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    
+    <FormularioCita 
+      onSubmit={handleUpdateCita} 
+      cita={citaSeleccionada} 
+      isEdit={true}
+      datosPrecargados={{
+        duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
+        duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
+        correo: citaSeleccionada?.pacienteId?.ownerId?.email,
+        mascotaId: citaSeleccionada?.pacienteId?._id,
+        mascotaNombre: `${citaSeleccionada?.pacienteId?.nombre} (${citaSeleccionada?.pacienteId?.especie})`
+      }}
+    />
+  </div>
+)}
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
-        >
-          {loading ? "Guardando..." : isEdit ? "Actualizar Cita" : "Crear Cita"}
-        </button>
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
-          >
-            Cancelar
-          </button>
+      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+        {citas.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500">No hay citas registradas</p>
+            {isClient && (
+              <p className="text-gray-400 mt-2">Haz clic en "+ Nueva Cita" para agendar tu primera cita</p>
+            )}
+          </div>
+        ) : citasFiltradas.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500">No se encontraron resultados</p>
+          </div>
+        ) : (
+          <DataTable
+            columns={[
+              { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
+              { header: "Hora", accessor: "horaInicio" },
+              { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
+              { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
+              { header: "Estado", accessor: "estado" }
+            ]}
+            data={citasFiltradas}
+            onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
+            onEdit={isAdmin ? (cita) => { 
+              setCitaSeleccionada(cita); 
+              setShowEditForm(true);
+            } : undefined}
+            onDelete={isAdmin ? (cita) => {
+              handleDeleteCita(cita._id);
+            } : undefined}
+          />
         )}
       </div>
-    </form>
+    </div>
   );
-};
+}
+
+export default CitasPage;
