@@ -6,6 +6,8 @@ import {
   NODE_ENV,
 } from "../config.js";
 import User from "../models/user.model.js";
+import Owner from "../models/owner.model.js"; // ← AGREGAR
+
 
 let sgMail;
 
