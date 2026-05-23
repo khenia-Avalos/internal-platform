@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { useState } from "react";
 import { FormularioClienteTemporal } from "../components/forms/FormularioClienteTemporal";
 import { toast, Toaster } from 'sonner';
-import fondoImg from '../../img/fondo.jpg';
+const fondoImg = '/img/fondo.jpg';
 
 function HomePage() {
   const { isAuthenticated, user, loading, authChecked } = useAuth();
