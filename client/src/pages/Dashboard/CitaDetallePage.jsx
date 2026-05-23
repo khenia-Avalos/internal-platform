@@ -18,6 +18,7 @@ function CitaDetallePage() {
   const [showReagendarModal, setShowReagendarModal] = useState(false);
 
   const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor';  // ← AGREGADO
   const isClient = user?.role === 'client';
 
   const mostrarFechaLocal = (fechaISO) => {
@@ -106,7 +107,7 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log(" Reagendando cita:", data);
+    console.log("Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
       const citaActualizada = await getCitaByIdRequest(id);
@@ -234,7 +235,7 @@ function CitaDetallePage() {
 
           {cita.pacienteId && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium"> Información de la Mascota</p>
+              <p className="text-green-800 text-sm font-medium">🐾 Información de la Mascota</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
                 <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
@@ -250,7 +251,6 @@ function CitaDetallePage() {
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>
-                {/*  Cliente puede confirmar */}
                 <button 
                   onClick={() => cambiarEstado('confirmada')} 
                   disabled={updating}
@@ -258,7 +258,6 @@ function CitaDetallePage() {
                 >
                    Confirmar Cita
                 </button>
-                {/*  Cliente puede cancelar */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
@@ -266,7 +265,6 @@ function CitaDetallePage() {
                 >
                    Cancelar Cita
                 </button>
-                {/*  Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -278,8 +276,8 @@ function CitaDetallePage() {
             
             {cita.estado === 'confirmada' && (
               <>
-                {/*  Marcar como Completada - SOLO para ADMIN (oculto para cliente) */}
-                {isAdmin || isDoctor && (
+                {/*  Marcar como Completada - para ADMIN y DOCTOR */}
+                {(isAdmin || isDoctor) && (
                   <button 
                     onClick={() => cambiarEstado('completada')} 
                     disabled={updating}
@@ -288,7 +286,6 @@ function CitaDetallePage() {
                      Marcar como Completada
                   </button>
                 )}
-                {/*  Cliente puede cancelar (si está confirmada y tiene tiempo) */}
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
@@ -296,7 +293,6 @@ function CitaDetallePage() {
                 >
                    Cancelar Cita
                 </button>
-                {/*  Cliente puede reagendar */}
                 <button 
                   onClick={abrirModalReagendar}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
