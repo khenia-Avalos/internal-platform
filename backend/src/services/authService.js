@@ -547,19 +547,25 @@ export const sendResetPasswordEmail = async (email) => {
   let resetToken, resetLink, user;
 
   try {
+    // ✅ BUSCAR PRIMERO EN User
     user = await User.findOne({ email });
+    let esOwner = false;
+    
+    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner
+    if (!user) {
+      user = await Owner.findOne({ email });
+      esOwner = true;
+    }
+    
     if (!user) {
       return {
-        success: true,//por seguridad 
-        message:
-          "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
+        success: true,
+        message: "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
       };
     }
 
     resetToken = await createAccessToken({ id: user._id }, "1h");
-    resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(
-      resetToken
-    )}`;
+    resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
@@ -567,22 +573,17 @@ export const sendResetPasswordEmail = async (email) => {
 
     const emailResult = await emailService.sendResetPassword(
       email,
-      user.username,//llama al metodo del servicio de email
+      user.username,
       resetLink
     );
 
-    const response = {
+    return {
       success: true,
-      message:
-        "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
+      message: "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
     };
-
-
-    return response;
   } catch (error) {
     console.error("Error in reset password email:", error);
 
-    // En desarrollo, puedes mostrar más información
     if (NODE_ENV === "development") {
       return {
         success: false,
@@ -592,11 +593,9 @@ export const sendResetPasswordEmail = async (email) => {
       };
     }
 
-    // En producción
     return {
       success: false,
-      message:
-        "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
+      message: "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
     };
   }
 };
