@@ -279,7 +279,7 @@ function CitaDetallePage() {
             {cita.estado === 'confirmada' && (
               <>
                 {/*  Marcar como Completada - SOLO para ADMIN (oculto para cliente) */}
-                {isAdmin && (
+                {isAdmin || isDoctor && (
                   <button 
                     onClick={() => cambiarEstado('completada')} 
                     disabled={updating}

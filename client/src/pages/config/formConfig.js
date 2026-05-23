@@ -86,7 +86,7 @@ export const formConfig = {
  
   
   login: {
-    title:"LOGIN",
+    title:"Iniciar sesión",
     fields: [
       {
         name: "email",
@@ -126,7 +126,7 @@ export const formConfig = {
   },
   
   forgot: {
-    title:"Forgot password",
+    title:"Olvidé mi contraseña",
     fields: [
       {
         name: "email",
@@ -157,7 +157,7 @@ export const formConfig = {
   },
   
   reset: {
-    title:"Reset password",
+    title:"Restablecer contraseña",
     fields: [
       {
         name: "password",

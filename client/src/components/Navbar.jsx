@@ -21,14 +21,14 @@ function Navbar() {
               </span>
             </li>
             <li>
-              <Link to="/tasks" className="text-gray-700 hover:text-cyan-600 transition text-sm md:text-base">
+              {/* <Link to="/tasks" className="text-gray-700 hover:text-cyan-600 transition text-sm md:text-base">
                 Tasks
               </Link>
             </li>
             <li>
               <Link to="/add-task" className="text-gray-700 hover:text-cyan-600 transition text-sm md:text-base">
                 Add Task
-              </Link>
+              </Link> */}
             </li>
             <li>
               <button

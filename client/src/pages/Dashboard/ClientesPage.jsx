@@ -139,7 +139,7 @@ function ClientesPage() {
         {showEditForm && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Cliente</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Cliente</h2>
               <button
                 onClick={handleCancel}
                 className="text-gray-400 hover:text-gray-600 transition text-xl"

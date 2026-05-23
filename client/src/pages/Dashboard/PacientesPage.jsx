@@ -146,7 +146,7 @@ function PacientesPage() {
               placeholder="Buscar paciente por nombre, raza y dueño..."
             />
           </div>
-          {(isAdmin || isDoctor || isClient) && (
+          {(isAdmin || isDoctor ) && (
             <button
               onClick={() => setMostrarFormulario(true)}
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
@@ -187,7 +187,7 @@ function PacientesPage() {
       {showEditForm && (isAdmin || isDoctor) && (
   <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
     <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg md:text-xl font-semibold text-gray-700">✏️ Editar Paciente</h2>
+      <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Paciente</h2>
       <button
         onClick={handleCancel}
         className="text-gray-400 hover:text-gray-600 transition text-xl"

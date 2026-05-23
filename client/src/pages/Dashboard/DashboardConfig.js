@@ -15,19 +15,24 @@ export const ROLES = {
 // 2. Definimos los módulos para cada rol
 export const dashboardModules = {
   [ROLES.ADMIN]: [
-  {
-    id: "clientes",
-    name: "Clientes",
-    component: ClientesPage,
-  },{
-    id: "clientes Temporales",
-    name: "Clientes Temporales",
-    component: ClientesTemporalesPage,
+    {
+    id:"perfil",
+    name:"Perfil",
+    component:PerfilPage
   },{
     id: "doctores",
     name: "Doctores",
     component: DoctoresPage,
 
+  },{
+    id: "clientes Temporales",
+    name: "Clientes Temporales",
+    component: ClientesTemporalesPage,
+  },
+  {
+    id: "clientes",
+    name: "Clientes",
+    component: ClientesPage,
   },
   {
     id: "citas",
@@ -38,13 +43,18 @@ export const dashboardModules = {
     id: "pacientes",
     name: "Pacientes",
     component: PacientesPage,
-  },{
+  },
+  ],
+  [ROLES.DOCTOR]: [
+    {
     id:"perfil",
     name:"Perfil",
     component:PerfilPage
-  }
-  ],
-  [ROLES.DOCTOR]: [
+  }, {
+    id: "doctores",  
+    name: "Mi Información",
+    component: DoctoresPage,
+  },
      {
     id: "citas",
     name: " Mis Citas",
@@ -54,32 +64,26 @@ export const dashboardModules = {
     id: "pacientes",
     name: "Pacientes",
     component: PacientesPage,
-  },{
-    id:"perfil",
-    name:"Perfil",
-    component:PerfilPage
-  },  {
-    id: "doctores",  
-    name: "Mi Información",
-    component: DoctoresPage,
-  }
+  }, 
 
   ],
   [ROLES.CLIENTE]: [
+    {
+    id:"perfil",
+    name:"Perfil",
+    component:PerfilPage
+  },
+    {
+    id: "pacientes",
+    name: "Mis Mascotas",
+    component: PacientesPage,
+  },
      {
     id: "citas",
     name: " Mis Citas",
     component: CitasPage,
   },
- {
-    id:"perfil",
-    name:"Perfil",
-    component:PerfilPage
-  }, {
-    id: "pacientes",
-    name: "Mis Mascotas",
-    component: PacientesPage,
-  },
+
   
   ]
 };
