@@ -18,7 +18,7 @@ function CitaDetallePage() {
   const [showReagendarModal, setShowReagendarModal] = useState(false);
 
   const isAdmin = user?.role === 'admin';
-  const isDoctor = user?.role === 'doctor';  // ← AGREGADO
+  const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
 
   const mostrarFechaLocal = (fechaISO) => {
@@ -71,6 +71,15 @@ function CitaDetallePage() {
     }
   };
 
+  const obtenerMensajeWhatsApp = () => {
+    const fecha = mostrarFechaLocal(cita?.fecha);
+    const hora = cita?.horaInicio;
+    const doctor = cita?.doctorId?.username || "nuestro veterinario";
+    const mascota = cita?.pacienteId?.nombre || "mi mascota";
+    
+    return `Hola, quisiera reagendar mi cita del ${fecha} a las ${hora} con ${doctor} para ${mascota}. ¿Podrían ayudarme?`;
+  };
+
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
     let mensajeExito = '';
@@ -107,7 +116,7 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log("Reagendando cita:", data);
+    console.log(" Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
       const citaActualizada = await getCitaByIdRequest(id);
@@ -265,18 +274,29 @@ function CitaDetallePage() {
                 >
                    Cancelar Cita
                 </button>
-                <button 
-                  onClick={abrirModalReagendar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                   Reagendar Cita
-                </button>
+                {/*  Cliente: WhatsApp | Admin/Doctor: Modal */}
+                {isClient ? (
+                  <a
+                    href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center"
+                  >
+                     Reagendar por WhatsApp
+                  </a>
+                ) : (
+                  <button 
+                    onClick={abrirModalReagendar}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                     Reagendar Cita
+                  </button>
+                )}
               </>
             )}
             
             {cita.estado === 'confirmada' && (
               <>
-                {/*  Marcar como Completada - para ADMIN y DOCTOR */}
                 {(isAdmin || isDoctor) && (
                   <button 
                     onClick={() => cambiarEstado('completada')} 
@@ -293,12 +313,24 @@ function CitaDetallePage() {
                 >
                    Cancelar Cita
                 </button>
-                <button 
-                  onClick={abrirModalReagendar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                   Reagendar Cita
-                </button>
+                {/* Cliente: WhatsApp | Admin/Doctor: Modal */}
+                {isClient ? (
+                  <a
+                    href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center"
+                  >
+                     Reagendar por WhatsApp
+                  </a>
+                ) : (
+                  <button 
+                    onClick={abrirModalReagendar}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                     Reagendar Cita
+                  </button>
+                )}
               </>
             )}
             
