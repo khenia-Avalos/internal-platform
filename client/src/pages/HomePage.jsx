@@ -24,7 +24,7 @@ function HomePage() {
       <div className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-white rounded-2xl p-8 shadow-lg">
-            <img src={logoImg} alt="Veterinaria El Éxito" className="w-24 h-24 mx-auto mb-4 rounded-full object-cover" />
+            <img src={logoImg} alt="Veterinaria El Éxito" className="w-32 h-auto mx-auto mb-4 object-cover" />
             <h1 className="text-5xl font-bold text-gray-800 mb-6">
               Hola, <span className="text-cyan-600">{user?.username}</span>
             </h1>
@@ -59,7 +59,7 @@ function HomePage() {
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <img src={logoImg} alt="Veterinaria El Éxito" className="w-32 h-32 mx-auto mb-6 rounded-full object-cover shadow-lg" />
+            <img src={logoImg} alt="Veterinaria El Éxito" className="w-48 h-auto mx-auto mb-6 object-cover" />
             <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-4">
               Cuidamos de <span className="text-cyan-600">tu mascota</span>
             </h1>
@@ -102,21 +102,21 @@ function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
             <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition text-center border border-gray-100">
               <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl text-cyan-600">24/7</span>
+                <span className="text-xl font-bold text-cyan-600">24/7</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Emergencias</h3>
-              <p className="text-gray-600">Atención inmediata para tu mascota en cualquier momento</p>
+              <p className="text-gray-600">Atención inmediata para tu mascota</p>
             </div>
             <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition text-center border border-gray-100">
               <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl text-cyan-600">Servicio a Domicilio</span>
+                <span className="text-sm font-bold text-cyan-600 text-center px-1">A Domicilio</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">A Domicilio</h3>
-              <p className="text-gray-600">Cuidamos de tu mascota desde la comodidad de tu hogar</p>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Servicio a Domicilio</h3>
+              <p className="text-gray-600">Cuidamos de tu mascota en tu hogar</p>
             </div>
             <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition text-center border border-gray-100">
               <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl text-cyan-600">Grooming</span>
+                <span className="text-sm font-bold text-cyan-600">Grooming</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Grooming</h3>
               <p className="text-gray-600">Baño, corte y estética profesional</p>
