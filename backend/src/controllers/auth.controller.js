@@ -228,6 +228,8 @@ export const verifyToken = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
+    console.log("🔥🔥🔥 ESTE ES UN MENSAJE DE PRUEBA - DEBERÍA APARECER EN LOS LOGS 🔥🔥🔥");
+
   console.log(" Forgot password request:", req.body.email);
   const { email } = req.body;
 
