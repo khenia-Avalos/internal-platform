@@ -1,103 +1,66 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-
-export const usePassword =()=>{
-  //resettoken no va porque cada componente lo usa diferente
+export const usePassword = () => {
   const [apiError, setApiError] = useState("");
-const [message, setMessage]=useState("");
-const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-
-
-
-
-const forgotPassword = async (email) => {//cambia data a email porque aqui no maneja form
+  const forgotPassword = async (email) => {
     setMessage("");
     setApiError("");
-setLoading(true);  // Para mostrar "cargando..."
-
-
-
+    setLoading(true);
 
     try {
-      // Solución temporal para trabajar en ambos entornos
-      const API_URL =
-        window.location.hostname === "localhost"
-          ? "http://localhost:3000"
-          : "https://backend-internal-platform.onrender.com";
+      // ✅ USAR LA URL CORRECTA DEL BACKEND
+      const API_URL = "https://el-exito-internal-platform.onrender.com";
 
       const response = await axios.post(`${API_URL}/api/forgot-password`, {
         email: email,
       });
 
-      //MUESTRA MENSAJE DE CONFIRMACIÓN
       if (response.data.success) {
         setMessage(
           response.data.message ||
             "¡Email enviado! Revisa tu bandeja de entrada."
         );
-   
       } else {
-        // Si el backend devuelve error pero con success: false
         setApiError(response.data.message || "Hubo un error. Intenta nuevamente.");
       }
     } catch (error) {
+      console.error("Error en forgotPassword:", error);
       
-      
-      // Manejo específico de errores de red o del servidor
       if (error.response) {
-        // Error con respuesta del servidor
         setApiError(error.response.data.message || "Error del servidor");
       } else if (error.request) {
-        // Error de red (sin respuesta)
         setApiError("Error de conexión. Verifica tu internet.");
       } else {
-        // Error al configurar la petición
         setApiError("Error al procesar la solicitud.");
       }
-   } finally {  
-  setLoading(false);
-}
+    } finally {
+      setLoading(false);
+    }
+  };
 
-}
-
-
-   const resetPassword = async (token, newPassword) => {  // token: el token de la URL
-  // newPassword: la nueva contraseña
+  const resetPassword = async (token, newPassword) => {
     setApiError("");
-    setLoading(true);  // Para mostrar "cargando..."
-setMessage("");    // Limpia mensajes anteriores
-
-/* 
-    if (!resetToken) {
-      setApiError("No reset token available.");
-      return;
-//     } */
-// NO tienes estado resetToken
-
-// NO es responsabilidad del hook validar si hay token
+    setLoading(true);
+    setMessage("");
 
     try {
-      const API_URL =
-        window.location.hostname === "localhost"
-          ? "http://localhost:3000"
-          : "https://backend-internal-platform.onrender.com";
+      const API_URL = "https://el-exito-internal-platform.onrender.com";
 
       const response = await axios.post(`${API_URL}/api/reset-password`, {
         token: token,
-        password:newPassword,
+        password: newPassword,
       });
 
       if (
         response.data.success ||
         (Array.isArray(response.data) &&
-        
           response.data.includes("Password reset successfully"))
-          
       ) {
-    setMessage("¡Contraseña cambiada exitosamente!"); 
-
+        setMessage("¡Contraseña cambiada exitosamente!");
       } else {
         setApiError(
           response.data?.[0] || response.data?.message || "Unknown error"
@@ -109,25 +72,22 @@ setMessage("");    // Limpia mensajes anteriores
           error.response.data?.[0] ||
           error.response.data?.message ||
           `Server error: ${error.response.status}`;
-        setApiError(" " + serverError);
+        setApiError("❌ " + serverError);
       } else if (error.request) {
-        setApiError(
-          " Cannot connect to server. Check your internet connection."
-        );
+        setApiError("❌ Cannot connect to server. Check your internet connection.");
       } else {
-        setApiError(" Error: " + error.message);
+        setApiError("❌ Error: " + error.message);
       }
-  } finally {
-  setLoading(false);  // ✅ Se ejecuta SIEMPRE (éxito o error)
-}
+    } finally {
+      setLoading(false);
+    }
+  };
 
-}
-
-return {
-  forgotPassword,
-  resetPassword,
-  message,
-  error: apiError,  // Devuelve apiError como "error"
-  loading,
-};
+  return {
+    forgotPassword,
+    resetPassword,
+    message,
+    error: apiError,
+    loading,
+  };
 };
