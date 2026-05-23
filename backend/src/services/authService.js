@@ -6,8 +6,7 @@ import {
   NODE_ENV,
 } from "../config.js";
 import User from "../models/user.model.js";
-import Owner from "../models/owner.model.js"; // ← AGREGAR
-
+import Owner from "../models/owner.model.js";
 
 let sgMail;
 
@@ -65,7 +64,6 @@ class EmailService {
 }
 
 //correro confirmacion cita
-
 getAppointmentHtmlTemplate(nombreCliente, cita) {
   const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
   const horaInicio = cita.horaInicio;
@@ -78,8 +76,7 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
     nombreMascota = cita.pacienteTemporal.nombre;
   }
   
-  // ✅ CORREGIDO: Apuntar directamente al BACKEND
- const BACKEND_URL = "https://el-exito-internal-platform.onrender.com";
+  const BACKEND_URL = "https://el-exito-internal-platform.onrender.com";
   const confirmarUrl = `${BACKEND_URL}/api/confirmar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const cancelarUrl = `${BACKEND_URL}/api/cancelar-cita/${cita._id}?token=${cita.tokenConfirmacion}`;
   const whatsappUrl = `https://wa.me/50670932898?text=Hola%2C%20quisiera%20reagendar%20mi%20cita%20del%20${fecha}%20a%20las%20${horaInicio}`;
@@ -104,24 +101,24 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
 <body>
     <div class="container">
         <div class="header">
-            <h1> Confirmación de Cita</h1>
+            <h1>📅 Confirmación de Cita</h1>
         </div>
         <div class="content">
             <h2>Hola ${nombreCliente},</h2>
             <p>Tu cita ha sido <strong>agendada exitosamente</strong>.</p>
             
             <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin: 20px 0;">
-                <p><strong> Fecha:</strong> ${fecha}</p>
-                <p><strong> Horario:</strong> ${horaInicio} - ${horaFin}</p>
-                <p><strong> Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
-                <p><strong> Mascota:</strong> ${nombreMascota}</p>
-                <p><strong> Tipo de Cita:</strong> ${cita.tipoCita || 'Consulta general'}</p>
+                <p><strong>📅 Fecha:</strong> ${fecha}</p>
+                <p><strong>⏰ Horario:</strong> ${horaInicio} - ${horaFin}</p>
+                <p><strong>👨‍⚕️ Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
+                <p><strong>🐾 Mascota:</strong> ${nombreMascota}</p>
+                <p><strong>📋 Tipo de Cita:</strong> ${cita.tipoCita || 'Consulta general'}</p>
             </div>
             
             <div class="actions">
-                <a href="${confirmarUrl}" class="button"> Confirmar Cita</a>
-                <a href="${cancelarUrl}" class="button button-cancel"> Cancelar Cita</a>
-                <a href="${whatsappUrl}" class="button button-wa" target="_blank"> Reagendar por WhatsApp</a>
+                <a href="${confirmarUrl}" class="button">✅ Confirmar Cita</a>
+                <a href="${cancelarUrl}" class="button button-cancel">❌ Cancelar Cita</a>
+                <a href="${whatsappUrl}" class="button button-wa" target="_blank">📱 Reagendar por WhatsApp</a>
             </div>
             
             <p><strong>Importante:</strong> Si necesitas modificar tu cita, puedes usar los botones de arriba.</p>
@@ -138,7 +135,6 @@ getAppointmentHtmlTemplate(nombreCliente, cita) {
 getAppointmentTextTemplate(nombreCliente, cita) {
   const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
   
-  // ✅ Obtener nombre de la mascota (temporal o real)
   let nombreMascota = 'No especificada';
   if (cita.pacienteId?.nombre) {
     nombreMascota = cita.pacienteId.nombre;
@@ -146,44 +142,45 @@ getAppointmentTextTemplate(nombreCliente, cita) {
     nombreMascota = cita.pacienteTemporal.nombre;
   }
   
-  return `CONFIRMACIÓN DE CITA
+  return `✅ CONFIRMACIÓN DE CITA
 
 Hola ${nombreCliente},
 
 Tu cita ha sido agendada exitosamente.
 
-Fecha: ${fecha}
-Horario: ${cita.horaInicio} - ${cita.horaFin}
-Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
-Mascota: ${nombreMascota}
-Tipo de Cita: ${cita.tipoCita || 'Consulta general'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Fecha: ${fecha}
+⏰ Horario: ${cita.horaInicio} - ${cita.horaFin}
+👨‍⚕️ Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
+🐾 Mascota: ${nombreMascota}
+📋 Tipo de Cita: ${cita.tipoCita || 'Consulta general'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
 
 © ${new Date().getFullYear()} Clínica Veterinaria.`;
 }
 
-
-
   async sendResetPassword(toEmail, username, resetLink) {
-
+    console.log("📧 [sendResetPassword] INICIO");
+    console.log("📧 toEmail:", toEmail);
+    console.log("📧 username:", username);
+    console.log("📧 resetLink:", resetLink);
     
-    //busca usuario en bd
     try {
       const subject = "Restablece tu Contraseña - Clínica Veterinaria";
       const html = this.getHtmlTemplate(username, resetLink);
       const text = this.getTextTemplate(username, resetLink);
 
-      // Verifica que SendGrid esté configurado
       if (!sgMail) {
+        console.error("❌ [sendResetPassword] SendGrid no configurado");
         throw new Error("SendGrid no está configurado");
       }
 
-      // Envía directamente con SendGrid
       const msg = {
         to: toEmail,
         from: {
-          email: SENDGRID_FROM_EMAIL ,
+          email: SENDGRID_FROM_EMAIL,
           name: "Clínica Veterinaria",
         },
         subject: subject,
@@ -196,19 +193,20 @@ Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
         category: "password-reset",
       };
 
-      const response = await sgMail.send(msg); //llama a la api de sendgrid
+      console.log("📤 [sendResetPassword] Enviando email con SendGrid...");
+      const response = await sgMail.send(msg);
+      console.log("✅ [sendResetPassword] Email enviado exitosamente");
+      console.log("✅ MessageId:", response[0]?.headers?.["x-message-id"]);
 
       return {
         success: true,
         service: "sendgrid",
-        messageId:
-          response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
-        // Esta línea intenta obtener el ID del mensaje de dos lugares posibles donde SendGrid podría guardarlo, usando optional chaining para evitar errores si alguna propiedad no existe.
+        messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
       };
     } catch (error) {
-      console.error(" Error enviando email:", error.message);
+      console.error("❌ [sendResetPassword] Error enviando email:", error.message);
       if (error.response) {
-        console.error("Detalles SendGrid:", error.response.body);
+        console.error("❌ Detalles SendGrid:", error.response.body);
       }
       throw error;
     }
@@ -233,7 +231,7 @@ Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
 <body>
     <div class="container">
         <div class="header">
-            <h1> Restablecer Contraseña</h1>
+            <h1>🔐 Restablecer Contraseña</h1>
         </div>
         <div class="content">
             <h2>Hola ${username},</h2>
@@ -244,8 +242,7 @@ Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
                 <a href="${resetLink}" class="button">Restablecer Contraseña</a>
             </p>
             
-            
-            <p><strong> Importante:</strong> Este enlace expirará en 1 hora.</p>
+            <p><strong>⚠️ Importante:</strong> Este enlace expirará en 1 hora.</p>
             <p>Si no solicitaste este cambio, puedes ignorar este email.</p>
         </div>
         <div class="footer">
@@ -274,92 +271,92 @@ Si no solicitaste este cambio, puedes ignorar este email.
 © ${new Date().getFullYear()} Clínica Veterinaria.`;
   }
 
-
   async sendWelcomeEmail(toEmail, username, temporaryPassword) {
-  try {
-    const subject = "Bienvenido a El Éxito - Tu cuenta ha sido creada";
-    const html = this.getWelcomeHtmlTemplate(username, toEmail, temporaryPassword);
-    const text = this.getWelcomeTextTemplate(username, toEmail, temporaryPassword);
+    try {
+      const subject = "Bienvenido a El Éxito - Tu cuenta ha sido creada";
+      const html = this.getWelcomeHtmlTemplate(username, toEmail, temporaryPassword);
+      const text = this.getWelcomeTextTemplate(username, toEmail, temporaryPassword);
 
-    if (!sgMail) {
-      throw new Error("SendGrid no está configurado");
+      if (!sgMail) {
+        throw new Error("SendGrid no está configurado");
+      }
+
+      const msg = {
+        to: toEmail,
+        from: {
+          email: SENDGRID_FROM_EMAIL,
+          name: "El Éxito - Clínica Veterinaria",
+        },
+        subject: subject,
+        html: html,
+        text: text,
+        trackingSettings: {
+          openTracking: { enable: true },
+        },
+        category: "welcome-email",
+      };
+
+      const response = await sgMail.send(msg);
+
+      return {
+        success: true,
+        service: "sendgrid",
+        messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
+      };
+    } catch (error) {
+      console.error("❌ Error enviando email de bienvenida:", error.message);
+      if (error.response) {
+        console.error("Detalles SendGrid:", error.response.body);
+      }
+      throw error;
     }
-
-    const msg = {
-      to: toEmail,
-      from: {
-        email: SENDGRID_FROM_EMAIL,
-        name: "El Éxito - Clínica Veterinaria",
-      },
-      subject: subject,
-      html: html,
-      text: text,
-      trackingSettings: {
-        openTracking: { enable: true },
-      },
-      category: "welcome-email",
-    };
-
-    const response = await sgMail.send(msg);
-
-    return {
-      success: true,
-      service: "sendgrid",
-      messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
-    };
-  } catch (error) {
-    console.error("❌ Error enviando email de bienvenida:", error.message);
-    if (error.response) {
-      console.error("Detalles SendGrid:", error.response.body);
-    }
-    throw error;
   }
-}
-async sendWelcomeEmailDoctor(toEmail, username, temporaryPassword) {
-  try {
-    const subject = "Bienvenido a El Éxito - Doctor";
-    const html = this.getWelcomeDoctorHtmlTemplate(username, toEmail, temporaryPassword);
-    const text = this.getWelcomeDoctorTextTemplate(username, toEmail, temporaryPassword);
 
-    if (!sgMail) {
-      throw new Error("SendGrid no está configurado");
+  async sendWelcomeEmailDoctor(toEmail, username, temporaryPassword) {
+    try {
+      const subject = "Bienvenido a El Éxito - Doctor";
+      const html = this.getWelcomeDoctorHtmlTemplate(username, toEmail, temporaryPassword);
+      const text = this.getWelcomeDoctorTextTemplate(username, toEmail, temporaryPassword);
+
+      if (!sgMail) {
+        throw new Error("SendGrid no está configurado");
+      }
+
+      const msg = {
+        to: toEmail,
+        from: {
+          email: SENDGRID_FROM_EMAIL,
+          name: "El Éxito - Clínica Veterinaria",
+        },
+        subject: subject,
+        html: html,
+        text: text,
+        trackingSettings: {
+          openTracking: { enable: true },
+        },
+        category: "welcome-doctor",
+      };
+
+      const response = await sgMail.send(msg);
+
+      return {
+        success: true,
+        service: "sendgrid",
+        messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
+      };
+    } catch (error) {
+      console.error("❌ Error enviando email de bienvenida a doctor:", error.message);
+      if (error.response) {
+        console.error("Detalles SendGrid:", error.response.body);
+      }
+      throw error;
     }
-
-    const msg = {
-      to: toEmail,
-      from: {
-        email: SENDGRID_FROM_EMAIL,
-        name: "El Éxito - Clínica Veterinaria",
-      },
-      subject: subject,
-      html: html,
-      text: text,
-      trackingSettings: {
-        openTracking: { enable: true },
-      },
-      category: "welcome-doctor",
-    };
-
-    const response = await sgMail.send(msg);
-
-    return {
-      success: true,
-      service: "sendgrid",
-      messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
-    };
-  } catch (error) {
-    console.error("❌ Error enviando email de bienvenida a doctor:", error.message);
-    if (error.response) {
-      console.error("Detalles SendGrid:", error.response.body);
-    }
-    throw error;
   }
-}
 
-getWelcomeDoctorHtmlTemplate(username, email, temporaryPassword) {
-  const plataformaUrl = "https://internal-platform.onrender.com";
-  
-  return `
+  getWelcomeDoctorHtmlTemplate(username, email, temporaryPassword) {
+    const plataformaUrl = "https://internal-platform.onrender.com";
+    
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -421,12 +418,12 @@ getWelcomeDoctorHtmlTemplate(username, email, temporaryPassword) {
     </div>
 </body>
 </html>`;
-}
+  }
 
-getWelcomeDoctorTextTemplate(username, email, temporaryPassword) {
-  const plataformaUrl = "https://internal-platform.onrender.com";
-  
-  return `
+  getWelcomeDoctorTextTemplate(username, email, temporaryPassword) {
+    const plataformaUrl = "https://internal-platform.onrender.com";
+    
+    return `
 BIENVENIDO A EL ÉXITO - CLÍNICA VETERINARIA
 
 Dr/a. ${username},
@@ -446,12 +443,12 @@ Su perfil de doctor ha sido creado exitosamente.
 
 © ${new Date().getFullYear()} El Éxito - Clínica Veterinaria
 `;
-}
+  }
 
-getWelcomeHtmlTemplate(username, email, temporaryPassword) {
-  const plataformaUrl = "https://internal-platform.onrender.com";
-  
-  return `
+  getWelcomeHtmlTemplate(username, email, temporaryPassword) {
+    const plataformaUrl = "https://internal-platform.onrender.com";
+    
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -513,12 +510,12 @@ getWelcomeHtmlTemplate(username, email, temporaryPassword) {
     </div>
 </body>
 </html>`;
-}
+  }
 
-getWelcomeTextTemplate(username, email, temporaryPassword) {
-  const plataformaUrl = "https://internal-platform.onrender.com";
-  
-  return `
+  getWelcomeTextTemplate(username, email, temporaryPassword) {
+    const plataformaUrl = "https://internal-platform.onrender.com";
+    
+    return `
 BIENVENIDO A EL ÉXITO - CLÍNICA VETERINARIA
 
 Hola ${username},
@@ -536,73 +533,71 @@ Tu perfil ha sido creado exitosamente.
 
 © ${new Date().getFullYear()} El Éxito - Clínica Veterinaria
 `;
+  }
 }
-}
-
-
-
-
 
 const emailService = new EmailService();
 
 export const sendResetPasswordEmail = async (email) => {
+  console.log("📧 [sendResetPasswordEmail] INICIO para:", email);
   let resetToken, resetLink, user;
 
   try {
-    // ✅ BUSCAR PRIMERO EN User
+    console.log("🔍 [sendResetPasswordEmail] Buscando en User...");
     user = await User.findOne({ email });
     let esOwner = false;
     
-    // ✅ SI NO ESTÁ EN User, BUSCAR EN Owner
     if (!user) {
+      console.log("🔍 [sendResetPasswordEmail] No encontrado en User, buscando en Owner...");
       user = await Owner.findOne({ email });
       esOwner = true;
     }
     
     if (!user) {
+      console.log("❌ [sendResetPasswordEmail] Usuario no encontrado en ninguna colección");
       return {
         success: true,
         message: "Si el email existe, recibirás un enlace para restablecer tu contraseña.",
       };
     }
+    
+    console.log("✅ [sendResetPasswordEmail] Usuario encontrado en:", esOwner ? "Owner" : "User");
+    console.log("✅ ID:", user._id);
+    console.log("✅ Username:", user.username);
 
+    console.log("🔑 [sendResetPasswordEmail] Generando token...");
     resetToken = await createAccessToken({ id: user._id }, "1h");
     resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    console.log("🔗 Reset link generado:", resetLink);
 
+    console.log("💾 [sendResetPasswordEmail] Guardando token en BD...");
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
+    console.log("✅ Token guardado");
 
+    console.log("📧 [sendResetPasswordEmail] Enviando email...");
     const emailResult = await emailService.sendResetPassword(
       email,
       user.username,
       resetLink
     );
+    console.log("📨 Resultado del envío:", emailResult);
 
     return {
       success: true,
       message: "Se ha enviado un email con las instrucciones para restablecer tu contraseña.",
     };
   } catch (error) {
-    console.error("Error in reset password email:", error);
-
-    if (NODE_ENV === "development") {
-      return {
-        success: false,
-        message: "Error enviando el email",
-        error: error.message,
-        ...(resetLink && { resetLink: resetLink }),
-      };
-    }
-
+    console.error("❌ [sendResetPasswordEmail] Error:", error);
     return {
       success: false,
-      message: "Hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.",
+      message: "Hubo un error al procesar tu solicitud.",
     };
   }
 };
 
-export const checkEmailConfig = async () => {//codigo para debug 
+export const checkEmailConfig = async () => {
   try {
     const config = {
       service: "sendgrid",
@@ -632,6 +627,7 @@ export const checkEmailConfig = async () => {//codigo para debug
     };
   }
 };
+
 export const sendAppointmentConfirmationEmail = async (email, nombreCliente, cita) => {
   try {
     const result = await emailService.sendAppointmentConfirmation(email, nombreCliente, cita);
@@ -657,6 +653,7 @@ export const sendWelcomeEmail = async (email, username, temporaryPassword) => {
     };
   }
 };
+
 export const sendWelcomeEmailDoctor = async (email, username, temporaryPassword) => {
   try {
     const result = await emailService.sendWelcomeEmailDoctor(email, username, temporaryPassword);
