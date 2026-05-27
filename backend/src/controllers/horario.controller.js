@@ -139,7 +139,7 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     
     //  Obtener el NÚMERO del día (0 = domingo, 1 = lunes, ..., 6 = sábado)
     const fechaObj = new Date(fecha);
-    const numeroDia = fechaObj.getDay(); // ← Esto devuelve 0, 1, 2, 3, 4, 5, 6
+    const numeroDia = fechaObj.getDay(); // Esto devuelve 0, 1, 2, 3, 4, 5, 6
     
     // Array para referencia (solo para logs)
     const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -151,7 +151,7 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     const Horario = await import('../models/horario.model.js').then(m => m.default);
     const horario = await Horario.findOne({ 
       doctorId: doctorId, 
-      dia: numeroDia,  // ← Ahora enviamos un número, no un string
+      dia: numeroDia,  // Ahora enviamos un número, no un string
       activo: true
     });
     

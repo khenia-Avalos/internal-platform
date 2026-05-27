@@ -24,11 +24,11 @@ export const createTasks = async (req, res)=>{
         date,
         user: req.user.id
 });
-  const savedTask = await newTask.save(); // ✅ Primero guardar
+  const savedTask = await newTask.save(); //  Primero guardar
         
-        // ✅ Luego hacer populate con el ID guardado
+        //  Luego hacer populate con el ID guardado
         const populatedTask = await Task.findById(savedTask._id).populate('user');
-        res.json(populatedTask); // ✅ Un solo response
+        res.json(populatedTask); //  Un solo response
 
         } catch (error) {
     return res.status(500).json({ message: 'Something went wrong'}) 

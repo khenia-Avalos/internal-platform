@@ -10,10 +10,10 @@ try{
   const nuevaPausa = new Pausa({
   doctorId,
   motivo: motivo || "almuerzo",
-  fecha: new Date(),        // ← fecha actual
-  inicio: new Date(),       // ← hora actual
-  fin: null,                // ← aún no termina
-  activa: true              // ← está activa
+  fecha: new Date(),        //  fecha actual
+  inicio: new Date(),       //  hora actual
+  fin: null,                //  aún no termina
+  activa: true              //  está activa
 });
    
     const pausaGuardada = await nuevaPausa.save();
@@ -67,16 +67,16 @@ export const getPausasActivas = async (req, res) => {
   try {
     const { doctorId } = req.params;
     
-    console.log("🔍 Buscando pausas activas para doctorId:", doctorId);
+    console.log(" Buscando pausas activas para doctorId:", doctorId);
     
     const pausas = await Pausa.find({ doctorId, activa: true });
     
-    console.log("📦 Pausas encontradas:", pausas.length);
-    console.log("📦 Datos:", pausas);
+    console.log(" Pausas encontradas:", pausas.length);
+    console.log(" Datos:", pausas);
     
     res.json(pausas);
   } catch (error) {
-    console.error("❌ Error en getPausasActivas:", error);
+    console.error(" Error en getPausasActivas:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 

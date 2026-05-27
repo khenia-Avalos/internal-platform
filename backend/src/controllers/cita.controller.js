@@ -74,13 +74,13 @@ export const createCita = async (req, res) => {
     const citaGuardada = await nuevaCita.save();
     console.log(" Cita guardada con ID:", citaGuardada._id);
 
-    // ✅ 1. PRIMERO: Generar y guardar el token
+    // . PRIMERO: Generar y guardar el token
     const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
     citaGuardada.tokenConfirmacion = tokenConfirmacion;
     await citaGuardada.save();
-    console.log("✅ Token generado y guardado");
+    console.log(" Token generado y guardado");
 
-    // ✅ 2. SEGUNDO: Volver a buscar la cita con populate (AHORA con token incluido)
+    //  SEGUNDO: Volver a buscar la cita con populate (AHORA con token incluido)
     const citaConDatos = await Cita.findById(citaGuardada._id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -91,7 +91,7 @@ export const createCita = async (req, res) => {
         }
       });
     
-    // ✅ 3. TERCERO: Enviar correo de confirmación
+    // . TERCERO: Enviar correo de confirmación
     if (correo) {
       console.log(" Intentando enviar correo a:", correo);
       try {
@@ -125,7 +125,7 @@ export const getCitasByDoctor = async (req, res) => {
     const { doctorId } = req.params;
     
     const citas = await Cita.find({ doctorId })
-      .populate('doctorId', 'username lastname especialidad') // ✅ AGREGAR ESTO
+      .populate('doctorId', 'username lastname especialidad') //  AGREGAR ESTO
       .populate('pacienteId', 'nombre especie raza')
       .sort({ fecha: -1, horaInicio: 1 });
     
@@ -144,7 +144,7 @@ export const getCitasByPaciente = async (req, res) => {
     
     const citas = await Cita.find({ pacienteId })
       .populate('doctorId', 'username lastname especialidad')
-      .populate('pacienteId', 'nombre especie raza') // ✅ AGREGADO: para mostrar nombre de la mascota
+      .populate('pacienteId', 'nombre especie raza') //  AGREGADO: para mostrar nombre de la mascota
       .sort({ fecha: -1, horaInicio: 1 });
     
     res.json(citas);
@@ -167,7 +167,7 @@ export const updateCita = async (req, res) => {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
     
-    // ✅ Si se intenta CANCELAR desde el dashboard
+    //  Si se intenta CANCELAR desde el dashboard
     if (data.estado === 'cancelada') {
       const fechaCita = new Date(cita.fecha);
       const ahora = new Date();
@@ -192,12 +192,12 @@ export const updateCita = async (req, res) => {
       }
     }
     
-    // ✅ Si se intenta CONFIRMAR, verificar que no esté cancelada
+    //  Si se intenta CONFIRMAR, verificar que no esté cancelada
     if (data.estado === 'confirmada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede confirmar una cita cancelada" });
     }
     
-    // ✅ Si se intenta COMPLETAR, verificar que no esté cancelada
+    // Si se intenta COMPLETAR, verificar que no esté cancelada
     if (data.estado === 'completada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede completar una cita cancelada" });
     }
@@ -392,8 +392,8 @@ export const getCitaById = async (req, res) => {
       })
       .populate('clienteTemporalId', 'username email phoneNumber estado direccion'); // ← Asegurar que trae estos campos
     
-    console.log("🔍 Cita encontrada:", JSON.stringify(cita, null, 2));
-    console.log("🔍 clienteTemporalId:", cita?.clienteTemporalId);
+    console.log(" Cita encontrada:", JSON.stringify(cita, null, 2));
+    console.log(" clienteTemporalId:", cita?.clienteTemporalId);
     
     if (!cita) {
       return res.status(404).json({ message: "Cita no encontrada" });
@@ -401,7 +401,7 @@ export const getCitaById = async (req, res) => {
     
     res.json(cita);
   } catch (error) {
-    console.error("❌ Error en getCitaById:", error);
+    console.error(" Error en getCitaById:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       message: errorResponse.message 
@@ -528,7 +528,7 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // ✅ VERIFICAR SI YA ESTÁ CANCELADA
+    //  VERIFICAR SI YA ESTÁ CANCELADA
     if (cita.estado === 'cancelada') {
       return res.send(renderizarPagina(
         'Cita ya cancelada',
@@ -537,7 +537,7 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // ✅ VERIFICAR SI YA ESTÁ COMPLETADA
+    //  VERIFICAR SI YA ESTÁ COMPLETADA
     if (cita.estado === 'completada') {
       return res.status(400).send(renderizarPagina(
         'Cita completada',
@@ -546,7 +546,7 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // ✅ VALIDACIÓN DE TIEMPO (2 horas antes) - PERMITE CANCELAR TANTO PENDIENTE COMO CONFIRMADA
+    //  VALIDACIÓN DE TIEMPO (2 horas antes) - PERMITE CANCELAR TANTO PENDIENTE COMO CONFIRMADA
     const fechaCita = new Date(cita.fecha);
     const ahora = new Date();
     

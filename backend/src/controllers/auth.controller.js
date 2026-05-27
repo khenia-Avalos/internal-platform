@@ -18,57 +18,57 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-export const register = async (req, res) => {
-  const { email, password, username, lastname, phoneNumber } = req.body;
-  const errors = [];
-  if (!username) errors.push("Username is required");
-  if (!lastname) errors.push("Last name is required");
-  if (!phoneNumber) errors.push("Phone number is required");
-  if (!email) errors.push("Email is required");
-  if (!password) errors.push("Password is required");
+// export const register = async (req, res) => {
+//   const { email, password, username, lastname, phoneNumber } = req.body;
+//   const errors = [];
+//   if (!username) errors.push("Usuario es requerido");
+//   if (!lastname) errors.push("Apellido es requerido");
+//   if (!phoneNumber) errors.push("Número de teléfono es requerido");
+//   if (!email) errors.push("Email es requerido");
+//   if (!password) errors.push("Contraseña es requerida");
 
-  if (errors.length > 0) {
-    return res.status(400).json(errors);
-  }
+//   if (errors.length > 0) {
+//     return res.status(400).json(errors);
+//   }
 
-  try {
-    const userFound = await User.findOne({ email });
-    if(userFound)
-      return res.status(400).json(["the email is already in use"]);
+//   try {
+//     const userFound = await User.findOne({ email });
+//     if(userFound)
+//       return res.status(400).json(["the email is already in use"]);
 
-    const passwordHash = await bcrypt.hash(password, 10);
+//     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
-      username,
-      email,
-      lastname,
-      phoneNumber,
-      password: passwordHash,
-    });
-    const userSaved = await newUser.save();
-    const token = await createAccessToken({ id: userSaved._id });
+//     const newUser = new User({
+//       username,
+//       email,
+//       lastname,
+//       phoneNumber,
+//       password: passwordHash,
+//     });
+//     const userSaved = await newUser.save();
+//     const token = await createAccessToken({ id: userSaved._id });
 
-    res.cookie("token", token, cookieOptions);
+//     res.cookie("token", token, cookieOptions);
 
-    res.json({
-      _id: userSaved._id,
-      id: userSaved._id,
-      username: userSaved.username,
-      lastname: userSaved.lastname,
-      phoneNumber: userSaved.phoneNumber,
-      email: userSaved.email,
-      role: userSaved.role,
-      createdAt: userSaved.createdAt,
-      updatedAt: userSaved.updatedAt,
-      accessToken: token,  
-    });
-  } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
-  }
-};
+//     res.json({
+//       _id: userSaved._id,
+//       id: userSaved._id,
+//       username: userSaved.username,
+//       lastname: userSaved.lastname,
+//       phoneNumber: userSaved.phoneNumber,
+//       email: userSaved.email,
+//       role: userSaved.role,
+//       createdAt: userSaved.createdAt,
+//       updatedAt: userSaved.updatedAt,
+//       accessToken: token,  
+//     });
+//   } catch (error) {
+//     const errorResponse = manejarError(error);
+//     res.status(errorResponse.status).json({ 
+//       message: errorResponse.message 
+//     });
+//   }
+// };
 
 export const login = async (req, res) => {
   console.log(" LOGIN INICIADO");
@@ -76,8 +76,8 @@ export const login = async (req, res) => {
 
   const { email, password } = req.body;
   const errors = [];
-  if (!email) errors.push("Email is required");
-  if (!password) errors.push("Password is required");
+  if (!email) errors.push("correo es requerido");
+  if (!password) errors.push("contraseña es requerida");
 
   if (errors.length > 0) {
     console.log(" Errores de validación:", errors);
@@ -228,7 +228,6 @@ export const verifyToken = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-    console.log("🔥🔥🔥 ESTE ES UN MENSAJE DE PRUEBA - DEBERÍA APARECER EN LOS LOGS 🔥🔥🔥");
 
   console.log(" Forgot password request:", req.body.email);
   const { email } = req.body;
@@ -251,7 +250,7 @@ export const forgotPassword = async (req, res) => {
     if (NODE_ENV === "development") {
       const devResponse = {
         success: true,
-        message: response.message || "Password reset processed",
+        message: response.message || "Se ha procesado el restablecimiento de la contraseña.",
       };
       if (response.debug && response.debug.resetLink) {
         devResponse.debug = {
@@ -267,14 +266,14 @@ export const forgotPassword = async (req, res) => {
     } else {
       return res.status(200).json({
         success: true,
-        message: "If an account exists with this email, you will receive password reset instructions.",
+        message: "si existe una cuenta con este correo, recibirás instrucciones para restablecer tu contraseña.",
       });
     }
   } catch (error) {
     const errorResponse = manejarError(error);
     return res.status(200).json({
       success: true,
-      message: "If an account exists with this email, you will receive password reset instructions.",
+      message: "si existe una cuenta con este correo, recibirás instrucciones para restablecer tu contraseña",
     });
   }
 };
@@ -283,8 +282,8 @@ export const resetPassword = async (req, res) => {
   const { token, password } = req.body;
 
   const errors = [];
-  if (!token) errors.push("Token is required");
-  if (!password) errors.push("Password is required");
+  if (!token) errors.push("token es requerido");
+  if (!password) errors.push("contraseña es requerida");
   if (errors.length > 0) {
     return res.status(400).json(errors);
   }
@@ -292,7 +291,7 @@ export const resetPassword = async (req, res) => {
   if (password.length < 6) {
     return res
       .status(400)
-      .json(["Password must be at least 6 characters long"]);
+      .json(["contraseña debe tener al menos 6 caracteres"]);
   }
   try {
     const decoded = jwt.verify(token, TOKEN_SECRET);
@@ -312,7 +311,7 @@ export const resetPassword = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(400).json(["Invalid or expired token"]);
+      return res.status(400).json(["invalido o expirado token"]);
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -321,7 +320,7 @@ export const resetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    return res.status(200).json(["Password reset successfully"]);
+    return res.status(200).json(["contraseña restablecida exitosamente"]);
   } catch (error) {
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 

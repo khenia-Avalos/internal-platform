@@ -3,7 +3,8 @@ import Owner from '../models/owner.model.js';
 import Cita from '../models/cita.model.js';
 import Paciente from '../models/pacientes.model.js';
 import { sendWelcomeEmail, sendAppointmentConfirmationEmail } from '../services/authService.js';
-import { createAccessToken } from '../libs/jwt.js';  // ← AGREGAR ESTA LÍNEA
+import { createAccessToken } from '../libs/jwt.js';
+import { manejarError } from '../utils/errorHandler.js';
 
 
 const validarEmail = (email) => {
@@ -20,9 +21,7 @@ const validarCedula = (cedula) => {
   return /^\d{6,12}$/.test(cedula);
 };
 
-// ============================================
-// OBTENER TODOS LOS CLIENTES TEMPORALES
-// ============================================
+
 export const getClientesTemporales = async (req, res) => {
   try {
     console.log('\n========== GET CLIENTES TEMPORALES ==========');
@@ -43,18 +42,16 @@ export const getClientesTemporales = async (req, res) => {
       createdAt: cliente.createdAt
     }));
     
-    console.log(`📊 Enviando ${clientesFormateados.length} clientes temporales`);
+    console.log(`Enviando ${clientesFormateados.length} clientes temporales`);
     res.json(clientesFormateados);
     
   } catch (error) {
-    console.error('❌ Error en getClientesTemporales:', error);
-    res.status(500).json({ message: 'Error al obtener clientes temporales' });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 
-// ============================================
-// OBTENER CLIENTE TEMPORAL POR ID
-// ============================================
+
 export const getClienteTemporalById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -87,13 +84,8 @@ export const getClienteTemporalById = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error en getClienteTemporalById:', error);
-    
-    if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'ID de cliente no válido' });
-    }
-    
-    res.status(500).json({ message: 'Error al obtener el cliente temporal' });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 
@@ -120,9 +112,7 @@ export const createClienteTemporal = async (req, res) => {
       notas
     } = req.body;
     
-    // ============================================
     // VALIDACIONES
-    // ============================================
     
     if (!username || username.trim() === '') {
       return res.status(400).json({ message: 'El nombre del dueño es requerido', field: 'username' });
@@ -172,9 +162,7 @@ export const createClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'Debe seleccionar un horario disponible', field: 'horario' });
     }
     
-    // ============================================
     // VERIFICAR UNICIDAD
-    // ============================================
     
     const emailExistente = await Owner.findOne({ email: email.toLowerCase().trim() });
     if (emailExistente) {
@@ -186,9 +174,7 @@ export const createClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: `La cédula "${cedula}" ya está registrada`, field: 'cedula' });
     }
     
-    // ============================================
     // 1. CREAR CLIENTE TEMPORAL (Owner)
-    // ============================================
     
     const nuevoCliente = new Owner({
       username: username.trim(),
@@ -216,9 +202,7 @@ export const createClienteTemporal = async (req, res) => {
     
     await nuevoCliente.save();
     
-    // ============================================
     // 2. CREAR CITA REAL (Appointment)
-    // ============================================
     
     // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD si es necesario
     let fechaFormateada = fechaCita;
@@ -250,20 +234,16 @@ export const createClienteTemporal = async (req, res) => {
     });
     
     const citaGuardada = await nuevaCita.save();
-    console.log(`✅ Cita creada: ${citaGuardada._id}`);
+    console.log(`Cita creada: ${citaGuardada._id}`);
     
-    // ============================================
     // 3. GENERAR Y GUARDAR TOKEN (PRIMERO)
-    // ============================================
     
     const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
     citaGuardada.tokenConfirmacion = tokenConfirmacion;
     await citaGuardada.save();
-    console.log("✅ Token generado y guardado");
+    console.log("Token generado y guardado");
     
-    // ============================================
     // 4. BUSCAR CITA CON POPULATE (AHORA CON TOKEN)
-    // ============================================
     
     const citaConDatos = await Cita.findById(citaGuardada._id)
       .populate('doctorId', 'username lastname especialidad')
@@ -275,39 +255,33 @@ export const createClienteTemporal = async (req, res) => {
         }
       });
     
-    // ============================================
     // 5. ENVIAR CORREO DE CONFIRMACIÓN
-    // ============================================
     
     if (email) {
-      console.log("📧 Intentando enviar correo de confirmación a:", email);
+      console.log("Intentando enviar correo de confirmación a:", email);
       try {
         await sendAppointmentConfirmationEmail(
           email,
           username || "Cliente",
           citaConDatos
         );
-        console.log("✅ Correo de confirmación enviado exitosamente a:", email);
+        console.log("Correo de confirmación enviado exitosamente a:", email);
       } catch (emailError) {
-        console.error("❌ Error enviando correo de confirmación:", emailError.message);
+        console.error("Error enviando correo de confirmación:", emailError.message);
       }
     }
     
-    // ============================================
     // 6. GUARDAR REFERENCIA DE LA CITA EN EL CLIENTE TEMPORAL
-    // ============================================
     
     nuevoCliente.citasTemporales[0].citaRealId = citaGuardada._id;
     await nuevoCliente.save();
     
-    console.log(`✅ Cliente temporal creado: ${nuevoCliente.username}`);
+    console.log(`Cliente temporal creado: ${nuevoCliente.username}`);
     
-    // ============================================
     // RESPUESTA
-    // ============================================
     
     res.status(201).json({
-      message: '✅ Cliente temporal y cita creados exitosamente. Se ha enviado un correo de confirmación.',
+      message: 'Cliente temporal y cita creados exitosamente. Se ha enviado un correo de confirmación.',
       cliente: {
         _id: nuevoCliente._id,
         username: nuevoCliente.username,
@@ -324,7 +298,7 @@ export const createClienteTemporal = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error en createClienteTemporal:', error);
+    console.error('Error en createClienteTemporal:', error);
     
     if (error.code === 11000) {
       if (error.keyPattern?.email) {
@@ -335,7 +309,8 @@ export const createClienteTemporal = async (req, res) => {
       }
     }
     
-    res.status(500).json({ message: error.message });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 
@@ -348,9 +323,6 @@ function calcularDuracion(horaInicio, horaFin) {
 }
 
 
-// ============================================
-// COMPLETAR REGISTRO DE CLIENTE TEMPORAL
-// ============================================
 export const completarRegistroClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
@@ -360,8 +332,8 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     } = req.body;
     
     console.log(`\n========== COMPLETAR REGISTRO ==========`);
-    console.log(`📝 Cliente ID: ${id}`);
-    console.log(`📝 Datos recibidos:`, { lastname, cedula, direccion, email, raza, edad, sexo, colorPelaje, peso, temperatura });
+    console.log(`Cliente ID: ${id}`);
+    console.log(`Datos recibidos:`, { lastname, cedula, direccion, email, raza, edad, sexo, colorPelaje, peso, temperatura });
     
     // Validar ID
     if (!id || id.length !== 24) {
@@ -378,9 +350,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'Este cliente ya está registrado completamente' });
     }
     
-    // ============================================
     // VALIDACIONES DEL CLIENTE
-    // ============================================
     
     if (!email || email.trim() === '') {
       return res.status(400).json({ message: 'El correo electrónico es requerido', field: 'email' });
@@ -406,9 +376,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       return res.status(400).json({ message: 'La dirección es requerida', field: 'direccion' });
     }
     
-    // ============================================
     // VERIFICAR UNICIDAD
-    // ============================================
     
     // Verificar email único (excluyendo el cliente actual)
     const emailExistente = await Owner.findOne({ 
@@ -436,9 +404,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       });
     }
     
-    // ============================================
     // 1. CREAR MASCOTA (Paciente)
-    // ============================================
     
     const citaTemporal = cliente.citasTemporales?.[0];
     let mascotaId = null;
@@ -460,14 +426,14 @@ export const completarRegistroClienteTemporal = async (req, res) => {
         });
       }
       
-      // ✅ Normalizar especie (asegurar minúsculas para el enum)
+      // Normalizar especie (asegurar minúsculas para el enum)
       let especieNormalizada = citaTemporal.pacienteTemporal.especie.toLowerCase();
       const especiesValidas = ['perro', 'gato', 'ave', 'conejo', 'otro'];
       if (!especiesValidas.includes(especieNormalizada)) {
         especieNormalizada = 'otro';
       }
       
-      // ✅ Normalizar sexo (convertir a Macho / Hembra con mayúscula)
+      // Normalizar sexo (convertir a Macho / Hembra con mayúscula)
       let sexoNormalizado = '';
       if (sexo) {
         const sexoLower = sexo.toLowerCase();
@@ -507,7 +473,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       
       const mascotaGuardada = await nuevaMascota.save();
       mascotaId = mascotaGuardada._id;
-      console.log(`✅ Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
+      console.log(`Mascota creada: ${mascotaGuardada.nombre} (ID: ${mascotaGuardada._id})`);
       console.log(`   - Especie: ${mascotaGuardada.especie}`);
       console.log(`   - Sexo: ${mascotaGuardada.sexo}`);
       
@@ -518,9 +484,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       });
     }
     
-    // ============================================
     // 2. ACTUALIZAR CITA REAL (Appointment)
-    // ============================================
     
     if (citaTemporal && citaTemporal.citaRealId) {
       const citaReal = await Cita.findById(citaTemporal.citaRealId);
@@ -529,15 +493,13 @@ export const completarRegistroClienteTemporal = async (req, res) => {
         citaReal.estado = 'confirmada';
         citaReal.esCitaTemporal = false;
         await citaReal.save();
-        console.log(`✅ Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
+        console.log(`Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
       } else {
-        console.log(`⚠️ No se encontró la cita real con ID: ${citaTemporal.citaRealId}`);
+        console.log(`No se encontró la cita real con ID: ${citaTemporal.citaRealId}`);
       }
     }
     
-    // ============================================
     // 3. COMPLETAR CLIENTE (Owner)
-    // ============================================
     
     cliente.lastname = lastname.trim();
     cliente.cedula = cedula.trim();
@@ -560,29 +522,25 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     }
     
     await cliente.save();
-    console.log(`✅ Cliente completado: ${cliente.username}`);
+    console.log(`Cliente completado: ${cliente.username}`);
     
-    // ============================================
     // 4. ENVIAR CORREO DE BIENVENIDA
-    // ============================================
     
     if (contrasenaAsignada && cliente.email) {
       try {
         await sendWelcomeEmail(cliente.email, cliente.username, DEFAULT_PASSWORD);
-        console.log(`📧 Correo de bienvenida enviado a: ${cliente.email}`);
+        console.log(`Correo de bienvenida enviado a: ${cliente.email}`);
       } catch (emailError) {
-        console.error('❌ Error enviando email:', emailError.message);
+        console.error('Error enviando email:', emailError.message);
       }
     }
     
-    // ============================================
     // RESPUESTA
-    // ============================================
     
     res.json({ 
       message: contrasenaAsignada 
-        ? '✅ Registro completado. Se ha enviado un correo con las credenciales de acceso.'
-        : '✅ Registro completado exitosamente',
+        ? 'Registro completado. Se ha enviado un correo con las credenciales de acceso.'
+        : 'Registro completado exitosamente',
       cliente: {
         _id: cliente._id,
         username: cliente.username,
@@ -596,7 +554,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error en completarRegistroClienteTemporal:', error);
+    console.error('Error en completarRegistroClienteTemporal:', error);
     
     // Manejar error de validación de Mongoose
     if (error.name === 'ValidationError') {
@@ -607,15 +565,12 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       });
     }
     
-    res.status(500).json({ 
-      message: 'Error al completar el registro. Intente nuevamente.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
-// ============================================
-// ELIMINAR CLIENTE TEMPORAL
-// ============================================
+
+
 export const deleteClienteTemporal = async (req, res) => {
   try {
     const { id } = req.params;
@@ -635,24 +590,17 @@ export const deleteClienteTemporal = async (req, res) => {
     }
     
     await cliente.deleteOne();
-    console.log(`🗑️ Cliente temporal eliminado: ${cliente.username}`);
+    console.log(`Cliente temporal eliminado: ${cliente.username}`);
     
     res.json({ message: 'Cliente temporal eliminado exitosamente' });
     
   } catch (error) {
-    console.error('❌ Error en deleteClienteTemporal:', error);
-    
-    if (error.name === 'CastError') {
-      return res.status(400).json({ message: 'ID de cliente no válido' });
-    }
-    
-    res.status(500).json({ message: 'Error al eliminar el cliente temporal' });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 
-// ============================================
-// CONVERTIR CITA TEMPORAL A CITA REAL
-// ============================================
+
 export const convertirCitaTemporal = async (req, res) => {
   try {
     const { clienteId, citaTemporalIndex } = req.params;
@@ -677,14 +625,12 @@ export const convertirCitaTemporal = async (req, res) => {
     res.json({ message: 'Cita temporal convertida exitosamente' });
     
   } catch (error) {
-    console.error('❌ Error en convertirCitaTemporal:', error);
-    res.status(500).json({ message: 'Error al convertir la cita temporal' });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };
 
-// ============================================
-// OBTENER CITAS TEMPORALES DE UN CLIENTE
-// ============================================
+
 export const getCitasTemporalesByCliente = async (req, res) => {
   try {
     const { id } = req.params;
@@ -697,7 +643,7 @@ export const getCitasTemporalesByCliente = async (req, res) => {
     res.json(cliente.citasTemporales || []);
     
   } catch (error) {
-    console.error('❌ Error en getCitasTemporalesByCliente:', error);
-    res.status(500).json({ message: 'Error al obtener las citas temporales' });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ message: errorResponse.message });
   }
 };

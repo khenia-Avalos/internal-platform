@@ -1,11 +1,11 @@
 import Paciente from '../models/pacientes.model.js';
-import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
+import { manejarError } from '../utils/errorHandler.js';
 
 // Obtener todos los pacientes
 export const getPaciente = async (req, res) => {
   try {
     const pacientes = await Paciente.find()
-      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); // ← Agregar cedula y direccion
+      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); //  Agregar cedula y direccion
     
     console.log("PRIMER PACIENTE CON POPULATE:", JSON.stringify(pacientes[0], null, 2));
 
@@ -33,12 +33,12 @@ const especieFinal = especie === 'otro' ? especieOtro : especie;
     };
     const newPaciente = new Paciente({
       nombre,
-      especie:especieFinal,  // ← Usa la variable final que maneja "otro"
+      especie:especieFinal,  //  Usa la variable final que maneja "otro"
      raza,
      edad,
      sexo,
         colorPelaje,
-      peso: pesoObjeto,  // ← Guardas el objeto completo
+      peso: pesoObjeto,  // Guardas el objeto completo
         pesoUnidad,
         temperatura,
         antecedentesMedicos,
@@ -65,10 +65,10 @@ export const updatePaciente = async (req, res) => {
     console.log("ID recibido:", id);
     console.log("Datos recibidos:", data);
     
-    // 1. Buscar y actualizar
+    //  Buscar y actualizar
     const pacienteActualizado = await Paciente.findByIdAndUpdate(id, data, { new: true })   .populate('ownerId', 'username lastname email phoneNumber');
     
-    // 2. Verificar si existe
+    //  Verificar si existe
     if (!pacienteActualizado) {
   const error = new Error("Paciente no encontrado");
   error.name = 'CustomError';
@@ -76,7 +76,7 @@ export const updatePaciente = async (req, res) => {
   throw error;
 }
     
-    // 3. Responder
+    //  Responder
     res.json(pacienteActualizado);
   } catch (error) {
      const errorResponse = manejarError(error);
@@ -93,7 +93,7 @@ export const deletePaciente = async (req, res) => {
     
     const pacienteEliminado = await Paciente.findByIdAndDelete(id);
     
-    if (!pacienteEliminado) {  // ← Cambiar pacienteActualizado por pacienteEliminado
+    if (!pacienteEliminado) {  //  Cambiar pacienteActualizado por pacienteEliminado
       const error = new Error("Paciente no encontrado");
       error.name = 'CustomError';
       error.status = 404;
@@ -142,7 +142,7 @@ export const getPacienteById = async (req, res) => {
     const { id } = req.params;
     
     const paciente = await Paciente.findById(id)
-      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); // ← Agregar cedula y direccion
+      .populate('ownerId', 'username lastname email phoneNumber cedula direccion'); // Agregar cedula y direccion
     
     if (!paciente) {
       return res.status(404).json({ message: "Paciente no encontrado" });

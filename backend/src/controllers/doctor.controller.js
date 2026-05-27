@@ -19,10 +19,9 @@ export const getDoctores = async (req, res) => {
 };
 
 // Crear un nuevo doctor
-// Crear un nuevo doctor
 export const createDoctor = async (req, res) => {
   try {
-    const { username, lastname, email, phoneNumber, especialidad } = req.body; // ← Eliminado password
+    const { username, lastname, email, phoneNumber, especialidad } = req.body; // ←Eliminado password
     
     // Verificar si ya existe el email
     const existeDoctor = await User.findOne({ email });
@@ -103,7 +102,7 @@ export const updateDoctor = async (req, res) => {
     }
     
     const doctorActualizado = await User.findByIdAndUpdate(id, data, { new: true })
-      .select('-password'); // ← Excluir password
+      .select('-password'); //  Excluir password
     
     if (!doctorActualizado) {
       return res.status(404).json({ message: "Doctor no encontrado" });
