@@ -14,7 +14,7 @@ export const DynamicForm = ({
    isLoading = false,
    defaultValues = {},
      customProps = {}  ,
-     layout = "centered"  // ← NUEVA PROP con valor por defecto
+     layout = "centered"  //  NUEVA PROP con valor por defecto
 
 }) => {
 
@@ -66,7 +66,7 @@ export const DynamicForm = ({
       <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}> {/* CAMBIO: condicional según layout */}
       
       {errors.map((error, i) => (
-        <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> {/* CAMBIO: agregué rounded-lg */}
+        <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> 
           {error}
         </div>
       ))}
@@ -76,7 +76,7 @@ export const DynamicForm = ({
               <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-green-800 font-semibold">¡Éxito!</span>
+              <span className="text-green-800 font-semibold">Éxito</span>
             </div>
             <p className="text-green-700 mt-2">{successMessage}</p>
           </div>
@@ -90,7 +90,6 @@ export const DynamicForm = ({
           {title}
         </Link>
 
-        {/* CAMBIO IMPORTANTE: grid responsivo condicional según layout */}
         <form onSubmit={handleFormSubmit} className={layout === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
           {fields.map((field) => (
             <div key={field.name} className={layout === "grid" ? "w-full" : ""}> {/* Cada campo ocupa el ancho de su columna si es grid */}

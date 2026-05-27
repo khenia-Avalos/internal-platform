@@ -52,7 +52,7 @@ console.log(" activeModule:", activeModule);
               }`}
               onClick={() => {
                 setActiveModule(module.id);
-                setMobileOpen(false); // ✅ Cierra sidebar en móvil al seleccionar un módulo
+                setMobileOpen(false); // Cierra sidebar en móvil al seleccionar un módulo
               }}
             >
               {module.name}

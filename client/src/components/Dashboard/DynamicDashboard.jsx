@@ -11,7 +11,7 @@ userRole,
 }) => {
 //EL ORDEN DE LAS LINEAS IMPORTA
 const [activeModule, setActiveModule] = useState(null);
-const [mobileOpen, setMobileOpen] = useState(false); // ✅ NUEVO: para sidebar en móvil
+const [mobileOpen, setMobileOpen] = useState(false); //  para sidebar en móvil
   const location = useLocation();
     const navigate = useNavigate();
 const activeModuleObj = modules.find(m => m.id === activeModule);//busca el modulo activo en el arrray de modulos
@@ -34,7 +34,7 @@ console.log(" userRole recibido:", userRole);
   return(
   <div className="flex h-screen bg-gray-100">
 
-  {/* ✅ Botón para abrir sidebar en móvil - ajustado para no interferir con Navbar */}
+  {/*  Botón para abrir sidebar en móvil - ajustado para no interferir con Navbar */}
   <button
     onClick={() => setMobileOpen(true)}
     className="fixed top-20 left-4 z-20 p-2 rounded-md bg-cyan-600 text-white md:hidden shadow-md"

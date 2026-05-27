@@ -6,10 +6,10 @@ import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datosPrecargados = null }) => {
-  console.log("📋 COMPONENTE FORMULARIO CITA - RENDERIZADO");
-  console.log("📋 isEdit:", isEdit);
-  console.log("📋 cita:", cita);
-  console.log("📋 datosPrecargados:", datosPrecargados);
+  console.log(" COMPONENTE FORMULARIO CITA - RENDERIZADO");
+  console.log(" isEdit:", isEdit);
+  console.log(" cita:", cita);
+  console.log(" datosPrecargados:", datosPrecargados);
   
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -35,19 +35,18 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     return '';
   });
 
-  // ============================================
   // FUNCIONES AUXILIARES
-  // ============================================
+  
 
   const cargarDoctores = async () => {
     try {
-      console.log("🔍 Cargando doctores...");
+      console.log("Cargando doctores...");
       const res = await getDoctoresRequest();
       let doctoresData = res.data || [];
       setDoctores(doctoresData);
-      console.log("✅ Doctores cargados:", doctoresData.length);
+      console.log(" Doctores cargados:", doctoresData.length);
     } catch (error) {
-      console.error("❌ Error cargando doctores:", error);
+      console.error(" Error cargando doctores:", error);
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -63,22 +62,22 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
   const cargarMascotas = async (ownerId) => {
     try {
-      console.log("🔍 Cargando mascotas para ownerId:", ownerId);
+      console.log(" Cargando mascotas para ownerId:", ownerId);
       const res = await getPacienteByOwnerRequest(ownerId);
-      console.log("📊 Mascotas recibidas:", res.data?.length || 0);
+      console.log(" Mascotas recibidas:", res.data?.length || 0);
       setMascotas(res.data || []);
       return res.data || [];
     } catch (error) {
-      console.error("❌ Error cargando mascotas:", error);
+      console.error(" Error cargando mascotas:", error);
       manejarErrorResponse(error, setErrors);
       setMascotas([]);
       return [];
     }
   };
 
-  // ============================================
+
   // USEEFFECTS
-  // ============================================
+
 
   // 1. Cargar doctores al montar
   useEffect(() => {
@@ -95,7 +94,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   // 3. PRECARGAR DATOS (tanto en creación como en edición)
   useEffect(() => {
     if (datosPrecargados) {
-      console.log("📋 Precargando datos (isEdit=" + isEdit + "):", datosPrecargados);
+      console.log(" Precargando datos (isEdit=" + isEdit + "):", datosPrecargados);
       
       // Setear dueño
       if (datosPrecargados.duenoId) {
@@ -142,7 +141,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   // 5. En edición, si tenemos cita, cargar sus datos
   useEffect(() => {
     if (isEdit && cita) {
-      console.log("📋 Editando cita, cargando datos de la cita:", cita);
+      console.log(" Editando cita, cargando datos de la cita:", cita);
       
       if (cita.doctorId?._id || cita.doctorId) {
         setDoctorId(cita.doctorId?._id || cita.doctorId);
@@ -232,7 +231,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       }
       
     } catch (error) {
-      console.error("❌ Error en onSubmit:", error);
+      console.error(" Error en onSubmit:", error);
       setErrors([error?.response?.data?.message || error.message || "Error al guardar"]);
     } finally {
       setLoading(false);
@@ -242,12 +241,12 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   return (
     <form className="space-y-4 bg-white p-6 rounded-lg shadow" onSubmit={handleSubmit}>
       <h2 className="text-xl font-semibold mb-4">
-        {isEdit ? '✏️ Editar Cita' : '+ Nueva Cita'}
+        {isEdit ? ' Editar Cita' : ' Nueva Cita'}
       </h2>
 
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {errors.map((err, i) => <p key={i}>❌ {err}</p>)}
+          {errors.map((err, i) => <p key={i}> {err}</p>)}
         </div>
       )}
 
@@ -290,7 +289,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
             />
             {horario && (
               <p className="text-sm text-green-600 mt-1">
-                ✅ Horario seleccionado: {horario.inicio} - {horario.fin}
+                 Horario seleccionado: {horario.inicio} - {horario.fin}
               </p>
             )}
           </div>
@@ -299,9 +298,9 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
       {isEdit && cita && (
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">📅 <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}</p>
-          <p className="text-sm text-gray-600">⏰ <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}</p>
-          <p className="text-sm text-gray-600">👨‍⚕️ <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}</p>
+          <p className="text-sm text-gray-600"> <strong>Fecha actual:</strong> {cita.fecha ? cita.fecha.split('T')[0] : ''}</p>
+          <p className="text-sm text-gray-600"> <strong>Horario actual:</strong> {cita.horaInicio} - {cita.horaFin}</p>
+          <p className="text-sm text-gray-600"> <strong>Veterinario:</strong> {cita.doctorId?.username} {cita.doctorId?.lastname}</p>
         </div>
       )}
 
@@ -333,8 +332,8 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
       {datosPrecargados && (
         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-700"><strong>👤 Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}</p>
-          <p className="text-sm text-gray-700"><strong>📧 Correo:</strong> {datosPrecargados.correo || 'No especificado'}</p>
+          <p className="text-sm text-gray-700"><strong> Dueño:</strong> {datosPrecargados.duenoNombre || 'No especificado'}</p>
+          <p className="text-sm text-gray-700"><strong> Correo:</strong> {datosPrecargados.correo || 'No especificado'}</p>
         </div>
       )}
 
@@ -355,7 +354,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
             ))}
           </select>
           {mascotas.length === 0 && (
-            <p className="text-xs text-amber-600 mt-1">⚠️ Este dueño no tiene mascotas registradas.</p>
+            <p className="text-xs text-amber-600 mt-1"> Este dueño no tiene mascotas registradas.</p>
           )}
         </div>
       )}
