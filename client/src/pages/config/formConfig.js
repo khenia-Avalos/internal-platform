@@ -147,7 +147,7 @@ export const formConfig = {
   redirect: {  
     links: [
       {
-        linkText: "← Back to Login",
+        linkText: "volver",
         to: "/login",
         className: "text-cyan-600 hover:text-cyan-700 font-medium"
       }
