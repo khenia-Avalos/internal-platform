@@ -28,7 +28,7 @@ router.get('/citas/doctor/:doctorId', validateToken, getCitasByDoctor);
 router.get('/citas/paciente/:pacienteId', validateToken, getCitasByPaciente);
 router.put('/citas/:id', validateToken, updateCita);
 router.delete('/citas/:id', validateToken, deleteCita);
-router.get('/citas', validateToken, getCitasRequest); // ← nueva ruta para obtener todas las citas
-router.get('/citas/:id', validateToken, getCitaById); // ← nueva ruta para obtener una cita por ID
+router.get('/citas', validateToken, getCitasRequest); // nueva ruta para obtener todas las citas
+router.get('/citas/:id', validateToken, getCitaById); // nueva ruta para obtener una cita por ID
 
 export default router;

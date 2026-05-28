@@ -42,7 +42,7 @@ const citaSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  // ✅ CAMPOS AGREGADOS
+  //  CAMPOS AGREGADOS
   tipoCita: {
     type: String,
     enum: ['consulta', 'vacunacion', 'cirugia', 'estetica'],

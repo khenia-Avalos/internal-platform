@@ -71,9 +71,9 @@ const userSchema = new mongoose.Schema(
                 return this.role === 'client' && this.estado === 'completo';
             }
         },
-        // ============================================
+       
         // NUEVOS CAMPOS PARA CLIENTES TEMPORALES
-        // ============================================
+       
         estado: {
             type: String,
             enum: ['completo', 'temporal', 'incompleto'],

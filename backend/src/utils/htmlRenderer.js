@@ -1,5 +1,5 @@
 // backend/src/components/htmlRenderer.js
-
+//PAGINA HTML PARA MOSTRAR RESULTADOS DE OPERACIONES (EXITO, ERROR, ETC) PARA LOS BOTONES DE CORREO
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://internal-platform.onrender.com";
 
 const colores = {

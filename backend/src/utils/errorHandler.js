@@ -1,6 +1,6 @@
-/**
- * Traduce nombres de campos técnicos a nombres amigables
- */
+
+ //Traduce nombres de campos técnicos a nombres amigables
+ 
 const traducirNombreCampo = (campo) => {
   const nombres = {
     // Usuarios / Autenticación
@@ -63,9 +63,8 @@ const traducirNombreCampo = (campo) => {
   return nombres[campo] || campo;
 };
 
-/**
- * Traduce errores de tipo enum
- */
+ //Traduce errores de tipo enum
+
 const traducirErrorEnum = (campo, valorRecibido) => {
   const opciones = {
     especie: ['perro', 'gato', 'ave', 'conejo', 'otro'],
@@ -80,9 +79,7 @@ const traducirErrorEnum = (campo, valorRecibido) => {
   return `"${valorRecibido}" no es válido para ${traducirNombreCampo(campo)}. Opciones: ${opcionesTexto}`;
 };
 
-/**
- * Traduce errores de validación de Mongoose
- */
+ //Traduce errores de validación de Mongoose
 const traducirErrorValidacion = (error) => {
   const errores = [];
 
@@ -130,9 +127,7 @@ const traducirErrorValidacion = (error) => {
   return errores;
 };
 
-/**
- * Traduce errores de MongoDB (código 11000 - duplicado)
- */
+ //Traduce errores de MongoDB (código 11000 - duplicado)
 const traducirErrorDuplicado = (error) => {
   const campo = Object.keys(error.keyPattern)[0];
   
@@ -146,11 +141,9 @@ const traducirErrorDuplicado = (error) => {
   return mensajes[campo] || `El ${traducirNombreCampo(campo)} ya está en uso`;
 };
 
-/**
- * Manejador principal de errores
- */
+ //Manejador principal de errores
 export const manejarError = (error) => {
-  console.error('🔴 Error detectado:', error);
+  console.error(' Error detectado:', error);
 
   // Error de validación de Mongoose
   if (error.name === 'ValidationError') {
@@ -214,7 +207,7 @@ export const manejarError = (error) => {
   }
 
   // Error por defecto
-  console.error('❌ Error no manejado:', error);
+  console.error(' Error no manejado:', error);
   return {
     status: 500,
     message: 'Error interno del servidor'

@@ -3,8 +3,8 @@ console.log('🔧 Cargando config.js...');
 const NODE_ENV_VALUE = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV_VALUE === 'production';
 
-console.log('🔧 NODE_ENV:', NODE_ENV_VALUE);
-console.log('🔧 EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'gmail');
+console.log(' NODE_ENV:', NODE_ENV_VALUE);
+console.log(' EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'gmail');
 
 // Configuración unificada de email
 export const EMAIL_SERVICE = process.env.EMAIL_SERVICE || 'gmail';
@@ -27,14 +27,14 @@ export const DB_URL = process.env.DB_URL;
 export const PORT = process.env.PORT || 3000;
 
 // Verificar configuraciones
-console.log('🔧 Configuración cargada:');
+console.log(' Configuración cargada:');
 console.log('   - FRONTEND_URL:', FRONTEND_URL);
 console.log('   - EMAIL_SERVICE:', EMAIL_SERVICE);
 
 if (EMAIL_SERVICE === 'sendgrid') {
-    console.log('   - SENDGRID_API_KEY:', SENDGRID_API_KEY ? '✅ CONFIGURADO' : '❌ NO CONFIGURADO');
-    console.log('   - SENDGRID_FROM_EMAIL:', SENDGRID_FROM_EMAIL || '❌ NO CONFIGURADO');
+    console.log('   - SENDGRID_API_KEY:', SENDGRID_API_KEY ? ' CONFIGURADO' : ' NO CONFIGURADO');
+    console.log('   - SENDGRID_FROM_EMAIL:', SENDGRID_FROM_EMAIL || ' NO CONFIGURADO');
 } else if (EMAIL_SERVICE === 'gmail') {
-    console.log('   - EMAIL_USER:', EMAIL_USER || '❌ NO CONFIGURADO');
-    console.log('   - EMAIL_PASS:', EMAIL_PASS ? `✅ CONFIGURADO (${EMAIL_PASS.length} chars)` : '❌ NO CONFIGURADO');
+    console.log('   - EMAIL_USER:', EMAIL_USER || ' NO CONFIGURADO');
+    console.log('   - EMAIL_PASS:', EMAIL_PASS ? ` CONFIGURADO (${EMAIL_PASS.length} chars)` : ' NO CONFIGURADO');
 }
