@@ -207,17 +207,15 @@ registerPaciente: {
         type: "text",
         label: "Peso",
         placeholder: "Peso del paciente",
-        validation: {
-        }
+      
       },
            {
         name: "pesoUnidad",
         type: "select",
         label: "PesoUnidad",
         placeholder: "Peso del paciente",
-        options: ["kg", "lb", "g"],
-        validation: {
-        }
+        options: ["kg", "lb", "g",""],
+    
       },
       {
         name: "temperatura",
@@ -241,7 +239,7 @@ registerPaciente: {
   type: "select",
   label: "Dueño",
   isSearchable: true,  
-  options: [],  // ← Se llenará desde la BD
+  options: [],  //  Se llenará desde la BD
   validation: { required: "El dueño es requerido" }
 }
            
