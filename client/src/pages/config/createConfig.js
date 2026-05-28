@@ -88,9 +88,7 @@ registerCliente: {
         type: "text",
         label: "Apellido",
         placeholder: "Tu apellido",
-        validation: {
-          required: "El apellido es requerido"
-        }
+      
       },
       {
         name: "phoneNumber",
@@ -142,7 +140,6 @@ registerCliente: {
       type: "text",
       label: "Dirección",
       placeholder: "Dirección exacta",
-      validation: { required: "La dirección es requerida" }
     }
   ],
   submitLabel: "Crear Cliente",
