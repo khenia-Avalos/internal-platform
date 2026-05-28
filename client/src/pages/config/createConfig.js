@@ -216,7 +216,7 @@ registerPaciente: {
            {
         name: "pesoUnidad",
         type: "select",
-        label: "Peso",
+        label: "PesoUnidad",
         placeholder: "Peso del paciente",
         options: ["kg", "lb", "g"],
         validation: {
