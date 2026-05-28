@@ -123,9 +123,7 @@ function ClienteTemporalDetallePage() {
     const nuevosErrores = [];
     const nuevosFieldErrors = {};
     
-    // ============================================
     // VALIDACIONES DEL CLIENTE
-    // ============================================
     
     // Validar apellido
     if (!formData.lastname || formData.lastname.trim() === '') {
@@ -157,9 +155,7 @@ function ClienteTemporalDetallePage() {
       nuevosFieldErrors.email = 'Formato de email inválido';
     }
     
-    // ============================================
     // VALIDACIONES DE LA MASCOTA
-    // ============================================
     
     // Validar raza (opcional)
     if (formData.raza && formData.raza.length > 50) {
@@ -354,7 +350,7 @@ function ClienteTemporalDetallePage() {
                 }}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
               >
-                + Completar Registro
+                 Completar Registro
               </button>
             </div>
           )}
@@ -388,9 +384,7 @@ function ClienteTemporalDetallePage() {
             </div>
           )}
 
-          {/* ============================================ */}
           {/* SECCIÓN: DATOS DEL CLIENTE */}
-          {/* ============================================ */}
           <div className="border-b border-gray-200 pb-2 mb-2">
             <h3 className="text-md font-semibold text-gray-700"> Datos del Cliente</h3>
           </div>
@@ -463,9 +457,7 @@ function ClienteTemporalDetallePage() {
             </p>
           </div>
 
-          {/* ============================================ */}
           {/* SECCIÓN: DATOS DE LA MASCOTA */}
-          {/* ============================================ */}
           <div className="border-b border-gray-200 pb-2 mt-4 mb-2">
             <h3 className="text-md font-semibold text-gray-700"> Datos de la Mascota</h3>
             <p className="text-xs text-gray-400">Completa la información de tu mascota</p>

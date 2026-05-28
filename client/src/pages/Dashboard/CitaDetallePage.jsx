@@ -244,7 +244,7 @@ function CitaDetallePage() {
 
           {cita.pacienteId && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium">🐾 Información de la Mascota</p>
+              <p className="text-green-800 text-sm font-medium"> Información de la Mascota</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
                 <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
@@ -254,9 +254,7 @@ function CitaDetallePage() {
             </div>
           )}
           
-          {/* ============================================ */}
           {/* BOTONES DE ACCIÓN SEGÚN ROL */}
-          {/* ============================================ */}
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 flex-wrap">
             {cita.estado === 'pendiente' && (
               <>

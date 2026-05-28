@@ -25,7 +25,7 @@ function App() {
       <AuthProvider>
         <TaskProvider>
           <BrowserRouter>
-            {/* ✅ QUITAR container y px-10 para que el dashboard ocupe toda la pantalla */}
+            {/* QUITAR container y px-10 para que el dashboard ocupe toda la pantalla */}
             <main className="min-h-screen">
               <Routes>
                 {/* Rutas sin Navbar */}

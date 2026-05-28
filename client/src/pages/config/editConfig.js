@@ -113,8 +113,6 @@ editCliente: {
 },
 
 
-
-
 editpaciente: {
   title: "Editar Paciente",
   fields: [
@@ -188,7 +186,7 @@ editpaciente: {
       label: "Dueño",
       isSearchable: true,
       options: [],
-      disabled: true, // ← Campo de solo lectura
+      disabled: true, //  Campo de solo lectura
       validation: { required: "El dueño es requerido" }
     }
   ],
@@ -244,7 +242,6 @@ editHorario: {
 },
 
 
-
 editCita: {
   title: "Editar Cita",
   fields: [
@@ -254,7 +251,7 @@ editCita: {
       label: "Mascota",
       isSearchable: true,
       options: [],
-      disabled: true, // ← Solo lectura, no se puede cambiar la mascota
+      disabled: true, //  Solo lectura, no se puede cambiar la mascota
       validation: { required: "La mascota es requerida" }
     },
     {

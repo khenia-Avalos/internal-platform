@@ -151,7 +151,7 @@ function PacientesPage() {
               onClick={() => setMostrarFormulario(true)}
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
             >
-              + Nueva Mascota
+               Nueva Mascota
             </button>
           )}
         </div>

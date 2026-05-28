@@ -13,7 +13,7 @@ import { getInternadosByPacienteRequest, createInternadoRequest } from "/src/api
 import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
 
 function PacienteDetallePage() {
-    const { user } = useAuth(); // ← OBTENER USUARIO LOGUEADO
+    const { user } = useAuth(); 
     const navigate = useNavigate();
     const { id } = useParams();
     const [paciente, setPaciente] = useState(null);
@@ -134,13 +134,13 @@ function PacienteDetallePage() {
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold">Historial de Internados</h3>
-                            {/* ✅ Botón "Agregar Internado" - SOLO para admin y doctor */}
+                            {/*  Botón "Agregar Internado" - SOLO para admin y doctor */}
                             {canAddInternado && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
                                     className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
                                 >
-                                    + Agregar Internado
+                                     Agregar Internado
                                 </button>
                             )}
                         </div>

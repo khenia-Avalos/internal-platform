@@ -203,11 +203,10 @@ function CitasPage() {
       )}
 
       {/* Formulario de edición - solo para admin */}
-     {/* Formulario de edición - solo para admin */}
 {showEditForm && citaSeleccionada && isAdmin && (
   <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
     <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-semibold">✏️ Editar Cita</h2>
+      <h2 className="text-xl font-semibold"> Editar Cita</h2>
       <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
     </div>
     
@@ -231,7 +230,7 @@ function CitasPage() {
           <div className="text-center py-16">
             <p className="text-gray-500">No hay citas registradas</p>
             {isClient && (
-              <p className="text-gray-400 mt-2">Haz clic en "+ Nueva Cita" para agendar tu primera cita</p>
+              <p className="text-gray-400 mt-2">Haz clic en " Nueva Cita" para agendar tu primera cita</p>
             )}
           </div>
         ) : citasFiltradas.length === 0 ? (

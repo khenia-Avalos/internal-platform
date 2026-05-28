@@ -13,8 +13,6 @@ import { formConfig } from "./config/formConfig"
   const { pathname } = location;//destructurado
   const isRegister = pathname === "/register";
   
-  
-
 
 const pageConfig = {
 

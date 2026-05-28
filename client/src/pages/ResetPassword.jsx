@@ -44,7 +44,7 @@ const handleSubmit = async (data) => {
   // Llama al hook
   await resetPassword(resetToken, data.password);
   
-  // ✅ Verifica si fue exitoso (si hay mensaje y no hay error)
+  // Verifica si fue exitoso (si hay mensaje y no hay error)
     if (message && !error) {
       setSuccess(true);
     }
@@ -81,7 +81,7 @@ const handleSubmit = async (data) => {
     <DynamicForm
       {...formConfig.reset}
       onSubmit={handleSubmit}
-      errors={allErrors}  // ✅ Combina ambos tipos de error
+      errors={allErrors}  //  Combina ambos tipos de error
       successMessage={message}
       isLoading={loading}
     />

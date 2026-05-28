@@ -146,9 +146,6 @@ registerCliente: {
   redirect: {}
 },
 
-
-
-
 registerPaciente: {
   title: "Nuevo Paciente",
   fields: [
@@ -388,10 +385,10 @@ completarRegistroCliente: {
   ],
   submitLabel: "Completar Registro",
   
-  // ✅ Mensaje de éxito personalizado
+  // Mensaje de éxito personalizado
   successMessage: "¡Registro completado! Se ha enviado un correo con las credenciales de acceso.",
   
-  // ✅ Función para procesar datos antes de enviar (opcional)
+  //  Función para procesar datos antes de enviar (opcional)
   transformData: (formData) => {
     return {
       lastname: formData.lastname,

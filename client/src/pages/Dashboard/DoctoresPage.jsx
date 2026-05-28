@@ -50,7 +50,7 @@ function DoctoresPage() {
 
   // Función para editar doctor (manual)
   const handleEditDoctor = (doctor) => {
-    console.log("✏️ Editando doctor:", doctor);
+    console.log("Editando doctor:", doctor);
     setDoctorSeleccionado(doctor);
     setShowEditForm(true);
   };
@@ -131,7 +131,7 @@ function DoctoresPage() {
               onClick={() => setMostrarFormulario(true)}
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
             >
-              + Nuevo Doctor
+               Nuevo Doctor
             </button>
           )}
         </div>

@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       const errorData = error.response?.data;
       const errorMessage = errorData 
         ? (Array.isArray(errorData) ? errorData : [errorData])
-        : ["Registration failed. Please try again."];
+        : ["el registro fallo. Por favor intente de nuevo."];
       setErrors(errorMessage);
       return { ok: false };
     }
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
       const errorData = error.response?.data;
       const errorMessage = errorData 
         ? (Array.isArray(errorData) ? errorData : [errorData])
-        : ["Login failed. Check your credentials."];
+        : ["el inicio de sesion fallo. Por favor intente de nuevo."];
       setErrors(errorMessage);
       return { ok: false, error: errorMessage };
     } finally {
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       }, 50);
       return { ok: true };
     } catch (error) {
-      const errorMessage = error.response?.data || ["Logout failed"];
+      const errorMessage = error.response?.data || ["la salida de sesion fallo"];
       setErrors(Array.isArray(errorMessage) ? errorMessage : [errorMessage]);
       return { ok: false };
     }
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        setUser,  // ✅ AGREGAR setUser al Provider
+        setUser,  
         signup,
         signin,
         logout,

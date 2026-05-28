@@ -30,7 +30,7 @@ return (
 <DynamicDashboard 
       modules={modules}
       userRole={user?.role}
-      isLoading={!user}  // ← mientras carga el usuario
+      isLoading={!user}  // mientras carga el usuario
     />)
 
 

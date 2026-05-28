@@ -186,7 +186,7 @@ export const formConfig = {
         }
       }
     ],
-     redirect: {  // ← AÑADE AQUÍ para resetPassword
+     redirect: {  
       text: "regresar al login",
       links: [
         {

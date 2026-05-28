@@ -12,7 +12,7 @@ export const usePassword = () => {
     setLoading(true);
 
     try {
-      // ✅ USAR LA URL CORRECTA DEL BACKEND
+      // USAR LA URL CORRECTA DEL BACKEND
       const API_URL = "https://el-exito-internal-platform.onrender.com";
 
       const response = await axios.post(`${API_URL}/api/forgot-password`, {
@@ -72,11 +72,11 @@ export const usePassword = () => {
           error.response.data?.[0] ||
           error.response.data?.message ||
           `Server error: ${error.response.status}`;
-        setApiError("❌ " + serverError);
+        setApiError(" " + serverError);
       } else if (error.request) {
-        setApiError("❌ Cannot connect to server. Check your internet connection.");
+        setApiError(" Cannot connect to server. Check your internet connection.");
       } else {
-        setApiError("❌ Error: " + error.message);
+        setApiError(" Error: " + error.message);
       }
     } finally {
       setLoading(false);

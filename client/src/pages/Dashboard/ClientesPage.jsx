@@ -104,7 +104,7 @@ function ClientesPage() {
             onClick={() => setMostrarFormulario(true)}
             className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
           >
-            + Nuevo Cliente
+            Nuevo Cliente
           </button>
         </div>
       </div>
@@ -189,7 +189,7 @@ function ClientesPage() {
               { header: "Cedula", accessor: "cedula" },
               { header: "Dirección", accessor: "direccion" }]}
             data={clientesFiltrados}
-            onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)} // ← NUEVO
+            onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)}
 
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
