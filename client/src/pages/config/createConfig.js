@@ -206,14 +206,16 @@ registerPaciente: {
         placeholder: "Peso del paciente",
       
       },
-           {
-        name: "pesoUnidad",
-        type: "select",
-        label: "PesoUnidad",
-        placeholder: "Peso del paciente",
-        options: ["kg", "lb", "g",""],
-    
-      },
+          {
+  name: "pesoUnidad",
+  type: "select",
+  label: "Unidad de Peso",
+  placeholder: "Peso del paciente",
+  options: ["kg", "lb", "g"],
+  validation: {
+    required: false  
+  }
+},
       {
         name: "temperatura",
         type: "number",
