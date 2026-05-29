@@ -206,14 +206,19 @@ registerPaciente: {
         placeholder: "Peso del paciente",
       
       },
-          {
+         {
   name: "pesoUnidad",
   type: "select",
   label: "Unidad de Peso",
-  placeholder: "Peso del paciente",
-  options: ["kg", "lb", "g"],
+  isSearchable: true,  // 👈 Usa react-select
+  options: [
+    { value: "", label: "Selecciona una unidad (opcional)" },
+    { value: "kg", label: "Kilogramos (kg)" },
+    { value: "lb", label: "Libras (lb)" },
+    { value: "g", label: "Gramos (g)" }
+  ],
   validation: {
-    required: false  
+    required: false
   }
 },
       {
