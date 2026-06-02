@@ -85,8 +85,13 @@ pacienteTemporal: {
     trim: true,
     default: ''
   },
+    recordatorioEnviado: {
+    type: Boolean,
+    default: false
+  },
 }, {
   timestamps: true
 });
+
 
 export default mongoose.model('Cita', citaSchema);
