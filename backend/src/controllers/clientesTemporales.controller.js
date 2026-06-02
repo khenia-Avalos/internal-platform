@@ -490,7 +490,6 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       const citaReal = await Cita.findById(citaTemporal.citaRealId);
       if (citaReal) {
         citaReal.pacienteId = mascotaId;
-        citaReal.estado = 'confirmada';
         citaReal.esCitaTemporal = false;
         await citaReal.save();
         console.log(`Cita actualizada: ${citaReal._id} con mascota: ${mascotaId}`);
