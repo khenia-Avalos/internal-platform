@@ -38,18 +38,21 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   // FUNCIONES AUXILIARES
   
 
+ 
   const cargarDoctores = async () => {
-    try {
-      console.log("Cargando doctores...");
-      const res = await getDoctoresRequest();
-      let doctoresData = res.data || [];
-      setDoctores(doctoresData);
-      console.log(" Doctores cargados:", doctoresData.length);
-    } catch (error) {
-      console.error(" Error cargando doctores:", error);
-      manejarErrorResponse(error, setErrors);
-    }
-  };
+  try {
+    console.log("Cargando doctores...");
+    const res = await getDoctoresRequest();
+    let doctoresData = res.data || [];
+    // Filtrar para excluir Cirugía (solo para clientes)
+    doctoresData = doctoresData.filter(doctor => doctor.especialidad !== 'Cirugia');
+    setDoctores(doctoresData);
+    console.log("Doctores cargados:", doctoresData.length);
+  } catch (error) {
+    console.error("Error cargando doctores:", error);
+    manejarErrorResponse(error, setErrors);
+  }
+};
 
   const cargarDuenos = async () => {
     try {
@@ -381,7 +384,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
         >
           <option value="consulta">Consulta general</option>
           <option value="vacunacion">Vacunación</option>
-          <option value="cirugia">Cirugía</option>
           <option value="estetica">Estética (baño, corte)</option>
         </select>
       </div>
