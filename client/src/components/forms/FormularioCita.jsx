@@ -14,6 +14,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   
   const { user } = useAuth();
   const userRole = user?.role;
+  console.log(" ROL DEL USUARIO ACTUAL:", userRole);
   
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -40,25 +41,49 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
   });
 
   // FUNCIONES AUXILIARES
-  
 
- 
   const cargarDoctores = async () => {
-  try {
-    console.log("Cargando doctores...");
-    const res = await getDoctoresRequest();
-    let doctoresData = res.data || [];
-    // Filtrar para excluir Cirugia solo para clientes
-    if (userRole === 'client') {
-      doctoresData = doctoresData.filter(doctor => doctor.especialidad !== 'Cirugia');
+    try {
+      console.log("=== INICIO cargarDoctores ===");
+      console.log("userRole actual:", userRole);
+      
+      const res = await getDoctoresRequest();
+      let doctoresData = res.data || [];
+      
+      console.log("Total doctores recibidos:", doctoresData.length);
+      console.log("Especialidades de todos los doctores:");
+      doctoresData.forEach(doctor => {
+        console.log(`  - ${doctor.username}: especialidad = "${doctor.especialidad}"`);
+      });
+      
+      // Filtrar para excluir Cirugia solo para clientes
+      if (userRole === 'client') {
+        console.log("Aplicando filtro para cliente...");
+        const doctoresFiltrados = doctoresData.filter(doctor => {
+          const especialidad = doctor.especialidad;
+          const esCirugia = especialidad === 'Cirugia' || especialidad === 'Cirugía' || especialidad === 'cirugia' || especialidad === 'CIRUGIA';
+          if (esCirugia) {
+            console.log(`  EXCLUYENDO a ${doctor.username} (${especialidad})`);
+          } else {
+            console.log(`  MANTENIENDO a ${doctor.username} (${especialidad})`);
+          }
+          return !esCirugia;
+        });
+        
+        console.log(`Doctores antes del filtro: ${doctoresData.length}`);
+        console.log(`Doctores despues del filtro: ${doctoresFiltrados.length}`);
+        setDoctores(doctoresFiltrados);
+      } else {
+        console.log("No se aplica filtro. userRole no es 'client':", userRole);
+        setDoctores(doctoresData);
+      }
+      
+      console.log("=== FIN cargarDoctores ===");
+    } catch (error) {
+      console.error("Error cargando doctores:", error);
+      manejarErrorResponse(error, setErrors);
     }
-    setDoctores(doctoresData);
-    console.log("Doctores cargados:", doctoresData.length);
-  } catch (error) {
-    console.error("Error cargando doctores:", error);
-    manejarErrorResponse(error, setErrors);
-  }
-};
+  };
 
   const cargarDuenos = async () => {
     try {
