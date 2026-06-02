@@ -4,12 +4,16 @@ import { getDoctoresRequest } from '../../api/doctores';
 import { getClientesRequest } from '../../api/clientes';
 import { getPacienteByOwnerRequest } from '../../api/pacientes';
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
+import { useAuth } from '../../hooks/useAuth';
 
 export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datosPrecargados = null }) => {
   console.log(" COMPONENTE FORMULARIO CITA - RENDERIZADO");
   console.log(" isEdit:", isEdit);
   console.log(" cita:", cita);
   console.log(" datosPrecargados:", datosPrecargados);
+  
+  const { user } = useAuth();
+  const userRole = user?.role;
   
   const [doctores, setDoctores] = useState([]);
   const [duenos, setDuenos] = useState([]);
@@ -44,8 +48,10 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
     console.log("Cargando doctores...");
     const res = await getDoctoresRequest();
     let doctoresData = res.data || [];
-    // Filtrar para excluir Cirugía (solo para clientes)
-    doctoresData = doctoresData.filter(doctor => doctor.especialidad !== 'Cirugia');
+    // Filtrar para excluir Cirugia solo para clientes
+    if (userRole === 'client') {
+      doctoresData = doctoresData.filter(doctor => doctor.especialidad !== 'Cirugia');
+    }
     setDoctores(doctoresData);
     console.log("Doctores cargados:", doctoresData.length);
   } catch (error) {
@@ -383,13 +389,16 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
           required
         >
           <option value="consulta">Consulta general</option>
-          <option value="vacunacion">Vacunación</option>
-          <option value="estetica">Estética (baño, corte)</option>
+          <option value="vacunacion">Vacunacion</option>
+          {userRole !== 'client' && (
+            <option value="cirugia">Cirugia</option>
+          )}
+          <option value="estetica">Estetica (bano, corte)</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Título de la cita</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Titulo de la cita</label>
         <input
           type="text"
           value={titulo}
@@ -399,7 +408,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
         <textarea
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
@@ -410,14 +419,14 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Síntomas</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Sintomas</label>
           <select
             value={sintomas}
             onChange={(e) => setSintomas(e.target.value)}
             className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
           >
-            <option value="">Selecciona un síntoma (opcional)</option>
-            <option value="vomito">Vómito</option>
+            <option value="">Selecciona un sintoma (opcional)</option>
+            <option value="vomito">Vomito</option>
             <option value="Diarrea">Diarrea</option>
             <option value="Falta de apetito">Falta de apetito</option>
             <option value="tos">Tos</option>
@@ -428,13 +437,13 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">¿Hace cuánto comenzaron los síntomas?</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Hace cuanto comenzaron los sintomas?</label>
           <input
             type="text"
             value={tiempoSintomas}
             onChange={(e) => setTiempoSintomas(e.target.value)}
             className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-            placeholder="Ej: 2 días, 1 semana..."
+            placeholder="Ej: 2 dias, 1 semana..."
           />
         </div>
       </div>
