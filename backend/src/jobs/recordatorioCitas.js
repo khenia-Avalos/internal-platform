@@ -1,6 +1,17 @@
 import cron from 'node-cron';
 import Cita from '../models/cita.model.js';
-import { sendAppointmentReminderEmail, sendAppointmentConfirmationEmail } from '../services/authService.js';
+import { sendAppointmentConfirmationEmail } from '../services/authService.js';
+
+// Función simple para recordatorio (puedes poner HTML básico aquí o crear una nueva)
+const sendReminderEmail = async (email, nombre, cita) => {
+  const msg = {
+    to: email,
+    from: process.env.SENDGRID_FROM_EMAIL,
+    subject: "Recordatorio de cita - El Exito",
+    html: `<h1>Recordatorio</h1><p>Hola ${nombre}, tu cita es en 2 horas.</p><p>Fecha: ${new Date(cita.fecha).toLocaleDateString('es-CR')}</p><p>Hora: ${cita.horaInicio} - ${cita.horaFin}</p>`
+  };
+  await sgMail.send(msg);
+};
 
 const enviarRecordatorios = async () => {
   const ahora = new Date();
@@ -29,9 +40,11 @@ const enviarRecordatorios = async () => {
       
       if (email) {
         if (cita.estado === 'pendiente') {
+          // Usar la función que YA existe
           await sendAppointmentConfirmationEmail(email, nombre, cita);
         } else {
-          await sendAppointmentReminderEmail(email, nombre, cita);
+          // Usar la función nueva de recordatorio
+          await sendReminderEmail(email, nombre, cita);
         }
         cita.recordatorioEnviado = true;
         await cita.save();
@@ -41,4 +54,3 @@ const enviarRecordatorios = async () => {
 };
 
 cron.schedule('*/15 * * * *', enviarRecordatorios, { timezone: "America/Costa_Rica" });
-console.log('Recordatorios activado');s
