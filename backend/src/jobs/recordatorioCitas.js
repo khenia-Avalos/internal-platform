@@ -58,14 +58,22 @@ const sendReminderEmail = async (email, nombre, cita) => {
 
 const enviarRecordatorios = async () => {
   console.log('=== INICIANDO VERIFICACION DE RECORDATORIOS ===');
-  console.log('Fecha y hora actual:', new Date().toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' }));
   
   const ahora = new Date();
+  const horaActualUTC = ahora.getUTCHours() * 60 + ahora.getUTCMinutes();
+  
+  // Costa Rica es UTC-6
+  const horaActualCR = horaActualUTC - 360;
+  if (horaActualCR < 0) {
+    horaActualCR += 1440;
+  }
+  
+  console.log('Fecha y hora actual UTC:', ahora.toISOString());
+  console.log('Hora actual Costa Rica (minutos):', horaActualCR);
+  
   const hoy = ahora.toISOString().split('T')[0];
-  const horaActual = ahora.getHours() * 60 + ahora.getMinutes();
   
   console.log(`Buscando citas para fecha: ${hoy}`);
-  console.log(`Hora actual en minutos: ${horaActual}`);
   
   const citas = await Cita.find({ 
     fecha: hoy, 
@@ -77,12 +85,14 @@ const enviarRecordatorios = async () => {
   
   for (const cita of citas) {
     const [h, m] = cita.horaInicio.split(':').map(Number);
-    const minutosCita = h * 60 + m;
-    const diferencia = minutosCita - horaActual;
+    const minutosCitaCR = h * 60 + m;
     
-    console.log(`Cita ID: ${cita._id}, Hora: ${cita.horaInicio}, Minutos cita: ${minutosCita}, Diferencia: ${diferencia} minutos`);
+    const diferencia = minutosCitaCR - horaActualCR;
     
-    if (diferencia <= 120 && diferencia > 0) {
+    console.log(`Cita ID: ${cita._id}, Hora CR: ${cita.horaInicio}, Minutos cita CR: ${minutosCitaCR}, Diferencia: ${diferencia} minutos`);
+    
+    // Si la cita es en las proximas 2 horas (diferencia entre 0 y 120 minutos)
+    if (diferencia > 0 && diferencia <= 120) {
       console.log(`Cita en rango de 2 horas - procesando...`);
       
       let email, nombre;
