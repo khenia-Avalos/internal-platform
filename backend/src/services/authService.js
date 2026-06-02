@@ -663,3 +663,17 @@ export const sendWelcomeEmailDoctor = async (email, username, temporaryPassword)
     };
   }
 };
+export const sendAppointmentReminderEmail = async (email, nombreCliente, cita) => {
+  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
+  const html = `
+    <h1>Recordatorio de cita</h1>
+    <p>Hola ${nombreCliente},</p>
+    <p>Te recordamos que tienes una cita en 2 horas.</p>
+    <p><strong>Fecha:</strong> ${fecha}</p>
+    <p><strong>Hora:</strong> ${cita.horaInicio} - ${cita.horaFin}</p>
+    <p><strong>Veterinario:</strong> ${cita.doctorId?.username}</p>
+  `;
+  
+  const msg = { to: email, from: SENDGRID_FROM_EMAIL, subject: "Recordatorio de cita", html };
+  await sgMail.send(msg);
+};
