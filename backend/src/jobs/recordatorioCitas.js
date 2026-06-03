@@ -7,9 +7,8 @@ import { SENDGRID_API_KEY, SENDGRID_FROM_EMAIL } from '../config.js';
 // Configurar SendGrid
 sgMail.setApiKey(SENDGRID_API_KEY);
 
-// Funcion para recordatorio de cita confirmada
 const sendReminderEmail = async (email, nombre, cita) => {
-  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
+  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR', { timeZone: 'America/Costa_Rica' });
   const html = `
 <!DOCTYPE html>
 <html>
@@ -36,6 +35,7 @@ const sendReminderEmail = async (email, nombre, cita) => {
                 <p><strong>Fecha:</strong> ${fecha}</p>
                 <p><strong>Hora:</strong> ${cita.horaInicio} - ${cita.horaFin}</p>
                 <p><strong>Veterinario:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
+                <p><strong>Mascota:</strong> ${cita.pacienteId?.nombre || cita.pacienteTemporal?.nombre || 'No especificado'}</p>
             </div>
             <p><strong>Importante:</strong> Por favor, llega 10 minutos antes.</p>
         </div>
@@ -57,77 +57,83 @@ const sendReminderEmail = async (email, nombre, cita) => {
 };
 
 const enviarRecordatorios = async () => {
-  console.log('=== INICIANDO VERIFICACION DE RECORDATORIOS ===');
-  
-  const ahora = new Date();
-  const horaActualUTC = ahora.getUTCHours() * 60 + ahora.getUTCMinutes();
-  
-  // Costa Rica es UTC-6
-  const horaActualCR = horaActualUTC - 360;
-  if (horaActualCR < 0) {
-    horaActualCR += 1440;
-  }
-  
-  console.log('Fecha y hora actual UTC:', ahora.toISOString());
-  console.log('Hora actual Costa Rica (minutos):', horaActualCR);
-  
-  const hoy = ahora.toISOString().split('T')[0];
-  
-  console.log(`Buscando citas para fecha: ${hoy}`);
-  
-  const citas = await Cita.find({ 
-    fecha: hoy, 
-    estado: { $ne: 'cancelada' },
-    recordatorioEnviado: false 
-  }).populate('doctorId pacienteId.ownerId clienteTemporalId');
-  
-  console.log(`Citas encontradas: ${citas.length}`);
-  
-  for (const cita of citas) {
-    const [h, m] = cita.horaInicio.split(':').map(Number);
-    const minutosCitaCR = h * 60 + m;
+  try {
+    console.log('=== INICIANDO VERIFICACION DE RECORDATORIOS ===');
     
-    const diferencia = minutosCitaCR - horaActualCR;
+    // Obtener fecha y hora actual en Costa Rica
+    const ahora = new Date();
+    const offsetCostaRica = -6 * 60; // Costa Rica UTC-6
+    const ahoraCR = new Date(ahora.getTime() + (offsetCostaRica - ahora.getTimezoneOffset()) * 60000);
     
-    console.log(`Cita ID: ${cita._id}, Hora CR: ${cita.horaInicio}, Minutos cita CR: ${minutosCitaCR}, Diferencia: ${diferencia} minutos`);
+    const año = ahoraCR.getFullYear();
+    const mes = String(ahoraCR.getMonth() + 1).padStart(2, '0');
+    const dia = String(ahoraCR.getDate()).padStart(2, '0');
+    const hoy = `${año}-${mes}-${dia}`;
     
-    // Si la cita es en las proximas 2 horas (diferencia entre 0 y 120 minutos)
-    if (diferencia > 0 && diferencia <= 120) {
-      console.log(`Cita en rango de 2 horas - procesando...`);
+    const horaActualMinutos = ahoraCR.getHours() * 60 + ahoraCR.getMinutes();
+    
+    console.log(`Fecha actual Costa Rica: ${hoy}`);
+    console.log(`Hora actual Costa Rica: ${ahoraCR.getHours()}:${ahoraCR.getMinutes()} (${horaActualMinutos} minutos)`);
+    
+    // Buscar citas para hoy
+    const citas = await Cita.find({ 
+      fecha: hoy, 
+      estado: { $ne: 'cancelada' },
+      recordatorioEnviado: false 
+    }).populate('doctorId pacienteId.ownerId clienteTemporalId');
+    
+    console.log(`Citas encontradas para hoy: ${citas.length}`);
+    
+    for (const cita of citas) {
+      const [h, m] = cita.horaInicio.split(':').map(Number);
+      const minutosCita = h * 60 + m;
+      const diferencia = minutosCita - horaActualMinutos;
       
-      let email, nombre;
-      if (cita.pacienteId?.ownerId) {
-        email = cita.pacienteId.ownerId.email;
-        nombre = cita.pacienteId.ownerId.username;
-      } else if (cita.clienteTemporalId) {
-        email = cita.clienteTemporalId.email;
-        nombre = cita.clienteTemporalId.username;
-      }
+      console.log(`Cita: ${cita._id}, Hora cita: ${cita.horaInicio}, Diferencia: ${diferencia} minutos`);
       
-      if (email) {
-        console.log(`Enviando correo a: ${email}, Estado cita: ${cita.estado}`);
-        try {
-          if (cita.estado === 'pendiente') {
-            await sendAppointmentConfirmationEmail(email, nombre, cita);
-            console.log(`Correo de confirmacion enviado a ${email}`);
-          } else if (cita.estado === 'confirmada') {
-            await sendReminderEmail(email, nombre, cita);
-            console.log(`Recordatorio enviado a ${email}`);
-          }
-          cita.recordatorioEnviado = true;
-          await cita.save();
-        } catch (error) {
-          console.error(`Error enviando correo a ${email}:`, error.message);
+      if (diferencia > 0 && diferencia <= 120) {
+        console.log(`-> Enviando recordatorio para cita ${cita._id}`);
+        
+        let email, nombre;
+        if (cita.pacienteId?.ownerId) {
+          email = cita.pacienteId.ownerId.email;
+          nombre = cita.pacienteId.ownerId.username;
+        } else if (cita.clienteTemporalId) {
+          email = cita.clienteTemporalId.email;
+          nombre = cita.clienteTemporalId.username;
         }
-      } else {
-        console.log(`No se encontro email para cita ${cita._id}`);
+        
+        if (email) {
+          try {
+            if (cita.estado === 'pendiente') {
+              await sendAppointmentConfirmationEmail(email, nombre, cita);
+              console.log(`  Correo de confirmacion enviado a ${email}`);
+            } else if (cita.estado === 'confirmada') {
+              await sendReminderEmail(email, nombre, cita);
+              console.log(`  Recordatorio enviado a ${email}`);
+            }
+            cita.recordatorioEnviado = true;
+            await cita.save();
+            console.log(`  Marcado como enviado`);
+          } catch (error) {
+            console.error(`  Error enviando correo:`, error.message);
+          }
+        } else {
+          console.log(`  No se encontro email para la cita`);
+        }
       }
     }
+    
+    console.log('=== FIN VERIFICACION DE RECORDATORIOS ===');
+  } catch (error) {
+    console.error('ERROR en enviarRecordatorios:', error);
   }
-  
-  console.log('=== FIN VERIFICACION DE RECORDATORIOS ===');
 };
 
-// Iniciar el cron job
-cron.schedule('*/15 * * * *', enviarRecordatorios, { timezone: "America/Costa_Rica" });
+// Iniciar el cron job SIN timezone (usar UTC y ajustar manualmente)
+cron.schedule('*/15 * * * *', () => {
+  console.log('CRON TRIGGERED - Ejecutando tarea programada');
+  enviarRecordatorios();
+});
+
 console.log('Cron job de recordatorios iniciado - se ejecutara cada 15 minutos');
