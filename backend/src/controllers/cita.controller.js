@@ -167,7 +167,7 @@ export const updateCita = async (req, res) => {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
     
-    //  Si se intenta CANCELAR desde el dashboard
+    // Si se intenta CANCELAR desde el dashboard (admin/doctor pueden cancelar sin restriccion de tiempo)
     if (data.estado === 'cancelada') {
       const fechaCita = new Date(cita.fecha);
       const ahora = new Date();
@@ -177,27 +177,22 @@ export const updateCita = async (req, res) => {
       fechaCita.setHours(horaInicio, minutoInicio, 0, 0);
       
       const horasDiferencia = (fechaCita - ahora) / (1000 * 60 * 60);
-      const limiteHoras = 2;
       
+      // Solo verificar que no sea una cita que ya paso
       if (horasDiferencia < 0) {
         return res.status(400).json({ message: "No se puede cancelar una cita que ya ha pasado" });
       }
       
-      if (horasDiferencia < limiteHoras && horasDiferencia > 0) {
-        const horasRestantes = Math.floor(horasDiferencia);
-        const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
-        return res.status(400).json({ 
-          message: `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos.`
-        });
-      }
+      // Admin y doctor pueden cancelar sin importar el tiempo restante
+      // No hay validacion de 2 horas aqui
     }
     
-    //  Si se intenta CONFIRMAR, verificar que no esté cancelada
+    // Si se intenta CONFIRMAR, verificar que no este cancelada
     if (data.estado === 'confirmada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede confirmar una cita cancelada" });
     }
     
-    // Si se intenta COMPLETAR, verificar que no esté cancelada
+    // Si se intenta COMPLETAR, verificar que no este cancelada
     if (data.estado === 'completada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede completar una cita cancelada" });
     }
