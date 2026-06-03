@@ -173,16 +173,21 @@ export const updateCita = async (req, res) => {
       const ahoraCR = new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' });
       const ahora = new Date(ahoraCR);
       
-      // Construir fecha y hora de la cita en Costa Rica
-      const fechaCitaStr = cita.fecha; // Formato: "2026-06-03T00:00:00.000Z"
-      const [anio, mes, dia] = fechaCitaStr.split('T')[0].split('-');
+      // cita.fecha es un objeto Date, extraer año, mes, dia
+      const fechaCitaObj = new Date(cita.fecha);
+      const anio = fechaCitaObj.getUTCFullYear();
+      const mes = fechaCitaObj.getUTCMonth();
+      const dia = fechaCitaObj.getUTCDate();
+      
+      // Obtener hora de la cita
       const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
       
       // Crear fecha de la cita en hora local Costa Rica
-      const fechaCitaCR = new Date(anio, mes - 1, dia, horaInicio, minutoInicio, 0);
+      const fechaCitaCR = new Date(anio, mes, dia, horaInicio, minutoInicio, 0);
       
       console.log(`Fecha cita CR: ${fechaCitaCR}`);
       console.log(`Fecha actual CR: ${ahora}`);
+      console.log(`Diferencia en minutos: ${(fechaCitaCR - ahora) / (1000 * 60)}`);
       
       // Verificar si la cita ya pasó
       if (fechaCitaCR < ahora) {
@@ -191,7 +196,6 @@ export const updateCita = async (req, res) => {
       
       // Admin y doctor pueden cancelar sin importar el tiempo restante
       // No hay validacion de 2 horas aqui
-      console.log(`Cancelacion permitida - Faltan ${(fechaCitaCR - ahora) / (1000 * 60)} minutos`);
     }
     
     // Si se intenta CONFIRMAR, verificar que no este cancelada
@@ -208,6 +212,7 @@ export const updateCita = async (req, res) => {
     res.json(citaActualizada);
     
   } catch (error) {
+    console.error("Error en updateCita:", error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ message: errorResponse.message });
   }
@@ -552,13 +557,17 @@ export const cancelarCitaConToken = async (req, res) => {
     const ahoraCR = new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' });
     const ahora = new Date(ahoraCR);
     
-    // Construir fecha y hora de la cita en Costa Rica
-    const fechaCitaStr = cita.fecha;
-    const [anio, mes, dia] = fechaCitaStr.split('T')[0].split('-');
+    // cita.fecha es un objeto Date, extraer año, mes, dia
+    const fechaCitaObj = new Date(cita.fecha);
+    const anio = fechaCitaObj.getUTCFullYear();
+    const mes = fechaCitaObj.getUTCMonth();
+    const dia = fechaCitaObj.getUTCDate();
+    
+    // Obtener hora de la cita
     const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
     
     // Crear fecha de la cita en hora local Costa Rica
-    const fechaCitaCR = new Date(anio, mes - 1, dia, horaInicio, minutoInicio, 0);
+    const fechaCitaCR = new Date(anio, mes, dia, horaInicio, minutoInicio, 0);
     
     const horasDiferencia = (fechaCitaCR - ahora) / (1000 * 60 * 60);
     const limiteHoras = 2;

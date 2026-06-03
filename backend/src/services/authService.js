@@ -17,10 +17,10 @@ let sgMail;
 try {
   sgMail = (await import("@sendgrid/mail")).default;
   sgMail.setApiKey(SENDGRID_API_KEY);
-  console.log("SendGrid configured");
+  console.log("SendGrid configurado");
 } catch (error) {
-  console.error("Error configuring SendGrid:", error.message);
-  throw new Error("SendGrid could not be configured");
+  console.error("Error configurando SendGrid:", error.message);
+  throw new Error("SendGrid no pudo ser configurado");
 }
 
 // SECTION: EMAIL SERVICE CLASS
@@ -31,19 +31,19 @@ class EmailService {
   
   async sendAppointmentConfirmation(toEmail, nombreCliente, cita) {
     try {
-      const subject = "Appointment Confirmation - Veterinary Clinic";
+      const subject = "Confirmación de Cita - Clínica Veterinaria";
       const html = this.getAppointmentHtmlTemplate(nombreCliente, cita);
       const text = this.getAppointmentTextTemplate(nombreCliente, cita);
 
       if (!sgMail) {
-        throw new Error("SendGrid is not configured");
+        throw new Error("SendGrid no está configurado");
       }
 
       const msg = {
         to: toEmail,
         from: {
           email: SENDGRID_FROM_EMAIL,
-          name: "Veterinary Clinic",
+          name: "Clínica Veterinaria",
         },
         subject: subject,
         html: html,
@@ -62,9 +62,9 @@ class EmailService {
         messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
       };
     } catch (error) {
-      console.error("Error sending confirmation email:", error.message);
+      console.error("Error enviando correo de confirmación:", error.message);
       if (error.response) {
-        console.error("SendGrid details:", error.response.body);
+        console.error("Detalles de SendGrid:", error.response.body);
       }
       throw error;
     }
@@ -75,7 +75,7 @@ class EmailService {
     const horaInicio = cita.horaInicio;
     const horaFin = cita.horaFin;
     
-    let nombreMascota = 'Not specified';
+    let nombreMascota = 'No especificado';
     if (cita.pacienteId?.nombre) {
       nombreMascota = cita.pacienteId.nombre;
     } else if (cita.pacienteTemporal?.nombre) {
@@ -107,31 +107,31 @@ class EmailService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Appointment Confirmation</h1>
+            <h1>Confirmación de Cita</h1>
         </div>
         <div class="content">
-            <h2>Hello ${nombreCliente},</h2>
-            <p>Your appointment has been <strong>successfully scheduled</strong>.</p>
+            <h2>Hola ${nombreCliente},</h2>
+            <p>Tu cita ha sido <strong>agendada exitosamente</strong>.</p>
             
             <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin: 20px 0;">
-                <p><strong>Date:</strong> ${fecha}</p>
-                <p><strong>Time:</strong> ${horaInicio} - ${horaFin}</p>
+                <p><strong>Fecha:</strong> ${fecha}</p>
+                <p><strong>Hora:</strong> ${horaInicio} - ${horaFin}</p>
                 <p><strong>Doctor:</strong> ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}</p>
-                <p><strong>Pet:</strong> ${nombreMascota}</p>
-                <p><strong>Appointment Type:</strong> ${cita.tipoCita || 'General consultation'}</p>
+                <p><strong>Mascota:</strong> ${nombreMascota}</p>
+                <p><strong>Tipo de Cita:</strong> ${cita.tipoCita || 'Consulta general'}</p>
             </div>
             
             <div class="actions">
-                <a href="${confirmarUrl}" class="button">Confirm Appointment</a>
-                <a href="${cancelarUrl}" class="button button-cancel">Cancel Appointment</a>
-                <a href="${whatsappUrl}" class="button button-wa" target="_blank">Reschedule via WhatsApp</a>
+                <a href="${confirmarUrl}" class="button">Confirmar Cita</a>
+                <a href="${cancelarUrl}" class="button button-cancel">Cancelar Cita</a>
+                <a href="${whatsappUrl}" class="button button-wa" target="_blank">Reagendar vía WhatsApp</a>
             </div>
             
-            <p><strong>Important:</strong> If you need to modify your appointment, you can use the buttons above.</p>
-            <p><small>This link is personal and non-transferable. Expires in 7 days.</small></p>
+            <p><strong>Importante:</strong> Si necesitas modificar tu cita, puedes usar los botones de arriba.</p>
+            <p><small>Este enlace es personal e intransferible. Caduca en 7 días.</small></p>
         </div>
         <div class="footer">
-            <p>(c) ${new Date().getFullYear()} Veterinary Clinic. All rights reserved.</p>
+            <p>(c) ${new Date().getFullYear()} Clínica Veterinaria. Todos los derechos reservados.</p>
         </div>
     </div>
 </body>
@@ -141,47 +141,47 @@ class EmailService {
   getAppointmentTextTemplate(nombreCliente, cita) {
     const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
     
-    let nombreMascota = 'Not specified';
+    let nombreMascota = 'No especificado';
     if (cita.pacienteId?.nombre) {
       nombreMascota = cita.pacienteId.nombre;
     } else if (cita.pacienteTemporal?.nombre) {
       nombreMascota = cita.pacienteTemporal.nombre;
     }
     
-    return `APPOINTMENT CONFIRMATION
+    return `CONFIRMACIÓN DE CITA
 
-Hello ${nombreCliente},
+Hola ${nombreCliente},
 
-Your appointment has been successfully scheduled.
+Tu cita ha sido agendada exitosamente.
 
-Date: ${fecha}
-Time: ${cita.horaInicio} - ${cita.horaFin}
+Fecha: ${fecha}
+Hora: ${cita.horaInicio} - ${cita.horaFin}
 Doctor: ${cita.doctorId?.username} ${cita.doctorId?.lastname || ''}
-Pet: ${nombreMascota}
-Appointment Type: ${cita.tipoCita || 'General consultation'}
+Mascota: ${nombreMascota}
+Tipo de Cita: ${cita.tipoCita || 'Consulta general'}
 
-To confirm or cancel your appointment, visit your panel at: ${FRONTEND_URL}/citas
+Para confirmar o cancelar tu cita, visita tu panel en: ${FRONTEND_URL}/citas
 
-(c) ${new Date().getFullYear()} Veterinary Clinic.`;
+(c) ${new Date().getFullYear()} Clínica Veterinaria.`;
   }
 
   // PASSWORD RESET EMAIL
 
   async sendResetPassword(toEmail, username, resetLink) {
     try {
-      const subject = "Reset Your Password - Veterinary Clinic";
+      const subject = "Restablece tu Contraseña - Clínica Veterinaria";
       const html = this.getHtmlTemplate(username, resetLink);
       const text = this.getTextTemplate(username, resetLink);
 
       if (!sgMail) {
-        throw new Error("SendGrid is not configured");
+        throw new Error("SendGrid no está configurado");
       }
 
       const msg = {
         to: toEmail,
         from: {
           email: SENDGRID_FROM_EMAIL,
-          name: "Veterinary Clinic",
+          name: "Clínica Veterinaria",
         },
         subject: subject,
         html: html,
@@ -201,9 +201,9 @@ To confirm or cancel your appointment, visit your panel at: ${FRONTEND_URL}/cita
         messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
       };
     } catch (error) {
-      console.error("Error sending email:", error.message);
+      console.error("Error enviando correo:", error.message);
       if (error.response) {
-        console.error("SendGrid details:", error.response.body);
+        console.error("Detalles de SendGrid:", error.response.body);
       }
       throw error;
     }
@@ -228,23 +228,23 @@ To confirm or cancel your appointment, visit your panel at: ${FRONTEND_URL}/cita
 <body>
     <div class="container">
         <div class="header">
-            <h1>Reset Password</h1>
+            <h1>Restablecer Contraseña</h1>
         </div>
         <div class="content">
-            <h2>Hello ${username},</h2>
-            <p>You have requested to reset your password at <strong>Veterinary Clinic</strong>.</p>
-            <p>To create a new password, click the button below:</p>
+            <h2>Hola ${username},</h2>
+            <p>Has solicitado restablecer tu contraseña en <strong>Clínica Veterinaria</strong>.</p>
+            <p>Para crear una nueva contraseña, haz clic en el botón de abajo:</p>
             
             <p style="text-align: center;">
-                <a href="${resetLink}" class="button">Reset Password</a>
+                <a href="${resetLink}" class="button">Restablecer Contraseña</a>
             </p>
             
-            <p><strong>Important:</strong> This link will expire in 1 hour.</p>
-            <p>If you did not request this change, you can ignore this email.</p>
+            <p><strong>Importante:</strong> Este enlace caducará en 1 hora.</p>
+            <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
         </div>
         <div class="footer">
-            <p>(c) ${new Date().getFullYear()} Veterinary Clinic. All rights reserved.</p>
-            <p>This is an automated message, please do not reply to this email.</p>
+            <p>(c) ${new Date().getFullYear()} Clínica Veterinaria. Todos los derechos reservados.</p>
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
         </div>
     </div>
 </body>
@@ -252,39 +252,39 @@ To confirm or cancel your appointment, visit your panel at: ${FRONTEND_URL}/cita
   }
 
   getTextTemplate(username, resetLink) {
-    return `PASSWORD RESET
+    return `RESTABLECER CONTRASEÑA
 
-Hello ${username},
+Hola ${username},
 
-You have requested to reset your password at Veterinary Clinic.
+Has solicitado restablecer tu contraseña en Clínica Veterinaria.
 
-To create a new password, click this link:
+Para crear una nueva contraseña, haz clic en este enlace:
 ${resetLink}
 
-This link will expire in 1 hour.
+Este enlace caducará en 1 hora.
 
-If you did not request this change, you can ignore this email.
+Si no solicitaste este cambio, puedes ignorar este correo.
 
-(c) ${new Date().getFullYear()} Veterinary Clinic.`;
+(c) ${new Date().getFullYear()} Clínica Veterinaria.`;
   }
 
   // WELCOME EMAIL FOR REGULAR USERS
 
   async sendWelcomeEmail(toEmail, username, temporaryPassword) {
     try {
-      const subject = "Welcome to El Exito - Your account has been created";
+      const subject = "Bienvenido a El Éxito - Tu cuenta ha sido creada";
       const html = this.getWelcomeHtmlTemplate(username, toEmail, temporaryPassword);
       const text = this.getWelcomeTextTemplate(username, toEmail, temporaryPassword);
 
       if (!sgMail) {
-        throw new Error("SendGrid is not configured");
+        throw new Error("SendGrid no está configurado");
       }
 
       const msg = {
         to: toEmail,
         from: {
           email: SENDGRID_FROM_EMAIL,
-          name: "El Exito - Veterinary Clinic",
+          name: "El Éxito - Clínica Veterinaria",
         },
         subject: subject,
         html: html,
@@ -303,9 +303,9 @@ If you did not request this change, you can ignore this email.
         messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
       };
     } catch (error) {
-      console.error("Error sending welcome email:", error.message);
+      console.error("Error enviando correo de bienvenida:", error.message);
       if (error.response) {
-        console.error("SendGrid details:", error.response.body);
+        console.error("Detalles de SendGrid:", error.response.body);
       }
       throw error;
     }
@@ -315,19 +315,19 @@ If you did not request this change, you can ignore this email.
 
   async sendWelcomeEmailDoctor(toEmail, username, temporaryPassword) {
     try {
-      const subject = "Welcome to El Exito - Doctor";
+      const subject = "Bienvenido a El Éxito - Doctor";
       const html = this.getWelcomeDoctorHtmlTemplate(username, toEmail, temporaryPassword);
       const text = this.getWelcomeDoctorTextTemplate(username, toEmail, temporaryPassword);
 
       if (!sgMail) {
-        throw new Error("SendGrid is not configured");
+        throw new Error("SendGrid no está configurado");
       }
 
       const msg = {
         to: toEmail,
         from: {
           email: SENDGRID_FROM_EMAIL,
-          name: "El Exito - Veterinary Clinic",
+          name: "El Éxito - Clínica Veterinaria",
         },
         subject: subject,
         html: html,
@@ -346,9 +346,9 @@ If you did not request this change, you can ignore this email.
         messageId: response[0]?.headers?.["x-message-id"] || response[0]?.messageId,
       };
     } catch (error) {
-      console.error("Error sending welcome email to doctor:", error.message);
+      console.error("Error enviando correo de bienvenida al doctor:", error.message);
       if (error.response) {
-        console.error("SendGrid details:", error.response.body);
+        console.error("Detalles de SendGrid:", error.response.body);
       }
       throw error;
     }
@@ -382,39 +382,39 @@ If you did not request this change, you can ignore this email.
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">[Doctor Icon]</div>
-            <h1>Welcome to El Exito!</h1>
-            <p>Veterinary Clinic</p>
+            <div class="logo">[Icono Doctor]</div>
+            <h1>¡Bienvenido a El Éxito!</h1>
+            <p>Clínica Veterinaria</p>
         </div>
         <div class="content">
             <h2>Dr. ${username},</h2>
-            <p>Your doctor profile has been successfully created in our veterinary management platform.</p>
+            <p>Tu perfil de doctor ha sido creado exitosamente en nuestra plataforma de gestión veterinaria.</p>
             
             <div class="info-box">
-                <strong>Your username (email):</strong> ${email}
+                <strong>Tu usuario (correo):</strong> ${email}
             </div>
             
             <div class="password-box">
-                <strong>Temporary password:</strong><br>
+                <strong>Contraseña temporal:</strong><br>
                 <span class="password">${temporaryPassword}</span>
             </div>
             
-            <p>For security reasons, we recommend changing your password the first time you log in.</p>
+            <p>Por razones de seguridad, te recomendamos cambiar tu contraseña la primera vez que inicies sesión.</p>
             
             <div style="text-align: center;">
-                <a href="${plataformaUrl}" class="button">Access the Platform</a>
+                <a href="${plataformaUrl}" class="button">Acceder a la Plataforma</a>
             </div>
             
             <div class="warning">
-                <strong>Important:</strong><br>
-                - Do not share your password with anyone<br>
-                - Change your password on first access<br>
-                - If you did not request this account, please ignore this message
+                <strong>Importante:</strong><br>
+                - No compartas tu contraseña con nadie<br>
+                - Cambia tu contraseña en tu primer acceso<br>
+                - Si no solicitaste esta cuenta, ignora este mensaje
             </div>
         </div>
         <div class="footer">
-            <p><strong>El Exito - Veterinary Clinic</strong></p>
-            <p>(c) ${new Date().getFullYear()} All rights reserved.</p>
+            <p><strong>El Éxito - Clínica Veterinaria</strong></p>
+            <p>(c) ${new Date().getFullYear()} Todos los derechos reservados.</p>
         </div>
     </div>
 </body>
@@ -425,24 +425,24 @@ If you did not request this change, you can ignore this email.
     const plataformaUrl = "https://internal-platform.onrender.com";
     
     return `
-WELCOME TO EL EXITO - VETERINARY CLINIC
+BIENVENIDO A EL ÉXITO - CLÍNICA VETERINARIA
 
 Dr. ${username},
 
-Your doctor profile has been successfully created.
+Tu perfil de doctor ha sido creado exitosamente.
 
 -----------------------------------------
- USERNAME: ${email}
- TEMPORARY PASSWORD: ${temporaryPassword}
+ USUARIO: ${email}
+ CONTRASEÑA TEMPORAL: ${temporaryPassword}
 -----------------------------------------
 
-ACCESS THE PLATFORM: ${plataformaUrl}
+ACCEDER A LA PLATAFORMA: ${plataformaUrl}
 
-RECOMMENDATIONS:
-- Change your password on first access
-- Do not share your password
+RECOMENDACIONES:
+- Cambia tu contraseña en tu primer acceso
+- No compartas tu contraseña
 
-(c) ${new Date().getFullYear()} El Exito - Veterinary Clinic
+(c) ${new Date().getFullYear()} El Éxito - Clínica Veterinaria
 `;
   }
 
@@ -474,39 +474,39 @@ RECOMMENDATIONS:
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">[Pet Icon]</div>
-            <h1>Welcome to El Exito!</h1>
-            <p>Veterinary Clinic</p>
+            <div class="logo">[Icono Mascota]</div>
+            <h1>¡Bienvenido a El Éxito!</h1>
+            <p>Clínica Veterinaria</p>
         </div>
         <div class="content">
-            <h2>Hello ${username},</h2>
-            <p>Your profile has been successfully created on our platform.</p>
+            <h2>Hola ${username},</h2>
+            <p>Tu perfil ha sido creado exitosamente en nuestra plataforma.</p>
             
             <div class="info-box">
-                <strong>Your username (email):</strong> ${email}
+                <strong>Tu usuario (correo):</strong> ${email}
             </div>
             
             <div class="password-box">
-                <strong>Temporary password:</strong><br>
+                <strong>Contraseña temporal:</strong><br>
                 <span class="password">${temporaryPassword}</span>
             </div>
             
-            <p>We recommend changing your password the first time you log in.</p>
+            <p>Te recomendamos cambiar tu contraseña la primera vez que inicies sesión.</p>
             
             <div style="text-align: center;">
-                <a href="${plataformaUrl}" class="button">Access the Platform</a>
+                <a href="${plataformaUrl}" class="button">Acceder a la Plataforma</a>
             </div>
             
             <div class="warning">
-                <strong>Important:</strong><br>
-                - Do not share your password<br>
-                - Change your password on first access<br>
-                - If you did not request this account, ignore this message
+                <strong>Importante:</strong><br>
+                - No compartas tu contraseña<br>
+                - Cambia tu contraseña en tu primer acceso<br>
+                - Si no solicitaste esta cuenta, ignora este mensaje
             </div>
         </div>
         <div class="footer">
-            <p><strong>El Exito - Veterinary Clinic</strong></p>
-            <p>(c) ${new Date().getFullYear()} All rights reserved.</p>
+            <p><strong>El Éxito - Clínica Veterinaria</strong></p>
+            <p>(c) ${new Date().getFullYear()} Todos los derechos reservados.</p>
         </div>
     </div>
 </body>
@@ -517,22 +517,22 @@ RECOMMENDATIONS:
     const plataformaUrl = "https://internal-platform.onrender.com";
     
     return `
-WELCOME TO EL EXITO - VETERINARY CLINIC
+BIENVENIDO A EL ÉXITO - CLÍNICA VETERINARIA
 
-Hello ${username},
+Hola ${username},
 
-Your profile has been successfully created.
+Tu perfil ha sido creado exitosamente.
 
 -----------------------------------------
- USERNAME: ${email}
- TEMPORARY PASSWORD: ${temporaryPassword}
+ USUARIO: ${email}
+ CONTRASEÑA TEMPORAL: ${temporaryPassword}
 -----------------------------------------
 
-ACCESS: ${plataformaUrl}
+ACCEDER: ${plataformaUrl}
 
-We recommend changing your password on first access.
+Te recomendamos cambiar tu contraseña en tu primer acceso.
 
-(c) ${new Date().getFullYear()} El Exito - Veterinary Clinic
+(c) ${new Date().getFullYear()} El Éxito - Clínica Veterinaria
 `;
   }
 }
@@ -544,29 +544,29 @@ const emailService = new EmailService();
 // SECTION: PUBLIC FUNCTIONS
 
 export const sendResetPasswordEmail = async (email) => {
-  console.log("[sendResetPasswordEmail] START for:", email);
+  console.log("[sendResetPasswordEmail] INICIO para:", email);
   let resetToken, resetLink, user;
 
   try {
     // Search in User collection first
-    console.log("Searching in User...");
+    console.log("Buscando en User...");
     user = await User.findOne({ email });
     
     // If not found in User, search in Owner
     if (!user) {
-      console.log("Not found in User, searching in Owner...");
+      console.log("No encontrado en User, buscando en Owner...");
       user = await Owner.findOne({ email });
     }
     
     if (!user) {
-      console.log("User not found");
+      console.log("Usuario no encontrado");
       return {
         success: true,
-        message: "If the email exists, you will receive a link to reset your password.",
+        message: "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
       };
     }
     
-    console.log("User found:", user.email);
+    console.log("Usuario encontrado:", user.email);
 
     resetToken = await createAccessToken({ id: user._id }, "1h");
     resetLink = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
@@ -583,13 +583,13 @@ export const sendResetPasswordEmail = async (email) => {
 
     return {
       success: true,
-      message: "An email with instructions to reset your password has been sent.",
+      message: "Se ha enviado un correo con instrucciones para restablecer tu contraseña.",
     };
   } catch (error) {
-    console.error("Error in sendResetPasswordEmail:", error);
+    console.error("Error en sendResetPasswordEmail:", error);
     return {
       success: false,
-      message: "There was an error processing your request.",
+      message: "Hubo un error al procesar tu solicitud.",
     };
   }
 };
@@ -605,21 +605,21 @@ export const checkEmailConfig = async () => {
       sendgrid: {
         apiKeyConfigured: !!SENDGRID_API_KEY,
         apiKeyLength: SENDGRID_API_KEY?.length || 0,
-        fromEmail: SENDGRID_FROM_EMAIL || "not configured",
-        status: SENDGRID_API_KEY ? "CONFIGURED" : "NOT CONFIGURED",
+        fromEmail: SENDGRID_FROM_EMAIL || "no configurado",
+        status: SENDGRID_API_KEY ? "CONFIGURADO" : "NO CONFIGURADO",
       },
     };
 
     return {
       success: true,
       ...config,
-      message: "SendGrid configuration verified successfully",
+      message: "Configuración de SendGrid verificada exitosamente",
     };
   } catch (error) {
-    console.error("Error verifying configuration:", error);
+    console.error("Error verificando configuración:", error);
     return {
       success: false,
-      message: "Error verifying SendGrid configuration",
+      message: "Error verificando la configuración de SendGrid",
       error: error.message,
     };
   }
@@ -630,10 +630,10 @@ export const sendAppointmentConfirmationEmail = async (email, nombreCliente, cit
     const result = await emailService.sendAppointmentConfirmation(email, nombreCliente, cita);
     return result;
   } catch (error) {
-    console.error("Error in sendAppointmentConfirmationEmail:", error);
+    console.error("Error en sendAppointmentConfirmationEmail:", error);
     return {
       success: false,
-      message: "Error sending confirmation email",
+      message: "Error enviando correo de confirmación",
     };
   }
 };
@@ -643,10 +643,10 @@ export const sendWelcomeEmail = async (email, username, temporaryPassword) => {
     const result = await emailService.sendWelcomeEmail(email, username, temporaryPassword);
     return result;
   } catch (error) {
-    console.error("Error in sendWelcomeEmail:", error);
+    console.error("Error en sendWelcomeEmail:", error);
     return {
       success: false,
-      message: "Error sending welcome email",
+      message: "Error enviando correo de bienvenida",
     };
   }
 };
@@ -656,13 +656,14 @@ export const sendWelcomeEmailDoctor = async (email, username, temporaryPassword)
     const result = await emailService.sendWelcomeEmailDoctor(email, username, temporaryPassword);
     return result;
   } catch (error) {
-    console.error("Error in sendWelcomeEmailDoctor:", error);
+    console.error("Error en sendWelcomeEmailDoctor:", error);
     return {
       success: false,
-      message: "Error sending welcome email to doctor",
+      message: "Error enviando correo de bienvenida al doctor",
     };
   }
 };
+
 export const sendAppointmentReminderEmail = async (email, nombreCliente, cita) => {
   const fecha = new Date(cita.fecha).toLocaleDateString('es-CR');
   const html = `
