@@ -62,7 +62,7 @@ const enviarRecordatorios = async () => {
     
     // Obtener fecha y hora actual en Costa Rica
     const ahora = new Date();
-    const offsetCostaRica = -6 * 60; // Costa Rica UTC-6
+    const offsetCostaRica = -6 * 60;
     const ahoraCR = new Date(ahora.getTime() + (offsetCostaRica - ahora.getTimezoneOffset()) * 60000);
     
     const año = ahoraCR.getFullYear();
@@ -75,12 +75,21 @@ const enviarRecordatorios = async () => {
     console.log(`Fecha actual Costa Rica: ${hoy}`);
     console.log(`Hora actual Costa Rica: ${ahoraCR.getHours()}:${ahoraCR.getMinutes()} (${horaActualMinutos} minutos)`);
     
-    // Buscar citas para hoy
+    // Buscar citas para hoy con POPULATE CORRECTO
     const citas = await Cita.find({ 
       fecha: hoy, 
       estado: { $ne: 'cancelada' },
       recordatorioEnviado: false 
-    }).populate('doctorId pacienteId.ownerId clienteTemporalId');
+    })
+    .populate('doctorId', 'username lastname especialidad')
+    .populate({
+      path: 'pacienteId',
+      populate: {
+        path: 'ownerId',
+        select: 'username email phoneNumber'
+      }
+    })
+    .populate('clienteTemporalId', 'username email');
     
     console.log(`Citas encontradas para hoy: ${citas.length}`);
     
@@ -94,13 +103,20 @@ const enviarRecordatorios = async () => {
       if (diferencia > 0 && diferencia <= 120) {
         console.log(`-> Enviando recordatorio para cita ${cita._id}`);
         
-        let email, nombre;
-        if (cita.pacienteId?.ownerId) {
+        let email = null;
+        let nombre = null;
+        
+        // Obtener email del owner de la mascota
+        if (cita.pacienteId?.ownerId?.email) {
           email = cita.pacienteId.ownerId.email;
           nombre = cita.pacienteId.ownerId.username;
-        } else if (cita.clienteTemporalId) {
+          console.log(`  Email obtenido de pacienteId.ownerId: ${email}`);
+        }
+        // Si no, intentar del cliente temporal
+        else if (cita.clienteTemporalId?.email) {
           email = cita.clienteTemporalId.email;
           nombre = cita.clienteTemporalId.username;
+          console.log(`  Email obtenido de clienteTemporalId: ${email}`);
         }
         
         if (email) {
@@ -120,6 +136,7 @@ const enviarRecordatorios = async () => {
           }
         } else {
           console.log(`  No se encontro email para la cita`);
+          console.log(`  Datos: pacienteId=${!!cita.pacienteId}, ownerId=${!!cita.pacienteId?.ownerId}`);
         }
       }
     }
@@ -130,7 +147,7 @@ const enviarRecordatorios = async () => {
   }
 };
 
-// Iniciar el cron job SIN timezone (usar UTC y ajustar manualmente)
+// Iniciar el cron job
 cron.schedule('*/15 * * * *', () => {
   console.log('CRON TRIGGERED - Ejecutando tarea programada');
   enviarRecordatorios();
