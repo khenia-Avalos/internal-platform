@@ -557,7 +557,7 @@ export const cancelarCitaConToken = async (req, res) => {
     const ahoraCR = new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' });
     const ahora = new Date(ahoraCR);
     
-    // cita.fecha es un objeto Date, extraer año, mes, dia
+    // Extraer fecha de la cita (cita.fecha es un objeto Date UTC)
     const fechaCitaObj = new Date(cita.fecha);
     const anio = fechaCitaObj.getUTCFullYear();
     const mes = fechaCitaObj.getUTCMonth();
@@ -569,15 +569,22 @@ export const cancelarCitaConToken = async (req, res) => {
     // Crear fecha de la cita en hora local Costa Rica
     const fechaCitaCR = new Date(anio, mes, dia, horaInicio, minutoInicio, 0);
     
-    const horasDiferencia = (fechaCitaCR - ahora) / (1000 * 60 * 60);
+    // Calcular diferencia en horas
+    const diferenciaMs = fechaCitaCR - ahora;
+    const horasDiferencia = diferenciaMs / (1000 * 60 * 60);
     const limiteHoras = 2;
     
-    console.log(`Fecha cita CR: ${fechaCitaCR}`);
+    console.log('=== CANCELAR CITA CON TOKEN ===');
+    console.log(`Fecha cita (UTC): ${cita.fecha}`);
+    console.log(`Hora cita: ${cita.horaInicio}`);
+    console.log(`Fecha cita CR construida: ${fechaCitaCR}`);
     console.log(`Fecha actual CR: ${ahora}`);
-    console.log(`Diferencia: ${horasDiferencia} horas`);
+    console.log(`Diferencia en horas: ${horasDiferencia}`);
+    console.log(`Limite: ${limiteHoras} horas`);
     
     // Si la cita ya paso
     if (fechaCitaCR < ahora) {
+      console.log(`CANCELACION DENEGADA: Cita ya pasada`);
       return res.status(400).send(renderizarPagina(
         'Cita ya pasada',
         'No se puede cancelar una cita que ya ha pasado.',
@@ -589,6 +596,7 @@ export const cancelarCitaConToken = async (req, res) => {
     if (horasDiferencia < limiteHoras) {
       const horasRestantes = Math.floor(horasDiferencia);
       const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
+      console.log(`CANCELACION DENEGADA: Faltan ${horasRestantes}h ${minutosRestantes}m (menos de ${limiteHoras}h)`);
       return res.status(400).send(renderizarPagina(
         'Cancelacion no permitida',
         `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`,
@@ -597,6 +605,7 @@ export const cancelarCitaConToken = async (req, res) => {
     }
     
     // Cancelar la cita
+    console.log(`CANCELACION PERMITIDA: Faltan ${horasDiferencia} horas`);
     cita.estado = 'cancelada';
     await cita.save();
     
