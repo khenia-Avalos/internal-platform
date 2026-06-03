@@ -169,22 +169,29 @@ export const updateCita = async (req, res) => {
     
     // Si se intenta CANCELAR desde el dashboard (admin/doctor pueden cancelar sin restriccion de tiempo)
     if (data.estado === 'cancelada') {
-      const fechaCita = new Date(cita.fecha);
-      const ahora = new Date();
+      // Obtener fecha y hora actual en Costa Rica
+      const ahoraCR = new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' });
+      const ahora = new Date(ahoraCR);
       
-      // Combinar fecha y hora
+      // Construir fecha y hora de la cita en Costa Rica
+      const fechaCitaStr = cita.fecha; // Formato: "2026-06-03T00:00:00.000Z"
+      const [anio, mes, dia] = fechaCitaStr.split('T')[0].split('-');
       const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
-      fechaCita.setHours(horaInicio, minutoInicio, 0, 0);
       
-      const horasDiferencia = (fechaCita - ahora) / (1000 * 60 * 60);
+      // Crear fecha de la cita en hora local Costa Rica
+      const fechaCitaCR = new Date(anio, mes - 1, dia, horaInicio, minutoInicio, 0);
       
-      // Solo verificar que no sea una cita que ya paso
-      if (horasDiferencia < 0) {
+      console.log(`Fecha cita CR: ${fechaCitaCR}`);
+      console.log(`Fecha actual CR: ${ahora}`);
+      
+      // Verificar si la cita ya pasó
+      if (fechaCitaCR < ahora) {
         return res.status(400).json({ message: "No se puede cancelar una cita que ya ha pasado" });
       }
       
       // Admin y doctor pueden cancelar sin importar el tiempo restante
       // No hay validacion de 2 horas aqui
+      console.log(`Cancelacion permitida - Faltan ${(fechaCitaCR - ahora) / (1000 * 60)} minutos`);
     }
     
     // Si se intenta CONFIRMAR, verificar que no este cancelada
@@ -497,8 +504,8 @@ export const cancelarCitaConToken = async (req, res) => {
       jwt.verify(token, TOKEN_SECRET);
     } catch (error) {
       return res.status(400).send(renderizarPagina(
-        'Enlace inválido',
-        'El enlace de cancelación no es válido o ha caducado.',
+        'Enlace invalido',
+        'El enlace de cancelacion no es valido o ha caducado.',
         'error'
       ));
     }
@@ -517,22 +524,22 @@ export const cancelarCitaConToken = async (req, res) => {
     // Verificar que el token coincida
     if (cita.tokenConfirmacion !== token) {
       return res.status(400).send(renderizarPagina(
-        'Token inválido',
-        'El token de cancelación no es válido.',
+        'Token invalido',
+        'El token de cancelacion no es valido.',
         'error'
       ));
     }
     
-    //  VERIFICAR SI YA ESTÁ CANCELADA
+    // Verificar si ya esta cancelada
     if (cita.estado === 'cancelada') {
       return res.send(renderizarPagina(
         'Cita ya cancelada',
-        'Esta cita ya había sido cancelada anteriormente.',
+        'Esta cita ya habia sido cancelada anteriormente.',
         'advertencia'
       ));
     }
     
-    //  VERIFICAR SI YA ESTÁ COMPLETADA
+    // Verificar si ya esta completada
     if (cita.estado === 'completada') {
       return res.status(400).send(renderizarPagina(
         'Cita completada',
@@ -541,18 +548,27 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    //  VALIDACIÓN DE TIEMPO (2 horas antes) - PERMITE CANCELAR TANTO PENDIENTE COMO CONFIRMADA
-    const fechaCita = new Date(cita.fecha);
-    const ahora = new Date();
+    // Obtener fecha y hora actual en Costa Rica
+    const ahoraCR = new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' });
+    const ahora = new Date(ahoraCR);
     
-    // Combinar fecha y hora para comparar correctamente
+    // Construir fecha y hora de la cita en Costa Rica
+    const fechaCitaStr = cita.fecha;
+    const [anio, mes, dia] = fechaCitaStr.split('T')[0].split('-');
     const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
-    fechaCita.setHours(horaInicio, minutoInicio, 0, 0);
     
-    const horasDiferencia = (fechaCita - ahora) / (1000 * 60 * 60);
-    const limiteHoras = 2; // 2 horas antes
+    // Crear fecha de la cita en hora local Costa Rica
+    const fechaCitaCR = new Date(anio, mes - 1, dia, horaInicio, minutoInicio, 0);
     
-    if (horasDiferencia < 0) {
+    const horasDiferencia = (fechaCitaCR - ahora) / (1000 * 60 * 60);
+    const limiteHoras = 2;
+    
+    console.log(`Fecha cita CR: ${fechaCitaCR}`);
+    console.log(`Fecha actual CR: ${ahora}`);
+    console.log(`Diferencia: ${horasDiferencia} horas`);
+    
+    // Si la cita ya paso
+    if (fechaCitaCR < ahora) {
       return res.status(400).send(renderizarPagina(
         'Cita ya pasada',
         'No se puede cancelar una cita que ya ha pasado.',
@@ -560,17 +576,18 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    if (horasDiferencia < limiteHoras && horasDiferencia > 0) {
+    // Si faltan menos de 2 horas (pero la cita aun no ha pasado)
+    if (horasDiferencia < limiteHoras) {
       const horasRestantes = Math.floor(horasDiferencia);
       const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
       return res.status(400).send(renderizarPagina(
-        'Cancelación no permitida',
-        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipación. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clínica.`,
+        'Cancelacion no permitida',
+        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`,
         'advertencia'
       ));
     }
     
-    // Cancelar la cita (pendiente o confirmada)
+    // Cancelar la cita
     cita.estado = 'cancelada';
     await cita.save();
     
@@ -584,7 +601,7 @@ export const cancelarCitaConToken = async (req, res) => {
     console.error("Error en cancelarCitaConToken:", error);
     res.status(500).send(renderizarPagina(
       'Error',
-      'Ocurrió un error al cancelar la cita.',
+      'Ocurrio un error al cancelar la cita.',
       'error'
     ));
   }
