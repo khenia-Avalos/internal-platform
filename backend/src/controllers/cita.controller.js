@@ -161,7 +161,6 @@ export const updateCita = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     
-    // Obtener el usuario que hace la peticion
     const usuario = req.user;
     const userRole = usuario?.role;
     
@@ -169,71 +168,49 @@ export const updateCita = async (req, res) => {
     console.log('UPDATE CITA - CANCELACION');
     console.log(`Cita ID: ${id}`);
     console.log(`Rol usuario: ${userRole}`);
-    console.log(`Nuevo estado solicitado: ${data.estado}`);
     
-    // Obtener la cita actual
     const cita = await Cita.findById(id);
     if (!cita) {
       return res.status(404).json({ message: "Cita no encontrada" });
     }
     
-    console.log(`cita.fecha (raw): ${cita.fecha}`);
-    console.log(`cita.horaInicio: ${cita.horaInicio}`);
-    
-    // Si se intenta CANCELAR
     if (data.estado === 'cancelada') {
-      
-      // === METODO: Construir fecha cita correctamente ===
+      // Construccion manual (METODO 2)
       const fechaCitaUTC = new Date(cita.fecha);
       const año = fechaCitaUTC.getUTCFullYear();
       const mes = fechaCitaUTC.getUTCMonth();
       const dia = fechaCitaUTC.getUTCDate();
-      console.log(`UTC: año=${año}, mes=${mes}, dia=${dia}`);
       
       const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
-      console.log(`Hora cita: ${horaInicio}:${minutoInicio}`);
-      
-      // Crear fecha cita en hora local (Costa Rica)
       const fechaCitaCR = new Date(año, mes, dia, horaInicio, minutoInicio, 0);
-      console.log(`fechaCitaCR construida: ${fechaCitaCR}`);
       
-      // Fecha actual en Costa Rica
       const ahoraCR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
-      console.log(`ahoraCR: ${ahoraCR}`);
-      
-      // Calcular diferencia
       const horasDiferencia = (fechaCitaCR - ahoraCR) / (1000 * 60 * 60);
       const limiteHoras = 2;
       
-      console.log(`Diferencia en horas: ${horasDiferencia}`);
+      console.log(`fechaCitaCR: ${fechaCitaCR}`);
+      console.log(`ahoraCR: ${ahoraCR}`);
+      console.log(`horasDiferencia: ${horasDiferencia}`);
       
-      // Verificar si la cita ya paso
       if (fechaCitaCR < ahoraCR) {
-        console.log('CANCELACION DENEGADA: Cita ya pasada');
         return res.status(400).json({ message: "No se puede cancelar una cita que ya ha pasado" });
       }
       
-      // Si es cliente, validar las 2 horas de anticipacion
       if (userRole === 'client') {
         if (horasDiferencia < limiteHoras) {
           const horasRestantes = Math.floor(horasDiferencia);
           const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
-          console.log(`CANCELACION DENEGADA: Cliente - faltan ${horasRestantes}h ${minutosRestantes}m (menos de ${limiteHoras}h)`);
           return res.status(400).json({ 
             message: `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`
           });
         }
       }
-      
-      console.log(`CANCELACION PERMITIDA para rol: ${userRole}`);
     }
     
-    // Si se intenta CONFIRMAR, verificar que no este cancelada
     if (data.estado === 'confirmada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede confirmar una cita cancelada" });
     }
     
-    // Si se intenta COMPLETAR, verificar que no este cancelada
     if (data.estado === 'completada' && cita.estado === 'cancelada') {
       return res.status(400).json({ message: "No se puede completar una cita cancelada" });
     }
@@ -561,7 +538,6 @@ export const cancelarCitaConToken = async (req, res) => {
     }
     
     console.log(`cita.fecha (raw): ${cita.fecha}`);
-    console.log(`cita.fecha tipo: ${typeof cita.fecha}`);
     console.log(`cita.horaInicio: ${cita.horaInicio}`);
     
     // Verificar que el token coincida
@@ -591,53 +567,29 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // === METODO 1: Usar toLocaleString ===
-    console.log('--- METODO 1: toLocaleString ---');
-    const fechaCitaCR1 = new Date(cita.fecha);
-    console.log(`fechaCitaCR1 inicial: ${fechaCitaCR1}`);
-    
-    // === METODO 2: Construir manualmente ===
-    console.log('--- METODO 2: Construccion manual ---');
-    const año = fechaCitaCR1.getUTCFullYear();
-    const mes = fechaCitaCR1.getUTCMonth();
-    const dia = fechaCitaCR1.getUTCDate();
-    console.log(`UTC: año=${año}, mes=${mes}, dia=${dia}`);
+    // --- METODO CORRECTO: Construccion manual (METODO 2) ---
+    const fechaCitaUTC = new Date(cita.fecha);
+    const año = fechaCitaUTC.getUTCFullYear();
+    const mes = fechaCitaUTC.getUTCMonth();
+    const dia = fechaCitaUTC.getUTCDate();
     
     const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
-    console.log(`Hora cita: ${horaInicio}:${minutoInicio}`);
     
-    const fechaCitaCR2 = new Date(año, mes, dia, horaInicio, minutoInicio, 0);
-    console.log(`fechaCitaCR2: ${fechaCitaCR2}`);
+    // Crear fecha cita en hora local (Costa Rica)
+    const fechaCitaCR = new Date(año, mes, dia, horaInicio, minutoInicio, 0);
     
-    // === METODO 3: Usar string ISO ===
-    console.log('--- METODO 3: String ISO ---');
-    const fechaCitaStr = cita.fecha.toISOString().split('T')[0];
-    const fechaHoraCitaStr = `${fechaCitaStr}T${cita.horaInicio}:00-06:00`;
-    console.log(`fechaHoraCitaStr: ${fechaHoraCitaStr}`);
-    const fechaCitaCR3 = new Date(fechaHoraCitaStr);
-    console.log(`fechaCitaCR3: ${fechaCitaCR3}`);
+    // Fecha actual en Costa Rica
+    const ahoraCR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
     
-    // Fecha actual
-    const ahora = new Date();
-    const ahoraCR = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
-    console.log(`ahora (servidor): ${ahora}`);
-    console.log(`ahoraCR: ${ahoraCR}`);
-    
-    // Calcular diferencias con los 3 metodos
-    const diff1 = (fechaCitaCR1 - ahoraCR) / (1000 * 60 * 60);
-    const diff2 = (fechaCitaCR2 - ahoraCR) / (1000 * 60 * 60);
-    const diff3 = (fechaCitaCR3 - ahoraCR) / (1000 * 60 * 60);
-    
-    console.log(`Diferencia METODO 1: ${diff1} horas`);
-    console.log(`Diferencia METODO 2: ${diff2} horas`);
-    console.log(`Diferencia METODO 3: ${diff3} horas`);
-    
+    const horasDiferencia = (fechaCitaCR - ahoraCR) / (1000 * 60 * 60);
     const limiteHoras = 2;
     
-    // Usar el metodo que funcione (eligiendo diff3 que es el mas confiable)
-    const horasDiferencia = diff3;
+    console.log(`fechaCitaCR: ${fechaCitaCR}`);
+    console.log(`ahoraCR: ${ahoraCR}`);
+    console.log(`horasDiferencia: ${horasDiferencia}`);
     
-    if (fechaCitaCR3 < ahoraCR) {
+    // Si la cita ya paso
+    if (fechaCitaCR < ahoraCR) {
       console.log('CANCELACION DENEGADA: Cita ya pasada');
       return res.status(400).send(renderizarPagina(
         'Cita ya pasada',
@@ -646,10 +598,11 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
+    // Si faltan menos de 2 horas
     if (horasDiferencia < limiteHoras) {
       const horasRestantes = Math.floor(horasDiferencia);
       const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
-      console.log(`CANCELACION DENEGADA: Faltan ${horasRestantes}h ${minutosRestantes}m`);
+      console.log(`CANCELACION DENEGADA: Faltan ${horasRestantes}h ${minutosRestantes}m (menos de ${limiteHoras}h)`);
       return res.status(400).send(renderizarPagina(
         'Cancelacion no permitida',
         `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`,
