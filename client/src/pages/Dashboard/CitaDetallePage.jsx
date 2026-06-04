@@ -194,11 +194,7 @@ function CitaDetallePage() {
         Volver atrás
       </button>
 
-      {errors.length > 0 && (
-        <div className="fixed top-20 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg">
-          {errors.map((err, i) => <p key={i}>{err}</p>)}
-        </div>
-      )}
+      
 
       {loading && (
         <div className="flex justify-center items-center h-64">

@@ -61,12 +61,12 @@ export const manejarErrorResponse = (error, setErrors = null, setSuccessMessage 
     mensajes = ["Error al procesar la solicitud."];
   }
 
-  // ✅ MOSTRAR CADA ERROR CON TOAST (notificación bonita)
+  //  MOSTRAR CADA ERROR CON TOAST (notificación bonita)
   mensajes.forEach(mensaje => {
     toast.error(mensaje, { duration: 5000 });
   });
 
-  // ✅ GUARDAR EN ESTADO (opcional, por si se necesita el bloque manual)
+  //  GUARDAR EN ESTADO (opcional, por si se necesita el bloque manual)
   if (setErrors) {
     setErrors(mensajes);
     
