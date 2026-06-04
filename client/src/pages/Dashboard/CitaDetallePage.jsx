@@ -107,8 +107,7 @@ function CitaDetallePage() {
       setCita({ ...cita, estado: nuevoEstado });
       toast.success(mensajeExito, { duration: 3000 });
     } catch (error) {
-      const mensajeErrorBackend = error.response?.data?.message || mensajeError;
-      toast.error(mensajeErrorBackend);
+    
       manejarErrorResponse(error, setErrors);
     } finally {
       setUpdating(false);
