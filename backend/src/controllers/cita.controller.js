@@ -201,7 +201,7 @@ export const updateCita = async (req, res) => {
           const horasRestantes = Math.floor(horasDiferencia);
           const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
           return res.status(400).json({ 
-            message: `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`
+            message: `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Si necesitas cancelar, por favor contacta a la clinica.`
           });
         }
       }
@@ -605,7 +605,7 @@ export const cancelarCitaConToken = async (req, res) => {
       console.log(`CANCELACION DENEGADA: Faltan ${horasRestantes}h ${minutosRestantes}m (menos de ${limiteHoras}h)`);
       return res.status(400).send(renderizarPagina(
         'Cancelacion no permitida',
-        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Faltan ${horasRestantes} horas y ${minutosRestantes} minutos. Si necesitas cancelar, por favor contacta a la clinica.`,
+        `Solo puedes cancelar la cita con al menos ${limiteHoras} horas de anticipacion. Si necesitas cancelar, por favor contacta a la clinica.`,
         'advertencia'
       ));
     }
