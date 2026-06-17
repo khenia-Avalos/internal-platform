@@ -137,21 +137,20 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
-    //  Obtener el NÚMERO del día (0 = domingo, 1 = lunes, ..., 6 = sábado)
+    // Obtener el NÚMERO del día
     const fechaObj = new Date(fecha);
-    const numeroDia = fechaObj.getDay(); // Esto devuelve 0, 1, 2, 3, 4, 5, 6
+    const numeroDia = fechaObj.getDay();
     
-    // Array para referencia (solo para logs)
     const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const nombreDia = diasSemana[numeroDia];
     
     console.log(` Día: ${nombreDia} (número: ${numeroDia})`);
     
-    //  Buscar horario usando el NÚMERO del día
+    // Buscar horario usando el NÚMERO del día
     const Horario = await import('../models/horario.model.js').then(m => m.default);
     const horario = await Horario.findOne({ 
       doctorId: doctorId, 
-      dia: numeroDia,  // Ahora enviamos un número, no un string
+      dia: numeroDia,
       activo: true
     });
     
@@ -172,6 +171,20 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     
     console.log(` Citas existentes: ${citas.length}`);
     
+    // === NUEVO: Verificar si es hoy y obtener hora actual ===
+    const hoy = new Date();
+    const esHoy = fecha === hoy.toISOString().split('T')[0];
+    const horaActual = hoy.toLocaleTimeString('en-US', { 
+      timeZone: 'America/Costa_Rica', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    const horaActualEnMinutos = parseInt(horaActual.split(':')[0]) * 60 + parseInt(horaActual.split(':')[1]);
+    
+    console.log(` Es hoy: ${esHoy}`);
+    console.log(` Hora actual Costa Rica: ${horaActual} (${horaActualEnMinutos} minutos)`);
+    
     // Generar bloques de horarios disponibles
     const horariosDisponibles = [];
     const [horaInicio, minInicio] = horario.horaInicio.split(':').map(Number);
@@ -181,21 +194,35 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     let currentMinutes = horaInicio * 60 + minInicio;
     const finMinutes = horaFin * 60 + minFin;
     
-    // Crear Set de horarios ocupados para búsqueda más eficiente
+    // Crear Set de horarios ocupados
     const horariosOcupados = new Set(citas.map(cita => cita.horaInicio));
     
     while (currentMinutes + intervaloMinutos <= finMinutes) {
       const inicio = `${Math.floor(currentMinutes / 60).toString().padStart(2, '0')}:${(currentMinutes % 60).toString().padStart(2, '0')}`;
       const fin = `${Math.floor((currentMinutes + intervaloMinutos) / 60).toString().padStart(2, '0')}:${((currentMinutes + intervaloMinutos) % 60).toString().padStart(2, '0')}`;
       
-      if (!horariosOcupados.has(inicio)) {
+      // === NUEVO: Verificar si el horario ya pasó (solo para hoy) ===
+      let horarioDisponible = true;
+      
+      // Si es hoy, filtrar horarios que ya pasaron (margen 15 minutos)
+      if (esHoy) {
+        const slotInicioEnMinutos = parseInt(inicio.split(':')[0]) * 60 + parseInt(inicio.split(':')[1]);
+        const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
+        if (diferencia > 15) {
+          horarioDisponible = false;
+          console.log(` Horario ${inicio} - ${fin} descartado: ya pasó (${diferencia} min atrasado)`);
+        }
+      }
+      
+      // Si está disponible y no está ocupado
+      if (horarioDisponible && !horariosOcupados.has(inicio)) {
         horariosDisponibles.push({ inicio, fin });
       }
       
       currentMinutes += intervaloMinutos;
     }
     
-    console.log(` Horarios disponibles: ${horariosDisponibles.length}`);
+    console.log(` Horarios disponibles después de filtrar: ${horariosDisponibles.length}`);
     res.json(horariosDisponibles);
     
   } catch (error) {
