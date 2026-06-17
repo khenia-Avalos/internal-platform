@@ -382,7 +382,7 @@ Si no solicitaste este cambio, puedes ignorar este correo.
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">[Icono Doctor]</div>
+            <div class="logo">Doctor</div>
             <h1>¡Bienvenido a El Éxito!</h1>
             <p>Clínica Veterinaria</p>
         </div>
