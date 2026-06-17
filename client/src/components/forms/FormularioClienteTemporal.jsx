@@ -171,19 +171,24 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     }
   
     //  Validar fecha (que no sea pasada)
-    if (!formData.fechaCita) {
-      nuevosErrores.push('La fecha de la cita es requerida');
-      nuevosFieldErrors.fechaCita = 'Seleccione una fecha';
-    } else {
-      const fechaSeleccionada = new Date(formData.fechaCita);
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      
-      if (fechaSeleccionada < hoy) {
-        nuevosErrores.push('No se pueden agendar citas para fechas pasadas');
-        nuevosFieldErrors.fechaCita = 'Seleccione una fecha futura';
-      }
-    }
+if (!formData.fechaCita) {
+  nuevosErrores.push('La fecha de la cita es requerida');
+  nuevosFieldErrors.fechaCita = 'Seleccione una fecha';
+} else {
+  // Crear fecha seleccionada en hora local (no UTC)
+  const [year, month, day] = formData.fechaCita.split('-').map(Number);
+  const fechaSeleccionada = new Date(year, month - 1, day);
+  
+  // Fecha actual en hora local (sin horas)
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  // Comparar correctamente
+  if (fechaSeleccionada < hoy) {
+    nuevosErrores.push('No se pueden agendar citas para fechas pasadas');
+    nuevosFieldErrors.fechaCita = 'Seleccione una fecha futura';
+  }
+}
     
     // Validar horario
     if (!horarioSeleccionado) {
