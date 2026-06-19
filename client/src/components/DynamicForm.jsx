@@ -103,7 +103,7 @@ export const DynamicForm = ({
               <div className="relative">
                 {field.type === "select" && field.isSearchable ? (
     <Select
-      options={customProps?.ownerOptions || []}
+options={field.options || customProps?.ownerIdOptions || []}
       value={field.options?.find(opt => opt.value === watch(field.name))}
       onChange={(selected) => setValue(field.name, selected.value)}
       placeholder={`Selecciona ${field.label}`}
