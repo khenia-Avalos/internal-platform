@@ -474,7 +474,6 @@ RECOMENDACIONES:
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">[Icono Mascota]</div>
             <h1>¡Bienvenido a El Éxito!</h1>
             <p>Clínica Veterinaria</p>
         </div>
