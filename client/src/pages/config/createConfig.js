@@ -149,105 +149,88 @@ registerCliente: {
 registerPaciente: {
   title: "Nuevo Paciente",
   fields: [
-   {
-        name: "nombre",
-        type: "text",
-        label: "Nombre",
-        placeholder: "Tu nombre",
-        validation: {
-          required: "El nombre es requerido"
-        }
-      },
     {
-  name: "especie",
-  type: "select",
-  label: "Especie",
-  options: ['perro', 'gato', 'ave', 'conejo', 'otro'],
-  validation: { required: "La especie es requerida" }
-},
-      {
-        name: "raza",
-        type: "text",
-        label: "Raza",
-        placeholder: "Raza del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "edad",
-        type: "number",
-        label: "Edad",
-        placeholder: "Edad del paciente",
-        validation: {
-          required: "La edad es requerida"
-        }
-      },
-      {
-        name: "sexo",
-        type: "select",
-        label: "Sexo",
-        options: ["Macho", "Hembra"],
-        validation: {
-          required: "El sexo es requerido"
-        }
-      },
-      {
-        name: "colorPelaje",
-        type: "text",
-        label: "Color de pelaje",
-        placeholder: "Color de pelaje del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "peso",
-        type: "text",
-        label: "Peso",
-        placeholder: "Peso del paciente",
-      
-      },
-         {
-  name: "pesoUnidad",
-  type: "select",
-  label: "Unidad de Peso",
-  isSearchable: true,  
-  options: [
-    { value: "", label: "Selecciona una unidad (opcional)" },
-    { value: "kg", label: "Kilogramos (kg)" },
-    { value: "lb", label: "Libras (lb)" },
-    { value: "g", label: "Gramos (g)" }
-  ],
-  validation: {
-    required: false
-  }
-},
-      {
-        name: "temperatura",
-        type: "number",
-        label: "Temperatura",
-        placeholder: "Temperatura del paciente",
-        validation: {
-        }
-      },
-      {
-        name: "antecedentesMedicos",
-        type: "textarea",
-        label: "Antecedentes Médicos",
-        placeholder: "Antecedentes médicos del paciente",
-        validation: {
-        
-        }
-      },
-      {
-  name: "ownerId",
-  type: "select",
-  label: "Dueño",
-  isSearchable: true,  
-  options: [],  //  Se llenará desde la BD
-  validation: { required: "El dueño es requerido" }
-}
-           
-    
+      name: "nombre",
+      type: "text",
+      label: "Nombre",
+      placeholder: "Nombre de la mascota",
+      validation: { required: "El nombre es requerido" }
+    },
+    {
+      name: "especie",
+      type: "select",
+      label: "Especie",
+      options: ['perro', 'gato', 'ave', 'conejo', 'otro'],
+      validation: { required: "La especie es requerida" }
+    },
+    {
+      name: "raza",
+      type: "text",
+      label: "Raza",
+      placeholder: "Raza del paciente",
+      validation: {}
+    },
+    {
+      name: "edad",
+      type: "number",
+      label: "Edad",
+      placeholder: "Edad del paciente",
+      validation: { required: "La edad es requerida" }
+    },
+    {
+      name: "sexo",
+      type: "select",
+      label: "Sexo",
+      options: ["Macho", "Hembra"],
+      validation: { required: "El sexo es requerido" }
+    },
+    {
+      name: "colorPelaje",
+      type: "text",
+      label: "Color de pelaje",
+      placeholder: "Color de pelaje del paciente",
+      validation: {}
+    },
+    {
+      name: "peso",
+      type: "text",
+      label: "Peso",
+      placeholder: "Peso del paciente",
+    },
+    {
+      name: "pesoUnidad",
+      type: "select",
+      label: "Unidad de Peso",
+      isSearchable: true,  // ← Se mantiene true
+      options: [
+        { value: "kg", label: "Kilogramos (kg)" },
+        { value: "lb", label: "Libras (lb)" },
+        { value: "g", label: "Gramos (g)" }
+      ],
+      validation: { required: false }
+    },
+    {
+      name: "temperatura",
+      type: "number",
+      label: "Temperatura",
+      placeholder: "Temperatura del paciente",
+      validation: {}
+    },
+    {
+      name: "antecedentesMedicos",
+      type: "textarea",
+      label: "Antecedentes Médicos",
+      placeholder: "Antecedentes médicos del paciente",
+      validation: {}
+    },
+    {
+      name: "ownerId",
+      type: "select",
+      label: "Dueño",
+      isSearchable: true,
+      options: [],  // ← Vacío, se llena desde customProps
+      validation: { required: "El dueño es requerido" }
+    }
   ],
   submitLabel: "Crear Cliente",
   redirect: {}

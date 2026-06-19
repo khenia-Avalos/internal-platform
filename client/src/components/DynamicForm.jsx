@@ -61,9 +61,9 @@ export const DynamicForm = ({
   }
 
   return (
-    <div className={layout === "centered" ? "flex h-[calc(100vh-100px)] items-center justify-center" : "w-full"}> {/* CAMBIO: condicional según layout */}
+    <div className={layout === "centered" ? "flex h-[calc(100vh-100px)] items-center justify-center" : "w-full"}> {/* CAMBIO: condicional segun layout */}
       
-      <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}> {/* CAMBIO: condicional según layout */}
+      <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}> {/* CAMBIO: condicional segun layout */}
       
       {errors.map((error, i) => (
         <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> 
@@ -76,7 +76,7 @@ export const DynamicForm = ({
               <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-green-800 font-semibold">Éxito</span>
+              <span className="text-green-800 font-semibold">Exito</span>
             </div>
             <p className="text-green-700 mt-2">{successMessage}</p>
           </div>
@@ -102,55 +102,68 @@ export const DynamicForm = ({
 
               <div className="relative">
                 {field.type === "select" && field.isSearchable ? (
-    <Select
-options={field.options || customProps?.ownerIdOptions || []}
-      value={field.options?.find(opt => opt.value === watch(field.name))}
-      onChange={(selected) => setValue(field.name, selected.value)}
-      placeholder={`Selecciona ${field.label}`}
-      isSearchable={true}
-      className="my-2"
-      styles={{
-        control: (base) => ({
-          ...base,
-          borderColor: '#22d3ee',
-          '&:hover': { borderColor: '#22d3ee' },
-          boxShadow: 'none',
-          minHeight: '42px' // CAMBIO: altura consistente con inputs
-        })
-      }}
-    />
-) : field.type === "select" ? (
-  <>
-    <select
-      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-      disabled={isLoading}
-      {...register(field.name, field.validation)}
-    >
-      <option value="">Selecciona una opción</option>
-      {field.options?.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
+                  // SOLUCION: Usar field.options si existe, sino usar customProps
+                  (() => {
+                    // Determinar que opciones usar: field.options o customProps
+                    const opciones = (field.options && field.options.length > 0) 
+                      ? field.options 
+                      : (customProps?.ownerOptions || []);
+                    
+                    // Determinar el valor seleccionado
+                    const valorActual = opciones.find(opt => opt.value === watch(field.name));
+                    
+                    return (
+                      <Select
+                        options={opciones}
+                        value={valorActual || null}
+                        onChange={(selected) => setValue(field.name, selected ? selected.value : '')}
+                        placeholder={`Selecciona ${field.label}`}
+                        isSearchable={true}
+                        className="my-2"
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: '#22d3ee',
+                            '&:hover': { borderColor: '#22d3ee' },
+                            boxShadow: 'none',
+                            minHeight: '42px'
+                          })
+                        }}
+                      />
+                    );
+                  })()
+                ) : field.type === "select" ? (
+                  <>
+                    <select
+                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      disabled={isLoading}
+                      {...register(field.name, field.validation)}
+                    >
+                      <option value="">Selecciona una opcion</option>
+                      {field.options?.map((opt) => (
+                        <option key={opt.value || opt} value={opt.value || opt}>
+                          {opt.label || opt}
+                        </option>
+                      ))}
+                    </select>
 
-    {/*  CAMPO CONDICIONAL PARA "OTRO" - AHORA DENTRO DEL FRAGMENTO */}
-    {field.name === "especie" && watch('especie') === 'otro' && (
-      <div className="mt-2">
-        <input
-          type="text"
-          placeholder="Especifique la especie"
-          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-          {...register('especieOtro', { required: "Por favor especifica la especie" })}
-        />
-      </div>
-    )}
-  </>
-) : (
+                    {/*  CAMPO CONDICIONAL PARA "OTRO" - AHORA DENTRO DEL FRAGMENTO */}
+                    {field.name === "especie" && watch('especie') === 'otro' && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          placeholder="Especifique la especie"
+                          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+                          {...register('especieOtro', { required: "Por favor especifica la especie" })}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
                   <>
                     <input
                       type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
-                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent" // CAMBIO: py-2.5 y focus ring
+                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                       placeholder={field.placeholder}
                       disabled={isLoading}
                       {...register(field.name, field.validation)}
@@ -210,7 +223,7 @@ options={field.options || customProps?.ownerIdOptions || []}
 
        <button
             type="submit"     
-            className={`w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed ${layout === "grid" ? "col-span-full" : ""}`} // CAMBIO: col-span-full solo para grid
+            className={`w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed ${layout === "grid" ? "col-span-full" : ""}`}
             disabled={isLoading}  
           >
             {isLoading ? "Processing..." : submitLabel} 
