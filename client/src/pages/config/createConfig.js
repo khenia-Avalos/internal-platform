@@ -210,7 +210,7 @@ registerPaciente: {
   name: "pesoUnidad",
   type: "select",
   label: "Unidad de Peso",
-  isSearchable: false,  
+  isSearchable: true,  
   options: [
     { value: "", label: "Selecciona una unidad (opcional)" },
     { value: "kg", label: "Kilogramos (kg)" },
