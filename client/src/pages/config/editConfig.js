@@ -292,7 +292,49 @@ editCita: {
     }
   ],
   submitLabel: "Actualizar Cita"
-}
+},
+editInternado: {
+  title: "Actualizar Internado",
+  fields: [
+    {
+      name: "fechaIngreso",
+      type: "date",
+      label: "Fecha de ingreso",
+      validation: { required: "La fecha de ingreso es requerida" }
+    },
+    {
+      name: "fechaEgreso",
+      type: "date",
+      label: "Fecha de egreso (opcional)"
+    },
+    {
+      name: "medicamento",
+      type: "text",
+      label: "Medicamento",
+      placeholder: "Nombre del medicamento"
+    },
+    {
+      name: "via",
+      type: "text",
+      label: "Vía de administración",
+      placeholder: "Oral, intravenosa, etc."
+    },
+    {
+      name: "dosis",
+      type: "text",
+      label: "Dosis",
+      placeholder: "500mg, 1 tableta, etc."
+    },
+    {
+      name: "notas",
+      type: "textarea",
+      label: "Notas",
+      placeholder: "Observaciones adicionales"
+    }
+  ],
+  submitLabel: "Guardar Internado"
+},
 };
+
 
 

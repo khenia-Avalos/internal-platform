@@ -3,14 +3,16 @@ import { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { createConfig } from "../config/createConfig";
+import { editConfig } from "../config/editConfig";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
-import { getInternadosByPacienteRequest, createInternadoRequest } from "/src/api/internados";
-import { useAuth } from "../../hooks/useAuth"; // ← IMPORTAR useAuth
+import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest } from "/src/api/internados";
+import { useAuth } from "../../hooks/useAuth";
+import { useEdit } from "../../hooks/useEdit";
 
 function PacienteDetallePage() {
     const { user } = useAuth(); 
@@ -24,11 +26,34 @@ function PacienteDetallePage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [internados, setInternados] = useState([]);
     const [mostrarFormInternado, setMostrarFormInternado] = useState(false);
+    const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
     const isClient = user?.role === 'client';
-    const canAddInternado = isAdmin || isDoctor; // Solo admin y doctor pueden agregar internados
+    const canAddInternado = isAdmin || isDoctor;
+
+    // Hook para editar internados
+    const {
+        showForm: showEditInternadoForm,
+        errors: editErrors,
+        successMessage: editSuccessMessage,
+        handleEdit: handleEditInternado,
+        handleUpdate: handleUpdateInternado,
+        handleCancel: handleCancelEditInternado
+    } = useEdit(
+        updateInternadoRequest,
+        getInternadosByPacienteRequest,
+        setInternados,
+        editConfig.editInternado,
+        id
+    );
+
+    // Sobrescribir handleEdit para guardar el internado seleccionado
+    const handleEditInternadoWithSelection = (internado) => {
+        setInternadoSeleccionado(internado);
+        handleEditInternado(internado);
+    };
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -134,18 +159,16 @@ function PacienteDetallePage() {
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold">Historial de Internados</h3>
-                            {/*  Botón "Agregar Internado" - SOLO para admin y doctor */}
                             {canAddInternado && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
                                     className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
                                 >
-                                     Agregar Internado
+                                    Agregar Internado
                                 </button>
                             )}
                         </div>
 
-                        {/* Formulario de internado - solo visible cuando se abre */}
                         {mostrarFormInternado && canAddInternado && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
@@ -169,24 +192,65 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de internados */}
+                        {showEditInternadoForm && canAddInternado && (
+                            <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Internado</h2>
+                                    <button
+                                        onClick={handleCancelEditInternado}
+                                        className="text-gray-400 hover:text-gray-600 transition text-xl"
+                                        aria-label="Cerrar"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <DynamicForm
+                                    {...editConfig.editInternado}
+                                    layout="grid"
+                                    defaultValues={{
+                                        fechaIngreso: internadoSeleccionado?.fechaIngreso?.split('T')[0] || '',
+                                        fechaEgreso: internadoSeleccionado?.fechaEgreso?.split('T')[0] || '',
+                                        medicamento: internadoSeleccionado?.medicamento || '',
+                                        via: internadoSeleccionado?.via || '',
+                                        dosis: internadoSeleccionado?.dosis || '',
+                                        notas: internadoSeleccionado?.notas || ''
+                                    }}
+                                    onSubmit={handleUpdateInternado}
+                                    errors={editErrors}
+                                    successMessage={editSuccessMessage}
+                                />
+                            </div>
+                        )}
+
                         {internados.length === 0 ? (
                             <p className="text-gray-500">No hay internados registrados</p>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {internados.map((internado) => (
-                                    <InfoCard
-                                        key={internado._id}
-                                        title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
-                                        data={[
-                                            { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
-                                            { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
-                                            { label: "Medicamento", value: internado.medicamento || 'No especificado' },
-                                            { label: "Vía", value: internado.via || 'No especificada' },
-                                            { label: "Dosis", value: internado.dosis || 'No especificada' },
-                                            { label: "Notas", value: internado.notas || 'Sin notas' }
-                                        ]}
-                                    />
+                                    <div key={internado._id} className="relative">
+                                        <InfoCard
+                                            title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
+                                            data={[
+                                                { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
+                                                { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
+                                                { label: "Medicamento", value: internado.medicamento || 'No especificado' },
+                                                { label: "Vía", value: internado.via || 'No especificada' },
+                                                { label: "Dosis", value: internado.dosis || 'No especificada' },
+                                                { label: "Notas", value: internado.notas || 'Sin notas' }
+                                            ]}
+                                        />
+                                        {canAddInternado && (
+                                            <button
+                                                onClick={() => handleEditInternadoWithSelection(internado)}
+                                                className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition"
+                                                title="Editar internado"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         )}
