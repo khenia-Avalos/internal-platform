@@ -7,11 +7,11 @@ const internadoSchema = new mongoose.Schema({
     required: true
   },
   fechaIngreso: {
-    type: string,
+    type: String,
     required: true
   },
   fechaEgreso: {
-    type: string
+    type: String
   },
   medicamento: {      
     type: String,
