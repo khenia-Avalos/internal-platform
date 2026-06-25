@@ -34,15 +34,27 @@ function PacienteDetallePage() {
     const canAddInternado = isAdmin || isDoctor;
 
     // Funcion para formatear fechas correctamente sin desfase horario
-    const formatearFechaLocal = (fechaISO) => {
-        if (!fechaISO) return 'No especificada';
-        const fecha = new Date(fechaISO);
-        return fecha.toLocaleDateString('es-CR', {
-            timeZone: 'America/Costa_Rica',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+    const formatearFechaLocal = (fecha) => {
+        if (!fecha) return 'No especificada';
+        
+        // Si ya es string YYYY-MM-DD, formatear directamente
+        if (typeof fecha === 'string' && fecha.includes('-')) {
+            const [year, month, day] = fecha.split('-');
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Si es objeto Date, usar toLocaleDateString
+        try {
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-CR', {
+                timeZone: 'America/Costa_Rica',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch {
+            return 'No especificada';
+        }
     };
 
     // Hook para editar internados
@@ -109,7 +121,17 @@ function PacienteDetallePage() {
 
     const handleCrearInternado = async (data) => {
         try {
-            await createInternadoRequest({ ...data, pacienteId: id });
+            // Forzar formato de fechas
+            const datosEnvio = {
+                ...data,
+                pacienteId: id,
+                fechaIngreso: data.fechaIngreso || '',
+                fechaEgreso: data.fechaEgreso || ''
+            };
+            
+            console.log("Datos a enviar al backend:", datosEnvio);
+            
+            await createInternadoRequest(datosEnvio);
             setMostrarFormInternado(false);
             setErrors([]);
             const response = await getInternadosByPacienteRequest(id);
