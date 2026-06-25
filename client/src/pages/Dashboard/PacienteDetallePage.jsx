@@ -34,7 +34,7 @@ function PacienteDetallePage() {
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
 
-    // Función para cargar todos los datos (paciente, dueño, internados)
+    // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
         setLoading(true);
         try {
@@ -54,17 +54,15 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para formatear fechas correctamente sin desfase horario
+    // Función para formatear fechas
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
-        // Si ya es string YYYY-MM-DD, formatear directamente
         if (typeof fecha === 'string' && fecha.includes('-')) {
             const [year, month, day] = fecha.split('-');
             return `${day}/${month}/${year}`;
         }
         
-        // Si es objeto Date, usar toLocaleDateString
         try {
             const date = new Date(fecha);
             return date.toLocaleDateString('es-CR', {
@@ -94,19 +92,17 @@ function PacienteDetallePage() {
         id
     );
 
-    // Sobrescribir handleEdit para guardar el internado seleccionado
     const handleEditInternadoWithSelection = (internado) => {
         setInternadoSeleccionado(internado);
         handleEditInternado(internado);
     };
 
-    // Función para eliminar internado
     const handleDeleteInternado = async (internadoId, internadoFecha) => {
         if (!window.confirm(`¿Estás seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
         
         try {
             await deleteInternadoRequest(internadoId);
-            await cargarTodosLosDatos(); // Recargar todos los datos
+            await cargarTodosLosDatos();
             toast.success('Internado eliminado exitosamente');
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -114,12 +110,11 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para editar internado (que recarga automáticamente)
     const handleUpdateInternadoConRecarga = async (data) => {
         try {
             await updateInternadoRequest(internadoSeleccionado._id, data);
-            await cargarTodosLosDatos(); // Recargar todos los datos
-            handleCancelEditInternado(); // Cerrar formulario de edición
+            await cargarTodosLosDatos();
+            handleCancelEditInternado();
             toast.success('Internado actualizado exitosamente');
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -144,7 +139,7 @@ function PacienteDetallePage() {
             
             await createInternadoRequest(datosEnvio);
             setMostrarFormInternado(false);
-            await cargarTodosLosDatos(); // Recargar todos los datos
+            await cargarTodosLosDatos();
             toast.success('Internado creado exitosamente');
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -285,36 +280,38 @@ function PacienteDetallePage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {internados.map((internado) => (
-                                    <div key={internado._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                        <div className="p-5 pb-16">
+                                    <div key={internado._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col min-h-[200px]">
+                                        <div className="p-5 pb-20 flex-1">
                                             <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
                                                 Internado {formatearFechaLocal(internado.fechaIngreso)}
                                             </h4>
                                             <div className="space-y-2 text-sm">
-                                                <p className="flex justify-between">
+                                                <div className="flex justify-between">
                                                     <span className="text-gray-500">Fecha Ingreso:</span>
                                                     <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaIngreso)}</span>
-                                                </p>
-                                                <p className="flex justify-between">
+                                                </div>
+                                                <div className="flex justify-between">
                                                     <span className="text-gray-500">Fecha Egreso:</span>
                                                     <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaEgreso) || 'En curso'}</span>
-                                                </p>
-                                                <p className="flex justify-between">
+                                                </div>
+                                                <div className="flex justify-between">
                                                     <span className="text-gray-500">Medicamento:</span>
                                                     <span className="font-medium text-gray-700">{internado.medicamento || 'No especificado'}</span>
-                                                </p>
-                                                <p className="flex justify-between">
+                                                </div>
+                                                <div className="flex justify-between">
                                                     <span className="text-gray-500">Vía:</span>
                                                     <span className="font-medium text-gray-700">{internado.via || 'No especificada'}</span>
-                                                </p>
-                                                <p className="flex justify-between">
+                                                </div>
+                                                <div className="flex justify-between">
                                                     <span className="text-gray-500">Dosis:</span>
                                                     <span className="font-medium text-gray-700">{internado.dosis || 'No especificada'}</span>
-                                                </p>
-                                                <p className="flex justify-between">
+                                                </div>
+                                                <div className="flex flex-col gap-1">
                                                     <span className="text-gray-500">Notas:</span>
-                                                    <span className="font-medium text-gray-700 truncate max-w-[150px]">{internado.notas || 'Sin notas'}</span>
-                                                </p>
+                                                    <span className="font-medium text-gray-700 break-words whitespace-normal">
+                                                        {internado.notas || 'Sin notas'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                         {canAddInternado && (
