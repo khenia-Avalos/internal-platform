@@ -93,8 +93,12 @@ function CitasPage() {
       let response;
       
       if (isDoctor && user?._id) {
-        const doctorId = user._id;
-        response = await getCitasByDoctorRequest(doctorId);
+        // 🔥 Obtener TODAS las citas (con populate completo) y filtrar por doctor
+        const todasLasCitas = await getCitasRequest();
+        const citasDoctor = todasLasCitas.data.filter(cita => 
+          cita.doctorId?._id === user._id || cita.doctorId === user._id
+        );
+        response = { data: citasDoctor };
       } 
       else if (isClient && user?._id) {
         const mascotasRes = await getPacienteByOwnerRequest(user._id);
@@ -169,7 +173,6 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {/* AHORA DOCTOR TAMBIEN PUEDE CREAR CITAS */}
           {(isAdmin || isDoctor || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
@@ -181,7 +184,6 @@ function CitasPage() {
         </div>
       </div>
 
-      {/* Formulario de creación - disponible para admin, doctor y cliente */}
       {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -202,7 +204,6 @@ function CitasPage() {
         </div>
       )}
 
-      {/* Formulario de edición - para admin y doctor */}
       {showEditForm && citaSeleccionada && (isAdmin || isDoctor) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -216,10 +217,14 @@ function CitasPage() {
             isEdit={true}
             datosPrecargados={{
               duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
-              duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
-              correo: citaSeleccionada?.pacienteId?.ownerId?.email,
+              duenoNombre: citaSeleccionada?.pacienteId?.ownerId ? 
+                `${citaSeleccionada.pacienteId.ownerId.username} ${citaSeleccionada.pacienteId.ownerId.lastname || ''}` : 
+                'No disponible',
+              correo: citaSeleccionada?.pacienteId?.ownerId?.email || 'No disponible',
               mascotaId: citaSeleccionada?.pacienteId?._id,
-              mascotaNombre: `${citaSeleccionada?.pacienteId?.nombre} (${citaSeleccionada?.pacienteId?.especie})`
+              mascotaNombre: citaSeleccionada?.pacienteId ? 
+                `${citaSeleccionada.pacienteId.nombre} (${citaSeleccionada.pacienteId.especie})` : 
+                'No disponible'
             }}
           />
         </div>
