@@ -13,6 +13,7 @@ import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
+import { toast } from 'sonner';
 
 function PacienteDetallePage() {
     const { user } = useAuth(); 
@@ -33,7 +34,27 @@ function PacienteDetallePage() {
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
 
-    // Funcion para formatear fechas correctamente sin desfase horario
+    // Función para cargar todos los datos (paciente, dueño, internados)
+    const cargarTodosLosDatos = async () => {
+        setLoading(true);
+        try {
+            const pacienteRes = await getPacienteByIdRequest(id);
+            setPaciente(pacienteRes.data);
+            
+            if (pacienteRes.data.ownerId) {
+                setDueno(pacienteRes.data.ownerId);           
+            }
+            
+            const internadosRes = await getInternadosByPacienteRequest(id);
+            setInternados(internadosRes.data);
+        } catch (error) {
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Función para formatear fechas correctamente sin desfase horario
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
@@ -79,49 +100,41 @@ function PacienteDetallePage() {
         handleEditInternado(internado);
     };
 
-    // Funcion para eliminar internado
+    // Función para eliminar internado
     const handleDeleteInternado = async (internadoId, internadoFecha) => {
-        if (!window.confirm(`¿Estas seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
+        if (!window.confirm(`¿Estás seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
         
         try {
             await deleteInternadoRequest(internadoId);
-            const response = await getInternadosByPacienteRequest(id);
-            setInternados(response.data);
-            setSuccessMessage("Internado eliminado exitosamente");
-            setTimeout(() => setSuccessMessage(""), 3000);
+            await cargarTodosLosDatos(); // Recargar todos los datos
+            toast.success('Internado eliminado exitosamente');
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
+            toast.error('Error al eliminar el internado');
+        }
+    };
+
+    // Función para editar internado (que recarga automáticamente)
+    const handleUpdateInternadoConRecarga = async (data) => {
+        try {
+            await updateInternadoRequest(internadoSeleccionado._id, data);
+            await cargarTodosLosDatos(); // Recargar todos los datos
+            handleCancelEditInternado(); // Cerrar formulario de edición
+            toast.success('Internado actualizado exitosamente');
+        } catch (error) {
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+            toast.error('Error al actualizar el internado');
         }
     };
 
     useEffect(() => {
-        const cargarDatos = async () => {
-            setLoading(true);
-            try {
-                const pacienteRes = await getPacienteByIdRequest(id);
-                setPaciente(pacienteRes.data);
-                
-                if (pacienteRes.data.ownerId) {
-                    setDueno(pacienteRes.data.ownerId);           
-                }
-                
-                const internadosRes = await getInternadosByPacienteRequest(id);
-                setInternados(internadosRes.data);
-            } catch (error) {
-                manejarErrorResponse(error, setErrors, setSuccessMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         if (id) {
-            cargarDatos();
+            cargarTodosLosDatos();
         }
     }, [id]);
 
     const handleCrearInternado = async (data) => {
         try {
-            // Forzar formato de fechas
             const datosEnvio = {
                 ...data,
                 pacienteId: id,
@@ -129,17 +142,13 @@ function PacienteDetallePage() {
                 fechaEgreso: data.fechaEgreso || ''
             };
             
-            console.log("Datos a enviar al backend:", datosEnvio);
-            
             await createInternadoRequest(datosEnvio);
             setMostrarFormInternado(false);
-            setErrors([]);
-            const response = await getInternadosByPacienteRequest(id);
-            setInternados(response.data);
-            setSuccessMessage("Internado creado exitosamente");
-            setTimeout(() => setSuccessMessage(""), 3000);
+            await cargarTodosLosDatos(); // Recargar todos los datos
+            toast.success('Internado creado exitosamente');
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
+            toast.error('Error al crear el internado');
         }
     };
 
@@ -264,7 +273,7 @@ function PacienteDetallePage() {
                                         dosis: internadoSeleccionado?.dosis || '',
                                         notas: internadoSeleccionado?.notas || ''
                                     }}
-                                    onSubmit={handleUpdateInternado}
+                                    onSubmit={handleUpdateInternadoConRecarga}
                                     errors={editErrors}
                                     successMessage={editSuccessMessage}
                                 />
@@ -274,33 +283,51 @@ function PacienteDetallePage() {
                         {internados.length === 0 ? (
                             <p className="text-gray-500">No hay internados registrados</p>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {internados.map((internado) => (
-                                    <div key={internado._id} className="relative">
-                                        <InfoCard
-                                            title={`Internado ${formatearFechaLocal(internado.fechaIngreso)}`}
-                                            data={[
-                                                { label: "Fecha Ingreso", value: formatearFechaLocal(internado.fechaIngreso) },
-                                                { label: "Fecha Egreso", value: formatearFechaLocal(internado.fechaEgreso) || 'En curso' },
-                                                { label: "Medicamento", value: internado.medicamento || 'No especificado' },
-                                                { label: "Vía", value: internado.via || 'No especificada' },
-                                                { label: "Dosis", value: internado.dosis || 'No especificada' },
-                                                { label: "Notas", value: internado.notas || 'Sin notas' }
-                                            ]}
-                                        />
+                                    <div key={internado._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                                        <div className="p-5 pb-16">
+                                            <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                                                Internado {formatearFechaLocal(internado.fechaIngreso)}
+                                            </h4>
+                                            <div className="space-y-2 text-sm">
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Fecha Ingreso:</span>
+                                                    <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaIngreso)}</span>
+                                                </p>
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Fecha Egreso:</span>
+                                                    <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaEgreso) || 'En curso'}</span>
+                                                </p>
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Medicamento:</span>
+                                                    <span className="font-medium text-gray-700">{internado.medicamento || 'No especificado'}</span>
+                                                </p>
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Vía:</span>
+                                                    <span className="font-medium text-gray-700">{internado.via || 'No especificada'}</span>
+                                                </p>
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Dosis:</span>
+                                                    <span className="font-medium text-gray-700">{internado.dosis || 'No especificada'}</span>
+                                                </p>
+                                                <p className="flex justify-between">
+                                                    <span className="text-gray-500">Notas:</span>
+                                                    <span className="font-medium text-gray-700 truncate max-w-[150px]">{internado.notas || 'Sin notas'}</span>
+                                                </p>
+                                            </div>
+                                        </div>
                                         {canAddInternado && (
-                                            <div className="absolute top-2 right-2 flex flex-col gap-1">
+                                            <div className="absolute bottom-3 right-3 flex gap-2">
                                                 <button
                                                     onClick={() => handleEditInternadoWithSelection(internado)}
-                                                    className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium"
-                                                    title="Editar internado"
+                                                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
                                                 >
                                                     Actualizar
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteInternado(internado._id, internado.fechaIngreso)}
-                                                    className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition text-sm font-medium"
-                                                    title="Eliminar internado"
+                                                    className="bg-red-600 text-white px-4 py-1.5 rounded-lg hover:bg-red-700 transition text-sm font-medium shadow-sm"
                                                 >
                                                     Eliminar
                                                 </button>
