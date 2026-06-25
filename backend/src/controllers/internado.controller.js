@@ -1,7 +1,5 @@
 import Internado from '../models/internado.model.js';
-import { manejarError } from '../utils/errorHandler.js';  // ← IMPORTAR
-
-
+import { manejarError } from '../utils/errorHandler.js';
 
 export const getInternadosByPaciente = async (req, res) => {
   try {
@@ -16,33 +14,34 @@ export const getInternadosByPaciente = async (req, res) => {
   }
 };
 
-
 // Crear un nuevo internado
 export const createInternado = async (req, res) => {
   try {
-    const {pacienteId, fechaIngreso, fechaEgreso, medicamentos, notas, } = req.body;
+    const { pacienteId, fechaIngreso, fechaEgreso, medicamento, via, dosis, notas } = req.body;
 
-    
+    // Asegurar que las fechas se guarden como strings en formato YYYY-MM-DD
+    const fechaIngresoStr = fechaIngreso ? new Date(fechaIngreso).toISOString().split('T')[0] : '';
+    const fechaEgresoStr = fechaEgreso ? new Date(fechaEgreso).toISOString().split('T')[0] : '';
+
     const newInternado = new Internado({
       pacienteId,
-      fechaIngreso,
-      fechaEgreso,
-      medicamentos,
-      notas
+      fechaIngreso: fechaIngresoStr,
+      fechaEgreso: fechaEgresoStr,
+      medicamento: medicamento || '',
+      via: via || '',
+      dosis: dosis || '',
+      notas: notas || ''
     });
 
-
     const savedInternado = await newInternado.save();
-    
-    // No enviar password en la respuesta
     const internadoResponse = savedInternado.toObject();
     
     res.status(201).json(internadoResponse);
   } catch (error) {
-     const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
@@ -52,9 +51,16 @@ export const updateInternado = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     
+    // Si vienen fechas, convertirlas a strings YYYY-MM-DD
+    if (data.fechaIngreso) {
+      data.fechaIngreso = new Date(data.fechaIngreso).toISOString().split('T')[0];
+    }
+    if (data.fechaEgreso) {
+      data.fechaEgreso = new Date(data.fechaEgreso).toISOString().split('T')[0];
+    }
+    
     console.log("ID recibido:", id);
     console.log("Datos recibidos:", data);
-    
     
     const internadoActualizado = await Internado.findByIdAndUpdate(id, data, { new: true });
     
@@ -65,9 +71,9 @@ export const updateInternado = async (req, res) => {
     res.json(internadoActualizado);
   } catch (error) {
     const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
@@ -85,9 +91,9 @@ export const deleteInternado = async (req, res) => {
     res.json({ message: "Internado eliminado correctamente" });
   } catch (error) {
     const errorResponse = manejarError(error);
-  res.status(errorResponse.status).json({ 
-    message: errorResponse.message 
-  });
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
   }
 };
 
