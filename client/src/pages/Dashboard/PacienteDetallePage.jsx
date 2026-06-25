@@ -33,6 +33,16 @@ function PacienteDetallePage() {
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
 
+    // Funcion para formatear fechas correctamente sin desfase horario
+    const formatearFechaLocal = (fechaISO) => {
+        if (!fechaISO) return 'No especificada';
+        const fecha = new Date(fechaISO);
+        const año = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        return `${dia}/${mes}/${año}`;
+    };
+
     // Hook para editar internados
     const {
         showForm: showEditInternadoForm,
@@ -229,10 +239,10 @@ function PacienteDetallePage() {
                                 {internados.map((internado) => (
                                     <div key={internado._id} className="relative">
                                         <InfoCard
-                                            title={`Internado ${new Date(internado.fechaIngreso).toLocaleDateString()}`}
+                                            title={`Internado ${formatearFechaLocal(internado.fechaIngreso)}`}
                                             data={[
-                                                { label: "Fecha Ingreso", value: new Date(internado.fechaIngreso).toLocaleDateString() },
-                                                { label: "Fecha Egreso", value: internado.fechaEgreso ? new Date(internado.fechaEgreso).toLocaleDateString() : 'En curso' },
+                                                { label: "Fecha Ingreso", value: formatearFechaLocal(internado.fechaIngreso) },
+                                                { label: "Fecha Egreso", value: formatearFechaLocal(internado.fechaEgreso) || 'En curso' },
                                                 { label: "Medicamento", value: internado.medicamento || 'No especificado' },
                                                 { label: "Vía", value: internado.via || 'No especificada' },
                                                 { label: "Dosis", value: internado.dosis || 'No especificada' },
@@ -242,12 +252,10 @@ function PacienteDetallePage() {
                                         {canAddInternado && (
                                             <button
                                                 onClick={() => handleEditInternadoWithSelection(internado)}
-                                                className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition"
+                                                className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium"
                                                 title="Editar internado"
                                             >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                </svg>
+                                                Actualizar
                                             </button>
                                         )}
                                     </div>
