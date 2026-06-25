@@ -178,15 +178,22 @@ function ClienteDetallePage() {
           <h3 className="text-xl font-semibold mb-4">Mascotas de {cliente.username}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {mascotas.map((mascota) => (
-              <InfoCard
-                key={mascota._id}
-                title={mascota.nombre}
-                data={[
-                  { label: "Especie", value: mascota.especie },
-                  { label: "Raza", value: mascota.raza || 'Sin raza' },
-                  { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
-                ]}
-              />
+              <div key={mascota._id} className="relative">
+                <InfoCard
+                  title={mascota.nombre}
+                  data={[
+                    { label: "Especie", value: mascota.especie },
+                    { label: "Raza", value: mascota.raza || 'Sin raza' },
+                    { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
+                  ]}
+                />
+                <button
+                  onClick={() => navigate(`/pacientes/${mascota._id}`)}
+                  className="absolute top-2 right-2 bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-700 transition text-sm font-medium shadow-sm"
+                >
+                  Ver Detalle
+                </button>
+              </div>
             ))}
           </div>
 
