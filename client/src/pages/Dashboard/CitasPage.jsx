@@ -45,7 +45,7 @@ function CitasPage() {
       try {
         const res = await getPacienteByOwnerRequest(user._id);
         setMascotasCliente(res.data);
-        console.log("🐾 Mascotas del cliente:", res.data);
+        console.log(" Mascotas del cliente:", res.data);
       } catch (error) {
         console.error("Error cargando mascotas del cliente:", error);
       }
@@ -157,7 +157,7 @@ function CitasPage() {
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
           {isDoctor && ' Mis Citas'}
           {isClient && ' Mis Citas'}
-          {isAdmin && ' Gestión de citas'}
+          {isAdmin && ' Gestion de citas'}
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
@@ -169,7 +169,7 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {/*  AHORA DOCTOR TAMBIÉN PUEDE CREAR CITAS */}
+          {/* AHORA DOCTOR TAMBIEN PUEDE CREAR CITAS */}
           {(isAdmin || isDoctor || isClient) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
@@ -181,7 +181,7 @@ function CitasPage() {
         </div>
       </div>
 
-      {/*  Formulario de creación - disponible para admin, doctor y cliente */}
+      {/* Formulario de creación - disponible para admin, doctor y cliente */}
       {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -202,28 +202,28 @@ function CitasPage() {
         </div>
       )}
 
-      {/* Formulario de edición - solo para admin */}
-{showEditForm && citaSeleccionada && isAdmin && (
-  <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-semibold"> Editar Cita</h2>
-      <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
-    </div>
-    
-    <FormularioCita 
-      onSubmit={handleUpdateCita} 
-      cita={citaSeleccionada} 
-      isEdit={true}
-      datosPrecargados={{
-        duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
-        duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
-        correo: citaSeleccionada?.pacienteId?.ownerId?.email,
-        mascotaId: citaSeleccionada?.pacienteId?._id,
-        mascotaNombre: `${citaSeleccionada?.pacienteId?.nombre} (${citaSeleccionada?.pacienteId?.especie})`
-      }}
-    />
-  </div>
-)}
+      {/* Formulario de edición - para admin y doctor */}
+      {showEditForm && citaSeleccionada && (isAdmin || isDoctor) && (
+        <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold"> Editar Cita</h2>
+            <button onClick={() => { setShowEditForm(false); setCitaSeleccionada(null); }} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          
+          <FormularioCita 
+            onSubmit={handleUpdateCita} 
+            cita={citaSeleccionada} 
+            isEdit={true}
+            datosPrecargados={{
+              duenoId: citaSeleccionada?.pacienteId?.ownerId?._id,
+              duenoNombre: `${citaSeleccionada?.pacienteId?.ownerId?.username} ${citaSeleccionada?.pacienteId?.ownerId?.lastname || ''}`,
+              correo: citaSeleccionada?.pacienteId?.ownerId?.email,
+              mascotaId: citaSeleccionada?.pacienteId?._id,
+              mascotaNombre: `${citaSeleccionada?.pacienteId?.nombre} (${citaSeleccionada?.pacienteId?.especie})`
+            }}
+          />
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         {citas.length === 0 ? (
@@ -248,7 +248,7 @@ function CitasPage() {
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-            onEdit={isAdmin ? (cita) => { 
+            onEdit={(isAdmin || isDoctor) ? (cita) => { 
               setCitaSeleccionada(cita); 
               setShowEditForm(true);
             } : undefined}
