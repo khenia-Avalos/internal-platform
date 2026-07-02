@@ -12,6 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getCitasByPacienteRequest } from "/src/api/cita";
+import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -32,54 +33,15 @@ function PacienteDetallePage() {
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
     const [citas, setCitas] = useState([]);
     const [citasLoading, setCitasLoading] = useState(false);
+    const [historialCompleto, setHistorialCompleto] = useState([]);
+    const [historialLoading, setHistorialLoading] = useState(false);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
 
-    // Función para cargar todos los datos
-    const cargarTodosLosDatos = async () => {
-        setLoading(true);
-        try {
-            const pacienteRes = await getPacienteByIdRequest(id);
-            setPaciente(pacienteRes.data);
-            
-            if (pacienteRes.data.ownerId) {
-                setDueno(pacienteRes.data.ownerId);           
-            }
-            
-            const internadosRes = await getInternadosByPacienteRequest(id);
-            setInternados(internadosRes.data);
-            
-            // Cargar citas para el historial clínico
-            await cargarCitasPaciente();
-        } catch (error) {
-            manejarErrorResponse(error, setErrors, setSuccessMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Función para cargar citas del paciente
-    const cargarCitasPaciente = async () => {
-        if (!id) return;
-        
-        setCitasLoading(true);
-        try {
-            const citasRes = await getCitasByPacienteRequest(id);
-            // Ordenar por fecha descendente (más reciente primero)
-            const citasOrdenadas = citasRes.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-            setCitas(citasOrdenadas);
-        } catch (error) {
-            console.error("Error cargando citas del paciente:", error);
-            manejarErrorResponse(error, setErrors, setSuccessMessage);
-        } finally {
-            setCitasLoading(false);
-        }
-    };
-
-    // Función para formatear fechas
+    // Funcion para formatear fechas
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
@@ -103,8 +65,72 @@ function PacienteDetallePage() {
 
     const formatearFechaHora = (fechaISO) => {
         if (!fechaISO) return 'No especificada';
-        const [year, month, day] = fechaISO.split('T')[0].split('-');
-        return `${day}/${month}/${year}`;
+        const date = new Date(fechaISO);
+        return date.toLocaleDateString('es-CR', {
+            timeZone: 'America/Costa_Rica',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    // Función para cargar todos los datos
+    const cargarTodosLosDatos = async () => {
+        setLoading(true);
+        try {
+            const pacienteRes = await getPacienteByIdRequest(id);
+            setPaciente(pacienteRes.data);
+            
+            if (pacienteRes.data.ownerId) {
+                setDueno(pacienteRes.data.ownerId);           
+            }
+            
+            const internadosRes = await getInternadosByPacienteRequest(id);
+            setInternados(internadosRes.data);
+            
+            await cargarCitasPaciente();
+            await cargarHistorialCompleto();
+        } catch (error) {
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Función para cargar citas del paciente
+    const cargarCitasPaciente = async () => {
+        if (!id) return;
+        
+        setCitasLoading(true);
+        try {
+            const citasRes = await getCitasByPacienteRequest(id);
+            const citasOrdenadas = citasRes.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            setCitas(citasOrdenadas);
+        } catch (error) {
+            console.error("Error cargando citas del paciente:", error);
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+        } finally {
+            setCitasLoading(false);
+        }
+    };
+
+    // Función para cargar historial clínico completo
+    const cargarHistorialCompleto = async () => {
+        if (!id) return;
+        
+        setHistorialLoading(true);
+        try {
+            const res = await getHistorialByPacienteRequest(id);
+            setHistorialCompleto(res.data || []);
+        } catch (error) {
+            console.error("Error cargando historial completo:", error);
+            // Si no existe, no mostrar error
+            if (error.response?.status !== 404) {
+                manejarErrorResponse(error, setErrors, setSuccessMessage);
+            }
+        } finally {
+            setHistorialLoading(false);
+        }
     };
 
     // Hook para editar internados
@@ -251,6 +277,9 @@ function PacienteDetallePage() {
                         </div>
                     )}
                     
+                    {/* ============================================ */}
+                    {/* SECCIÓN DE INTERNADOS */}
+                    {/* ============================================ */}
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold">Historial de Internados</h3>
@@ -378,61 +407,130 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* ============================================= */}
-                    {/* SECCIÓN DE HISTORIAL CLÍNICO */}
-                    {/* ============================================= */}
+                    {/* ============================================ */}
+                    {/* SECCIÓN DE CITAS */}
+                    {/* ============================================ */}
                     <div className="mt-8">
-                        <div className="mb-6">
-                            <h3 className="text-xl font-semibold text-gray-800">Historial Clínico</h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Registro completo de citas y observaciones médicas de {paciente.nombre}
-                            </p>
-                        </div>
-
-                        {/* Fecha de registro de la mascota */}
-                        <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-medium text-gray-600">Fecha de registro en la clínica:</span>
-                                <span className="text-sm font-semibold text-gray-800">
-                                    {paciente.createdAt ? formatearFechaLocal(paciente.createdAt) : 'No especificada'}
-                                </span>
+                        <h3 className="text-xl font-semibold mb-4">Citas Registradas</h3>
+                        
+                        {citasLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
                             </div>
-                        </div>
-
-                        {/* Tabla de citas */}
-                        <div>
-                            <h4 className="text-lg font-semibold text-gray-700 mb-4">Citas Registradas</h4>
-                            
-                            {citasLoading ? (
-                                <div className="flex justify-center items-center h-32">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                                </div>
-                            ) : citas.length === 0 ? (
-                                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                                    <p className="text-gray-500">No hay citas registradas para esta mascota</p>
-                                </div>
-                            ) : (
-                                <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-                                    <DataTable
-                                        columns={[
-                                            { header: "Fecha", accessor: "fecha", render: (cita) => formatearFechaHora(cita.fecha) },
-                                            { header: "Hora", accessor: "horaInicio" },
-                                            { header: "Título", accessor: "titulo", render: (cita) => cita.titulo || 'Sin título' },
-                                            { header: "Descripción", accessor: "descripcion", render: (cita) => cita.descripcion || 'Sin descripción' },
-                                            { header: "Síntomas", accessor: "sintomas", render: (cita) => cita.sintomas || 'No reportados' },
-                                            { header: "Observaciones del Doctor", accessor: "notas", render: (cita) => cita.notas || 'Sin observaciones' },
-                                            { header: "Estado", accessor: "estado", render: (cita) => obtenerEstadoCita(cita.estado) }
-                                        ]}
-                                        data={citas}
-                                        onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        ) : citas.length === 0 ? (
+                            <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                <p className="text-gray-500">No hay citas registradas para esta mascota</p>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+                                <DataTable
+                                    columns={[
+                                        { header: "Fecha", accessor: "fecha", render: (cita) => formatearFechaHora(cita.fecha) },
+                                        { header: "Hora", accessor: "horaInicio" },
+                                        { header: "Título", accessor: "titulo", render: (cita) => cita.titulo || 'Sin título' },
+                                        { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username || 'No asignado' },
+                                        { header: "Estado", accessor: "estado", render: (cita) => obtenerEstadoCita(cita.estado) }
+                                    ]}
+                                    data={citas}
+                                    onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
+                                />
+                            </div>
+                        )}
                     </div>
-                    {/* ============================================= */}
-                    {/* FIN SECCIÓN DE HISTORIAL CLÍNICO */}
-                    {/* ============================================= */}
+
+                    {/* ============================================ */}
+                    {/* SECCIÓN DE HISTORIAL CLÍNICO COMPLETO */}
+                    {/* ============================================ */}
+                    <div className="mt-8">
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Historial Clínico Completo</h3>
+                        
+                        {historialLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                            </div>
+                        ) : historialCompleto.length === 0 ? (
+                            <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                <p className="text-gray-500">No hay registros clínicos para esta mascota</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {historialCompleto.map((registro) => (
+                                    <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+                                        <div className="flex justify-between items-start mb-3 pb-2 border-b border-gray-100">
+                                            <h4 className="text-lg font-semibold text-gray-800">
+                                                Registro del {formatearFechaLocal(registro.createdAt)}
+                                            </h4>
+                                            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                                Cita: {registro.citaId?.titulo || 'Sin título'}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Motivo de consulta</p>
+                                                <p className="text-gray-800 font-medium">{registro.motivoConsulta || 'No especificado'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Síntomas reportados</p>
+                                                <p className="text-gray-800 font-medium">{registro.sintomas || 'No especificados'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Diagnóstico</p>
+                                                <p className="text-gray-800 font-medium">{registro.diagnostico || 'No especificado'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Tratamiento indicado</p>
+                                                <p className="text-gray-800 font-medium">{registro.tratamiento || 'No especificado'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Medicamentos recetados</p>
+                                                <p className="text-gray-800 font-medium">
+                                                    {registro.medicamentos?.length > 0 
+                                                        ? registro.medicamentos.map(m => `${m.nombre} (${m.dosis})`).join(', ')
+                                                        : 'No especificados'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Exámenes realizados</p>
+                                                <p className="text-gray-800 font-medium">
+                                                    {registro.examenes?.length > 0
+                                                        ? registro.examenes.map(e => `${e.nombre}: ${e.resultado}`).join(', ')
+                                                        : 'No especificados'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Peso registrado</p>
+                                                <p className="text-gray-800 font-medium">
+                                                    {registro.pesoRegistrado?.valor 
+                                                        ? `${registro.pesoRegistrado.valor} ${registro.pesoRegistrado.unidad || 'kg'}`
+                                                        : 'No registrado'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Temperatura registrada</p>
+                                                <p className="text-gray-800 font-medium">
+                                                    {registro.temperaturaRegistrada 
+                                                        ? `${registro.temperaturaRegistrada} °C`
+                                                        : 'No registrada'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Próxima cita sugerida</p>
+                                                <p className="text-gray-800 font-medium">
+                                                    {registro.proximaCitaSugerida 
+                                                        ? formatearFechaHora(registro.proximaCitaSugerida)
+                                                        : 'No sugerida'}
+                                                </p>
+                                            </div>
+                                            <div className="md:col-span-2 lg:col-span-3">
+                                                <p className="text-sm text-gray-500">Observaciones adicionales</p>
+                                                <p className="text-gray-800 font-medium">{registro.observaciones || 'No especificadas'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </div>
