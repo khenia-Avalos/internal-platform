@@ -11,7 +11,6 @@ import pacientesRoutes from './routes/pacientes.routes.js';
 import horarioRoutes from './routes/horario.routes.js';
 import internadoRoutes from './routes/internado.routes.js';
 import pausaRoutes from './routes/pausa.routes.js';
-import historialRoutes from './routes/historialClinico.routes.js';
 import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import { FRONTEND_URL } from "./config.js";
@@ -35,19 +34,12 @@ app.use(
   })
 );
 
+
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-// =============================================
-// 🔥 RUTAS ESPECÍFICAS PRIMERO (más específicas)
-// =============================================
-app.use('/api/historial', historialRoutes);
-app.use("/api", clientesTemporalesRoutes);
 
-// =============================================
-// 🔥 RUTAS GENÉRICAS DESPUÉS
-// =============================================
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
@@ -57,5 +49,6 @@ app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
+app.use("/api", clientesTemporalesRoutes);
 
 export default app;
