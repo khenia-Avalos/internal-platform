@@ -352,12 +352,6 @@ editHistorialClinico: {
       rows: 2
     },
     {
-      name: "tiempoSintomas",
-      type: "text",
-      label: "Tiempo con los síntomas",
-      placeholder: "Ej: 2 días, 1 semana..."
-    },
-    {
       name: "diagnostico",
       type: "textarea",
       label: "Diagnóstico",
@@ -374,43 +368,13 @@ editHistorialClinico: {
       name: "medicamentos",
       type: "textarea",
       label: "Medicamentos recetados",
-      rows: 4,
-      helperText: "Usa el formato: Nombre | Dosis | Frecuencia | Duración | Vía (uno por línea)"
+      rows: 3
     },
     {
       name: "examenes",
       type: "textarea",
       label: "Exámenes realizados",
-      rows: 3,
-      helperText: "Usa el formato: Nombre | Resultado | Fecha (uno por línea)"
-    },
-    {
-      name: "peso",
-      type: "number",
-      label: "Peso (kg)",
-      step: "0.1"
-    },
-    {
-      name: "temperatura",
-      type: "number",
-      label: "Temperatura (°C)",
-      step: "0.1"
-    },
-    {
-      name: "frecuenciaCardiaca",
-      type: "number",
-      label: "Frecuencia cardíaca (latidos/min)"
-    },
-    {
-      name: "frecuenciaRespiratoria",
-      type: "number",
-      label: "Frecuencia respiratoria (resp/min)"
-    },
-    {
-      name: "presionArterial",
-      type: "text",
-      label: "Presión arterial",
-      placeholder: "Ej: 120/80 mmHg"
+      rows: 3
     },
     {
       name: "observaciones",

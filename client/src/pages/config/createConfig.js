@@ -391,13 +391,12 @@ completarRegistroCliente: {
 
 // Agregar al final del objeto createConfig
 historialClinico: {
-  title: "Registro Clínico Completo",
+  title: "Registro Clínico",
   fields: [
     {
       name: "motivoConsulta",
       type: "textarea",
       label: "Motivo de la consulta",
-      placeholder: "¿Qué trajo al paciente a la consulta?",
       rows: 2,
       validation: { required: "El motivo de la consulta es requerido" }
     },
@@ -405,20 +404,12 @@ historialClinico: {
       name: "sintomas",
       type: "textarea",
       label: "Síntomas reportados",
-      placeholder: "Describe los síntomas que presenta el paciente",
       rows: 2
-    },
-    {
-      name: "tiempoSintomas",
-      type: "text",
-      label: "Tiempo con los síntomas",
-      placeholder: "Ej: 2 días, 1 semana, 3 meses..."
     },
     {
       name: "diagnostico",
       type: "textarea",
       label: "Diagnóstico",
-      placeholder: "Diagnóstico principal y secundarios",
       rows: 2,
       validation: { required: "El diagnóstico es requerido" }
     },
@@ -426,63 +417,26 @@ historialClinico: {
       name: "tratamiento",
       type: "textarea",
       label: "Tratamiento indicado",
-      placeholder: "Describe el tratamiento recomendado",
       rows: 2
     },
     {
       name: "medicamentos",
       type: "textarea",
       label: "Medicamentos recetados",
-      placeholder: "Nombre | Dosis | Frecuencia | Duración | Vía\nEj: Amoxicilina | 500mg | c/8h | 7 días | Oral",
-      rows: 4,
-      helperText: "Usa el formato: Nombre | Dosis | Frecuencia | Duración | Vía (uno por línea)"
+      rows: 3,
+      helperText: "Escribe cada medicamento en una línea (ej: Amoxicilina 500mg cada 8h)"
     },
     {
       name: "examenes",
       type: "textarea",
       label: "Exámenes realizados",
-      placeholder: "Nombre | Resultado | Fecha\nEj: Hemograma | Normal | 2026-07-02",
       rows: 3,
-      helperText: "Usa el formato: Nombre | Resultado | Fecha (uno por línea)"
-    },
-    // Signos vitales
-    {
-      name: "peso",
-      type: "number",
-      label: "Peso (kg)",
-      placeholder: "Peso actual del paciente",
-      step: "0.1"
-    },
-    {
-      name: "temperatura",
-      type: "number",
-      label: "Temperatura (°C)",
-      placeholder: "Temperatura corporal",
-      step: "0.1"
-    },
-    {
-      name: "frecuenciaCardiaca",
-      type: "number",
-      label: "Frecuencia cardíaca (latidos/min)",
-      placeholder: "Ej: 120"
-    },
-    {
-      name: "frecuenciaRespiratoria",
-      type: "number",
-      label: "Frecuencia respiratoria (resp/min)",
-      placeholder: "Ej: 30"
-    },
-    {
-      name: "presionArterial",
-      type: "text",
-      label: "Presión arterial",
-      placeholder: "Ej: 120/80 mmHg"
+      helperText: "Escribe cada examen en una línea (ej: Hemograma: normal)"
     },
     {
       name: "observaciones",
       type: "textarea",
       label: "Observaciones adicionales",
-      placeholder: "Cualquier otra observación relevante",
       rows: 3
     },
     {

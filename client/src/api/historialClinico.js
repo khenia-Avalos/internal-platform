@@ -1,27 +1,31 @@
 import axios from 'axios';
 
-// ============================================
-// 🔥 HISTORIAL CLÍNICO - API
-// ============================================
-
-// Crear historial clínico para una cita
-export const crearHistorialRequest = async (citaId, data) => {
-  return await axios.post(`/api/citas/${citaId}/historial`, data);
+// Obtener historial por cita
+export const getHistorialByCitaRequest = async (citaId) => {
+  return await axios.get(`/api/historial/cita/${citaId}`);
 };
 
-// Obtener historial clínico de una cita
-export const obtenerHistorialRequest = async (citaId) => {
-  return await axios.get(`/api/citas/${citaId}/historial`);
+// Obtener historial por paciente
+export const getHistorialByPacienteRequest = async (pacienteId) => {
+  return await axios.get(`/api/historial/paciente/${pacienteId}`);
 };
 
-// Actualizar historial clínico de una cita
-export const actualizarHistorialRequest = async (citaId, data) => {
-  return await axios.put(`/api/citas/${citaId}/historial`, data);
+// Obtener historial por ID
+export const getHistorialByIdRequest = async (id) => {
+  return await axios.get(`/api/historial/${id}`);
 };
 
-// ============================================
-// ⚠️ ALIAS PARA COMPATIBILIDAD CON NOMBRES ANTIGUOS
-// ============================================
-export const getHistorialByCitaRequest = obtenerHistorialRequest;
-export const createHistorialRequest = crearHistorialRequest;
-export const updateHistorialRequest = actualizarHistorialRequest;
+// Crear historial
+export const createHistorialRequest = async (data) => {
+  return await axios.post('/api/historial', data);
+};
+
+// Actualizar historial
+export const updateHistorialRequest = async (id, data) => {
+  return await axios.put(`/api/historial/${id}`, data);
+};
+
+// Eliminar historial
+export const deleteHistorialRequest = async (id) => {
+  return await axios.delete(`/api/historial/${id}`);
+};
