@@ -1,31 +1,29 @@
 import axios from 'axios';
 
+// 🔥 URL COMPLETA DEL BACKEND
+const API_URL = 'https://el-exito-internal-platform.onrender.com';
+
 // Obtener historial por cita
 export const getHistorialByCitaRequest = async (citaId) => {
-  return await axios.get(`/api/historial/cita/${citaId}`);
-};
-
-// Obtener historial por paciente
-export const getHistorialByPacienteRequest = async (pacienteId) => {
-  return await axios.get(`/api/historial/paciente/${pacienteId}`);
-};
-
-// Obtener historial por ID
-export const getHistorialByIdRequest = async (id) => {
-  return await axios.get(`/api/historial/${id}`);
+  console.log('🔍 GET a:', `${API_URL}/api/historial/cita/${citaId}`);
+  return await axios.get(`${API_URL}/api/historial/cita/${citaId}`);
 };
 
 // Crear historial
 export const createHistorialRequest = async (data) => {
-  return await axios.post('/api/historial', data);
+  console.log('🔥 POST a:', `${API_URL}/api/historial`);
+  console.log('📝 Datos:', data);
+  return await axios.post(`${API_URL}/api/historial`, data);
 };
 
 // Actualizar historial
 export const updateHistorialRequest = async (id, data) => {
-  return await axios.put(`/api/historial/${id}`, data);
+  console.log('🔥 PUT a:', `${API_URL}/api/historial/${id}`);
+  return await axios.put(`${API_URL}/api/historial/${id}`, data);
 };
 
 // Eliminar historial
 export const deleteHistorialRequest = async (id) => {
-  return await axios.delete(`/api/historial/${id}`);
+  console.log('🗑️ DELETE a:', `${API_URL}/api/historial/${id}`);
+  return await axios.delete(`${API_URL}/api/historial/${id}`);
 };
