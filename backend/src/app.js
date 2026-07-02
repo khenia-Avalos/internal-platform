@@ -14,6 +14,8 @@ import pausaRoutes from './routes/pausa.routes.js';
 import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import { FRONTEND_URL } from "./config.js";
+import historialRoutes from './routes/historialClinico.routes.js';
+
 
 const app = express();
 
@@ -49,6 +51,8 @@ app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
+app.use('/api/historial', historialRoutes);
+
 app.use("/api", clientesTemporalesRoutes);
 
 export default app;
