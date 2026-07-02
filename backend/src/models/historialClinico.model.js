@@ -11,87 +11,23 @@ const historialClinicoSchema = new mongoose.Schema({
     ref: 'Cita',
     required: true
   },
-  // Datos médicos de la consulta
-  motivoConsulta: {
-    type: String,
-    trim: true,
-    default: ''
+  motivoConsulta: { type: String, default: '' },
+  sintomas: { type: String, default: '' },
+  diagnostico: { type: String, default: '' },
+  tratamiento: { type: String, default: '' },
+  medicamentos: { type: Array, default: [] },
+  examenes: { type: Array, default: [] },
+  pesoRegistrado: { 
+    valor: { type: Number, default: 0 },
+    unidad: { type: String, default: 'kg' }
   },
-  sintomas: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  diagnostico: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  tratamiento: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  // Medicamentos recetados
-  medicamentos: [{
-    nombre: {
-      type: String,
-      trim: true
-    },
-    dosis: {
-      type: String,
-      trim: true
-    },
-    frecuencia: {
-      type: String,
-      trim: true
-    },
-    duracion: {
-      type: String,
-      trim: true
-    }
-  }],
-  // Exámenes realizados
-  examenes: [{
-    nombre: {
-      type: String,
-      trim: true
-    },
-    resultado: {
-      type: String,
-      trim: true
-    },
-    fecha: {
-      type: Date
-    }
-  }],
-  // Signos vitales
-  pesoRegistrado: {
-    valor: Number,
-    unidad: {
-      type: String,
-      enum: ['kg', 'lb', 'g'],
-      default: 'kg'
-    }
-  },
-  temperaturaRegistrada: {
-    type: Number
-  },
-  // Observaciones generales
-  observaciones: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  // Próxima cita sugerida
-  proximaCitaSugerida: {
-    type: Date
-  },
-  // Estado de la consulta
-  estadoConsulta: {
-    type: String,
-    enum: ['en_progreso', 'completada', 'pendiente'],
-    default: 'pendiente'
+  temperaturaRegistrada: { type: Number, default: 0 },
+  observaciones: { type: String, default: '' },
+  proximaCitaSugerida: { type: Date },
+  estadoConsulta: { 
+    type: String, 
+    enum: ['en_progreso', 'completada', 'pendiente'], 
+    default: 'completada' 
   }
 }, {
   timestamps: true

@@ -1,43 +1,36 @@
 import HistorialClinico from '../models/historialClinico.model.js';
-import { manejarError } from '../utils/errorHandler.js';
 
-// Obtener historial por ID de cita
+// Obtener historial por cita
 export const getHistorialByCita = async (req, res) => {
   try {
     const { citaId } = req.params;
+    console.log('🔍 Buscando historial para cita:', citaId);
     
-    const historial = await HistorialClinico.findOne({ citaId })
-      .populate('pacienteId', 'nombre especie raza')
-      .populate('citaId', 'fecha horaInicio titulo');
+    const historial = await HistorialClinico.findOne({ citaId });
     
     if (!historial) {
-      return res.status(404).json({ message: 'No hay registro clínico para esta cita' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'No hay registro clínico para esta cita' 
+      });
     }
     
-    res.json(historial);
+    res.json({ success: true, data: historial });
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error('❌ Error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Obtener historial por ID de paciente (todos los registros)
+// Obtener historial por paciente
 export const getHistorialByPaciente = async (req, res) => {
   try {
     const { pacienteId } = req.params;
-    
-    const historial = await HistorialClinico.find({ pacienteId })
-      .populate('citaId', 'fecha horaInicio titulo estado')
-      .sort({ createdAt: -1 });
-    
-    res.json(historial);
+    const historial = await HistorialClinico.find({ pacienteId }).sort({ createdAt: -1 });
+    res.json({ success: true, data: historial });
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error('❌ Error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -45,27 +38,24 @@ export const getHistorialByPaciente = async (req, res) => {
 export const getHistorialById = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const historial = await HistorialClinico.findById(id)
-      .populate('pacienteId', 'nombre especie raza')
-      .populate('citaId', 'fecha horaInicio titulo estado');
-
+    const historial = await HistorialClinico.findById(id);
+    
     if (!historial) {
-      return res.status(404).json({ message: 'Registro clínico no encontrado' });
+      return res.status(404).json({ success: false, message: 'Registro no encontrado' });
     }
-
-    res.json(historial);
+    
+    res.json({ success: true, data: historial });
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error('❌ Error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Crear nuevo registro clínico
+// Crear historial
 export const createHistorial = async (req, res) => {
   try {
+    console.log('📝 Creando historial con datos:', req.body);
+    
     const { 
       pacienteId, 
       citaId, 
@@ -78,93 +68,81 @@ export const createHistorial = async (req, res) => {
       pesoRegistrado, 
       temperaturaRegistrada, 
       observaciones, 
-      proximaCitaSugerida,
-      estadoConsulta
+      proximaCitaSugerida 
     } = req.body;
 
-    // Verificar si ya existe un historial para esta cita
-    const existeHistorial = await HistorialClinico.findOne({ citaId });
-    if (existeHistorial) {
+    // Verificar si ya existe
+    const existe = await HistorialClinico.findOne({ citaId });
+    if (existe) {
       return res.status(400).json({ 
+        success: false,
         message: 'Ya existe un registro clínico para esta cita' 
       });
     }
 
-    const newHistorial = new HistorialClinico({
+    const nuevo = new HistorialClinico({
       pacienteId,
       citaId,
-      motivoConsulta,
-      sintomas,
-      diagnostico,
-      tratamiento,
-      medicamentos,
-      examenes,
-      pesoRegistrado,
-      temperaturaRegistrada,
-      observaciones,
-      proximaCitaSugerida,
-      estadoConsulta: estadoConsulta || 'completada'
+      motivoConsulta: motivoConsulta || '',
+      sintomas: sintomas || '',
+      diagnostico: diagnostico || '',
+      tratamiento: tratamiento || '',
+      medicamentos: medicamentos || [],
+      examenes: examenes || [],
+      pesoRegistrado: pesoRegistrado || { valor: 0, unidad: 'kg' },
+      temperaturaRegistrada: temperaturaRegistrada || 0,
+      observaciones: observaciones || '',
+      proximaCitaSugerida: proximaCitaSugerida || null,
+      estadoConsulta: 'completada'
     });
 
-    const savedHistorial = await newHistorial.save();
+    const guardado = await nuevo.save();
+    console.log('✅ Historial guardado:', guardado);
     
-    const historialCompleto = await HistorialClinico.findById(savedHistorial._id)
-      .populate('pacienteId', 'nombre especie raza')
-      .populate('citaId', 'fecha horaInicio titulo');
-
-    res.status(201).json(historialCompleto);
-  } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
+    res.status(201).json({ 
+      success: true, 
+      message: 'Registro clínico creado exitosamente',
+      data: guardado 
     });
+  } catch (error) {
+    console.error('❌ Error al crear historial:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Actualizar registro clínico
+// Actualizar historial
 export const updateHistorial = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    console.log('📝 Actualizando historial:', id, data);
 
-    const historialExistente = await HistorialClinico.findById(id);
-    if (!historialExistente) {
-      return res.status(404).json({ message: 'Registro clínico no encontrado' });
+    const actualizado = await HistorialClinico.findByIdAndUpdate(id, data, { new: true });
+    
+    if (!actualizado) {
+      return res.status(404).json({ success: false, message: 'Registro no encontrado' });
     }
-
-    const historialActualizado = await HistorialClinico.findByIdAndUpdate(
-      id, 
-      data, 
-      { new: true, runValidators: true }
-    )
-    .populate('pacienteId', 'nombre especie raza')
-    .populate('citaId', 'fecha horaInicio titulo');
-
-    res.json(historialActualizado);
+    
+    res.json({ success: true, message: 'Registro actualizado', data: actualizado });
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error('❌ Error al actualizar:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Eliminar registro clínico
+// Eliminar historial
 export const deleteHistorial = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const historialEliminado = await HistorialClinico.findByIdAndDelete(id);
+    const eliminado = await HistorialClinico.findByIdAndDelete(id);
     
-    if (!historialEliminado) {
-      return res.status(404).json({ message: 'Registro clínico no encontrado' });
+    if (!eliminado) {
+      return res.status(404).json({ success: false, message: 'Registro no encontrado' });
     }
-
-    res.json({ message: 'Registro clínico eliminado exitosamente' });
+    
+    res.json({ success: true, message: 'Registro eliminado' });
   } catch (error) {
-    const errorResponse = manejarError(error);
-    res.status(errorResponse.status).json({ 
-      message: errorResponse.message 
-    });
+    console.error('❌ Error al eliminar:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
