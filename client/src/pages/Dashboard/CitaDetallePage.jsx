@@ -25,10 +25,10 @@ function CitaDetallePage() {
   const [updating, setUpdating] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
   const [historial, setHistorial] = useState(null);
-  const [showHistorialForm, setShowHistorialForm] = useState(false);
-  const [showEditHistorialForm, setShowEditHistorialForm] = useState(false);
   const [historialLoading, setHistorialLoading] = useState(false);
-  const [editHistorialData, setEditHistorialData] = useState({});
+  const [showHistorialForm, setShowHistorialForm] = useState(false);
+  const [historialFormData, setHistorialFormData] = useState({});
+  const [isEditingHistorial, setIsEditingHistorial] = useState(false);
   const [editErrors, setEditErrors] = useState([]);
   const [editSuccessMessage, setEditSuccessMessage] = useState("");
 
@@ -108,7 +108,7 @@ function CitaDetallePage() {
   };
 
   // ============================================
-  // FUNCIONES DE HISTORIAL CLÍNICO
+  // FUNCIONES DE HISTORIAL CLÍNICO (UNIFICADAS)
   // ============================================
 
   const cargarHistorial = async () => {
@@ -131,11 +131,64 @@ function CitaDetallePage() {
     }
   };
 
-  const handleCreateHistorial = async (data) => {
-    try {
-      console.log('📝 Datos del formulario:', data);
+  // Función para abrir el formulario (crear o editar)
+  const openHistorialForm = () => {
+    if (historial) {
+      // Si ya existe historial, preparar datos para editar
+      const medicamentosText = Array.isArray(historial.medicamentos) 
+        ? historial.medicamentos.map(m => {
+            let text = m.nombre || '';
+            if (m.dosis) text += `: ${m.dosis}`;
+            if (m.frecuencia) text += ` cada ${m.frecuencia}`;
+            if (m.duracion) text += ` por ${m.duracion}`;
+            return text;
+          }).join('\n')
+        : '';
       
-      // Verificar que tenemos los datos necesarios
+      const examenesText = Array.isArray(historial.examenes)
+        ? historial.examenes.map(e => {
+            let text = e.nombre || '';
+            if (e.resultado) text += `: ${e.resultado}`;
+            return text;
+          }).join('\n')
+        : '';
+      
+      setHistorialFormData({
+        motivoConsulta: historial.motivoConsulta || '',
+        sintomas: historial.sintomas || '',
+        diagnostico: historial.diagnostico || '',
+        tratamiento: historial.tratamiento || '',
+        medicamentos: medicamentosText,
+        examenes: examenesText,
+        pesoRegistrado: historial.pesoRegistrado?.valor || '',
+        temperaturaRegistrada: historial.temperaturaRegistrada || '',
+        observaciones: historial.observaciones || '',
+        proximaCitaSugerida: historial.proximaCitaSugerida ? 
+          new Date(historial.proximaCitaSugerida).toISOString().split('T')[0] : ''
+      });
+      setIsEditingHistorial(true);
+    } else {
+      // Nuevo registro
+      setHistorialFormData({
+        motivoConsulta: '',
+        sintomas: '',
+        diagnostico: '',
+        tratamiento: '',
+        medicamentos: '',
+        examenes: '',
+        pesoRegistrado: '',
+        temperaturaRegistrada: '',
+        observaciones: '',
+        proximaCitaSugerida: ''
+      });
+      setIsEditingHistorial(false);
+    }
+    setShowHistorialForm(true);
+  };
+
+  // Función para guardar historial (crear o actualizar)
+  const handleSaveHistorial = async (data) => {
+    try {
       if (!cita?.pacienteId?._id) {
         toast.error('No se puede crear el registro: falta la mascota asociada a la cita');
         return;
@@ -206,150 +259,23 @@ function CitaDetallePage() {
         estadoConsulta: 'completada'
       };
       
-      console.log('📤 Datos a enviar al backend:', JSON.stringify(datosEnvio, null, 2));
-      
-      const response = await createHistorialRequest(datosEnvio);
-      console.log('✅ Respuesta del backend:', response.data);
+      if (isEditingHistorial && historial?._id) {
+        // Actualizar
+        await updateHistorialRequest(historial._id, datosEnvio);
+        toast.success('Registro clínico actualizado exitosamente');
+      } else {
+        // Crear
+        await createHistorialRequest(datosEnvio);
+        toast.success('Registro clínico creado exitosamente');
+      }
       
       await cargarHistorial();
       setShowHistorialForm(false);
-      toast.success('Registro clínico creado exitosamente');
     } catch (error) {
-      console.error('❌ Error detallado:', error);
-      console.error('❌ Respuesta del error:', error.response?.data);
+      console.error('Error al guardar historial:', error);
       manejarErrorResponse(error, setErrors);
-      toast.error('Error al crear el registro clínico: ' + (error.response?.data?.message || error.message));
+      toast.error('Error al guardar el registro clínico');
     }
-  };
-
-  // Función para abrir el formulario de edición con los datos existentes
-  const handleEditHistorialClick = () => {
-    if (!historial) return;
-    
-    // Preparar los datos para el formulario
-    const medicamentosText = Array.isArray(historial.medicamentos) 
-      ? historial.medicamentos.map(m => {
-          let text = m.nombre || '';
-          if (m.dosis) text += `: ${m.dosis}`;
-          if (m.frecuencia) text += ` cada ${m.frecuencia}`;
-          if (m.duracion) text += ` por ${m.duracion}`;
-          return text;
-        }).join('\n')
-      : '';
-    
-    const examenesText = Array.isArray(historial.examenes)
-      ? historial.examenes.map(e => {
-          let text = e.nombre || '';
-          if (e.resultado) text += `: ${e.resultado}`;
-          return text;
-        }).join('\n')
-      : '';
-    
-    setEditHistorialData({
-      motivoConsulta: historial.motivoConsulta || '',
-      sintomas: historial.sintomas || '',
-      diagnostico: historial.diagnostico || '',
-      tratamiento: historial.tratamiento || '',
-      medicamentos: medicamentosText,
-      examenes: examenesText,
-      pesoRegistrado: historial.pesoRegistrado?.valor || '',
-      temperaturaRegistrada: historial.temperaturaRegistrada || '',
-      observaciones: historial.observaciones || '',
-      proximaCitaSugerida: historial.proximaCitaSugerida ? 
-        new Date(historial.proximaCitaSugerida).toISOString().split('T')[0] : ''
-    });
-    
-    setShowEditHistorialForm(true);
-  };
-
-  // Función para actualizar el historial
-  const handleUpdateHistorial = async (data) => {
-    try {
-      if (!historial?._id) {
-        toast.error('No hay registro clínico para actualizar');
-        return;
-      }
-      
-      console.log('Actualizando historial ID:', historial._id);
-      console.log('Datos a actualizar:', data);
-      
-      // Convertir medicamentos de texto a array de objetos
-      const medicamentosArray = data.medicamentos ? 
-        data.medicamentos.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-              const nombre = parts[0].trim();
-              const resto = parts.slice(1).join(':').trim();
-              const dosisMatch = resto.match(/(\d+\s*(mg|g|ml|tableta|comprimido|gotas))/i);
-              return {
-                nombre: nombre,
-                dosis: dosisMatch ? dosisMatch[0] : resto,
-                frecuencia: '',
-                duracion: ''
-              };
-            }
-            return {
-              nombre: line.trim(),
-              dosis: '',
-              frecuencia: '',
-              duracion: ''
-            };
-          }) : [];
-      
-      // Convertir examenes de texto a array de objetos
-      const examenesArray = data.examenes ?
-        data.examenes.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split(':');
-            if (parts.length >= 2) {
-              return {
-                nombre: parts[0].trim(),
-                resultado: parts.slice(1).join(':').trim(),
-                fecha: null
-              };
-            }
-            return {
-              nombre: line.trim(),
-              resultado: '',
-              fecha: null
-            };
-          }) : [];
-      
-      const datosEnvio = {
-        ...data,
-        medicamentos: medicamentosArray,
-        examenes: examenesArray,
-        pesoRegistrado: data.pesoRegistrado ? {
-          valor: parseFloat(data.pesoRegistrado) || 0,
-          unidad: 'kg'
-        } : null,
-        temperaturaRegistrada: data.temperaturaRegistrada ? 
-          parseFloat(data.temperaturaRegistrada) : null,
-        proximaCitaSugerida: data.proximaCitaSugerida || null
-      };
-      
-      await updateHistorialRequest(historial._id, datosEnvio);
-      await cargarHistorial();
-      setShowEditHistorialForm(false);
-      setEditSuccessMessage('Registro clínico actualizado exitosamente');
-      toast.success('Registro clínico actualizado exitosamente');
-      setTimeout(() => setEditSuccessMessage(''), 3000);
-    } catch (error) {
-      console.error('Error al actualizar historial:', error);
-      manejarErrorResponse(error, setEditErrors);
-      toast.error('Error al actualizar el registro clínico');
-    }
-  };
-
-  // Función para cancelar edición
-  const handleCancelEditHistorial = () => {
-    setShowEditHistorialForm(false);
-    setEditHistorialData({});
-    setEditErrors([]);
-    setEditSuccessMessage('');
   };
 
   // ============================================
@@ -494,12 +420,12 @@ function CitaDetallePage() {
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800">Registro Clínico</h3>
-              {canEditHistorial && !historial && !showHistorialForm && !showEditHistorialForm && (
+              {canEditHistorial && !showHistorialForm && (
                 <button
-                  onClick={() => setShowHistorialForm(true)}
+                  onClick={openHistorialForm}
                   className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
                 >
-                  Crear Registro Clínico
+                  {historial ? 'Actualizar Registro Clínico' : 'Crear Registro Clínico'}
                 </button>
               )}
             </div>
@@ -511,7 +437,9 @@ function CitaDetallePage() {
             ) : showHistorialForm ? (
               <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-700">Nuevo Registro Clínico</h2>
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-700">
+                    {isEditingHistorial ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+                  </h2>
                   <button
                     onClick={() => setShowHistorialForm(false)}
                     className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -520,34 +448,12 @@ function CitaDetallePage() {
                   </button>
                 </div>
                 <DynamicForm
-                  {...createConfig.historialClinico}
+                  {...(isEditingHistorial ? editConfig.editHistorialClinico : createConfig.historialClinico)}
                   layout="grid"
-                  defaultValues={{
-                    pacienteId: cita?.pacienteId?._id,
-                    citaId: id
-                  }}
-                  onSubmit={handleCreateHistorial}
-                  errors={errors}
-                />
-              </div>
-            ) : showEditHistorialForm ? (
-              <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Registro Clínico</h2>
-                  <button
-                    onClick={handleCancelEditHistorial}
-                    className="text-gray-400 hover:text-gray-600 transition text-xl"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <DynamicForm
-                  {...editConfig.editHistorialClinico}
-                  layout="grid"
-                  defaultValues={editHistorialData}
-                  onSubmit={handleUpdateHistorial}
-                  errors={editErrors}
-                  successMessage={editSuccessMessage}
+                  defaultValues={historialFormData}
+                  onSubmit={handleSaveHistorial}
+                  errors={isEditingHistorial ? editErrors : errors}
+                  successMessage={isEditingHistorial ? editSuccessMessage : ''}
                 />
               </div>
             ) : historial ? (
@@ -615,16 +521,6 @@ function CitaDetallePage() {
                       <p className="text-gray-800 font-medium">{historial.observaciones || 'No especificadas'}</p>
                     </div>
                   </div>
-                  {canEditHistorial && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <button
-                        onClick={handleEditHistorialClick}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                      >
-                        Actualizar Registro Clínico
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             ) : (
@@ -632,7 +528,7 @@ function CitaDetallePage() {
                 <p className="text-gray-500">No hay registro clínico para esta cita</p>
                 {canEditHistorial && (
                   <button
-                    onClick={() => setShowHistorialForm(true)}
+                    onClick={openHistorialForm}
                     className="mt-4 text-cyan-600 hover:text-cyan-700 font-medium"
                   >
                     Crear Registro Clínico
