@@ -629,6 +629,8 @@ export const cancelarCitaConToken = async (req, res) => {
     ));
   }
 
+  
+};
 
   // ============================================
 // HISTORIAL CLÍNICO - DENTRO DE CITA CONTROLLER
@@ -735,5 +737,4 @@ export const actualizarHistorialClinico = async (req, res) => {
     console.error('❌ Error:', error);
     res.status(500).json({ message: error.message });
   }
-};
 };
