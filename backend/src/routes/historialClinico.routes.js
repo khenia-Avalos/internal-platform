@@ -7,29 +7,22 @@ import {
   deleteHistorial,
   getHistorialById
 } from '../controllers/historialClinico.controller.js';
-import { authRequired } from '../middlewares/validateToken.js';
+//  CORREGIDO: importar validateToken (no authRequired)
+import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 
 const router = Router();
 
 // Todas las rutas requieren autenticación
-router.use(authRequired);
+router.use(validateToken);
 
-// Obtener historial por cita
+// Rutas de lectura - cualquier usuario autenticado puede ver
 router.get('/cita/:citaId', getHistorialByCita);
-
-// Obtener historial por paciente (todos los registros)
 router.get('/paciente/:pacienteId', getHistorialByPaciente);
-
-// Obtener un registro por ID
 router.get('/:id', getHistorialById);
 
-// Crear nuevo registro clínico
-router.post('/', createHistorial);
-
-// Actualizar registro clínico
-router.put('/:id', updateHistorial);
-
-// Eliminar registro clínico
-router.delete('/:id', deleteHistorial);
+// Rutas de escritura - SOLO admin y doctor pueden
+router.post('/', adminRequired, createHistorial);
+router.put('/:id', adminRequired, updateHistorial);
+router.delete('/:id', adminRequired, deleteHistorial);
 
 export default router;
