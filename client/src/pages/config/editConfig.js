@@ -335,7 +335,6 @@ editInternado: {
   submitLabel: "Guardar Internado"
 },
 
-// Agregar al final del objeto editConfig
 editHistorialClinico: {
   title: "Editar Registro Clínico",
   fields: [
@@ -368,24 +367,26 @@ editHistorialClinico: {
     {
       name: "medicamentos",
       type: "textarea",
-      label: "Medicamentos recetados",
-      rows: 2
+      label: "Medicamentos recetados (uno por línea)",
+      rows: 3
     },
     {
       name: "examenes",
       type: "textarea",
-      label: "Exámenes realizados",
-      rows: 2
+      label: "Exámenes realizados (uno por línea)",
+      rows: 3
     },
     {
       name: "pesoRegistrado",
       type: "number",
-      label: "Peso registrado (kg)"
+      label: "Peso registrado (kg)",
+      step: "0.1"
     },
     {
       name: "temperaturaRegistrada",
       type: "number",
-      label: "Temperatura registrada (°C)"
+      label: "Temperatura registrada (°C)",
+      step: "0.1"
     },
     {
       name: "observaciones",
