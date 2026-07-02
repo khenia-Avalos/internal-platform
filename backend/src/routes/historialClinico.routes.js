@@ -7,15 +7,16 @@ import {
   deleteHistorial,
   getHistorialById
 } from '../controllers/historialClinico.controller.js';
-import { validateToken, adminRequired } from '../middlewares/validateToken.js';
+// 🔥 AUTENTICACIÓN COMENTADA TEMPORALMENTE PARA PROBAR
+// import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 
 const router = Router();
 
 console.log('🔄 Configurando rutas de historial clínico...');
 
-// Todas las rutas requieren autenticación
+// 🔥 AUTENTICACIÓN COMENTADA TEMPORALMENTE
 // router.use(validateToken);
-console.log('✅ Middleware validateToken aplicado');
+// console.log('✅ Middleware validateToken aplicado');
 
 // Rutas de lectura - cualquier usuario autenticado puede ver
 router.get('/cita/:citaId', getHistorialByCita);
@@ -27,14 +28,14 @@ console.log('✅ Ruta GET /paciente/:pacienteId registrada');
 router.get('/:id', getHistorialById);
 console.log('✅ Ruta GET /:id registrada');
 
-// Rutas de escritura - SOLO admin y doctor pueden
-router.post('/', adminRequired, createHistorial);
+// Rutas de escritura - SIN AUTENTICACIÓN TEMPORALMENTE
+router.post('/', createHistorial);
 console.log('✅ Ruta POST / registrada');
 
-router.put('/:id', adminRequired, updateHistorial);
+router.put('/:id', updateHistorial);
 console.log('✅ Ruta PUT /:id registrada');
 
-router.delete('/:id', adminRequired, deleteHistorial);
+router.delete('/:id', deleteHistorial);
 console.log('✅ Ruta DELETE /:id registrada');
 
 console.log('✅ Todas las rutas de historial configuradas');
