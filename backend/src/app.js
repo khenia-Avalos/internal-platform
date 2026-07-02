@@ -40,13 +40,26 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =============================================
-// 🔥 PRIMERO LAS RUTAS ESPECÍFICAS (MÁS LARGAS)
+// 🔥 RUTA DE PRUEBA - PARA VERIFICAR QUE EL BACKEND RESPONDE
 // =============================================
-app.use('/api/historial', historialRoutes);
-app.use("/api", clientesTemporalesRoutes);
+app.get('/api/historial/test', (req, res) => {
+  console.log('🔥🔥🔥 RUTA DE PRUEBA /api/historial/test FUNCIONA 🔥🔥🔥');
+  res.json({ 
+    success: true, 
+    message: '¡LA RUTA DE HISTORIAL FUNCIONA!',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // =============================================
-// 🔥 DESPUÉS LAS RUTAS GENÉRICAS
+// 🔥 RUTAS ESPECÍFICAS PRIMERO
+// =============================================
+console.log('📝 Registrando ruta /api/historial...');
+app.use('/api/historial', historialRoutes);
+console.log('✅ Ruta /api/historial registrada');
+
+// =============================================
+// RUTAS GENÉRICAS
 // =============================================
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
@@ -57,5 +70,8 @@ app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
+app.use("/api", clientesTemporalesRoutes);
+
+console.log('✅ Todas las rutas registradas');
 
 export default app;
