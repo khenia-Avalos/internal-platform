@@ -40,26 +40,20 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =============================================
-// 🔥 RUTA DE PRUEBA - PARA VERIFICAR QUE EL BACKEND RESPONDE
+// 🔥🔥🔥 LA RUTA DE HISTORIAL DEBE IR PRIMERO 🔥🔥🔥
 // =============================================
-app.get('/api/historial/test', (req, res) => {
-  console.log('🔥🔥🔥 RUTA DE PRUEBA /api/historial/test FUNCIONA 🔥🔥🔥');
-  res.json({ 
-    success: true, 
-    message: '¡LA RUTA DE HISTORIAL FUNCIONA!',
-    timestamp: new Date().toISOString()
-  });
+console.log('📝 REGISTRANDO RUTA /api/historial...');
+app.use('/api/historial', historialRoutes);
+console.log('✅ RUTA /api/historial REGISTRADA');
+
+// RUTA DE PRUEBA PARA VERIFICAR
+app.get('/api/historial-test', (req, res) => {
+  console.log('🔥 RUTA DE PRUEBA FUNCIONA');
+  res.json({ message: 'Backend funcionando' });
 });
 
 // =============================================
-// 🔥 RUTAS ESPECÍFICAS PRIMERO
-// =============================================
-console.log('📝 Registrando ruta /api/historial...');
-app.use('/api/historial', historialRoutes);
-console.log('✅ Ruta /api/historial registrada');
-
-// =============================================
-// RUTAS GENÉRICAS
+// TODAS LAS DEMÁS RUTAS
 // =============================================
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
@@ -72,6 +66,6 @@ app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
 app.use("/api", clientesTemporalesRoutes);
 
-console.log('✅ Todas las rutas registradas');
+console.log('✅ TODAS LAS RUTAS REGISTRADAS');
 
 export default app;
