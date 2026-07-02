@@ -104,11 +104,12 @@ function PacienteDetallePage() {
         setCitasLoading(true);
         try {
             const citasRes = await getCitasByPacienteRequest(id);
-            const citasOrdenadas = citasRes.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            const citasOrdenadas = Array.isArray(citasRes.data) ? citasRes.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) : [];
             setCitas(citasOrdenadas);
         } catch (error) {
             console.error("Error cargando citas del paciente:", error);
             manejarErrorResponse(error, setErrors, setSuccessMessage);
+            setCitas([]);
         } finally {
             setCitasLoading(false);
         }
@@ -121,13 +122,15 @@ function PacienteDetallePage() {
         setHistorialLoading(true);
         try {
             const res = await getHistorialByPacienteRequest(id);
-            setHistorialCompleto(res.data || []);
+            // Asegurar que siempre sea un array
+            const data = Array.isArray(res.data) ? res.data : [];
+            setHistorialCompleto(data);
         } catch (error) {
             console.error("Error cargando historial completo:", error);
-            // Si no existe, no mostrar error
             if (error.response?.status !== 404) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             }
+            setHistorialCompleto([]);
         } finally {
             setHistorialLoading(false);
         }
@@ -417,7 +420,7 @@ function PacienteDetallePage() {
                             <div className="flex justify-center items-center h-32">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
                             </div>
-                        ) : citas.length === 0 ? (
+                        ) : !Array.isArray(citas) || citas.length === 0 ? (
                             <div className="text-center py-8 bg-gray-50 rounded-lg">
                                 <p className="text-gray-500">No hay citas registradas para esta mascota</p>
                             </div>
@@ -448,7 +451,7 @@ function PacienteDetallePage() {
                             <div className="flex justify-center items-center h-32">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
                             </div>
-                        ) : historialCompleto.length === 0 ? (
+                        ) : !Array.isArray(historialCompleto) || historialCompleto.length === 0 ? (
                             <div className="text-center py-8 bg-gray-50 rounded-lg">
                                 <p className="text-gray-500">No hay registros clínicos para esta mascota</p>
                             </div>

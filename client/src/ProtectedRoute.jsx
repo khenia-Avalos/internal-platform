@@ -14,7 +14,7 @@ function ProtectedRoute({ requireAdmin = false }) {
         path: location.pathname 
     });
 
-    // ✅ Solo mostrar loading cuando realmente está cargando Y no hemos verificado
+    //  Solo mostrar loading cuando realmente está cargando Y no hemos verificado
     if (loading && !authChecked) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -23,25 +23,25 @@ function ProtectedRoute({ requireAdmin = false }) {
         );
     }
 
-    // ✅ Definir qué rutas son protegidas (si no estamos usando requireAdmin en todas)
+    //  Definir qué rutas son protegidas (si no estamos usando requireAdmin en todas)
     const protectedPaths = ["/tasks", "/profile", "/add-task", "/admin"];
     const isProtectedPath = protectedPaths.some(path => 
         location.pathname.startsWith(path)
     );
 
-    // ✅ Solo redirigir si authChecked es true (ya verificamos)
+    //  Solo redirigir si authChecked es true (ya verificamos)
     if (authChecked && !isAuthenticated && isProtectedPath) {
         console.log("Redirigiendo a login desde:", location.pathname);
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
-    // 🔴 Si la ruta requiere admin y el usuario NO es admin
+    //  Si la ruta requiere admin y el usuario NO es admin
     if (authChecked && isAuthenticated && requireAdmin && user?.role !== 'admin') {
         console.log("Acceso denegado: no es admin. Rol actual:", user?.role);
         return <Navigate to="/" replace />;
     }
 
-    // ✅ Si estamos en /admin pero el usuario no es admin (por si alguien escribe la URL)
+    // Si estamos en /admin pero el usuario no es admin (por si alguien escribe la URL)
     if (authChecked && isAuthenticated && location.pathname.startsWith('/admin') && user?.role !== 'admin') {
         console.log("Intento de acceso a admin sin permisos:", user?.role);
         return <Navigate to="/" replace />;
