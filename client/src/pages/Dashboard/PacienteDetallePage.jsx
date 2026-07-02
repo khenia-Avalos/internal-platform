@@ -188,7 +188,7 @@ function PacienteDetallePage() {
     // Función para obtener estado de la cita con color
     const obtenerEstadoCita = (estado) => {
         const estados = {
-            'pendiente': 'Pendiente',
+            'pendiente': 'Pendiente de confirmación',
             'confirmada': 'Confirmada',
             'cancelada': 'Cancelada',
             'completada': 'Completada'
@@ -228,36 +228,88 @@ function PacienteDetallePage() {
 
             {!loading && paciente && (
                 <>
-                    <InfoCard
-                        title={`Información de ${paciente.nombre}`}
-                        data={[
-                            { label: "Nombre", value: paciente.nombre },
-                            { label: "Especie", value: paciente.especie },
-                            { label: "Raza", value: paciente.raza || 'Sin raza' },
-                            { label: "Edad", value: paciente.edad ? `${paciente.edad} años` : 'No especificada' },
-                            { label: "Sexo", value: paciente.sexo || 'No especificado' },
-                            { label: "Color Pelaje", value: paciente.colorPelaje || 'No especificado' },
-                            { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No especificado' },
-                            { label: "Antecedentes Médicos", value: paciente.antecedentesMedicos || 'No especificados' },
-                        ]}
-                    />
-
-                    {dueno && (
-                        <div className="mt-8">
-                            <h3 className="text-xl font-semibold mb-4">Dueño de {paciente.nombre}</h3>
-                            <InfoCard
-                                title={`${dueno.username} ${dueno.lastname}`}
-                                data={[
-                                    { label: "Nombre completo", value: `${dueno.username} ${dueno.lastname}` },
-                                    { label: "Email", value: dueno.email },
-                                    { label: "Teléfono", value: dueno.phoneNumber },
-                                    { label: "Cédula", value: dueno.cedula },
-                                    { label: "Dirección", value: dueno.direccion },
-                                ]}
-                            />
+                    {/* ========================================== */}
+                    {/* EXPEDIENTE CLÍNICO - DATOS DEL PACIENTE */}
+                    {/* ========================================== */}
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
+                        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4">
+                            <h2 className="text-2xl font-bold text-white">Expediente Clínico</h2>
+                            <p className="text-cyan-100 text-sm">Paciente: {paciente.nombre}</p>
                         </div>
-                    )}
-                    
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Fecha de registro</p>
+                                    <p className="text-gray-800 font-medium">{formatearFechaLocal(paciente.createdAt)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Especie</p>
+                                    <p className="text-gray-800 font-medium">{paciente.especie || 'No especificada'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Raza</p>
+                                    <p className="text-gray-800 font-medium">{paciente.raza || 'No especificada'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Edad</p>
+                                    <p className="text-gray-800 font-medium">{paciente.edad ? `${paciente.edad} años` : 'No especificada'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sexo</p>
+                                    <p className="text-gray-800 font-medium">{paciente.sexo || 'No especificado'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Color de pelaje</p>
+                                    <p className="text-gray-800 font-medium">{paciente.colorPelaje || 'No especificado'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Peso</p>
+                                    <p className="text-gray-800 font-medium">{paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No registrado'}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Temperatura</p>
+                                    <p className="text-gray-800 font-medium">{paciente.temperatura ? `${paciente.temperatura} °C` : 'No registrada'}</p>
+                                </div>
+                            </div>
+
+                            {/* Antecedentes Médicos */}
+                            {paciente.antecedentesMedicos && (
+                                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-6">
+                                    <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold">Antecedentes Médicos</p>
+                                    <p className="text-gray-800 mt-1">{paciente.antecedentesMedicos}</p>
+                                </div>
+                            )}
+
+                            {/* DATOS DEL DUEÑO */}
+                            {dueno && (
+                                <div className="border-t border-gray-200 pt-4">
+                                    <h4 className="text-sm font-semibold text-gray-600 mb-3">Información del Dueño</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Nombre completo</p>
+                                            <p className="text-gray-800 font-medium">{dueno.username} {dueno.lastname}</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Email</p>
+                                            <p className="text-gray-800 font-medium">{dueno.email}</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Teléfono</p>
+                                            <p className="text-gray-800 font-medium">{dueno.phoneNumber || 'No registrado'}</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Dirección</p>
+                                            <p className="text-gray-800 font-medium">{dueno.direccion || 'No registrada'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ========================================== */}
+                    {/* HISTORIAL DE INTERNADOS */}
+                    {/* ========================================== */}
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold">Historial de Internados</h3>
@@ -386,19 +438,19 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE HISTORIAL CLÍNICO COMPLETO */}
+                    {/* HISTORIAL CLÍNICO COMPLETO - EXPEDIENTE */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-800">Historial Clínico</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">Historial de Consultas</h3>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Registro completo de consultas y evolución médica de {paciente.nombre}
+                                    Registro completo de todas las consultas médicas de {paciente.nombre}
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-500">
-                                    {historialCompleto.length} registros
+                                    {historialCompleto.length} consultas registradas
                                 </span>
                             </div>
                         </div>
@@ -410,82 +462,119 @@ function PacienteDetallePage() {
                         ) : historialCompleto.length === 0 ? (
                             <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                                 <div className="text-5xl mb-4">📋</div>
-                                <p className="text-gray-500 text-lg">No hay registros clínicos para esta mascota</p>
-                                <p className="text-gray-400 text-sm mt-2">Los registros clínicos se generan desde las citas completadas</p>
+                                <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
+                                <p className="text-gray-400 text-sm mt-2">Las consultas se registran automáticamente al completar una cita</p>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {historialCompleto.map((registro, index) => (
-                                    <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                        <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 flex flex-wrap items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-sm font-semibold text-gray-400">#{index + 1}</span>
-                                                <h4 className="text-lg font-semibold text-gray-800">
-                                                    Consulta del {formatearFechaHora(registro.createdAt)}
-                                                </h4>
+                                {historialCompleto.map((registro, index) => {
+                                    // Obtener la cita asociada si existe
+                                    const cita = registro.citaId || {};
+                                    const fechaCita = cita.fecha || registro.createdAt;
+                                    
+                                    return (
+                                        <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                                            {/* Encabezado de la consulta */}
+                                            <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 flex flex-wrap items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                        #{index + 1}
+                                                    </span>
+                                                    <h4 className="text-lg font-semibold text-gray-800">
+                                                        Consulta del {formatearFechaHora(fechaCita)}
+                                                    </h4>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    {cita.horaInicio && (
+                                                        <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                            🕐 {cita.horaInicio} - {cita.horaFin || ''}
+                                                        </span>
+                                                    )}
+                                                    {cita.estado && (
+                                                        <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                                                            cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
+                                                            cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
+                                                            cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-red-100 text-red-700'
+                                                        }`}>
+                                                            {obtenerEstadoCita(cita.estado)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                {registro.citaId?.titulo || 'Sin título'}
-                                            </span>
-                                        </div>
-                                        <div className="p-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                <div className="bg-gray-50 p-3 rounded-lg">
-                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de consulta</p>
-                                                    <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+
+                                            {/* Contenido de la consulta */}
+                                            <div className="p-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de consulta</p>
+                                                        <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas</p>
+                                                        <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
+                                                        <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                    </div>
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 md:col-span-2 lg:col-span-3">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento</p>
+                                                        <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="bg-gray-50 p-3 rounded-lg">
-                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas</p>
-                                                    <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No especificados'}</p>
-                                                </div>
-                                                <div className="bg-gray-50 p-3 rounded-lg">
-                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
-                                                    <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
-                                                </div>
-                                                <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
-                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento</p>
-                                                    <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
-                                                </div>
+
+                                                {/* Medicamentos */}
                                                 {registro.medicamentos && registro.medicamentos.length > 0 && (
-                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
-                                                        <p className="text-gray-800 font-medium mt-1">
+                                                    <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                        <p className="text-xs text-blue-600 uppercase tracking-wider font-semibold">💊 Medicamentos Recetados</p>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
                                                             {registro.medicamentos.map((m, i) => (
-                                                                <span key={i} className="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs mr-1 mb-1">
-                                                                    {m.nombre} {m.dosis && `(${m.dosis})`}
+                                                                <span key={i} className="inline-flex items-center bg-white px-3 py-1.5 rounded-full border border-blue-200 text-sm">
+                                                                    {m.nombre}
+                                                                    {m.dosis && <span className="text-blue-600 ml-1">({m.dosis})</span>}
+                                                                    {m.frecuencia && <span className="text-gray-500 ml-1">c/{m.frecuencia}</span>}
+                                                                    {m.duracion && <span className="text-gray-500 ml-1">por {m.duracion}</span>}
                                                                 </span>
                                                             ))}
-                                                        </p>
+                                                        </div>
                                                     </div>
                                                 )}
+
+                                                {/* Exámenes */}
                                                 {registro.examenes && registro.examenes.length > 0 && (
-                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
-                                                        <p className="text-gray-800 font-medium mt-1">
+                                                    <div className="mt-4 bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                                        <p className="text-xs text-purple-600 uppercase tracking-wider font-semibold">🔬 Exámenes Realizados</p>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
                                                             {registro.examenes.map((e, i) => (
-                                                                <span key={i} className="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs mr-1 mb-1">
-                                                                    {e.nombre}{e.resultado && `: ${e.resultado}`}
+                                                                <span key={i} className="inline-flex items-center bg-white px-3 py-1.5 rounded-full border border-purple-200 text-sm">
+                                                                    {e.nombre}
+                                                                    {e.resultado && <span className="text-purple-600 ml-1">: {e.resultado}</span>}
                                                                 </span>
                                                             ))}
-                                                        </p>
+                                                        </div>
                                                     </div>
                                                 )}
+
+                                                {/* Observaciones */}
                                                 {registro.observaciones && (
-                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones</p>
-                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap">{registro.observaciones}</p>
+                                                    <div className="mt-4 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                                                        <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold">📝 Observaciones del Veterinario</p>
+                                                        <p className="text-gray-800 mt-1 whitespace-pre-wrap">{registro.observaciones}</p>
                                                     </div>
                                                 )}
+
+                                                {/* Próxima cita sugerida */}
                                                 {registro.proximaCitaSugerida && (
-                                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{formatearFechaHora(registro.proximaCitaSugerida)}</p>
+                                                    <div className="mt-4 bg-green-50 p-4 rounded-lg border border-green-200 flex items-center gap-2">
+                                                        <span className="text-green-600 text-sm font-medium">📅 Próxima cita sugerida:</span>
+                                                        <span className="text-gray-800 font-medium">{formatearFechaHora(registro.proximaCitaSugerida)}</span>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
