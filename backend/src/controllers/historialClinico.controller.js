@@ -101,15 +101,12 @@ export const createHistorial = async (req, res) => {
       citaId, 
       motivoConsulta, 
       sintomas, 
-      tiempoSintomas,
       diagnostico, 
       tratamiento, 
       medicamentos, 
       examenes, 
-      signosVitales,
       observaciones, 
-      proximaCitaSugerida,
-      estadoConsulta
+      proximaCitaSugerida
     } = req.body;
 
     // Verificar campos obligatorios
@@ -131,75 +128,18 @@ export const createHistorial = async (req, res) => {
       });
     }
 
-    // Procesar medicamentos si vienen como string
-    let medicamentosArray = [];
-    if (typeof medicamentos === 'string' && medicamentos.trim()) {
-      medicamentosArray = medicamentos.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
-          return {
-            nombre: parts[0] || '',
-            dosis: parts[1] || '',
-            frecuencia: parts[2] || '',
-            duracion: parts[3] || '',
-            via: parts[4] || ''
-          };
-        });
-    } else if (Array.isArray(medicamentos)) {
-      medicamentosArray = medicamentos;
-    }
-
-    // Procesar examenes si vienen como string
-    let examenesArray = [];
-    if (typeof examenes === 'string' && examenes.trim()) {
-      examenesArray = examenes.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
-          return {
-            nombre: parts[0] || '',
-            resultado: parts[1] || '',
-            fecha: parts[2] ? new Date(parts[2]) : null
-          };
-        });
-    } else if (Array.isArray(examenes)) {
-      examenesArray = examenes;
-    }
-
-    // Procesar signos vitales
-    let signosVitalesObj = {
-      peso: { valor: 0, unidad: 'kg' },
-      temperatura: 0,
-      frecuenciaCardiaca: 0,
-      frecuenciaRespiratoria: 0,
-      presionArterial: ''
-    };
-
-    if (signosVitales) {
-      signosVitalesObj = {
-        peso: signosVitales.peso || { valor: 0, unidad: 'kg' },
-        temperatura: signosVitales.temperatura || 0,
-        frecuenciaCardiaca: signosVitales.frecuenciaCardiaca || 0,
-        frecuenciaRespiratoria: signosVitales.frecuenciaRespiratoria || 0,
-        presionArterial: signosVitales.presionArterial || ''
-      };
-    }
-
     const nuevo = new HistorialClinico({
       pacienteId,
       citaId,
       motivoConsulta: motivoConsulta || '',
       sintomas: sintomas || '',
-      tiempoSintomas: tiempoSintomas || '',
       diagnostico: diagnostico || '',
       tratamiento: tratamiento || '',
-      medicamentos: medicamentosArray,
-      examenes: examenesArray,
-      signosVitales: signosVitalesObj,
+      medicamentos: medicamentos || [],
+      examenes: examenes || [],
       observaciones: observaciones || '',
       proximaCitaSugerida: proximaCitaSugerida || null,
-      estadoConsulta: estadoConsulta || 'completada'
+      estadoConsulta: 'completada'
     });
 
     console.log('💾 Guardando historial...');
@@ -230,47 +170,9 @@ export const updateHistorial = async (req, res) => {
     console.log('📝 Actualizando historial ID:', id);
     console.log('📝 Datos a actualizar:', JSON.stringify(data, null, 2));
 
-    // Procesar medicamentos si vienen como string
-    let medicamentosArray = data.medicamentos;
-    if (typeof data.medicamentos === 'string' && data.medicamentos.trim()) {
-      medicamentosArray = data.medicamentos.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
-          return {
-            nombre: parts[0] || '',
-            dosis: parts[1] || '',
-            frecuencia: parts[2] || '',
-            duracion: parts[3] || '',
-            via: parts[4] || ''
-          };
-        });
-    }
-
-    // Procesar examenes si vienen como string
-    let examenesArray = data.examenes;
-    if (typeof data.examenes === 'string' && data.examenes.trim()) {
-      examenesArray = data.examenes.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const parts = line.split('|').map(p => p.trim());
-          return {
-            nombre: parts[0] || '',
-            resultado: parts[1] || '',
-            fecha: parts[2] ? new Date(parts[2]) : null
-          };
-        });
-    }
-
-    const datosActualizados = {
-      ...data,
-      medicamentos: medicamentosArray,
-      examenes: examenesArray
-    };
-
     const actualizado = await HistorialClinico.findByIdAndUpdate(
       id, 
-      datosActualizados, 
+      data, 
       { new: true, runValidators: true }
     );
     
@@ -328,4 +230,4 @@ export const deleteHistorial = async (req, res) => {
       message: errorResponse.message 
     });
   }
-};
+};S

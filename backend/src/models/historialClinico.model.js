@@ -9,93 +9,40 @@ const historialClinicoSchema = new mongoose.Schema({
   citaId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Cita',
-    required: true
+    required: true,
+    unique: true
   },
-  // Datos de la consulta
   motivoConsulta: {
     type: String,
-    trim: true,
     default: ''
   },
   sintomas: {
     type: String,
-    trim: true,
-    default: ''
-  },
-  tiempoSintomas: {
-    type: String,
-    trim: true,
     default: ''
   },
   diagnostico: {
     type: String,
-    trim: true,
     default: ''
   },
   tratamiento: {
     type: String,
-    trim: true,
     default: ''
   },
-  // Medicamentos recetados
-  medicamentos: [{
-    nombre: {
-      type: String,
-      trim: true
-    },
-    dosis: {
-      type: String,
-      trim: true
-    },
-    frecuencia: {
-      type: String,
-      trim: true
-    },
-    duracion: {
-      type: String,
-      trim: true
-    },
-    via: {
-      type: String,
-      trim: true
-    }
-  }],
-  // Exámenes realizados
-  examenes: [{
-    nombre: {
-      type: String,
-      trim: true
-    },
-    resultado: {
-      type: String,
-      trim: true
-    },
-    fecha: {
-      type: Date
-    }
-  }],
-  // Signos vitales
-  signosVitales: {
-    peso: {
-      valor: { type: Number, default: 0 },
-      unidad: { type: String, enum: ['kg', 'lb', 'g'], default: 'kg' }
-    },
-    temperatura: { type: Number, default: 0 },
-    frecuenciaCardiaca: { type: Number, default: 0 },
-    frecuenciaRespiratoria: { type: Number, default: 0 },
-    presionArterial: { type: String, default: '' }
+  medicamentos: {
+    type: Array,
+    default: []
   },
-  // Observaciones
+  examenes: {
+    type: Array,
+    default: []
+  },
   observaciones: {
     type: String,
-    trim: true,
     default: ''
   },
-  // Próxima cita
   proximaCitaSugerida: {
     type: Date
   },
-  // Estado de la consulta
   estadoConsulta: {
     type: String,
     enum: ['en_progreso', 'completada', 'pendiente'],
