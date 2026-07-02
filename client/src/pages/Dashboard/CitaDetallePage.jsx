@@ -6,6 +6,14 @@ import { InfoCard } from "../../components/desCard";
 import { getCitaByIdRequest, updateCita } from "/src/api/cita";
 import { FormularioCita } from "../../components/forms/FormularioCita";
 import { useAuth } from "../../hooks/useAuth";
+import { DynamicForm } from "../../components/DynamicForm";
+import { createConfig } from "../config/createConfig";
+import { editConfig } from "../config/editConfig";
+import { 
+  getHistorialByCitaRequest,
+  createHistorialRequest,
+  updateHistorialRequest
+} from "/src/api/historialClinico";
 
 function CitaDetallePage() {
   const { user } = useAuth();
@@ -16,15 +24,34 @@ function CitaDetallePage() {
   const [errors, setErrors] = useState([]);
   const [updating, setUpdating] = useState(false);
   const [showReagendarModal, setShowReagendarModal] = useState(false);
+  
+  // Estados para historial clínico
+  const [historial, setHistorial] = useState(null);
+  const [historialLoading, setHistorialLoading] = useState(false);
+  const [showHistorialForm, setShowHistorialForm] = useState(false);
+  const [isEditingHistorial, setIsEditingHistorial] = useState(false);
+  const [historialFormData, setHistorialFormData] = useState({});
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
+  const canEditHistorial = isAdmin || isDoctor;
 
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
     const [year, month, day] = fechaISO.split('T')[0].split('-');
     return `${day}/${month}/${year}`;
+  };
+
+  const mostrarFechaHora = (fechaISO) => {
+    if (!fechaISO) return 'No especificada';
+    const date = new Date(fechaISO);
+    return date.toLocaleDateString('es-CR', {
+      timeZone: 'America/Costa_Rica',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const obtenerNombreDueño = () => {
@@ -63,10 +90,10 @@ function CitaDetallePage() {
 
   const obtenerEstadoTexto = () => {
     switch (cita?.estado) {
-      case 'pendiente': return ' Pendiente de confirmación';
-      case 'confirmada': return ' Confirmada';
-      case 'cancelada': return ' Cancelada';
-      case 'completada': return ' Completada';
+      case 'pendiente': return 'Pendiente de confirmación';
+      case 'confirmada': return 'Confirmada';
+      case 'cancelada': return 'Cancelada';
+      case 'completada': return 'Completada';
       default: return cita?.estado || 'No especificado';
     }
   };
@@ -80,23 +107,238 @@ function CitaDetallePage() {
     return `Hola, quisiera reagendar mi cita del ${fecha} a las ${hora} con ${doctor} para ${mascota}. ¿Podrían ayudarme?`;
   };
 
+  // ============================================
+  // FUNCIONES DE HISTORIAL CLÍNICO
+  // ============================================
+
+  const cargarHistorial = async () => {
+    if (!id) return;
+    
+    setHistorialLoading(true);
+    try {
+      console.log('🔍 Buscando historial para cita:', id);
+      const res = await getHistorialByCitaRequest(id);
+      console.log('✅ Historial encontrado:', res.data);
+      setHistorial(res.data.data);
+      
+      // Preparar datos para edición si existe
+      if (res.data.data) {
+        const h = res.data.data;
+        // Convertir medicamentos de array a texto
+        const medicamentosText = Array.isArray(h.medicamentos) && h.medicamentos.length > 0
+          ? h.medicamentos.map(m => 
+              `${m.nombre || ''} | ${m.dosis || ''} | ${m.frecuencia || ''} | ${m.duracion || ''} | ${m.via || ''}`
+            ).join('\n')
+          : '';
+        
+        // Convertir examenes de array a texto
+        const examenesText = Array.isArray(h.examenes) && h.examenes.length > 0
+          ? h.examenes.map(e => 
+              `${e.nombre || ''} | ${e.resultado || ''} | ${e.fecha ? new Date(e.fecha).toISOString().split('T')[0] : ''}`
+            ).join('\n')
+          : '';
+        
+        setHistorialFormData({
+          motivoConsulta: h.motivoConsulta || '',
+          sintomas: h.sintomas || '',
+          tiempoSintomas: h.tiempoSintomas || '',
+          diagnostico: h.diagnostico || '',
+          tratamiento: h.tratamiento || '',
+          medicamentos: medicamentosText,
+          examenes: examenesText,
+          peso: h.signosVitales?.peso?.valor || '',
+          temperatura: h.signosVitales?.temperatura || '',
+          frecuenciaCardiaca: h.signosVitales?.frecuenciaCardiaca || '',
+          frecuenciaRespiratoria: h.signosVitales?.frecuenciaRespiratoria || '',
+          presionArterial: h.signosVitales?.presionArterial || '',
+          observaciones: h.observaciones || '',
+          proximaCitaSugerida: h.proximaCitaSugerida ? 
+            new Date(h.proximaCitaSugerida).toISOString().split('T')[0] : ''
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error cargando historial:', error);
+      if (error.response?.status !== 404) {
+        manejarErrorResponse(error, setErrors);
+      }
+      setHistorial(null);
+    } finally {
+      setHistorialLoading(false);
+    }
+  };
+
+  const handleCreateHistorial = async (data) => {
+    try {
+      if (!cita?.pacienteId?._id) {
+        toast.error('No se puede crear el registro: falta la mascota asociada a la cita');
+        return;
+      }
+      
+      // Procesar medicamentos
+      const medicamentosArray = data.medicamentos ? 
+        data.medicamentos.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            return {
+              nombre: parts[0] || '',
+              dosis: parts[1] || '',
+              frecuencia: parts[2] || '',
+              duracion: parts[3] || '',
+              via: parts[4] || ''
+            };
+          }) : [];
+      
+      // Procesar examenes
+      const examenesArray = data.examenes ?
+        data.examenes.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            return {
+              nombre: parts[0] || '',
+              resultado: parts[1] || '',
+              fecha: parts[2] ? new Date(parts[2]) : null
+            };
+          }) : [];
+      
+      const datosEnvio = {
+        pacienteId: cita.pacienteId._id,
+        citaId: id,
+        motivoConsulta: data.motivoConsulta || '',
+        sintomas: data.sintomas || '',
+        tiempoSintomas: data.tiempoSintomas || '',
+        diagnostico: data.diagnostico || '',
+        tratamiento: data.tratamiento || '',
+        medicamentos: medicamentosArray,
+        examenes: examenesArray,
+        signosVitales: {
+          peso: data.peso ? { valor: parseFloat(data.peso), unidad: 'kg' } : { valor: 0, unidad: 'kg' },
+          temperatura: data.temperatura ? parseFloat(data.temperatura) : 0,
+          frecuenciaCardiaca: data.frecuenciaCardiaca ? parseFloat(data.frecuenciaCardiaca) : 0,
+          frecuenciaRespiratoria: data.frecuenciaRespiratoria ? parseFloat(data.frecuenciaRespiratoria) : 0,
+          presionArterial: data.presionArterial || ''
+        },
+        observaciones: data.observaciones || '',
+        proximaCitaSugerida: data.proximaCitaSugerida || null,
+        estadoConsulta: 'completada'
+      };
+      
+      await createHistorialRequest(datosEnvio);
+      await cargarHistorial();
+      setShowHistorialForm(false);
+      toast.success('Registro clínico creado exitosamente');
+    } catch (error) {
+      console.error('❌ Error al crear historial:', error);
+      manejarErrorResponse(error, setErrors);
+      toast.error('Error al crear el registro clínico');
+    }
+  };
+
+  const handleUpdateHistorial = async (data) => {
+    try {
+      if (!historial?._id) {
+        toast.error('No hay registro clínico para actualizar');
+        return;
+      }
+      
+      // Procesar medicamentos
+      const medicamentosArray = data.medicamentos ? 
+        data.medicamentos.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            return {
+              nombre: parts[0] || '',
+              dosis: parts[1] || '',
+              frecuencia: parts[2] || '',
+              duracion: parts[3] || '',
+              via: parts[4] || ''
+            };
+          }) : [];
+      
+      // Procesar examenes
+      const examenesArray = data.examenes ?
+        data.examenes.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            return {
+              nombre: parts[0] || '',
+              resultado: parts[1] || '',
+              fecha: parts[2] ? new Date(parts[2]) : null
+            };
+          }) : [];
+      
+      const datosEnvio = {
+        ...data,
+        medicamentos: medicamentosArray,
+        examenes: examenesArray,
+        signosVitales: {
+          peso: data.peso ? { valor: parseFloat(data.peso), unidad: 'kg' } : { valor: 0, unidad: 'kg' },
+          temperatura: data.temperatura ? parseFloat(data.temperatura) : 0,
+          frecuenciaCardiaca: data.frecuenciaCardiaca ? parseFloat(data.frecuenciaCardiaca) : 0,
+          frecuenciaRespiratoria: data.frecuenciaRespiratoria ? parseFloat(data.frecuenciaRespiratoria) : 0,
+          presionArterial: data.presionArterial || ''
+        },
+        proximaCitaSugerida: data.proximaCitaSugerida || null
+      };
+      
+      await updateHistorialRequest(historial._id, datosEnvio);
+      await cargarHistorial();
+      setShowHistorialForm(false);
+      toast.success('Registro clínico actualizado exitosamente');
+    } catch (error) {
+      console.error('❌ Error al actualizar historial:', error);
+      manejarErrorResponse(error, setErrors);
+      toast.error('Error al actualizar el registro clínico');
+    }
+  };
+
+  const abrirFormularioCrear = () => {
+    setHistorialFormData({
+      motivoConsulta: '',
+      sintomas: '',
+      tiempoSintomas: '',
+      diagnostico: '',
+      tratamiento: '',
+      medicamentos: '',
+      examenes: '',
+      peso: '',
+      temperatura: '',
+      frecuenciaCardiaca: '',
+      frecuenciaRespiratoria: '',
+      presionArterial: '',
+      observaciones: '',
+      proximaCitaSugerida: ''
+    });
+    setIsEditingHistorial(false);
+    setShowHistorialForm(true);
+  };
+
+  const abrirFormularioEditar = () => {
+    if (!historial) return;
+    setIsEditingHistorial(true);
+    setShowHistorialForm(true);
+  };
+
+  // ============================================
+  // FUNCIONES DE ESTADO DE CITA
+  // ============================================
+
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
     let mensajeExito = '';
-    let mensajeError = '';
     
     if (nuevoEstado === 'confirmada') {
       mensajeConfirmacion = '¿Estás seguro de confirmar esta cita?';
-      mensajeExito = ' Cita confirmada exitosamente';
-      mensajeError = ' Error al confirmar la cita';
+      mensajeExito = 'Cita confirmada exitosamente';
     } else if (nuevoEstado === 'cancelada') {
       mensajeConfirmacion = '¿Estás seguro de cancelar esta cita?';
-      mensajeExito = ' Cita cancelada';
-      mensajeError = ' Error al cancelar la cita';
+      mensajeExito = 'Cita cancelada';
     } else if (nuevoEstado === 'completada') {
       mensajeConfirmacion = '¿Estás seguro de marcar esta cita como completada?';
-      mensajeExito = ' Cita marcada como completada';
-      mensajeError = ' Error al marcar la cita como completada';
+      mensajeExito = 'Cita marcada como completada';
     }
     
     if (!window.confirm(mensajeConfirmacion)) return;
@@ -107,7 +349,6 @@ function CitaDetallePage() {
       setCita({ ...cita, estado: nuevoEstado });
       toast.success(mensajeExito, { duration: 3000 });
     } catch (error) {
-    
       manejarErrorResponse(error, setErrors);
     } finally {
       setUpdating(false);
@@ -115,21 +356,21 @@ function CitaDetallePage() {
   };
 
   const handleReagendar = async (data) => {
-    console.log(" Reagendando cita:", data);
+    console.log("Reagendando cita:", data);
     try {
       await updateCita(cita._id, data);
       const citaActualizada = await getCitaByIdRequest(id);
       setCita(citaActualizada.data);
       
-      toast.success(' Cita reagendada exitosamente', {
+      toast.success('Cita reagendada exitosamente', {
         description: `Nueva fecha: ${mostrarFechaLocal(data.fecha)} a las ${data.horaInicio}`,
         duration: 4000,
       });
       
       setShowReagendarModal(false);
     } catch (error) {
-      console.error(" Error en reagendar:", error);
-      toast.error(' Error al reagendar la cita');
+      console.error("Error en reagendar:", error);
+      toast.error('Error al reagendar la cita');
       manejarErrorResponse(error, setErrors);
     }
   };
@@ -140,6 +381,7 @@ function CitaDetallePage() {
       try {
         const citaRes = await getCitaByIdRequest(id);
         setCita(citaRes.data);
+        await cargarHistorial();
       } catch (error) {
         console.error("Error cargando cita:", error);
         manejarErrorResponse(error, setErrors);
@@ -169,8 +411,8 @@ function CitaDetallePage() {
     { 
       label: "Origen de la cita", 
       value: esCitaTemporal() 
-        ? ' Cliente Temporal (pendiente de completar registro)' 
-        : ' Cliente Registrado'
+        ? 'Cliente Temporal (pendiente de completar registro)' 
+        : 'Cliente Registrado'
     },
     { label: "Dueño", value: obtenerNombreDueño() },
     { label: "Correo del dueño", value: obtenerEmailDueño() },
@@ -194,8 +436,6 @@ function CitaDetallePage() {
         Volver atrás
       </button>
 
-      
-
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
@@ -218,28 +458,179 @@ function CitaDetallePage() {
         <>
           <InfoCard title="Información de la cita" data={informacionCita} />
 
+          {/* ========================================== */}
+          {/* SECCIÓN DE HISTORIAL CLÍNICO */}
+          {/* ========================================== */}
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Registro Clínico</h3>
+              {canEditHistorial && !showHistorialForm && (
+                <button
+                  onClick={historial ? abrirFormularioEditar : abrirFormularioCrear}
+                  className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
+                >
+                  {historial ? 'Actualizar Registro Clínico' : 'Crear Registro Clínico'}
+                </button>
+              )}
+            </div>
+
+            {historialLoading ? (
+              <div className="flex justify-center items-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+              </div>
+            ) : showHistorialForm ? (
+              <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-700">
+                    {isEditingHistorial ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+                  </h2>
+                  <button
+                    onClick={() => setShowHistorialForm(false)}
+                    className="text-gray-400 hover:text-gray-600 transition text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <DynamicForm
+                  {...(isEditingHistorial ? editConfig.editHistorialClinico : createConfig.historialClinico)}
+                  layout="grid"
+                  defaultValues={historialFormData}
+                  onSubmit={isEditingHistorial ? handleUpdateHistorial : handleCreateHistorial}
+                  errors={errors}
+                />
+              </div>
+            ) : historial ? (
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                      <p className="text-sm text-gray-500">Motivo de la consulta</p>
+                      <p className="text-gray-800 font-medium">{historial.motivoConsulta || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Síntomas reportados</p>
+                      <p className="text-gray-800 font-medium">{historial.sintomas || 'No especificados'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Tiempo con síntomas</p>
+                      <p className="text-gray-800 font-medium">{historial.tiempoSintomas || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Diagnóstico</p>
+                      <p className="text-gray-800 font-medium">{historial.diagnostico || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Tratamiento indicado</p>
+                      <p className="text-gray-800 font-medium">{historial.tratamiento || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Medicamentos recetados</p>
+                      <p className="text-gray-800 font-medium">
+                        {Array.isArray(historial.medicamentos) && historial.medicamentos.length > 0 
+                          ? historial.medicamentos.map(m => 
+                              `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}${m.frecuencia ? ` c/${m.frecuencia}` : ''}`
+                            ).join(', ')
+                          : 'No especificados'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Exámenes realizados</p>
+                      <p className="text-gray-800 font-medium">
+                        {Array.isArray(historial.examenes) && historial.examenes.length > 0
+                          ? historial.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
+                          : 'No especificados'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Peso</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.signosVitales?.peso?.valor 
+                          ? `${historial.signosVitales.peso.valor} ${historial.signosVitales.peso.unidad || 'kg'}`
+                          : 'No registrado'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Temperatura</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.signosVitales?.temperatura 
+                          ? `${historial.signosVitales.temperatura} °C`
+                          : 'No registrada'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Frecuencia cardíaca</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.signosVitales?.frecuenciaCardiaca 
+                          ? `${historial.signosVitales.frecuenciaCardiaca} latidos/min`
+                          : 'No registrada'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Frecuencia respiratoria</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.signosVitales?.frecuenciaRespiratoria 
+                          ? `${historial.signosVitales.frecuenciaRespiratoria} resp/min`
+                          : 'No registrada'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Presión arterial</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.signosVitales?.presionArterial || 'No registrada'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Próxima cita sugerida</p>
+                      <p className="text-gray-800 font-medium">
+                        {historial.proximaCitaSugerida 
+                          ? mostrarFechaHora(historial.proximaCitaSugerida)
+                          : 'No sugerida'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <p className="text-sm text-gray-500">Observaciones adicionales</p>
+                      <p className="text-gray-800 font-medium">{historial.observaciones || 'No especificadas'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">No hay registro clínico para esta cita</p>
+                {canEditHistorial && (
+                  <button
+                    onClick={abrirFormularioCrear}
+                    className="mt-4 text-cyan-600 hover:text-cyan-700 font-medium"
+                  >
+                    Crear Registro Clínico
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
           {esCitaTemporal() && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-orange-50 border border-orange-300 rounded-lg">
-              <p className="text-orange-800 text-sm font-medium"> Esta es una cita de <strong>Cliente Temporal</strong></p>
+              <p className="text-orange-800 text-sm font-medium">Esta es una cita de <strong>Cliente Temporal</strong></p>
               <p className="text-orange-700 text-sm mt-1">El cliente aún no ha completado su registro. Cuando lo haga, la mascota y los datos completos se asignarán automáticamente a esta cita.</p>
             </div>
           )}
 
           {cita.clienteTemporalId && !cita.pacienteId && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm font-medium"> Información del Cliente Temporal</p>
+              <p className="text-blue-800 text-sm font-medium">Información del Cliente Temporal</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-blue-700"><strong>Nombre:</strong> {cita.clienteTemporalId.username}</p>
                 <p className="text-blue-700"><strong>Email:</strong> {cita.clienteTemporalId.email}</p>
                 <p className="text-blue-700"><strong>Teléfono:</strong> {cita.clienteTemporalId.phoneNumber || 'No registrado'}</p>
-                <p className="text-blue-700"><strong>Estado:</strong> {cita.clienteTemporalId.estado === 'temporal' ? 'Pendiente de registro' : ' Registrado'}</p>
+                <p className="text-blue-700"><strong>Estado:</strong> {cita.clienteTemporalId.estado === 'temporal' ? 'Pendiente de registro' : 'Registrado'}</p>
               </div>
             </div>
           )}
 
           {cita.pacienteId && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm font-medium"> Información de la Mascota</p>
+              <p className="text-green-800 text-sm font-medium">Información de la Mascota</p>
               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                 <p className="text-green-700"><strong>Nombre:</strong> {cita.pacienteId.nombre}</p>
                 <p className="text-green-700"><strong>Especie:</strong> {cita.pacienteId.especie}</p>
@@ -258,16 +649,15 @@ function CitaDetallePage() {
                   disabled={updating}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                 >
-                   Confirmar Cita
+                  Confirmar Cita
                 </button>
                 <button 
                   onClick={() => cambiarEstado('cancelada')} 
                   disabled={updating}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                 >
-                   Cancelar Cita
+                  Cancelar Cita
                 </button>
-                {/*  Cliente: WhatsApp | Admin/Doctor: Modal */}
                 {isClient ? (
                   <a
                     href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
@@ -275,14 +665,14 @@ function CitaDetallePage() {
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center"
                   >
-                     Reagendar por WhatsApp
+                    Reagendar por WhatsApp
                   </a>
                 ) : (
                   <button 
                     onClick={abrirModalReagendar}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                   >
-                     Reagendar Cita
+                    Reagendar Cita
                   </button>
                 )}
               </>
@@ -296,7 +686,7 @@ function CitaDetallePage() {
                     disabled={updating}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                   >
-                     Marcar como Completada
+                    Marcar como Completada
                   </button>
                 )}
                 <button 
@@ -304,9 +694,8 @@ function CitaDetallePage() {
                   disabled={updating}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                 >
-                   Cancelar Cita
+                  Cancelar Cita
                 </button>
-                {/* Cliente: WhatsApp | Admin/Doctor: Modal */}
                 {isClient ? (
                   <a
                     href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
@@ -314,24 +703,24 @@ function CitaDetallePage() {
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center"
                   >
-                     Reagendar por WhatsApp
+                    Reagendar por WhatsApp
                   </a>
                 ) : (
                   <button 
                     onClick={abrirModalReagendar}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                   >
-                     Reagendar Cita
+                    Reagendar Cita
                   </button>
                 )}
               </>
             )}
             
             {cita.estado === 'cancelada' && (
-              <p className="text-red-600 font-medium"> Esta cita ha sido cancelada</p>
+              <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>
             )}
             {cita.estado === 'completada' && (
-              <p className="text-green-600 font-medium"> Esta cita ya fue completada</p>
+              <p className="text-green-600 font-medium">Esta cita ya fue completada</p>
             )}
           </div>
         </>
@@ -344,7 +733,7 @@ function CitaDetallePage() {
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setShowReagendarModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10">✕</button>
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-gray-800"> Reagendar Cita</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Reagendar Cita</h2>
                 <p className="text-sm text-gray-500 mb-4">Cita actual: {mostrarFechaLocal(cita.fecha)} a las {cita.horaInicio}</p>
                 <FormularioCita onSubmit={handleReagendar} cita={cita} isEdit={false} />
               </div>
