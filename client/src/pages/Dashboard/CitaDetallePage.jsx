@@ -133,26 +133,92 @@ function CitaDetallePage() {
 
   const handleCreateHistorial = async (data) => {
     try {
-      console.log('Datos a crear:', data);
+      console.log('📝 Datos del formulario:', data);
+      
+      // Verificar que tenemos los datos necesarios
+      if (!cita?.pacienteId?._id) {
+        toast.error('No se puede crear el registro: falta la mascota asociada a la cita');
+        return;
+      }
+      
+      // Convertir medicamentos de texto a array de objetos
+      const medicamentosArray = data.medicamentos ? 
+        data.medicamentos.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2) {
+              const nombre = parts[0].trim();
+              const resto = parts.slice(1).join(':').trim();
+              const dosisMatch = resto.match(/(\d+\s*(mg|g|ml|tableta|comprimido|gotas))/i);
+              return {
+                nombre: nombre,
+                dosis: dosisMatch ? dosisMatch[0] : resto,
+                frecuencia: '',
+                duracion: ''
+              };
+            }
+            return {
+              nombre: line.trim(),
+              dosis: '',
+              frecuencia: '',
+              duracion: ''
+            };
+          }) : [];
+      
+      // Convertir examenes de texto a array de objetos
+      const examenesArray = data.examenes ?
+        data.examenes.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2) {
+              return {
+                nombre: parts[0].trim(),
+                resultado: parts.slice(1).join(':').trim(),
+                fecha: null
+              };
+            }
+            return {
+              nombre: line.trim(),
+              resultado: '',
+              fecha: null
+            };
+          }) : [];
       
       const datosEnvio = {
-        ...data,
-        pacienteId: cita?.pacienteId?._id,
+        pacienteId: cita.pacienteId._id,
         citaId: id,
-        medicamentos: data.medicamentos ? 
-          data.medicamentos.split('\n').filter(m => m.trim()) : [],
-        examenes: data.examenes ?
-          data.examenes.split('\n').filter(e => e.trim()) : []
+        motivoConsulta: data.motivoConsulta || '',
+        sintomas: data.sintomas || '',
+        diagnostico: data.diagnostico || '',
+        tratamiento: data.tratamiento || '',
+        medicamentos: medicamentosArray,
+        examenes: examenesArray,
+        pesoRegistrado: data.pesoRegistrado ? {
+          valor: parseFloat(data.pesoRegistrado) || 0,
+          unidad: 'kg'
+        } : null,
+        temperaturaRegistrada: data.temperaturaRegistrada ? 
+          parseFloat(data.temperaturaRegistrada) : null,
+        observaciones: data.observaciones || '',
+        proximaCitaSugerida: data.proximaCitaSugerida || null,
+        estadoConsulta: 'completada'
       };
       
-      await createHistorialRequest(datosEnvio);
+      console.log('📤 Datos a enviar al backend:', JSON.stringify(datosEnvio, null, 2));
+      
+      const response = await createHistorialRequest(datosEnvio);
+      console.log('✅ Respuesta del backend:', response.data);
+      
       await cargarHistorial();
       setShowHistorialForm(false);
       toast.success('Registro clínico creado exitosamente');
     } catch (error) {
-      console.error('Error al crear historial:', error);
+      console.error('❌ Error detallado:', error);
+      console.error('❌ Respuesta del error:', error.response?.data);
       manejarErrorResponse(error, setErrors);
-      toast.error('Error al crear el registro clínico');
+      toast.error('Error al crear el registro clínico: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -162,11 +228,21 @@ function CitaDetallePage() {
     
     // Preparar los datos para el formulario
     const medicamentosText = Array.isArray(historial.medicamentos) 
-      ? historial.medicamentos.map(m => `${m.nombre}: ${m.dosis} ${m.frecuencia || ''}`).join('\n')
+      ? historial.medicamentos.map(m => {
+          let text = m.nombre || '';
+          if (m.dosis) text += `: ${m.dosis}`;
+          if (m.frecuencia) text += ` cada ${m.frecuencia}`;
+          if (m.duracion) text += ` por ${m.duracion}`;
+          return text;
+        }).join('\n')
       : '';
     
     const examenesText = Array.isArray(historial.examenes)
-      ? historial.examenes.map(e => `${e.nombre}: ${e.resultado || ''}`).join('\n')
+      ? historial.examenes.map(e => {
+          let text = e.nombre || '';
+          if (e.resultado) text += `: ${e.resultado}`;
+          return text;
+        }).join('\n')
       : '';
     
     setEditHistorialData({
@@ -197,12 +273,62 @@ function CitaDetallePage() {
       console.log('Actualizando historial ID:', historial._id);
       console.log('Datos a actualizar:', data);
       
+      // Convertir medicamentos de texto a array de objetos
+      const medicamentosArray = data.medicamentos ? 
+        data.medicamentos.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2) {
+              const nombre = parts[0].trim();
+              const resto = parts.slice(1).join(':').trim();
+              const dosisMatch = resto.match(/(\d+\s*(mg|g|ml|tableta|comprimido|gotas))/i);
+              return {
+                nombre: nombre,
+                dosis: dosisMatch ? dosisMatch[0] : resto,
+                frecuencia: '',
+                duracion: ''
+              };
+            }
+            return {
+              nombre: line.trim(),
+              dosis: '',
+              frecuencia: '',
+              duracion: ''
+            };
+          }) : [];
+      
+      // Convertir examenes de texto a array de objetos
+      const examenesArray = data.examenes ?
+        data.examenes.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2) {
+              return {
+                nombre: parts[0].trim(),
+                resultado: parts.slice(1).join(':').trim(),
+                fecha: null
+              };
+            }
+            return {
+              nombre: line.trim(),
+              resultado: '',
+              fecha: null
+            };
+          }) : [];
+      
       const datosEnvio = {
         ...data,
-        medicamentos: data.medicamentos ? 
-          data.medicamentos.split('\n').filter(m => m.trim()) : [],
-        examenes: data.examenes ?
-          data.examenes.split('\n').filter(e => e.trim()) : []
+        medicamentos: medicamentosArray,
+        examenes: examenesArray,
+        pesoRegistrado: data.pesoRegistrado ? {
+          valor: parseFloat(data.pesoRegistrado) || 0,
+          unidad: 'kg'
+        } : null,
+        temperaturaRegistrada: data.temperaturaRegistrada ? 
+          parseFloat(data.temperaturaRegistrada) : null,
+        proximaCitaSugerida: data.proximaCitaSugerida || null
       };
       
       await updateHistorialRequest(historial._id, datosEnvio);
