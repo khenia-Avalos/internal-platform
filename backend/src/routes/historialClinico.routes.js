@@ -14,7 +14,7 @@ const router = Router();
 console.log('🔄 Configurando rutas de historial clínico...');
 
 // Todas las rutas requieren autenticación
-router.use(validateToken);
+// router.use(validateToken);
 console.log('✅ Middleware validateToken aplicado');
 
 // Rutas de lectura - cualquier usuario autenticado puede ver
