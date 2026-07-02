@@ -7,12 +7,11 @@ import {
   deleteHistorial,
   getHistorialById
 } from '../controllers/historialClinico.controller.js';
-//  CORREGIDO: importar validateToken (no authRequired)
 import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 
 const router = Router();
 
-// Todas las rutas requieren autenticación
+// 🔥 TODAS las rutas requieren autenticación
 router.use(validateToken);
 
 // Rutas de lectura - cualquier usuario autenticado puede ver
