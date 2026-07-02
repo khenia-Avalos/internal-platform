@@ -334,6 +334,73 @@ editInternado: {
   ],
   submitLabel: "Guardar Internado"
 },
+
+// Agregar al final del objeto editConfig
+editHistorialClinico: {
+  title: "Editar Registro Clínico",
+  fields: [
+    {
+      name: "motivoConsulta",
+      type: "textarea",
+      label: "Motivo de la consulta",
+      rows: 2,
+      validation: { required: "El motivo de la consulta es requerido" }
+    },
+    {
+      name: "sintomas",
+      type: "textarea",
+      label: "Síntomas reportados",
+      rows: 2
+    },
+    {
+      name: "diagnostico",
+      type: "textarea",
+      label: "Diagnóstico",
+      rows: 2,
+      validation: { required: "El diagnóstico es requerido" }
+    },
+    {
+      name: "tratamiento",
+      type: "textarea",
+      label: "Tratamiento indicado",
+      rows: 2
+    },
+    {
+      name: "medicamentos",
+      type: "textarea",
+      label: "Medicamentos recetados",
+      rows: 2
+    },
+    {
+      name: "examenes",
+      type: "textarea",
+      label: "Exámenes realizados",
+      rows: 2
+    },
+    {
+      name: "pesoRegistrado",
+      type: "number",
+      label: "Peso registrado (kg)"
+    },
+    {
+      name: "temperaturaRegistrada",
+      type: "number",
+      label: "Temperatura registrada (°C)"
+    },
+    {
+      name: "observaciones",
+      type: "textarea",
+      label: "Observaciones adicionales",
+      rows: 3
+    },
+    {
+      name: "proximaCitaSugerida",
+      type: "date",
+      label: "Próxima cita sugerida (opcional)"
+    }
+  ],
+  submitLabel: "Actualizar Registro Clínico"
+}
 };
 
 
