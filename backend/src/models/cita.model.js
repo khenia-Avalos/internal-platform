@@ -89,9 +89,21 @@ pacienteTemporal: {
     type: Boolean,
     default: false
   },
+  // Dentro del schema de Cita, agrega:
+historialClinico: {
+  motivoConsulta: { type: String, default: '' },
+  sintomas: { type: String, default: '' },
+  diagnostico: { type: String, default: '' },
+  tratamiento: { type: String, default: '' },
+  observaciones: { type: String, default: '' },
+  fechaRegistro: { type: Date, default: null }
+}
 }, {
   timestamps: true
-});
+}
+
+
+);
 
 
 export default mongoose.model('Cita', citaSchema);

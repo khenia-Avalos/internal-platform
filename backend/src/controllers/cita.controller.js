@@ -628,4 +628,112 @@ export const cancelarCitaConToken = async (req, res) => {
       'error'
     ));
   }
+
+
+  // ============================================
+// HISTORIAL CLÍNICO - DENTRO DE CITA CONTROLLER
+// ============================================
+
+// Crear historial clínico
+export const crearHistorialClinico = async (req, res) => {
+  try {
+    console.log('📝 Creando historial clínico');
+    console.log('📝 Datos:', req.body);
+    
+    const { citaId, motivoConsulta, sintomas, diagnostico, tratamiento, observaciones } = req.body;
+    
+    // Buscar la cita
+    const cita = await Cita.findById(citaId);
+    if (!cita) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    
+    // Guardar el historial DENTRO de la cita (como campo)
+    cita.historialClinico = {
+      motivoConsulta: motivoConsulta || '',
+      sintomas: sintomas || '',
+      diagnostico: diagnostico || '',
+      tratamiento: tratamiento || '',
+      observaciones: observaciones || '',
+      fechaRegistro: new Date()
+    };
+    
+    await cita.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Historial clínico guardado exitosamente',
+      data: cita.historialClinico
+    });
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Obtener historial clínico de una cita
+export const obtenerHistorialClinico = async (req, res) => {
+  try {
+    const { citaId } = req.params;
+    console.log('🔍 Buscando historial para cita:', citaId);
+    
+    const cita = await Cita.findById(citaId);
+    if (!cita) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    
+    if (!cita.historialClinico) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No hay historial clínico para esta cita' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      data: cita.historialClinico 
+    });
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Actualizar historial clínico
+export const actualizarHistorialClinico = async (req, res) => {
+  try {
+    const { citaId } = req.params;
+    const { motivoConsulta, sintomas, diagnostico, tratamiento, observaciones } = req.body;
+    
+    console.log('📝 Actualizando historial para cita:', citaId);
+    
+    const cita = await Cita.findById(citaId);
+    if (!cita) {
+      return res.status(404).json({ message: 'Cita no encontrada' });
+    }
+    
+    cita.historialClinico = {
+      motivoConsulta: motivoConsulta || cita.historialClinico?.motivoConsulta || '',
+      sintomas: sintomas || cita.historialClinico?.sintomas || '',
+      diagnostico: diagnostico || cita.historialClinico?.diagnostico || '',
+      tratamiento: tratamiento || cita.historialClinico?.tratamiento || '',
+      observaciones: observaciones || cita.historialClinico?.observaciones || '',
+      fechaRegistro: new Date()
+    };
+    
+    await cita.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Historial clínico actualizado',
+      data: cita.historialClinico
+    });
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
 };

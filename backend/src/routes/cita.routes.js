@@ -9,7 +9,11 @@ import {
   getCitasRequest,
   getCitaById,
   confirmarCitaConToken,
-  cancelarCitaConToken
+  cancelarCitaConToken,
+
+   crearHistorialClinico,
+  obtenerHistorialClinico,
+  actualizarHistorialClinico
 } from '../controllers/cita.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
@@ -30,5 +34,13 @@ router.put('/citas/:id', validateToken, updateCita);
 router.delete('/citas/:id', validateToken, deleteCita);
 router.get('/citas', validateToken, getCitasRequest); // nueva ruta para obtener todas las citas
 router.get('/citas/:id', validateToken, getCitaById); // nueva ruta para obtener una cita por ID
+
+
+// ============================================
+// RUTAS DE HISTORIAL CLÍNICO (DENTRO DE CITAS)
+// ============================================
+router.post('/:citaId/historial', crearHistorialClinico);
+router.get('/:citaId/historial', obtenerHistorialClinico);
+router.put('/:citaId/historial', actualizarHistorialClinico);
 
 export default router;
