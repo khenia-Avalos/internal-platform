@@ -3,8 +3,6 @@ import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
 import tasksRoutes from './routes/tasks.routes.js';
 import doctorRoutes from './routes/doctor.routes.js';
@@ -17,9 +15,6 @@ import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import historialRoutes from './routes/historialClinico.routes.js';
 import { FRONTEND_URL } from "./config.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -45,17 +40,22 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =============================================
-// 🔥 RUTAS ESPECÍFICAS PRIMERO (MÁS LARGAS)
+// 🔥🔥🔥 RUTA DE HISTORIAL - PRIMERO DE TODAS 🔥🔥🔥
 // =============================================
-console.log('📝 REGISTRANDO RUTAS ESPECÍFICAS...');
+console.log('🔥 REGISTRANDO /api/historial PRIMERO');
 app.use('/api/historial', historialRoutes);
-app.use("/api", clientesTemporalesRoutes);
-console.log('✅ RUTAS ESPECÍFICAS REGISTRADAS');
 
 // =============================================
-// 🔥 RUTAS GENÉRICAS DESPUÉS
+// RUTAS DE PRUEBA PARA VERIFICAR
 // =============================================
-console.log('📝 REGISTRANDO RUTAS GENÉRICAS...');
+app.get('/api/test', (req, res) => {
+  console.log('🔥 RUTA TEST FUNCIONA');
+  res.json({ message: 'Backend OK' });
+});
+
+// =============================================
+// EL RESTO DE RUTAS
+// =============================================
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
@@ -65,7 +65,7 @@ app.use("/api", horarioRoutes);
 app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
-console.log('✅ RUTAS GENÉRICAS REGISTRADAS');
+app.use("/api", clientesTemporalesRoutes);
 
 console.log('✅ TODAS LAS RUTAS REGISTRADAS');
 
