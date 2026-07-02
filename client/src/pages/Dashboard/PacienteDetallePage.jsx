@@ -11,9 +11,11 @@ import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
+import { getCitasByPacienteRequest } from "/src/api/cita";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
+import { DataTable } from "../../components/DataTable";
 
 function PacienteDetallePage() {
     const { user } = useAuth(); 
@@ -28,6 +30,8 @@ function PacienteDetallePage() {
     const [internados, setInternados] = useState([]);
     const [mostrarFormInternado, setMostrarFormInternado] = useState(false);
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
+    const [citas, setCitas] = useState([]);
+    const [citasLoading, setCitasLoading] = useState(false);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
@@ -47,10 +51,31 @@ function PacienteDetallePage() {
             
             const internadosRes = await getInternadosByPacienteRequest(id);
             setInternados(internadosRes.data);
+            
+            // Cargar citas para el historial clínico
+            await cargarCitasPaciente();
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Función para cargar citas del paciente
+    const cargarCitasPaciente = async () => {
+        if (!id) return;
+        
+        setCitasLoading(true);
+        try {
+            const citasRes = await getCitasByPacienteRequest(id);
+            // Ordenar por fecha descendente (más reciente primero)
+            const citasOrdenadas = citasRes.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            setCitas(citasOrdenadas);
+        } catch (error) {
+            console.error("Error cargando citas del paciente:", error);
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+        } finally {
+            setCitasLoading(false);
         }
     };
 
@@ -74,6 +99,12 @@ function PacienteDetallePage() {
         } catch {
             return 'No especificada';
         }
+    };
+
+    const formatearFechaHora = (fechaISO) => {
+        if (!fechaISO) return 'No especificada';
+        const [year, month, day] = fechaISO.split('T')[0].split('-');
+        return `${day}/${month}/${year}`;
     };
 
     // Hook para editar internados
@@ -145,6 +176,17 @@ function PacienteDetallePage() {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
             toast.error('Error al crear el internado');
         }
+    };
+
+    // Función para obtener el estado con color
+    const obtenerEstadoCita = (estado) => {
+        const estados = {
+            'pendiente': 'Pendiente',
+            'confirmada': 'Confirmada',
+            'cancelada': 'Cancelada',
+            'completada': 'Completada'
+        };
+        return estados[estado] || estado;
     };
 
     return (
@@ -335,6 +377,62 @@ function PacienteDetallePage() {
                             </div>
                         )}
                     </div>
+
+                    {/* ============================================= */}
+                    {/* SECCIÓN DE HISTORIAL CLÍNICO */}
+                    {/* ============================================= */}
+                    <div className="mt-8">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-800">Historial Clínico</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Registro completo de citas y observaciones médicas de {paciente.nombre}
+                            </p>
+                        </div>
+
+                        {/* Fecha de registro de la mascota */}
+                        <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-medium text-gray-600">Fecha de registro en la clínica:</span>
+                                <span className="text-sm font-semibold text-gray-800">
+                                    {paciente.createdAt ? formatearFechaLocal(paciente.createdAt) : 'No especificada'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Tabla de citas */}
+                        <div>
+                            <h4 className="text-lg font-semibold text-gray-700 mb-4">Citas Registradas</h4>
+                            
+                            {citasLoading ? (
+                                <div className="flex justify-center items-center h-32">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                                </div>
+                            ) : citas.length === 0 ? (
+                                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                    <p className="text-gray-500">No hay citas registradas para esta mascota</p>
+                                </div>
+                            ) : (
+                                <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+                                    <DataTable
+                                        columns={[
+                                            { header: "Fecha", accessor: "fecha", render: (cita) => formatearFechaHora(cita.fecha) },
+                                            { header: "Hora", accessor: "horaInicio" },
+                                            { header: "Título", accessor: "titulo", render: (cita) => cita.titulo || 'Sin título' },
+                                            { header: "Descripción", accessor: "descripcion", render: (cita) => cita.descripcion || 'Sin descripción' },
+                                            { header: "Síntomas", accessor: "sintomas", render: (cita) => cita.sintomas || 'No reportados' },
+                                            { header: "Observaciones del Doctor", accessor: "notas", render: (cita) => cita.notas || 'Sin observaciones' },
+                                            { header: "Estado", accessor: "estado", render: (cita) => obtenerEstadoCita(cita.estado) }
+                                        ]}
+                                        data={citas}
+                                        onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {/* ============================================= */}
+                    {/* FIN SECCIÓN DE HISTORIAL CLÍNICO */}
+                    {/* ============================================= */}
                 </>
             )}
         </div>
