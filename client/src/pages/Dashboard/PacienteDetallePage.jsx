@@ -11,6 +11,7 @@ import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
+import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ function PacienteDetallePage() {
     const [internados, setInternados] = useState([]);
     const [mostrarFormInternado, setMostrarFormInternado] = useState(false);
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
+    const [historialCompleto, setHistorialCompleto] = useState([]);
+    const [historialLoading, setHistorialLoading] = useState(false);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
@@ -47,10 +50,33 @@ function PacienteDetallePage() {
             
             const internadosRes = await getInternadosByPacienteRequest(id);
             setInternados(internadosRes.data);
+            
+            await cargarHistorialCompleto();
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Función para cargar historial clínico completo del paciente
+    const cargarHistorialCompleto = async () => {
+        if (!id) return;
+        
+        setHistorialLoading(true);
+        try {
+            console.log('🔍 Cargando historial clínico para paciente:', id);
+            const res = await getHistorialByPacienteRequest(id);
+            console.log('✅ Historial clínico cargado:', res.data);
+            setHistorialCompleto(res.data.data || []);
+        } catch (error) {
+            console.error('❌ Error cargando historial clínico:', error);
+            if (error.response?.status !== 404) {
+                manejarErrorResponse(error, setErrors, setSuccessMessage);
+            }
+            setHistorialCompleto([]);
+        } finally {
+            setHistorialLoading(false);
         }
     };
 
@@ -74,6 +100,18 @@ function PacienteDetallePage() {
         } catch {
             return 'No especificada';
         }
+    };
+
+    // Función para formatear fecha y hora
+    const formatearFechaHora = (fechaISO) => {
+        if (!fechaISO) return 'No especificada';
+        const date = new Date(fechaISO);
+        return date.toLocaleDateString('es-CR', {
+            timeZone: 'America/Costa_Rica',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     };
 
     // Hook para editar internados
@@ -145,6 +183,17 @@ function PacienteDetallePage() {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
             toast.error('Error al crear el internado');
         }
+    };
+
+    // Función para obtener estado de la cita con color
+    const obtenerEstadoCita = (estado) => {
+        const estados = {
+            'pendiente': 'Pendiente',
+            'confirmada': 'Confirmada',
+            'cancelada': 'Cancelada',
+            'completada': 'Completada'
+        };
+        return estados[estado] || estado;
     };
 
     return (
@@ -330,6 +379,111 @@ function PacienteDetallePage() {
                                                 </button>
                                             </div>
                                         )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ========================================== */}
+                    {/* SECCIÓN DE HISTORIAL CLÍNICO COMPLETO */}
+                    {/* ========================================== */}
+                    <div className="mt-10">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-800">Historial Clínico</h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Registro completo de consultas y evolución médica de {paciente.nombre}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">
+                                    {historialCompleto.length} registros
+                                </span>
+                            </div>
+                        </div>
+
+                        {historialLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                            </div>
+                        ) : historialCompleto.length === 0 ? (
+                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                                <div className="text-5xl mb-4">📋</div>
+                                <p className="text-gray-500 text-lg">No hay registros clínicos para esta mascota</p>
+                                <p className="text-gray-400 text-sm mt-2">Los registros clínicos se generan desde las citas completadas</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {historialCompleto.map((registro, index) => (
+                                    <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                                        <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 flex flex-wrap items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-sm font-semibold text-gray-400">#{index + 1}</span>
+                                                <h4 className="text-lg font-semibold text-gray-800">
+                                                    Consulta del {formatearFechaHora(registro.createdAt)}
+                                                </h4>
+                                            </div>
+                                            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                {registro.citaId?.titulo || 'Sin título'}
+                                            </span>
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                <div className="bg-gray-50 p-3 rounded-lg">
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de consulta</p>
+                                                    <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                </div>
+                                                <div className="bg-gray-50 p-3 rounded-lg">
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas</p>
+                                                    <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No especificados'}</p>
+                                                </div>
+                                                <div className="bg-gray-50 p-3 rounded-lg">
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
+                                                    <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                </div>
+                                                <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
+                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento</p>
+                                                    <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                </div>
+                                                {registro.medicamentos && registro.medicamentos.length > 0 && (
+                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
+                                                        <p className="text-gray-800 font-medium mt-1">
+                                                            {registro.medicamentos.map((m, i) => (
+                                                                <span key={i} className="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs mr-1 mb-1">
+                                                                    {m.nombre} {m.dosis && `(${m.dosis})`}
+                                                                </span>
+                                                            ))}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {registro.examenes && registro.examenes.length > 0 && (
+                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
+                                                        <p className="text-gray-800 font-medium mt-1">
+                                                            {registro.examenes.map((e, i) => (
+                                                                <span key={i} className="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs mr-1 mb-1">
+                                                                    {e.nombre}{e.resultado && `: ${e.resultado}`}
+                                                                </span>
+                                                            ))}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {registro.observaciones && (
+                                                    <div className="bg-gray-50 p-3 rounded-lg md:col-span-2 lg:col-span-3">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones</p>
+                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap">{registro.observaciones}</p>
+                                                    </div>
+                                                )}
+                                                {registro.proximaCitaSugerida && (
+                                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
+                                                        <p className="text-gray-800 font-medium mt-1">{formatearFechaHora(registro.proximaCitaSugerida)}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
