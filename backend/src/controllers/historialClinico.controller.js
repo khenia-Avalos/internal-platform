@@ -230,4 +230,4 @@ export const deleteHistorial = async (req, res) => {
       message: errorResponse.message 
     });
   }
-};S
+};
