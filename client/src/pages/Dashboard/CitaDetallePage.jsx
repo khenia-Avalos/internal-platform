@@ -141,16 +141,10 @@ function CitaDetallePage() {
         setHistorialFormData({
           motivoConsulta: h.motivoConsulta || '',
           sintomas: h.sintomas || '',
-          tiempoSintomas: h.tiempoSintomas || '',
           diagnostico: h.diagnostico || '',
           tratamiento: h.tratamiento || '',
           medicamentos: medicamentosText,
           examenes: examenesText,
-          peso: h.signosVitales?.peso?.valor || '',
-          temperatura: h.signosVitales?.temperatura || '',
-          frecuenciaCardiaca: h.signosVitales?.frecuenciaCardiaca || '',
-          frecuenciaRespiratoria: h.signosVitales?.frecuenciaRespiratoria || '',
-          presionArterial: h.signosVitales?.presionArterial || '',
           observaciones: h.observaciones || '',
           proximaCitaSugerida: h.proximaCitaSugerida ? 
             new Date(h.proximaCitaSugerida).toISOString().split('T')[0] : ''
@@ -168,128 +162,81 @@ function CitaDetallePage() {
   };
 
   const handleCreateHistorial = async (data) => {
+    console.log('🔥🔥🔥 handleCreateHistorial EJECUTÁNDOSE 🔥🔥🔥');
+    console.log('📝 Datos del formulario:', data);
+    
     try {
       if (!cita?.pacienteId?._id) {
         toast.error('No se puede crear el registro: falta la mascota asociada a la cita');
         return;
       }
       
-      // Procesar medicamentos
-      const medicamentosArray = data.medicamentos ? 
-        data.medicamentos.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split('|').map(p => p.trim());
-            return {
-              nombre: parts[0] || '',
-              dosis: parts[1] || '',
-              frecuencia: parts[2] || '',
-              duracion: parts[3] || '',
-              via: parts[4] || ''
-            };
-          }) : [];
-      
-      // Procesar examenes
-      const examenesArray = data.examenes ?
-        data.examenes.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split('|').map(p => p.trim());
-            return {
-              nombre: parts[0] || '',
-              resultado: parts[1] || '',
-              fecha: parts[2] ? new Date(parts[2]) : null
-            };
-          }) : [];
-      
+      // 🔥 SOLO LOS CAMPOS QUE EXISTEN EN EL MODELO
       const datosEnvio = {
         pacienteId: cita.pacienteId._id,
         citaId: id,
         motivoConsulta: data.motivoConsulta || '',
         sintomas: data.sintomas || '',
-        tiempoSintomas: data.tiempoSintomas || '',
         diagnostico: data.diagnostico || '',
         tratamiento: data.tratamiento || '',
-        medicamentos: medicamentosArray,
-        examenes: examenesArray,
-        signosVitales: {
-          peso: data.peso ? { valor: parseFloat(data.peso), unidad: 'kg' } : { valor: 0, unidad: 'kg' },
-          temperatura: data.temperatura ? parseFloat(data.temperatura) : 0,
-          frecuenciaCardiaca: data.frecuenciaCardiaca ? parseFloat(data.frecuenciaCardiaca) : 0,
-          frecuenciaRespiratoria: data.frecuenciaRespiratoria ? parseFloat(data.frecuenciaRespiratoria) : 0,
-          presionArterial: data.presionArterial || ''
-        },
+        medicamentos: data.medicamentos ? 
+          data.medicamentos.split('\n').filter(line => line.trim()) : [],
+        examenes: data.examenes ?
+          data.examenes.split('\n').filter(line => line.trim()) : [],
         observaciones: data.observaciones || '',
-        proximaCitaSugerida: data.proximaCitaSugerida || null,
-        estadoConsulta: 'completada'
+        proximaCitaSugerida: data.proximaCitaSugerida || null
       };
       
-      await createHistorialRequest(datosEnvio);
+      console.log('📤 Datos a enviar:', JSON.stringify(datosEnvio, null, 2));
+      
+      const response = await createHistorialRequest(datosEnvio);
+      console.log('✅ Respuesta del backend:', response.data);
+      
       await cargarHistorial();
       setShowHistorialForm(false);
       toast.success('Registro clínico creado exitosamente');
     } catch (error) {
       console.error('❌ Error al crear historial:', error);
+      console.error('❌ Respuesta del error:', error.response?.data);
       manejarErrorResponse(error, setErrors);
       toast.error('Error al crear el registro clínico');
     }
   };
 
   const handleUpdateHistorial = async (data) => {
+    console.log('🔥🔥🔥 handleUpdateHistorial EJECUTÁNDOSE 🔥🔥🔥');
+    console.log('📝 Datos a actualizar:', data);
+    
     try {
       if (!historial?._id) {
         toast.error('No hay registro clínico para actualizar');
         return;
       }
       
-      // Procesar medicamentos
-      const medicamentosArray = data.medicamentos ? 
-        data.medicamentos.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split('|').map(p => p.trim());
-            return {
-              nombre: parts[0] || '',
-              dosis: parts[1] || '',
-              frecuencia: parts[2] || '',
-              duracion: parts[3] || '',
-              via: parts[4] || ''
-            };
-          }) : [];
-      
-      // Procesar examenes
-      const examenesArray = data.examenes ?
-        data.examenes.split('\n')
-          .filter(line => line.trim())
-          .map(line => {
-            const parts = line.split('|').map(p => p.trim());
-            return {
-              nombre: parts[0] || '',
-              resultado: parts[1] || '',
-              fecha: parts[2] ? new Date(parts[2]) : null
-            };
-          }) : [];
-      
       const datosEnvio = {
-        ...data,
-        medicamentos: medicamentosArray,
-        examenes: examenesArray,
-        signosVitales: {
-          peso: data.peso ? { valor: parseFloat(data.peso), unidad: 'kg' } : { valor: 0, unidad: 'kg' },
-          temperatura: data.temperatura ? parseFloat(data.temperatura) : 0,
-          frecuenciaCardiaca: data.frecuenciaCardiaca ? parseFloat(data.frecuenciaCardiaca) : 0,
-          frecuenciaRespiratoria: data.frecuenciaRespiratoria ? parseFloat(data.frecuenciaRespiratoria) : 0,
-          presionArterial: data.presionArterial || ''
-        },
+        motivoConsulta: data.motivoConsulta || '',
+        sintomas: data.sintomas || '',
+        diagnostico: data.diagnostico || '',
+        tratamiento: data.tratamiento || '',
+        medicamentos: data.medicamentos ? 
+          data.medicamentos.split('\n').filter(line => line.trim()) : [],
+        examenes: data.examenes ?
+          data.examenes.split('\n').filter(line => line.trim()) : [],
+        observaciones: data.observaciones || '',
         proximaCitaSugerida: data.proximaCitaSugerida || null
       };
       
-      await updateHistorialRequest(historial._id, datosEnvio);
+      console.log('📤 Datos a enviar:', JSON.stringify(datosEnvio, null, 2));
+      
+      const response = await updateHistorialRequest(historial._id, datosEnvio);
+      console.log('✅ Respuesta del backend:', response.data);
+      
       await cargarHistorial();
       setShowHistorialForm(false);
       toast.success('Registro clínico actualizado exitosamente');
     } catch (error) {
       console.error('❌ Error al actualizar historial:', error);
+      console.error('❌ Respuesta del error:', error.response?.data);
       manejarErrorResponse(error, setErrors);
       toast.error('Error al actualizar el registro clínico');
     }
@@ -299,16 +246,10 @@ function CitaDetallePage() {
     setHistorialFormData({
       motivoConsulta: '',
       sintomas: '',
-      tiempoSintomas: '',
       diagnostico: '',
       tratamiento: '',
       medicamentos: '',
       examenes: '',
-      peso: '',
-      temperatura: '',
-      frecuenciaCardiaca: '',
-      frecuenciaRespiratoria: '',
-      presionArterial: '',
       observaciones: '',
       proximaCitaSugerida: ''
     });
@@ -512,10 +453,6 @@ function CitaDetallePage() {
                       <p className="text-gray-800 font-medium">{historial.sintomas || 'No especificados'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Tiempo con síntomas</p>
-                      <p className="text-gray-800 font-medium">{historial.tiempoSintomas || 'No especificado'}</p>
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">Diagnóstico</p>
                       <p className="text-gray-800 font-medium">{historial.diagnostico || 'No especificado'}</p>
                     </div>
@@ -542,42 +479,8 @@ function CitaDetallePage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Peso</p>
-                      <p className="text-gray-800 font-medium">
-                        {historial.signosVitales?.peso?.valor 
-                          ? `${historial.signosVitales.peso.valor} ${historial.signosVitales.peso.unidad || 'kg'}`
-                          : 'No registrado'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Temperatura</p>
-                      <p className="text-gray-800 font-medium">
-                        {historial.signosVitales?.temperatura 
-                          ? `${historial.signosVitales.temperatura} °C`
-                          : 'No registrada'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Frecuencia cardíaca</p>
-                      <p className="text-gray-800 font-medium">
-                        {historial.signosVitales?.frecuenciaCardiaca 
-                          ? `${historial.signosVitales.frecuenciaCardiaca} latidos/min`
-                          : 'No registrada'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Frecuencia respiratoria</p>
-                      <p className="text-gray-800 font-medium">
-                        {historial.signosVitales?.frecuenciaRespiratoria 
-                          ? `${historial.signosVitales.frecuenciaRespiratoria} resp/min`
-                          : 'No registrada'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Presión arterial</p>
-                      <p className="text-gray-800 font-medium">
-                        {historial.signosVitales?.presionArterial || 'No registrada'}
-                      </p>
+                      <p className="text-sm text-gray-500">Observaciones adicionales</p>
+                      <p className="text-gray-800 font-medium">{historial.observaciones || 'No especificadas'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Próxima cita sugerida</p>
@@ -586,10 +489,6 @@ function CitaDetallePage() {
                           ? mostrarFechaHora(historial.proximaCitaSugerida)
                           : 'No sugerida'}
                       </p>
-                    </div>
-                    <div className="md:col-span-2 lg:col-span-3">
-                      <p className="text-sm text-gray-500">Observaciones adicionales</p>
-                      <p className="text-gray-800 font-medium">{historial.observaciones || 'No especificadas'}</p>
                     </div>
                   </div>
                 </div>
