@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/api/clientes-temporales',
   '/api/confirmar-cita',
   '/api/cancelar-cita',
+    '/api/historial'  // ← AGREGAR ESTA LÍNEA
+
 ];
 
 export const validateToken = async (req, res, next) => {
