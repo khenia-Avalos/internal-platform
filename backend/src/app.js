@@ -40,17 +40,51 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =============================================
-// 🔥🔥🔥 LA RUTA DE HISTORIAL DEBE IR PRIMERO 🔥🔥🔥
+// 🔥🔥🔥 RUTA DE EMERGENCIA - HISTORIAL CLÍNICO 🔥🔥🔥
+// =============================================
+app.get('/api/historial/cita/:citaId', async (req, res) => {
+  console.log('🔥🔥🔥 RUTA DE EMERGENCIA - getHistorialByCita 🔥🔥🔥');
+  console.log('📝 citaId:', req.params.citaId);
+  
+  try {
+    // Importar el modelo dinámicamente
+    const HistorialClinico = await import('./models/historialClinico.model.js').then(m => m.default);
+    const historial = await HistorialClinico.findOne({ citaId: req.params.citaId });
+    
+    if (!historial) {
+      console.log('❌ No hay registro clínico para esta cita');
+      return res.status(404).json({ 
+        success: false,
+        message: 'No hay registro clínico para esta cita' 
+      });
+    }
+    
+    console.log('✅ Historial encontrado');
+    res.json({ success: true, data: historial });
+  } catch (error) {
+    console.error('❌ Error en ruta de emergencia:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// =============================================
+// 🔥 RUTA DE PRUEBA PARA VERIFICAR QUE EL BACKEND RESPONDE
+// =============================================
+app.get('/api/historial-test', (req, res) => {
+  console.log('🔥 RUTA DE PRUEBA /api/historial-test FUNCIONA');
+  res.json({ 
+    success: true, 
+    message: '¡BACKEND FUNCIONANDO!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// =============================================
+// 🔥 RUTAS ESPECÍFICAS
 // =============================================
 console.log('📝 REGISTRANDO RUTA /api/historial...');
 app.use('/api/historial', historialRoutes);
 console.log('✅ RUTA /api/historial REGISTRADA');
-
-// RUTA DE PRUEBA PARA VERIFICAR
-app.get('/api/historial-test', (req, res) => {
-  console.log('🔥 RUTA DE PRUEBA FUNCIONA');
-  res.json({ message: 'Backend funcionando' });
-});
 
 // =============================================
 // TODAS LAS DEMÁS RUTAS
