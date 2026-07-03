@@ -40,9 +40,6 @@ function PacienteDetallePage() {
     const [documentoFormData, setDocumentoFormData] = useState({ nombre: '', tipo: 'otro', descripcion: '' });
     const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
     const [subiendoDocumento, setSubiendoDocumento] = useState(false);
-    
-    // 🔥 Estado para el visor de PDF
-    const [documentoParaVer, setDocumentoParaVer] = useState(null);
 
     // Estados para paginación y acordeón
     const [paginaActual, setPaginaActual] = useState(1);
@@ -152,11 +149,13 @@ function PacienteDetallePage() {
     const formatearFechaHora = (fechaISO) => {
         if (!fechaISO) return 'No especificada';
         
+        // Si es string ISO, extraer la fecha sin conversión de zona horaria
         if (typeof fechaISO === 'string' && fechaISO.includes('T')) {
             const [year, month, day] = fechaISO.split('T')[0].split('-');
             return `${day}/${month}/${year}`;
         }
         
+        // Si es un objeto Date o string de fecha simple
         try {
             const date = new Date(fechaISO);
             const year = date.getFullYear();
@@ -248,6 +247,7 @@ function PacienteDetallePage() {
             formData.append('descripcion', documentoFormData.descripcion || '');
             
             console.log('📤 Enviando formData a /api/documentos');
+            console.log('📤 FormData entries:');
             for (let [key, value] of formData.entries()) {
                 console.log(`  ${key}: ${value}`);
             }
@@ -379,7 +379,7 @@ function PacienteDetallePage() {
                     )}
                     
                     {/* ========================================== */}
-                    {/* SECCIÓN DE HISTORIAL CLÍNICO */}
+                    {/* SECCIÓN DE HISTORIAL CLÍNICO - CON ACORDEÓN Y PAGINACIÓN */}
                     {/* ========================================== */}
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-6">
@@ -407,6 +407,7 @@ function PacienteDetallePage() {
                             </div>
                         ) : (
                             <>
+                                {/* Lista de consultas con acordeón */}
                                 <div className="space-y-3">
                                     {consultasPagina.map((registro, index) => {
                                         const globalIndex = inicio + index;
@@ -417,6 +418,7 @@ function PacienteDetallePage() {
                                         
                                         return (
                                             <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                                {/* Encabezado - Siempre visible y clickeable */}
                                                 <div 
                                                     className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
                                                         isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
@@ -463,6 +465,7 @@ function PacienteDetallePage() {
                                                     </div>
                                                 </div>
 
+                                                {/* Contenido - Solo visible si está expandido */}
                                                 {isOpen && (
                                                     <div className="p-6 bg-white">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -518,6 +521,7 @@ function PacienteDetallePage() {
                                     })}
                                 </div>
 
+                                {/* Controles de paginación */}
                                 {totalPaginas > 1 && (
                                     <div className="flex justify-center items-center gap-3 mt-6">
                                         <button 
@@ -544,7 +548,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS CON VISOR EMBEBIDO */}
+                    {/* SECCIÓN DE DOCUMENTOS - CON LOGS */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -696,12 +700,14 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-                                                <button
-                                                    onClick={() => setDocumentoParaVer(doc)}
+                                                <a
+                                                    href={doc.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
                                                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                                                 >
                                                     Ver
-                                                </button>
+                                                </a>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}
@@ -719,60 +725,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* VISOR DE PDF EMBEBIDO - MODAL */}
-                    {/* ========================================== */}
-                    {documentoParaVer && (
-                        <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                                {/* Encabezado del modal */}
-                                <div className="flex justify-between items-center p-4 border-b bg-gray-50">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800">{documentoParaVer.nombre}</h3>
-                                        <p className="text-xs text-gray-500">
-                                            {documentoParaVer.tipo && documentoParaVer.tipo !== 'otro' ? 
-                                                documentoParaVer.tipo.replace('_', ' ').toUpperCase() : 'Documento'}
-                                            {documentoParaVer.descripcion && ` - ${documentoParaVer.descripcion}`}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <a
-                                            href={documentoParaVer.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                                        >
-                                            Abrir en nueva pestaña
-                                        </a>
-                                        <button 
-                                            onClick={() => setDocumentoParaVer(null)}
-                                            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                </div>
-                                {/* Visor del PDF */}
-                                <div className="flex-1 p-4 bg-gray-100 overflow-auto min-h-[500px]">
-                                    {documentoParaVer.url.endsWith('.pdf') ? (
-                                        <embed
-                                            src={`${documentoParaVer.url}?fl_attachment=0`}
-                                            type="application/pdf"
-                                            className="w-full h-full min-h-[500px] rounded-lg shadow-inner"
-                                        />
-                                    ) : (
-                                        <img
-                                            src={documentoParaVer.url}
-                                            alt={documentoParaVer.nombre}
-                                            className="max-w-full max-h-full mx-auto rounded-lg shadow-inner"
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ========================================== */}
-                    {/* SECCIÓN DE INTERNADOS */}
+                    {/* SECCIÓN DE INTERNADOS - DESPUÉS DEL HISTORIAL */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
