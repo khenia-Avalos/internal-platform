@@ -709,12 +709,15 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-                                                <button
-                                                    onClick={() => handleDownload(doc)}
-                                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                                                >
-                                                    📥 Descargar
-                                                </button>
+                                             <a
+    href={doc.url}
+    download={doc.nombre}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+>
+    📥 Descargar
+</a>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}
