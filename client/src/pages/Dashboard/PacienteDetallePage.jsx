@@ -31,6 +31,11 @@ function PacienteDetallePage() {
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
     const [historialCompleto, setHistorialCompleto] = useState([]);
     const [historialLoading, setHistorialLoading] = useState(false);
+    
+    // Estados para paginación y acordeón
+    const [paginaActual, setPaginaActual] = useState(1);
+    const [consultaAbierta, setConsultaAbierta] = useState(null);
+    const consultasPorPagina = 5;
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
@@ -75,6 +80,8 @@ function PacienteDetallePage() {
                 return new Date(fechaA) - new Date(fechaB);
             });
             setHistorialCompleto(historialOrdenado);
+            setPaginaActual(1);
+            setConsultaAbierta(null);
         } catch (error) {
             console.error('❌ Error cargando historial clínico:', error);
             if (error.response?.status !== 404) {
@@ -191,6 +198,12 @@ function PacienteDetallePage() {
         }
     };
 
+    // Calcular paginación
+    const totalPaginas = Math.ceil(historialCompleto.length / consultasPorPagina);
+    const inicio = (paginaActual - 1) * consultasPorPagina;
+    const fin = inicio + consultasPorPagina;
+    const consultasPagina = historialCompleto.slice(inicio, fin);
+
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <button
@@ -254,7 +267,7 @@ function PacienteDetallePage() {
                     )}
                     
                     {/* ========================================== */}
-                    {/* SECCIÓN DE HISTORIAL CLÍNICO - PRIMERO */}
+                    {/* SECCIÓN DE HISTORIAL CLÍNICO - CON ACORDEÓN Y PAGINACIÓN */}
                     {/* ========================================== */}
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-6">
@@ -281,114 +294,144 @@ function PacienteDetallePage() {
                                 <p className="text-gray-400 text-sm mt-2">Las consultas se registran automáticamente al completar una cita</p>
                             </div>
                         ) : (
-                            <div className="space-y-6">
-                                {historialCompleto.map((registro, index) => {
-                                    const cita = registro.citaId || {};
-                                    const fechaCita = cita.fecha || registro.createdAt;
-                                    const citaId = cita._id || registro.citaId;
-                                    
-                                    return (
-                                        <div 
-                                            key={registro._id} 
-                                            className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                                            onClick={() => {
-                                                if (citaId) {
-                                                    navigate(`/citas/${citaId}`);
-                                                }
-                                            }}
-                                        >
-                                            {/* Encabezado - Fecha de registro en la clínica */}
-                                            <div className="border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-3">
-                                                <div className="flex flex-wrap items-center justify-between">
-                                                    <div className="flex items-center gap-3">
+                            <>
+                                {/* Lista de consultas con acordeón */}
+                                <div className="space-y-3">
+                                    {consultasPagina.map((registro, index) => {
+                                        const globalIndex = inicio + index;
+                                        const isOpen = consultaAbierta === globalIndex;
+                                        const cita = registro.citaId || {};
+                                        const fechaCita = cita.fecha || registro.createdAt;
+                                        const citaId = cita._id || registro.citaId;
+                                        
+                                        return (
+                                            <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                                {/* Encabezado - Siempre visible y clickeable */}
+                                                <div 
+                                                    className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
+                                                        isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
+                                                    }`}
+                                                    onClick={() => setConsultaAbierta(isOpen ? null : globalIndex)}
+                                                >
+                                                    <div className="flex items-center gap-3 flex-wrap">
                                                         <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                            Consulta #{index + 1}
+                                                            #{globalIndex + 1}
                                                         </span>
                                                         <span className="text-sm font-medium text-gray-700">
-                                                            Fecha de la cita: {formatearFechaHora(fechaCita)}
+                                                            📅 {formatearFechaHora(fechaCita)}
                                                         </span>
                                                         {cita.horaInicio && (
-                                                            <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                                Hora de la cita: {cita.horaInicio}
-                                                            </span>
+                                                            <span className="text-sm text-gray-500">🕐 {cita.horaInicio}</span>
                                                         )}
+                                                        <span className="text-sm text-gray-600 max-w-[200px] truncate">
+                                                            {registro.motivoConsulta || 'Sin motivo'}
+                                                        </span>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-3">
                                                         {citaId && (
-                                                            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                                                                Ver detalles →
-                                                            </span>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/citas/${citaId}`);
+                                                                }}
+                                                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                                            >
+                                                                Ver cita →
+                                                            </button>
                                                         )}
-                                                        {cita.estado && (
-                                                            <span className={`text-sm px-3 py-1 rounded-full font-medium ${
-                                                                cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
-                                                                cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
-                                                                cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                                                                'bg-red-100 text-red-700'
-                                                            }`}>
-                                                                {cita.estado === 'completada' ? 'Completada' :
-                                                                 cita.estado === 'confirmada' ? 'Confirmada' :
-                                                                 cita.estado === 'pendiente' ? 'Pendiente' :
-                                                                 'Cancelada'}
-                                                            </span>
-                                                        )}
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${
+                                                            cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
+                                                            cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
+                                                            cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                                                            'bg-red-100 text-red-700'
+                                                        }`}>
+                                                            {cita.estado || 'Sin estado'}
+                                                        </span>
+                                                        <span className="text-gray-400 text-sm">
+                                                            {isOpen ? '▲' : '▼'}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Contenido de la consulta */}
-                                            <div className="p-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                {/* Contenido - Solo visible si está expandido */}
+                                                {isOpen && (
+                                                    <div className="p-6 bg-white">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
+                                                                <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas reportados</p>
+                                                                <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
+                                                                <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
+                                                                <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
+                                                                <p className="text-gray-800 font-medium mt-1">
+                                                                    {registro.medicamentos && registro.medicamentos.length > 0 
+                                                                        ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
+                                                                        : 'No especificados'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
+                                                                <p className="text-gray-800 font-medium mt-1">
+                                                                    {registro.examenes && registro.examenes.length > 0 
+                                                                        ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
+                                                                        : 'No especificados'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
+                                                                <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
+                                                                <p className="text-gray-800 font-medium mt-1">
+                                                                    {registro.proximaCitaSugerida 
+                                                                        ? formatearFechaHora(registro.proximaCitaSugerida)
+                                                                        : 'No sugerida'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas reportados</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
-                                                        <p className="text-gray-800 font-medium mt-1">
-                                                            {registro.medicamentos && registro.medicamentos.length > 0 
-                                                                ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
-                                                                : 'No especificados'}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
-                                                        <p className="text-gray-800 font-medium mt-1">
-                                                            {registro.examenes && registro.examenes.length > 0 
-                                                                ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
-                                                                : 'No especificados'}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
-                                                        <p className="text-gray-800 font-medium mt-1">
-                                                            {registro.proximaCitaSugerida 
-                                                                ? formatearFechaHora(registro.proximaCitaSugerida)
-                                                                : 'No sugerida'}
-                                                        </p>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Controles de paginación */}
+                                {totalPaginas > 1 && (
+                                    <div className="flex justify-center items-center gap-3 mt-6">
+                                        <button 
+                                            onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                                            disabled={paginaActual === 1}
+                                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                        >
+                                            Anterior
+                                        </button>
+                                        <span className="text-sm text-gray-600">
+                                            Página {paginaActual} de {totalPaginas}
+                                        </span>
+                                        <button 
+                                            onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                                            disabled={paginaActual === totalPaginas}
+                                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                        >
+                                            Siguiente
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
