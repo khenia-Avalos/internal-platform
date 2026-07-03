@@ -9,7 +9,11 @@ const __dirname = path.dirname(__filename);
 
 const uploadDir = path.join(__dirname, '../../uploads');
 
-// Obtener documentos por paciente
+// Asegurar que la carpeta uploads existe
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 export const getDocumentosByPaciente = async (req, res) => {
     try {
         const { pacienteId } = req.params;
@@ -26,7 +30,6 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento
 export const uploadDocumento = async (req, res) => {
     try {
         const { pacienteId, nombre, tipo, descripcion } = req.body;
@@ -63,7 +66,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 DOWNLOAD - VERSIÓN SIMPLIFICADA
+// 🔥🔥🔥 FUNCIÓN DE DESCARGA CORREGIDA 🔥🔥🔥
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -73,38 +76,51 @@ export const downloadDocumento = async (req, res) => {
             return res.status(404).json({ message: 'Documento no encontrado' });
         }
 
-        const filePath = path.join(uploadDir, documento.filename);
-        
-        if (!fs.existsSync(filePath)) {
+        if (!documento.filename) {
             return res.status(404).json({ message: 'Archivo no encontrado' });
         }
 
-        // 🔥 Enviar el archivo directamente
-        res.download(filePath, documento.nombre);
+        const filePath = path.join(uploadDir, documento.filename);
+        console.log('📂 Buscando archivo en:', filePath);
+        
+        if (!fs.existsSync(filePath)) {
+            console.log('❌ Archivo no existe en el servidor');
+            return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+        }
+
+        // 🔥 LEER EL ARCHIVO Y ENVIARLO MANUALMENTE
+        const fileBuffer = fs.readFileSync(filePath);
+        
+        // 🔥 FORZAR EL CONTENT-TYPE A PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
+        res.setHeader('Content-Length', fileBuffer.length);
+        
+        // 🔥 ENVIAR EL BUFFER
+        res.send(fileBuffer);
+        
+        console.log('✅ Archivo enviado:', documento.nombre);
         
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Error al descargar:', error);
         res.status(500).json({ message: error.message });
     }
 };
 
-// Eliminar documento
 export const deleteDocumento = async (req, res) => {
     try {
         const { id } = req.params;
         const documento = await Documento.findById(id);
         
         if (!documento) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Documento no encontrado' 
-            });
+            return res.status(404).json({ message: 'Documento no encontrado' });
         }
 
         if (documento.filename) {
             const filePath = path.join(uploadDir, documento.filename);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
+                console.log('🗑️ Archivo eliminado');
             }
         }
 
