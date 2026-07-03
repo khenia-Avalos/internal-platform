@@ -31,12 +31,7 @@ app.use(
     origin: FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-    ],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
     exposedHeaders: ["Set-Cookie"],
   })
 );
@@ -45,29 +40,17 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-// =============================================
-// 🔥 SERVIR ARCHIVOS ESTÁTICOS DE UPLOADS
-// =============================================
+// 🔥 SERVIR ARCHIVOS ESTÁTICOS
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// =============================================
-// 🔥🔥🔥 RUTAS ESPECÍFICAS - PRIMERO DE TODAS
-// =============================================
-console.log('🔥 REGISTRANDO /api/historial PRIMERO');
+// 🔥 RUTAS
 app.use('/api/historial', historialRoutes);
 app.use('/api/documentos', documentoRoutes);
 
-// =============================================
-// RUTAS DE PRUEBA PARA VERIFICAR
-// =============================================
 app.get('/api/test', (req, res) => {
-  console.log('🔥 RUTA TEST FUNCIONA');
   res.json({ message: 'Backend OK' });
 });
 
-// =============================================
-// EL RESTO DE RUTAS
-// =============================================
 app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
@@ -78,7 +61,5 @@ app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
 app.use("/api", clientesTemporalesRoutes);
-
-console.log('✅ TODAS LAS RUTAS REGISTRADAS');
 
 export default app;

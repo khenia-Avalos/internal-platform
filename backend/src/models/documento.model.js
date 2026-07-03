@@ -25,9 +25,9 @@ const documentoSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    publicId: {
+    filename: {
         type: String,
-        default: null
+        required: true
     },
     subidoPor: {
         type: mongoose.Schema.Types.ObjectId,

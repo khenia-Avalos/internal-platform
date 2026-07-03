@@ -7,11 +7,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Crear carpeta uploads si no existe
 const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 // Obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
@@ -30,13 +26,9 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento a carpeta local
+// Subir documento
 export const uploadDocumento = async (req, res) => {
     try {
-        console.log('📝 Subiendo documento...');
-        console.log('📝 Body:', req.body);
-        console.log('📝 File:', req.file);
-        
         const { pacienteId, nombre, tipo, descripcion } = req.body;
         
         if (!req.file) {
@@ -46,29 +38,23 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Construir URL para acceder al archivo
-        const url = `/uploads/${req.file.filename}`;
-
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: url,
+            url: `/uploads/${req.file.filename}`,
             filename: req.file.filename,
             subidoPor: req.user.id
         });
 
         const guardado = await nuevoDocumento.save();
-        console.log('✅ Documento guardado en MongoDB');
-        
         res.status(201).json({ 
             success: true, 
             message: 'Documento subido exitosamente',
             data: guardado 
         });
     } catch (error) {
-        console.error('❌ Error al subir documento:', error);
         const errorResponse = manejarError(error);
         res.status(errorResponse.status).json({ 
             success: false,
@@ -77,56 +63,28 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// Descargar documento
+// 🔥 DOWNLOAD - VERSIÓN SIMPLIFICADA
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
         const documento = await Documento.findById(id);
         
         if (!documento) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Documento no encontrado' 
-            });
-        }
-
-        if (!documento.filename) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Archivo no encontrado' 
-            });
+            return res.status(404).json({ message: 'Documento no encontrado' });
         }
 
         const filePath = path.join(uploadDir, documento.filename);
-        console.log('📂 Ruta del archivo:', filePath);
         
         if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Archivo no encontrado en el servidor' 
-            });
+            return res.status(404).json({ message: 'Archivo no encontrado' });
         }
 
-        // Determinar Content-Type
-        const ext = path.extname(documento.filename).toLowerCase();
-        let contentType = 'application/octet-stream';
-        if (ext === '.pdf') contentType = 'application/pdf';
-        else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-        else if (ext === '.png') contentType = 'image/png';
-        
-        const fileBuffer = fs.readFileSync(filePath);
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
-        res.setHeader('Content-Length', fileBuffer.length);
-        res.send(fileBuffer);
+        // 🔥 Enviar el archivo directamente
+        res.download(filePath, documento.nombre);
         
     } catch (error) {
-        console.error('❌ Error al descargar documento:', error);
-        const errorResponse = manejarError(error);
-        res.status(errorResponse.status).json({ 
-            success: false,
-            message: errorResponse.message 
-        });
+        console.error('❌ Error:', error);
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -147,7 +105,6 @@ export const deleteDocumento = async (req, res) => {
             const filePath = path.join(uploadDir, documento.filename);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
-                console.log('🗑️ Archivo eliminado del servidor');
             }
         }
 
