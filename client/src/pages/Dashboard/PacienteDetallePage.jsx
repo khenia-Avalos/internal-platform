@@ -12,6 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
+import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest } from "/src/api/documentos";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -32,6 +33,14 @@ function PacienteDetallePage() {
     const [historialCompleto, setHistorialCompleto] = useState([]);
     const [historialLoading, setHistorialLoading] = useState(false);
     
+    // Estados para documentos
+    const [documentos, setDocumentos] = useState([]);
+    const [documentosLoading, setDocumentosLoading] = useState(false);
+    const [mostrarFormDocumento, setMostrarFormDocumento] = useState(false);
+    const [documentoFormData, setDocumentoFormData] = useState({ nombre: '', tipo: 'otro', descripcion: '' });
+    const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
+    const [subiendoDocumento, setSubiendoDocumento] = useState(false);
+
     // Estados para paginación y acordeón
     const [paginaActual, setPaginaActual] = useState(1);
     const [consultaAbierta, setConsultaAbierta] = useState(null);
@@ -57,6 +66,7 @@ function PacienteDetallePage() {
             setInternados(internadosRes.data);
             
             await cargarHistorialCompleto();
+            await cargarDocumentos();
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
         } finally {
@@ -90,6 +100,21 @@ function PacienteDetallePage() {
             setHistorialCompleto([]);
         } finally {
             setHistorialLoading(false);
+        }
+    };
+
+    // Función para cargar documentos
+    const cargarDocumentos = async () => {
+        if (!id) return;
+        setDocumentosLoading(true);
+        try {
+            const res = await getDocumentosByPacienteRequest(id);
+            setDocumentos(res.data.data || []);
+        } catch (error) {
+            console.error('Error cargando documentos:', error);
+            setDocumentos([]);
+        } finally {
+            setDocumentosLoading(false);
         }
     };
 
@@ -178,6 +203,55 @@ function PacienteDetallePage() {
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
             toast.error('Error al actualizar el internado');
+        }
+    };
+
+    // Función para manejar subida de documentos
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setArchivoSeleccionado(file);
+        }
+    };
+
+    const handleSubirDocumento = async (e) => {
+        e.preventDefault();
+        if (!archivoSeleccionado) {
+            toast.error('Por favor selecciona un archivo');
+            return;
+        }
+        
+        setSubiendoDocumento(true);
+        try {
+            const formData = new FormData();
+            formData.append('archivo', archivoSeleccionado);
+            formData.append('pacienteId', id);
+            formData.append('nombre', documentoFormData.nombre);
+            formData.append('tipo', documentoFormData.tipo);
+            formData.append('descripcion', documentoFormData.descripcion);
+            
+            await uploadDocumentoRequest(formData);
+            await cargarDocumentos();
+            setMostrarFormDocumento(false);
+            setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
+            setArchivoSeleccionado(null);
+            toast.success('Documento subido exitosamente');
+        } catch (error) {
+            console.error('Error subiendo documento:', error);
+            toast.error('Error al subir el documento');
+        } finally {
+            setSubiendoDocumento(false);
+        }
+    };
+
+    const handleDeleteDocumento = async (documentoId) => {
+        if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
+        try {
+            await deleteDocumentoRequest(documentoId);
+            await cargarDocumentos();
+            toast.success('Documento eliminado');
+        } catch (error) {
+            toast.error('Error al eliminar el documento');
         }
     };
 
@@ -280,7 +354,7 @@ function PacienteDetallePage() {
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                            <h3 className="text-xl font-semibold">Expediente Clinico</h3>
+                            <h3 className="text-xl font-semibold">Historial Clinico</h3>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Registro completo de todas las consultas médicas de {paciente.nombre}
                                 </p>
@@ -440,6 +514,169 @@ function PacienteDetallePage() {
                                     </div>
                                 )}
                             </>
+                        )}
+                    </div>
+
+                    {/* ========================================== */}
+                    {/* SECCIÓN DE DOCUMENTOS */}
+                    {/* ========================================== */}
+                    <div className="mt-10">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Resultados de laboratorio, radiografías y otros documentos
+                                </p>
+                            </div>
+                            {canAddInternado && (
+                                <button
+                                    onClick={() => setMostrarFormDocumento(true)}
+                                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                                >
+                                    + Subir Documento
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Formulario de subida */}
+                        {mostrarFormDocumento && (
+                            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">Subir Documento</h2>
+                                    <button
+                                        onClick={() => {
+                                            setMostrarFormDocumento(false);
+                                            setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 text-xl"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <form onSubmit={handleSubirDocumento} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nombre del documento *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={documentoFormData.nombre}
+                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, nombre: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Ej: Resultados de laboratorio"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Tipo de documento
+                                        </label>
+                                        <select
+                                            value={documentoFormData.tipo}
+                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, tipo: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                                        >
+                                            <option value="resultado_lab">Resultado de laboratorio</option>
+                                            <option value="radiografia">Radiografía</option>
+                                            <option value="receta">Receta médica</option>
+                                            <option value="informe">Informe médico</option>
+                                            <option value="otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Descripción (opcional)
+                                        </label>
+                                        <textarea
+                                            value={documentoFormData.descripcion}
+                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                                            rows={2}
+                                            placeholder="Breve descripción del documento..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Archivo (PDF o imagen) *
+                                        </label>
+                                        <input
+                                            type="file"
+                                            onChange={handleFileChange}
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        />
+                                        <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (máx. 10MB)</p>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={subiendoDocumento}
+                                        className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition disabled:opacity-50"
+                                    >
+                                        {subiendoDocumento ? 'Subiendo...' : 'Subir Documento'}
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Lista de documentos */}
+                        {documentosLoading ? (
+                            <div className="flex justify-center items-center h-20">
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                            </div>
+                        ) : documentos.length === 0 ? (
+                            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                                <p className="text-gray-500">No hay documentos adjuntos</p>
+                                <p className="text-gray-400 text-sm mt-1">Sube resultados, radiografías o recetas para este paciente</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {documentos.map((doc) => (
+                                    <div key={doc._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl">
+                                                        {doc.tipo === 'resultado_lab' ? '🧪' :
+                                                         doc.tipo === 'radiografia' ? '🩻' :
+                                                         doc.tipo === 'receta' ? '📝' :
+                                                         doc.tipo === 'informe' ? '📄' : '📎'}
+                                                    </span>
+                                                    <h4 className="font-medium text-gray-800 truncate">{doc.nombre}</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {doc.tipo && doc.tipo !== 'otro' ? 
+                                                        doc.tipo.replace('_', ' ').toUpperCase() : 'Documento'}
+                                                </p>
+                                                {doc.descripcion && (
+                                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{doc.descripcion}</p>
+                                                )}
+                                                <p className="text-xs text-gray-400 mt-2">
+                                                    Subido: {new Date(doc.createdAt).toLocaleDateString('es-CR')}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-col gap-1 ml-2">
+                                                <a
+                                                    href={doc.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                                >
+                                                    Ver
+                                                </a>
+                                                {canAddInternado && (
+                                                    <button
+                                                        onClick={() => handleDeleteDocumento(doc._id)}
+                                                        className="text-red-500 hover:text-red-700 text-sm"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
