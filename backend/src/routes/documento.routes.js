@@ -2,39 +2,53 @@ import { Router } from 'express';
 import { 
     getDocumentosByPaciente,
     uploadDocumento,
-    deleteDocumento
+    deleteDocumento,
+    downloadDocumento
 } from '../controllers/documento.controller.js';
 import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
-import { 
-    CLOUDINARY_CLOUD_NAME, 
-    CLOUDINARY_API_KEY, 
-    CLOUDINARY_API_SECRET 
-} from '../config.js';
+import path from 'path';
+import fs from 'fs';
 
-// Configurar Cloudinary
-cloudinary.config({
-    cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: CLOUDINARY_API_KEY,
-    api_secret: CLOUDINARY_API_SECRET
+// Crear carpeta uploads si no existe
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configuración de multer para archivos locales
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
 });
 
-// 🔥 Usar memoryStorage para manejar el archivo en memoria
-const storage = multer.memoryStorage();
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Solo se permiten archivos PDF, JPEG o PNG'), false);
+    }
+};
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: fileFilter
 });
 
 const router = Router();
 
-// Todas las rutas requieren autenticación
 router.use(validateToken);
 
 router.get('/paciente/:pacienteId', getDocumentosByPaciente);
 router.post('/', adminRequired, upload.single('archivo'), uploadDocumento);
 router.delete('/:id', adminRequired, deleteDocumento);
+router.get('/download/:id', downloadDocumento);
 
 export default router;

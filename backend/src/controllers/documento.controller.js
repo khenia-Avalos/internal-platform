@@ -1,6 +1,11 @@
 import Documento from '../models/documento.model.js';
-import { v2 as cloudinary } from 'cloudinary';
 import { manejarError } from '../utils/errorHandler.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
@@ -19,7 +24,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// 🔥 Subir documento - CON ACCESO PÚBLICO (versión manual)
+// Subir documento a carpeta local
 export const uploadDocumento = async (req, res) => {
     try {
         console.log('📝 Subiendo documento...');
@@ -35,34 +40,16 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Subir a Cloudinary manualmente con acceso público
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'expedientes',
-                    resource_type: 'auto',
-                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
-                                type: 'upload', // ← AGREGA ESTO
-
-                    access_mode: 'public' // ← CLAVE: Hace el archivo público
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(req.file.buffer);
-        });
-
-        console.log('✅ Subido a Cloudinary:', result.secure_url);
+        // Construir URL para acceder al archivo
+        const url = `/uploads/${req.file.filename}`;
 
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: result.secure_url,
-            publicId: result.public_id,
+            url: url,
+            filename: req.file.filename,
             subidoPor: req.user.id
         });
 
@@ -84,6 +71,39 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
+// Descargar documento
+export const downloadDocumento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const documento = await Documento.findById(id);
+        
+        if (!documento) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Documento no encontrado' 
+            });
+        }
+
+        const filePath = path.join(__dirname, '../../uploads', documento.filename);
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Archivo no encontrado en el servidor' 
+            });
+        }
+
+        res.download(filePath, documento.nombre);
+    } catch (error) {
+        console.error('❌ Error al descargar documento:', error);
+        const errorResponse = manejarError(error);
+        res.status(errorResponse.status).json({ 
+            success: false,
+            message: errorResponse.message 
+        });
+    }
+};
+
 // Eliminar documento
 export const deleteDocumento = async (req, res) => {
     try {
@@ -97,9 +117,13 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        // Eliminar de Cloudinary
-        if (documento.publicId) {
-            await cloudinary.uploader.destroy(documento.publicId);
+        // Eliminar archivo físico
+        if (documento.filename) {
+            const filePath = path.join(__dirname, '../../uploads', documento.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log('🗑️ Archivo eliminado del servidor');
+            }
         }
 
         await documento.deleteOne();

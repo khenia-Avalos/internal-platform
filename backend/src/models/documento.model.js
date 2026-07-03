@@ -25,7 +25,7 @@ const documentoSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    publicId: {
+    filename: {
         type: String,
         required: true
     },
