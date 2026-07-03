@@ -38,6 +38,7 @@ const upload = multer({
 
 const router = Router();
 
+// Todas las rutas requieren autenticación
 router.use(validateToken);
 
 router.get('/paciente/:pacienteId', getDocumentosByPaciente);
