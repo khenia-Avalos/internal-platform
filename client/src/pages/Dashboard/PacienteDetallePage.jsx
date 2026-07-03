@@ -280,7 +280,7 @@ function PacienteDetallePage() {
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                            <h3 className="text-xl font-semibold">Historial Clinico</h3>
+                            <h3 className="text-xl font-semibold">Expediente Clinico</h3>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Registro completo de todas las consultas médicas de {paciente.nombre}
                                 </p>

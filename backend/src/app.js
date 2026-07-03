@@ -14,6 +14,8 @@ import pausaRoutes from './routes/pausa.routes.js';
 import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import historialRoutes from './routes/historialClinico.routes.js';
+import documentoRoutes from './routes/documento.routes.js';
+
 import { FRONTEND_URL } from "./config.js";
 
 const app = express();
@@ -44,6 +46,8 @@ app.use(cookieParser());
 // =============================================
 console.log('🔥 REGISTRANDO /api/historial PRIMERO');
 app.use('/api/historial', historialRoutes);
+app.use('/api/documentos', documentoRoutes);
+
 
 // =============================================
 // RUTAS DE PRUEBA PARA VERIFICAR
