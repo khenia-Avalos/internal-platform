@@ -3,6 +3,8 @@ import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
 import tasksRoutes from './routes/tasks.routes.js';
 import doctorRoutes from './routes/doctor.routes.js';
@@ -15,8 +17,10 @@ import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import historialRoutes from './routes/historialClinico.routes.js';
 import documentoRoutes from './routes/documento.routes.js';
-
 import { FRONTEND_URL } from "./config.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -42,12 +46,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 // =============================================
-// 🔥🔥🔥 RUTA DE HISTORIAL - PRIMERO DE TODAS 🔥🔥🔥
+// 🔥 SERVIR ARCHIVOS ESTÁTICOS DE UPLOADS
+// =============================================
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// =============================================
+// 🔥🔥🔥 RUTAS ESPECÍFICAS - PRIMERO DE TODAS
 // =============================================
 console.log('🔥 REGISTRANDO /api/historial PRIMERO');
 app.use('/api/historial', historialRoutes);
 app.use('/api/documentos', documentoRoutes);
-
 
 // =============================================
 // RUTAS DE PRUEBA PARA VERIFICAR

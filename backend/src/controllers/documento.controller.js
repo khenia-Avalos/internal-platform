@@ -1,5 +1,4 @@
 import Documento from '../models/documento.model.js';
-import { v2 as cloudinary } from 'cloudinary';
 import { manejarError } from '../utils/errorHandler.js';
 import path from 'path';
 import fs from 'fs';
@@ -7,6 +6,12 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Crear carpeta uploads si no existe
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
@@ -25,7 +30,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento a Cloudinary (siempre)
+// Subir documento a carpeta local
 export const uploadDocumento = async (req, res) => {
     try {
         console.log('📝 Subiendo documento...');
@@ -41,33 +46,8 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Subir a Cloudinary
-        const isPDF = req.file.mimetype === 'application/pdf';
-        const resourceType = isPDF ? 'raw' : 'image';
-        
-        console.log(`📤 Subiendo a Cloudinary como ${resourceType}...`);
-
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'expedientes',
-                    resource_type: resourceType,
-                    access_mode: 'public'
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(req.file.buffer);
-        });
-
-        let url = result.secure_url;
-        if (isPDF) {
-            url = url.replace('/image/', '/raw/');
-        }
-
-        console.log('✅ Subido a Cloudinary:', url);
+        // Construir URL para acceder al archivo
+        const url = `/uploads/${req.file.filename}`;
 
         const nuevoDocumento = new Documento({
             pacienteId,
@@ -75,7 +55,7 @@ export const uploadDocumento = async (req, res) => {
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
             url: url,
-            filename: null,
+            filename: req.file.filename,
             subidoPor: req.user.id
         });
 
@@ -97,7 +77,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 Descargar documento - SIEMPRE usa Cloudinary
+// Descargar documento
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -110,20 +90,36 @@ export const downloadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 SIEMPRE usar la URL de Cloudinary
-        if (documento.url) {
-            console.log('📤 Redirigiendo a Cloudinary:', documento.url);
-            // Agregar parámetro para forzar descarga
-            const downloadUrl = documento.url.includes('?') 
-                ? `${documento.url}&fl_attachment=1` 
-                : `${documento.url}?fl_attachment=1`;
-            return res.redirect(downloadUrl);
+        if (!documento.filename) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Archivo no encontrado' 
+            });
         }
 
-        return res.status(404).json({ 
-            success: false,
-            message: 'No se encontró el archivo' 
-        });
+        const filePath = path.join(uploadDir, documento.filename);
+        console.log('📂 Ruta del archivo:', filePath);
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Archivo no encontrado en el servidor' 
+            });
+        }
+
+        // Determinar Content-Type
+        const ext = path.extname(documento.filename).toLowerCase();
+        let contentType = 'application/octet-stream';
+        if (ext === '.pdf') contentType = 'application/pdf';
+        else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        else if (ext === '.png') contentType = 'image/png';
+        
+        const fileBuffer = fs.readFileSync(filePath);
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
+        res.setHeader('Content-Length', fileBuffer.length);
+        res.send(fileBuffer);
+        
     } catch (error) {
         console.error('❌ Error al descargar documento:', error);
         const errorResponse = manejarError(error);
@@ -147,10 +143,12 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        // Eliminar de Cloudinary si tiene publicId
-        if (documento.publicId) {
-            await cloudinary.uploader.destroy(documento.publicId);
-            console.log('🗑️ Eliminado de Cloudinary');
+        if (documento.filename) {
+            const filePath = path.join(uploadDir, documento.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log('🗑️ Archivo eliminado del servidor');
+            }
         }
 
         await documento.deleteOne();
