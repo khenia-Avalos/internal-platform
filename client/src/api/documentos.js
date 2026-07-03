@@ -18,8 +18,9 @@ export const deleteDocumentoRequest = async (id) => {
     return await axios.delete(`${API_URL}/api/documentos/${id}`);
 };
 
+// 🔥 FUNCIÓN DE DESCARGA CORREGIDA
 export const downloadDocumentoRequest = async (id) => {
     return await axios.get(`${API_URL}/api/documentos/download/${id}`, {
-        responseType: 'blob'
+        responseType: 'blob' // ← Esto es CLAVE para que descargue el archivo
     });
 };
