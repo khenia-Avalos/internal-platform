@@ -31,20 +31,14 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Subir a Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'expedientes',
-            resource_type: 'auto',
-            allowed_formats: ['pdf', 'jpg', 'jpeg', 'png']
-        });
-
+        // Cloudinary ya subió el archivo, solo guardamos la URL
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: result.secure_url,
-            publicId: result.public_id,
+            url: req.file.path || req.file.secure_url,
+            publicId: req.file.filename || req.file.public_id,
             subidoPor: req.user.id
         });
 

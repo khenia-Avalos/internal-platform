@@ -38,3 +38,8 @@ if (EMAIL_SERVICE === 'sendgrid') {
     console.log('   - EMAIL_USER:', EMAIL_USER || ' NO CONFIGURADO');
     console.log('   - EMAIL_PASS:', EMAIL_PASS ? ` CONFIGURADO (${EMAIL_PASS.length} chars)` : ' NO CONFIGURADO');
 }
+
+
+export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
