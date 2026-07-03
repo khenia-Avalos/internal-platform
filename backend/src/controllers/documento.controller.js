@@ -19,7 +19,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento - CON ACCESO PÚBLICO
+// 🔥 Subir documento - CON ACCESO PÚBLICO (versión manual)
 export const uploadDocumento = async (req, res) => {
     try {
         console.log('📝 Subiendo documento...');
@@ -35,12 +35,21 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Subir a Cloudinary con acceso público
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'expedientes',
-            resource_type: 'auto',
-            allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
-            access_mode: 'public' // ← CLAVE: Hace el archivo público
+        // 🔥 Subir a Cloudinary manualmente con acceso público
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'expedientes',
+                    resource_type: 'auto',
+                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+                    access_mode: 'public' // ← CLAVE: Hace el archivo público
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
+            uploadStream.end(req.file.buffer);
         });
 
         console.log('✅ Subido a Cloudinary:', result.secure_url);

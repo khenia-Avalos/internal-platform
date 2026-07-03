@@ -7,7 +7,6 @@ import {
 import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { 
     CLOUDINARY_CLOUD_NAME, 
     CLOUDINARY_API_KEY, 
@@ -21,15 +20,8 @@ cloudinary.config({
     api_secret: CLOUDINARY_API_SECRET
 });
 
-// Configurar almacenamiento en Cloudinary
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'expedientes',
-        allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
-        resource_type: 'auto'
-    }
-});
+// 🔥 Usar memoryStorage para manejar el archivo en memoria
+const storage = multer.memoryStorage();
 
 const upload = multer({ 
     storage: storage,
