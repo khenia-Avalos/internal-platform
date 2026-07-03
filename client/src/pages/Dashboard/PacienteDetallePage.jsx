@@ -228,88 +228,36 @@ function PacienteDetallePage() {
 
             {!loading && paciente && (
                 <>
-                    {/* ========================================== */}
-                    {/* EXPEDIENTE CLÍNICO - DATOS DEL PACIENTE */}
-                    {/* ========================================== */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-                        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4">
-                            <h2 className="text-2xl font-bold text-white">Expediente Clínico</h2>
-                            <p className="text-cyan-100 text-sm">Paciente: {paciente.nombre}</p>
+                    <InfoCard
+                        title={`Información de ${paciente.nombre}`}
+                        data={[
+                            { label: "Nombre", value: paciente.nombre },
+                            { label: "Especie", value: paciente.especie },
+                            { label: "Raza", value: paciente.raza || 'Sin raza' },
+                            { label: "Edad", value: paciente.edad ? `${paciente.edad} años` : 'No especificada' },
+                            { label: "Sexo", value: paciente.sexo || 'No especificado' },
+                            { label: "Color Pelaje", value: paciente.colorPelaje || 'No especificado' },
+                            { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No especificado' },
+                            { label: "Antecedentes Médicos", value: paciente.antecedentesMedicos || 'No especificados' },
+                        ]}
+                    />
+
+                    {dueno && (
+                        <div className="mt-8">
+                            <h3 className="text-xl font-semibold mb-4">Dueño de {paciente.nombre}</h3>
+                            <InfoCard
+                                title={`${dueno.username} ${dueno.lastname}`}
+                                data={[
+                                    { label: "Nombre completo", value: `${dueno.username} ${dueno.lastname}` },
+                                    { label: "Email", value: dueno.email },
+                                    { label: "Teléfono", value: dueno.phoneNumber },
+                                    { label: "Cédula", value: dueno.cedula },
+                                    { label: "Dirección", value: dueno.direccion },
+                                ]}
+                            />
                         </div>
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Fecha de registro</p>
-                                    <p className="text-gray-800 font-medium">{formatearFechaLocal(paciente.createdAt)}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Especie</p>
-                                    <p className="text-gray-800 font-medium">{paciente.especie || 'No especificada'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Raza</p>
-                                    <p className="text-gray-800 font-medium">{paciente.raza || 'No especificada'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Edad</p>
-                                    <p className="text-gray-800 font-medium">{paciente.edad ? `${paciente.edad} años` : 'No especificada'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sexo</p>
-                                    <p className="text-gray-800 font-medium">{paciente.sexo || 'No especificado'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Color de pelaje</p>
-                                    <p className="text-gray-800 font-medium">{paciente.colorPelaje || 'No especificado'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Peso</p>
-                                    <p className="text-gray-800 font-medium">{paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No registrado'}</p>
-                                </div>
-                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Temperatura</p>
-                                    <p className="text-gray-800 font-medium">{paciente.temperatura ? `${paciente.temperatura} °C` : 'No registrada'}</p>
-                                </div>
-                            </div>
-
-                            {/* Antecedentes Médicos */}
-                            {paciente.antecedentesMedicos && (
-                                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-6">
-                                    <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold">Antecedentes Médicos</p>
-                                    <p className="text-gray-800 mt-1">{paciente.antecedentesMedicos}</p>
-                                </div>
-                            )}
-
-                            {/* DATOS DEL DUEÑO */}
-                            {dueno && (
-                                <div className="border-t border-gray-200 pt-4">
-                                    <h4 className="text-sm font-semibold text-gray-600 mb-3">Información del Dueño</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Nombre completo</p>
-                                            <p className="text-gray-800 font-medium">{dueno.username} {dueno.lastname}</p>
-                                        </div>
-                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Email</p>
-                                            <p className="text-gray-800 font-medium">{dueno.email}</p>
-                                        </div>
-                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Teléfono</p>
-                                            <p className="text-gray-800 font-medium">{dueno.phoneNumber || 'No registrado'}</p>
-                                        </div>
-                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Dirección</p>
-                                            <p className="text-gray-800 font-medium">{dueno.direccion || 'No registrada'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* ========================================== */}
-                    {/* HISTORIAL DE INTERNADOS */}
-                    {/* ========================================== */}
+                    )}
+                    
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold">Historial de Internados</h3>
@@ -478,10 +426,10 @@ function PacienteDetallePage() {
                                             <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 flex flex-wrap items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                        #{index + 1}
+                                                        Consulta #{index + 1}
                                                     </span>
                                                     <h4 className="text-lg font-semibold text-gray-800">
-                                                        Consulta del {formatearFechaHora(fechaCita)}
+                                                        {formatearFechaHora(fechaCita)}
                                                     </h4>
                                                 </div>
                                                 <div className="flex items-center gap-3">
