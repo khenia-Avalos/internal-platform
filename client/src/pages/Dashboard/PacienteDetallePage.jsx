@@ -11,7 +11,7 @@ import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
-import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
+import { getHistorialByPacienteRequest, createHistorialRequest, updateHistorialRequest } from "/src/api/historialClinico";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -31,11 +31,16 @@ function PacienteDetallePage() {
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
     const [historialCompleto, setHistorialCompleto] = useState([]);
     const [historialLoading, setHistorialLoading] = useState(false);
+    const [showHistorialForm, setShowHistorialForm] = useState(false);
+    const [isEditingHistorial, setIsEditingHistorial] = useState(false);
+    const [historialFormData, setHistorialFormData] = useState({});
+    const [selectedHistorialId, setSelectedHistorialId] = useState(null);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
+    const canEditHistorial = isAdmin || isDoctor;
 
     // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
@@ -112,6 +117,137 @@ function PacienteDetallePage() {
             month: '2-digit',
             year: 'numeric'
         });
+    };
+
+    // ============================================
+    // FUNCIONES DE HISTORIAL CLÍNICO
+    // ============================================
+
+    const abrirFormularioCrear = () => {
+        setHistorialFormData({
+            motivoConsulta: '',
+            sintomas: '',
+            diagnostico: '',
+            tratamiento: '',
+            medicamentos: '',
+            examenes: '',
+            observaciones: '',
+            proximaCitaSugerida: ''
+        });
+        setIsEditingHistorial(false);
+        setShowHistorialForm(true);
+    };
+
+    const abrirFormularioEditar = (historial) => {
+        if (!historial) return;
+        
+        const medicamentosText = Array.isArray(historial.medicamentos) && historial.medicamentos.length > 0
+            ? historial.medicamentos.map(m => 
+                `${m.nombre || ''} | ${m.dosis || ''} | ${m.frecuencia || ''} | ${m.duracion || ''} | ${m.via || ''}`
+            ).join('\n')
+            : '';
+        
+        const examenesText = Array.isArray(historial.examenes) && historial.examenes.length > 0
+            ? historial.examenes.map(e => 
+                `${e.nombre || ''} | ${e.resultado || ''} | ${e.fecha ? new Date(e.fecha).toISOString().split('T')[0] : ''}`
+            ).join('\n')
+            : '';
+        
+        setHistorialFormData({
+            motivoConsulta: historial.motivoConsulta || '',
+            sintomas: historial.sintomas || '',
+            diagnostico: historial.diagnostico || '',
+            tratamiento: historial.tratamiento || '',
+            medicamentos: medicamentosText,
+            examenes: examenesText,
+            observaciones: historial.observaciones || '',
+            proximaCitaSugerida: historial.proximaCitaSugerida ? 
+                new Date(historial.proximaCitaSugerida).toISOString().split('T')[0] : ''
+        });
+        setSelectedHistorialId(historial._id);
+        setIsEditingHistorial(true);
+        setShowHistorialForm(true);
+    };
+
+    const handleCreateHistorial = async (data) => {
+        console.log('🔥🔥🔥 handleCreateHistorial (Paciente) EJECUTÁNDOSE 🔥🔥🔥');
+        console.log('📝 Datos del formulario:', data);
+        
+        try {
+            if (!paciente?._id) {
+                toast.error('No se puede crear el registro: falta el paciente');
+                return;
+            }
+            
+            const datosEnvio = {
+                pacienteId: paciente._id,
+                citaId: null, // No tiene cita asociada
+                motivoConsulta: data.motivoConsulta || '',
+                sintomas: data.sintomas || '',
+                diagnostico: data.diagnostico || '',
+                tratamiento: data.tratamiento || '',
+                medicamentos: data.medicamentos ? 
+                    data.medicamentos.split('\n').filter(line => line.trim()) : [],
+                examenes: data.examenes ?
+                    data.examenes.split('\n').filter(line => line.trim()) : [],
+                observaciones: data.observaciones || '',
+                proximaCitaSugerida: data.proximaCitaSugerida || null
+            };
+            
+            console.log('📤 Datos a enviar:', JSON.stringify(datosEnvio, null, 2));
+            
+            const response = await createHistorialRequest(datosEnvio);
+            console.log('✅ Respuesta del backend:', response.data);
+            
+            await cargarHistorialCompleto();
+            setShowHistorialForm(false);
+            toast.success('Registro clínico creado exitosamente');
+        } catch (error) {
+            console.error('❌ Error al crear historial:', error);
+            console.error('❌ Respuesta del error:', error.response?.data);
+            manejarErrorResponse(error, setErrors);
+            toast.error('Error al crear el registro clínico');
+        }
+    };
+
+    const handleUpdateHistorial = async (data) => {
+        console.log('🔥🔥🔥 handleUpdateHistorial (Paciente) EJECUTÁNDOSE 🔥🔥🔥');
+        console.log('📝 Datos a actualizar:', data);
+        
+        try {
+            if (!selectedHistorialId) {
+                toast.error('No hay registro clínico para actualizar');
+                return;
+            }
+            
+            const datosEnvio = {
+                motivoConsulta: data.motivoConsulta || '',
+                sintomas: data.sintomas || '',
+                diagnostico: data.diagnostico || '',
+                tratamiento: data.tratamiento || '',
+                medicamentos: data.medicamentos ? 
+                    data.medicamentos.split('\n').filter(line => line.trim()) : [],
+                examenes: data.examenes ?
+                    data.examenes.split('\n').filter(line => line.trim()) : [],
+                observaciones: data.observaciones || '',
+                proximaCitaSugerida: data.proximaCitaSugerida || null
+            };
+            
+            console.log('📤 Datos a enviar:', JSON.stringify(datosEnvio, null, 2));
+            
+            const response = await updateHistorialRequest(selectedHistorialId, datosEnvio);
+            console.log('✅ Respuesta del backend:', response.data);
+            
+            await cargarHistorialCompleto();
+            setShowHistorialForm(false);
+            setSelectedHistorialId(null);
+            toast.success('Registro clínico actualizado exitosamente');
+        } catch (error) {
+            console.error('❌ Error al actualizar historial:', error);
+            console.error('❌ Respuesta del error:', error.response?.data);
+            manejarErrorResponse(error, setErrors);
+            toast.error('Error al actualizar el registro clínico');
+        }
     };
 
     // Hook para editar internados
@@ -259,6 +395,14 @@ function PacienteDetallePage() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
+                                {canEditHistorial && !showHistorialForm && (
+                                    <button
+                                        onClick={abrirFormularioCrear}
+                                        className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition text-sm font-medium"
+                                    >
+                                        + Nuevo Registro
+                                    </button>
+                                )}
                                 <span className="text-sm text-gray-500">
                                     {historialCompleto.length} consultas registradas
                                 </span>
@@ -269,10 +413,37 @@ function PacienteDetallePage() {
                             <div className="flex justify-center items-center h-32">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
                             </div>
+                        ) : showHistorialForm ? (
+                            <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg md:text-xl font-semibold text-gray-700">
+                                        {isEditingHistorial ? 'Editar Registro Clínico' : 'Nuevo Registro Clínico'}
+                                    </h2>
+                                    <button
+                                        onClick={() => {
+                                            setShowHistorialForm(false);
+                                            setSelectedHistorialId(null);
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 transition text-xl"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <DynamicForm
+                                    {...(isEditingHistorial ? editConfig.editHistorialClinico : createConfig.historialClinico)}
+                                    layout="grid"
+                                    defaultValues={historialFormData}
+                                    onSubmit={isEditingHistorial ? handleUpdateHistorial : handleCreateHistorial}
+                                    errors={errors}
+                                />
+                            </div>
                         ) : historialCompleto.length === 0 ? (
                             <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                                 <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
-                                <p className="text-gray-400 text-sm mt-2">Las consultas se registran automáticamente al completar una cita</p>
+                                <p className="text-gray-400 text-sm mt-2">
+                                    {canEditHistorial && 'Haz clic en "+ Nuevo Registro" para agregar uno'}
+                                    {!canEditHistorial && 'Las consultas se registran automáticamente al completar una cita'}
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-6">
@@ -282,7 +453,7 @@ function PacienteDetallePage() {
                                     
                                     return (
                                         <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                            {/* Encabezado - Fecha de registro en la clínica */}
+                                            {/* Encabezado */}
                                             <div className="border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-3">
                                                 <div className="flex flex-wrap items-center justify-between">
                                                     <div className="flex items-center gap-3">
@@ -298,19 +469,29 @@ function PacienteDetallePage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    {cita.estado && (
-                                                        <span className={`text-sm px-3 py-1 rounded-full font-medium ${
-                                                            cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
-                                                            cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
-                                                            cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-red-100 text-red-700'
-                                                        }`}>
-                                                            {cita.estado === 'completada' ? 'Completada' :
-                                                             cita.estado === 'confirmada' ? 'Confirmada' :
-                                                             cita.estado === 'pendiente' ? 'Pendiente' :
-                                                             'Cancelada'}
-                                                        </span>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {cita.estado && (
+                                                            <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                                                                cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
+                                                                cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
+                                                                cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                                                                'bg-red-100 text-red-700'
+                                                            }`}>
+                                                                {cita.estado === 'completada' ? 'Completada' :
+                                                                 cita.estado === 'confirmada' ? 'Confirmada' :
+                                                                 cita.estado === 'pendiente' ? 'Pendiente' :
+                                                                 'Cancelada'}
+                                                            </span>
+                                                        )}
+                                                        {canEditHistorial && (
+                                                            <button
+                                                                onClick={() => abrirFormularioEditar(registro)}
+                                                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                                            >
+                                                                Editar
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
