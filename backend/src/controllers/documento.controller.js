@@ -40,7 +40,6 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Construir URL para acceder al archivo
         const url = `/uploads/${req.file.filename}`;
 
         const nuevoDocumento = new Documento({
@@ -71,7 +70,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 Descargar documento - CORREGIDO
+// 🔥 Descargar documento - CON CONTENT-TYPE CORRECTO
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -84,7 +83,7 @@ export const downloadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Si tiene filename (documento local) - descargar del servidor
+        // Si tiene filename (documento local)
         if (documento.filename) {
             const filePath = path.join(__dirname, '../../uploads', documento.filename);
             console.log('📂 Ruta del archivo:', filePath);
@@ -96,10 +95,31 @@ export const downloadDocumento = async (req, res) => {
                 });
             }
 
-            return res.download(filePath, documento.nombre);
+            // 🔥 Obtener la extensión del archivo
+            const ext = path.extname(documento.filename).toLowerCase();
+            
+            // 🔥 Definir Content-Type según la extensión
+            let contentType = 'application/octet-stream';
+            if (ext === '.pdf') {
+                contentType = 'application/pdf';
+            } else if (ext === '.jpg' || ext === '.jpeg') {
+                contentType = 'image/jpeg';
+            } else if (ext === '.png') {
+                contentType = 'image/png';
+            }
+            
+            // 🔥 Leer el archivo y enviarlo con el Content-Type correcto
+            const fileBuffer = fs.readFileSync(filePath);
+            
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
+            res.setHeader('Content-Length', fileBuffer.length);
+            res.send(fileBuffer);
+            
+            return;
         }
         
-        // 🔥 Si tiene url (documento de Cloudinary) - redirigir a Cloudinary
+        // Si tiene url (documento de Cloudinary) - redirigir
         if (documento.url) {
             console.log('📤 Redirigiendo a Cloudinary:', documento.url);
             return res.redirect(documento.url);
@@ -132,7 +152,6 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        // Eliminar archivo físico si existe
         if (documento.filename) {
             const filePath = path.join(__dirname, '../../uploads', documento.filename);
             if (fs.existsSync(filePath)) {
