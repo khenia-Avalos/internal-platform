@@ -12,6 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
+import { getCitasByPacienteRequest } from "/src/api/cita";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -31,6 +32,8 @@ function PacienteDetallePage() {
     const [internadoSeleccionado, setInternadoSeleccionado] = useState(null);
     const [historialCompleto, setHistorialCompleto] = useState([]);
     const [historialLoading, setHistorialLoading] = useState(false);
+    const [citasFuturas, setCitasFuturas] = useState([]);
+    const [citasLoading, setCitasLoading] = useState(false);
 
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
@@ -52,6 +55,7 @@ function PacienteDetallePage() {
             setInternados(internadosRes.data);
             
             await cargarHistorialCompleto();
+            await cargarCitasFuturas();
         } catch (error) {
             manejarErrorResponse(error, setErrors, setSuccessMessage);
         } finally {
@@ -77,6 +81,25 @@ function PacienteDetallePage() {
             setHistorialCompleto([]);
         } finally {
             setHistorialLoading(false);
+        }
+    };
+
+    // Función para cargar citas futuras
+    const cargarCitasFuturas = async () => {
+        if (!id) return;
+        
+        setCitasLoading(true);
+        try {
+            const res = await getCitasByPacienteRequest(id);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const futuras = res.data.filter(cita => new Date(cita.fecha) >= hoy && cita.estado !== 'cancelada');
+            setCitasFuturas(futuras);
+        } catch (error) {
+            console.error('Error cargando citas futuras:', error);
+            setCitasFuturas([]);
+        } finally {
+            setCitasLoading(false);
         }
     };
 
@@ -386,12 +409,58 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
+                    {/* PRÓXIMAS CITAS AGENDADAS */}
+                    {/* ========================================== */}
+                    <div className="mt-10">
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Próximas citas agendadas</h3>
+                        
+                        {citasLoading ? (
+                            <div className="flex justify-center items-center h-20">
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-cyan-500"></div>
+                            </div>
+                        ) : citasFuturas.length === 0 ? (
+                            <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200">
+                                <p className="text-gray-500">No hay citas programadas para esta mascota</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {citasFuturas.map((cita) => (
+                                    <div key={cita._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center justify-between hover:shadow-md transition-shadow">
+                                        <div className="flex items-center gap-4 flex-wrap">
+                                            <div className="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-sm font-medium">
+                                                {formatearFechaLocal(cita.fecha)}
+                                            </div>
+                                            <span className="text-gray-700">{cita.horaInicio} - {cita.horaFin}</span>
+                                            <span className="text-gray-600">{cita.doctorId?.username || 'Veterinario'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                                                cita.estado === 'confirmada' ? 'bg-green-100 text-green-700' :
+                                                cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-gray-100 text-gray-500'
+                                            }`}>
+                                                {obtenerEstadoCita(cita.estado)}
+                                            </span>
+                                            <button 
+                                                onClick={() => navigate(`/citas/${cita._id}`)}
+                                                className="text-cyan-600 hover:text-cyan-700 text-sm font-medium"
+                                            >
+                                                Ver detalles →
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ========================================== */}
                     {/* HISTORIAL CLÍNICO COMPLETO - EXPEDIENTE */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-800">Historial de Consultas</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">Historial Clínico</h3>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Registro completo de todas las consultas médicas de {paciente.nombre}
                                 </p>
@@ -416,14 +485,14 @@ function PacienteDetallePage() {
                         ) : (
                             <div className="space-y-6">
                                 {historialCompleto.map((registro, index) => {
-                                    // Obtener la cita asociada si existe
                                     const cita = registro.citaId || {};
                                     const fechaCita = cita.fecha || registro.createdAt;
+                                    const nombreDoctor = cita.doctorId?.username || 'Veterinario asignado';
                                     
                                     return (
                                         <div key={registro._id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                                            {/* Encabezado de la consulta */}
-                                            <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 flex flex-wrap items-center justify-between">
+                                            {/* Encabezado */}
+                                            <div className="border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-4 flex flex-wrap items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
                                                         Consulta #{index + 1}
@@ -431,13 +500,16 @@ function PacienteDetallePage() {
                                                     <h4 className="text-lg font-semibold text-gray-800">
                                                         {formatearFechaHora(fechaCita)}
                                                     </h4>
-                                                </div>
-                                                <div className="flex items-center gap-3">
                                                     {cita.horaInicio && (
                                                         <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                            🕐 {cita.horaInicio} - {cita.horaFin || ''}
+                                                            🕐 {cita.horaInicio}
                                                         </span>
                                                     )}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                        {nombreDoctor}
+                                                    </span>
                                                     {cita.estado && (
                                                         <span className={`text-sm px-3 py-1 rounded-full font-medium ${
                                                             cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
@@ -451,74 +523,79 @@ function PacienteDetallePage() {
                                                 </div>
                                             </div>
 
-                                            {/* Contenido de la consulta */}
+                                            {/* Contenido */}
                                             <div className="p-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de consulta</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                <div className="space-y-4">
+                                                    {/* Motivo */}
+                                                    <div className="border-l-4 border-cyan-500 pl-4">
+                                                        <p className="text-sm text-gray-500">Motivo de la consulta</p>
+                                                        <p className="text-gray-800 font-medium">{registro.motivoConsulta || 'No especificado'}</p>
                                                     </div>
-                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+
+                                                    {/* Síntomas y Diagnóstico */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas reportados</p>
+                                                            <p className="text-gray-800 mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                        </div>
+                                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
+                                                            <p className="text-gray-800 mt-1 font-medium">{registro.diagnostico || 'No especificado'}</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
-                                                    </div>
-                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 md:col-span-2 lg:col-span-3">
-                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento</p>
-                                                        <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
-                                                    </div>
+
+                                                    {/* Tratamiento */}
+                                                    {registro.tratamiento && (
+                                                        <div className="border-l-4 border-blue-500 pl-4">
+                                                            <p className="text-sm text-gray-500">Tratamiento indicado</p>
+                                                            <p className="text-gray-800">{registro.tratamiento}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Medicamentos */}
+                                                    {registro.medicamentos && registro.medicamentos.length > 0 && (
+                                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                            <p className="text-sm font-medium text-blue-700 mb-2">💊 Medicamentos recetados</p>
+                                                            <ul className="space-y-1">
+                                                                {registro.medicamentos.map((m, i) => (
+                                                                    <li key={i} className="text-gray-700 text-sm">
+                                                                        • {m.nombre}{m.dosis && ` (${m.dosis})`}{m.frecuencia && ` — cada ${m.frecuencia}`}{m.duracion && ` durante ${m.duracion}`}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Exámenes */}
+                                                    {registro.examenes && registro.examenes.length > 0 && (
+                                                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                                            <p className="text-sm font-medium text-purple-700 mb-2">🔬 Exámenes realizados</p>
+                                                            <ul className="space-y-1">
+                                                                {registro.examenes.map((e, i) => (
+                                                                    <li key={i} className="text-gray-700 text-sm">
+                                                                        • {e.nombre}{e.resultado && `: ${e.resultado}`}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Observaciones */}
+                                                    {registro.observaciones && (
+                                                        <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                                                            <p className="text-sm font-medium text-amber-700 mb-1">📝 Observaciones del veterinario</p>
+                                                            <p className="text-gray-700 whitespace-pre-wrap">{registro.observaciones}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Próxima cita sugerida */}
+                                                    {registro.proximaCitaSugerida && (
+                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-2">
+                                                            <span className="text-green-600 text-sm font-medium">📅 Próxima cita sugerida:</span>
+                                                            <span className="text-gray-800 font-medium">{formatearFechaHora(registro.proximaCitaSugerida)}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                {/* Medicamentos */}
-                                                {registro.medicamentos && registro.medicamentos.length > 0 && (
-                                                    <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                                        <p className="text-xs text-blue-600 uppercase tracking-wider font-semibold">💊 Medicamentos Recetados</p>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {registro.medicamentos.map((m, i) => (
-                                                                <span key={i} className="inline-flex items-center bg-white px-3 py-1.5 rounded-full border border-blue-200 text-sm">
-                                                                    {m.nombre}
-                                                                    {m.dosis && <span className="text-blue-600 ml-1">({m.dosis})</span>}
-                                                                    {m.frecuencia && <span className="text-gray-500 ml-1">c/{m.frecuencia}</span>}
-                                                                    {m.duracion && <span className="text-gray-500 ml-1">por {m.duracion}</span>}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Exámenes */}
-                                                {registro.examenes && registro.examenes.length > 0 && (
-                                                    <div className="mt-4 bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                                        <p className="text-xs text-purple-600 uppercase tracking-wider font-semibold">🔬 Exámenes Realizados</p>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            {registro.examenes.map((e, i) => (
-                                                                <span key={i} className="inline-flex items-center bg-white px-3 py-1.5 rounded-full border border-purple-200 text-sm">
-                                                                    {e.nombre}
-                                                                    {e.resultado && <span className="text-purple-600 ml-1">: {e.resultado}</span>}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Observaciones */}
-                                                {registro.observaciones && (
-                                                    <div className="mt-4 bg-amber-50 p-4 rounded-lg border border-amber-200">
-                                                        <p className="text-xs text-amber-600 uppercase tracking-wider font-semibold">📝 Observaciones del Veterinario</p>
-                                                        <p className="text-gray-800 mt-1 whitespace-pre-wrap">{registro.observaciones}</p>
-                                                    </div>
-                                                )}
-
-                                                {/* Próxima cita sugerida */}
-                                                {registro.proximaCitaSugerida && (
-                                                    <div className="mt-4 bg-green-50 p-4 rounded-lg border border-green-200 flex items-center gap-2">
-                                                        <span className="text-green-600 text-sm font-medium">📅 Próxima cita sugerida:</span>
-                                                        <span className="text-gray-800 font-medium">{formatearFechaHora(registro.proximaCitaSugerida)}</span>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     );
