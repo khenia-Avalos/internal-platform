@@ -93,7 +93,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para formatear fechas
+    // Función para formatear fechas SIN desfase horario
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
@@ -104,27 +104,35 @@ function PacienteDetallePage() {
         
         try {
             const date = new Date(fecha);
-            return date.toLocaleDateString('es-CR', {
-                timeZone: 'America/Costa_Rica',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${day}/${month}/${year}`;
         } catch {
             return 'No especificada';
         }
     };
 
-    // Función para formatear fecha y hora
+    // Función para formatear fecha y hora SIN desfase horario
     const formatearFechaHora = (fechaISO) => {
         if (!fechaISO) return 'No especificada';
-        const date = new Date(fechaISO);
-        return date.toLocaleDateString('es-CR', {
-            timeZone: 'America/Costa_Rica',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        
+        // Si es string ISO, extraer la fecha sin conversión de zona horaria
+        if (typeof fechaISO === 'string' && fechaISO.includes('T')) {
+            const [year, month, day] = fechaISO.split('T')[0].split('-');
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Si es un objeto Date o string de fecha simple
+        try {
+            const date = new Date(fechaISO);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${day}/${month}/${year}`;
+        } catch {
+            return 'No especificada';
+        }
     };
 
     // Hook para editar internados
@@ -272,7 +280,7 @@ function PacienteDetallePage() {
                     <div className="mt-8">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-800">Historial Clínico</h3>
+                            <h3 className="text-xl font-semibold">Historial Clinico</h3>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Registro completo de todas las consultas médicas de {paciente.nombre}
                                 </p>
@@ -315,13 +323,13 @@ function PacienteDetallePage() {
                                                 >
                                                     <div className="flex items-center gap-3 flex-wrap">
                                                         <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                            #{globalIndex + 1}
+                                                           Registro clinico de la cita #{globalIndex + 1}
                                                         </span>
                                                         <span className="text-sm font-medium text-gray-700">
-                                                            📅 {formatearFechaHora(fechaCita)}
+                                                        Fecha de la cita: {formatearFechaHora(fechaCita)}
                                                         </span>
                                                         {cita.horaInicio && (
-                                                            <span className="text-sm text-gray-500">🕐 {cita.horaInicio}</span>
+                                                            <span className="text-sm text-gray-500">Hora de la cita: {cita.horaInicio}</span>
                                                         )}
                                                         <span className="text-sm text-gray-600 max-w-[200px] truncate">
                                                             {registro.motivoConsulta || 'Sin motivo'}
