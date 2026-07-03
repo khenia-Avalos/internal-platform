@@ -12,7 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
-import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest } from "/src/api/documentos";
+import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest, downloadDocumentoRequest } from "/src/api/documentos";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -210,7 +210,10 @@ function PacienteDetallePage() {
         }
     };
 
-    // Funciones para documentos
+    // ============================================
+    // FUNCIONES PARA DOCUMENTOS CON DESCARGA LOCAL
+    // ============================================
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         console.log('📎 Archivo seleccionado:', file);
@@ -264,6 +267,30 @@ function PacienteDetallePage() {
             toast.error('Error al subir el documento: ' + (error.response?.data?.message || error.message));
         } finally {
             setSubiendoDocumento(false);
+        }
+    };
+
+    // 🔥 FUNCIÓN PARA DESCARGAR DOCUMENTO
+    const handleDownload = async (documentoId, nombre) => {
+        console.log('📥 Descargando documento:', documentoId);
+        try {
+            const response = await downloadDocumentoRequest(documentoId);
+            console.log('✅ Documento descargado:', response);
+            
+            // Crear URL del blob y descargar
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', nombre || 'documento.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            
+            toast.success('Documento descargado');
+        } catch (error) {
+            console.error('❌ Error al descargar documento:', error);
+            toast.error('Error al descargar el documento');
         }
     };
 
@@ -540,7 +567,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA */}
+                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA LOCAL */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -692,15 +719,12 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-                                                <a
-                                                    href={`${doc.url}?fl_attachment=1`}
-                                                    download={doc.nombre}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                <button
+                                                    onClick={() => handleDownload(doc._id, doc.nombre)}
                                                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                                                 >
                                                     📥 Descargar
-                                                </a>
+                                                </button>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}

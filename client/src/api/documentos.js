@@ -17,3 +17,9 @@ export const uploadDocumentoRequest = async (formData) => {
 export const deleteDocumentoRequest = async (id) => {
     return await axios.delete(`${API_URL}/api/documentos/${id}`);
 };
+
+export const downloadDocumentoRequest = async (id) => {
+    return await axios.get(`${API_URL}/api/documentos/download/${id}`, {
+        responseType: 'blob'
+    });
+};
