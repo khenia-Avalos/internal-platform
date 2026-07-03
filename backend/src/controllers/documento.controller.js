@@ -42,6 +42,8 @@ export const uploadDocumento = async (req, res) => {
                     folder: 'expedientes',
                     resource_type: 'auto',
                     allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+                                type: 'upload', // ← AGREGA ESTO
+
                     access_mode: 'public' // ← CLAVE: Hace el archivo público
                 },
                 (error, result) => {
