@@ -53,21 +53,26 @@ function PacienteDetallePage() {
 
     // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
+        console.log('🔄 Cargando todos los datos para paciente:', id);
         setLoading(true);
         try {
             const pacienteRes = await getPacienteByIdRequest(id);
             setPaciente(pacienteRes.data);
+            console.log('✅ Paciente cargado:', pacienteRes.data.nombre);
             
             if (pacienteRes.data.ownerId) {
-                setDueno(pacienteRes.data.ownerId);           
+                setDueno(pacienteRes.data.ownerId);
+                console.log('✅ Dueño cargado');           
             }
             
             const internadosRes = await getInternadosByPacienteRequest(id);
             setInternados(internadosRes.data);
+            console.log('✅ Internados cargados:', internadosRes.data.length);
             
             await cargarHistorialCompleto();
             await cargarDocumentos();
         } catch (error) {
+            console.error('❌ Error cargando datos:', error);
             manejarErrorResponse(error, setErrors, setSuccessMessage);
         } finally {
             setLoading(false);
@@ -106,12 +111,14 @@ function PacienteDetallePage() {
     // Función para cargar documentos
     const cargarDocumentos = async () => {
         if (!id) return;
+        console.log('🔍 Cargando documentos para paciente:', id);
         setDocumentosLoading(true);
         try {
             const res = await getDocumentosByPacienteRequest(id);
+            console.log('✅ Documentos cargados:', res.data);
             setDocumentos(res.data.data || []);
         } catch (error) {
-            console.error('Error cargando documentos:', error);
+            console.error('❌ Error cargando documentos:', error);
             setDocumentos([]);
         } finally {
             setDocumentosLoading(false);
@@ -206,17 +213,26 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para manejar subida de documentos
+    // 🔥 FUNCIONES PARA DOCUMENTOS CON LOGS
     const handleFileChange = (e) => {
         const file = e.target.files[0];
+        console.log('📎 Archivo seleccionado:', file);
         if (file) {
             setArchivoSeleccionado(file);
+            console.log('📎 Nombre:', file.name);
+            console.log('📎 Tamaño:', file.size, 'bytes');
+            console.log('📎 Tipo:', file.type);
         }
     };
 
     const handleSubirDocumento = async (e) => {
         e.preventDefault();
+        console.log('🔥🔥🔥 handleSubirDocumento EJECUTADO 🔥🔥🔥');
+        console.log('📝 documentoFormData:', documentoFormData);
+        console.log('📎 archivoSeleccionado:', archivoSeleccionado);
+        
         if (!archivoSeleccionado) {
+            console.log('❌ No hay archivo seleccionado');
             toast.error('Por favor selecciona un archivo');
             return;
         }
@@ -226,31 +242,45 @@ function PacienteDetallePage() {
             const formData = new FormData();
             formData.append('archivo', archivoSeleccionado);
             formData.append('pacienteId', id);
-            formData.append('nombre', documentoFormData.nombre);
-            formData.append('tipo', documentoFormData.tipo);
-            formData.append('descripcion', documentoFormData.descripcion);
+            formData.append('nombre', documentoFormData.nombre || archivoSeleccionado.name);
+            formData.append('tipo', documentoFormData.tipo || 'otro');
+            formData.append('descripcion', documentoFormData.descripcion || '');
             
-            await uploadDocumentoRequest(formData);
+            console.log('📤 Enviando formData a /api/documentos');
+            console.log('📤 FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
+            
+            const response = await uploadDocumentoRequest(formData);
+            console.log('✅ Documento subido exitosamente:', response.data);
+            
+            toast.success('Documento subido exitosamente');
             await cargarDocumentos();
+            console.log('📄 Documentos recargados');
+            
             setMostrarFormDocumento(false);
             setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
             setArchivoSeleccionado(null);
-            toast.success('Documento subido exitosamente');
         } catch (error) {
-            console.error('Error subiendo documento:', error);
-            toast.error('Error al subir el documento');
+            console.error('❌ Error subiendo documento:', error);
+            console.error('❌ Detalles del error:', error.response?.data);
+            toast.error('Error al subir el documento: ' + (error.response?.data?.message || error.message));
         } finally {
             setSubiendoDocumento(false);
         }
     };
 
     const handleDeleteDocumento = async (documentoId) => {
+        console.log('🗑️ Eliminando documento:', documentoId);
         if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
         try {
             await deleteDocumentoRequest(documentoId);
             await cargarDocumentos();
             toast.success('Documento eliminado');
+            console.log('✅ Documento eliminado');
         } catch (error) {
+            console.error('❌ Error al eliminar documento:', error);
             toast.error('Error al eliminar el documento');
         }
     };
@@ -518,7 +548,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS */}
+                    {/* SECCIÓN DE DOCUMENTOS - CON LOGS */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -530,7 +560,10 @@ function PacienteDetallePage() {
                             </div>
                             {canAddInternado && (
                                 <button
-                                    onClick={() => setMostrarFormDocumento(true)}
+                                    onClick={() => {
+                                        console.log('🔄 Abriendo formulario de subida de documentos');
+                                        setMostrarFormDocumento(true);
+                                    }}
                                     className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
                                 >
                                     + Subir Documento
@@ -545,8 +578,10 @@ function PacienteDetallePage() {
                                     <h2 className="text-lg font-semibold text-gray-700">Subir Documento</h2>
                                     <button
                                         onClick={() => {
+                                            console.log('🔄 Cerrando formulario de subida');
                                             setMostrarFormDocumento(false);
                                             setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
+                                            setArchivoSeleccionado(null);
                                         }}
                                         className="text-gray-400 hover:text-gray-600 text-xl"
                                     >
@@ -561,7 +596,10 @@ function PacienteDetallePage() {
                                         <input
                                             type="text"
                                             value={documentoFormData.nombre}
-                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, nombre: e.target.value })}
+                                            onChange={(e) => {
+                                                console.log('📝 Nombre actualizado:', e.target.value);
+                                                setDocumentoFormData({ ...documentoFormData, nombre: e.target.value });
+                                            }}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
                                             placeholder="Ej: Resultados de laboratorio"
                                             required
@@ -573,7 +611,10 @@ function PacienteDetallePage() {
                                         </label>
                                         <select
                                             value={documentoFormData.tipo}
-                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, tipo: e.target.value })}
+                                            onChange={(e) => {
+                                                console.log('📝 Tipo actualizado:', e.target.value);
+                                                setDocumentoFormData({ ...documentoFormData, tipo: e.target.value });
+                                            }}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
                                         >
                                             <option value="resultado_lab">Resultado de laboratorio</option>
@@ -589,7 +630,10 @@ function PacienteDetallePage() {
                                         </label>
                                         <textarea
                                             value={documentoFormData.descripcion}
-                                            onChange={(e) => setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value })}
+                                            onChange={(e) => {
+                                                console.log('📝 Descripción actualizada:', e.target.value);
+                                                setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value });
+                                            }}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
                                             rows={2}
                                             placeholder="Breve descripción del documento..."
