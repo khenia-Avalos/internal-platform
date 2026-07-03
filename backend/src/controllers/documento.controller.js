@@ -71,7 +71,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// Descargar documento
+// 🔥 Descargar documento - CORREGIDO
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -84,16 +84,31 @@ export const downloadDocumento = async (req, res) => {
             });
         }
 
-        const filePath = path.join(__dirname, '../../uploads', documento.filename);
+        // 🔥 Si tiene filename (documento local) - descargar del servidor
+        if (documento.filename) {
+            const filePath = path.join(__dirname, '../../uploads', documento.filename);
+            console.log('📂 Ruta del archivo:', filePath);
+            
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: 'Archivo no encontrado en el servidor' 
+                });
+            }
+
+            return res.download(filePath, documento.nombre);
+        }
         
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Archivo no encontrado en el servidor' 
-            });
+        // 🔥 Si tiene url (documento de Cloudinary) - redirigir a Cloudinary
+        if (documento.url) {
+            console.log('📤 Redirigiendo a Cloudinary:', documento.url);
+            return res.redirect(documento.url);
         }
 
-        res.download(filePath, documento.nombre);
+        return res.status(404).json({ 
+            success: false,
+            message: 'No se encontró el archivo' 
+        });
     } catch (error) {
         console.error('❌ Error al descargar documento:', error);
         const errorResponse = manejarError(error);
@@ -117,7 +132,7 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        // Eliminar archivo físico
+        // Eliminar archivo físico si existe
         if (documento.filename) {
             const filePath = path.join(__dirname, '../../uploads', documento.filename);
             if (fs.existsSync(filePath)) {

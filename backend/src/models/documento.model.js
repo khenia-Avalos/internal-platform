@@ -27,7 +27,7 @@ const documentoSchema = new mongoose.Schema({
     },
     filename: {
         type: String,
-        required: true
+        default: null  // ← Opcional para documentos de Cloudinary
     },
     subidoPor: {
         type: mongoose.Schema.Types.ObjectId,
