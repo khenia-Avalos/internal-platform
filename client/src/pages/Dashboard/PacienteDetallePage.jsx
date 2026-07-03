@@ -12,7 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
-import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest, downloadDocumentoRequest } from "/src/api/documentos";
+import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest } from "/src/api/documentos";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -211,7 +211,7 @@ function PacienteDetallePage() {
     };
 
     // ============================================
-    // FUNCIONES PARA DOCUMENTOS CON DESCARGA LOCAL
+    // FUNCIONES PARA DOCUMENTOS
     // ============================================
 
     const handleFileChange = (e) => {
@@ -270,28 +270,18 @@ function PacienteDetallePage() {
         }
     };
 
-    // 🔥 FUNCIÓN PARA DESCARGAR DOCUMENTO
-    const handleDownload = async (documentoId, nombre) => {
-        console.log('📥 Descargando documento:', documentoId);
-        try {
-            const response = await downloadDocumentoRequest(documentoId);
-            console.log('✅ Documento descargado:', response);
-            
-            // Crear URL del blob y descargar
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', nombre || 'documento.pdf');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            
-            toast.success('Documento descargado');
-        } catch (error) {
-            console.error('❌ Error al descargar documento:', error);
-            toast.error('Error al descargar el documento');
-        }
+    // 🔥 FUNCIÓN DE DESCARGA - VERSIÓN DEFINITIVA
+    const handleDownload = (doc) => {
+        console.log('📥 Descargando documento:', doc.nombre);
+        console.log('📂 URL:', doc.url);
+        
+        // 🔥 Crear un enlace directamente a la URL del archivo
+        const link = document.createElement('a');
+        link.href = doc.url;
+        link.download = doc.nombre || 'documento.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleDeleteDocumento = async (documentoId) => {
@@ -567,7 +557,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA LOCAL */}
+                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA DIRECTA */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -682,7 +672,7 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de documentos con botón de descarga */}
+                        {/* Lista de documentos con botón de descarga directa */}
                         {documentosLoading ? (
                             <div className="flex justify-center items-center h-20">
                                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
@@ -720,7 +710,7 @@ function PacienteDetallePage() {
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
                                                 <button
-                                                    onClick={() => handleDownload(doc._id, doc.nombre)}
+                                                    onClick={() => handleDownload(doc)}
                                                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                                                 >
                                                     📥 Descargar
