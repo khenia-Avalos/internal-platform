@@ -70,7 +70,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 Descargar documento - CON CONTENT-TYPE CORRECTO
+// 🔥 Descargar documento - CORREGIDO (prioriza url sobre filename)
 export const downloadDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -83,45 +83,38 @@ export const downloadDocumento = async (req, res) => {
             });
         }
 
-        // Si tiene filename (documento local)
+        // 🔥 PRIORIDAD 1: Si tiene url (Cloudinary), redirigir
+        if (documento.url && documento.url.startsWith('http')) {
+            console.log('📤 Redirigiendo a Cloudinary:', documento.url);
+            return res.redirect(documento.url);
+        }
+
+        // 🔥 PRIORIDAD 2: Si tiene filename, intentar descarga local
         if (documento.filename) {
             const filePath = path.join(__dirname, '../../uploads', documento.filename);
             console.log('📂 Ruta del archivo:', filePath);
             
-            if (!fs.existsSync(filePath)) {
-                return res.status(404).json({ 
-                    success: false,
-                    message: 'Archivo no encontrado en el servidor' 
-                });
+            if (fs.existsSync(filePath)) {
+                // Determinar Content-Type
+                const ext = path.extname(documento.filename).toLowerCase();
+                let contentType = 'application/octet-stream';
+                if (ext === '.pdf') contentType = 'application/pdf';
+                else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+                else if (ext === '.png') contentType = 'image/png';
+                
+                const fileBuffer = fs.readFileSync(filePath);
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
+                res.setHeader('Content-Length', fileBuffer.length);
+                return res.send(fileBuffer);
+            } else {
+                console.log('⚠️ Archivo local no encontrado, buscando url...');
             }
-
-            // 🔥 Obtener la extensión del archivo
-            const ext = path.extname(documento.filename).toLowerCase();
-            
-            // 🔥 Definir Content-Type según la extensión
-            let contentType = 'application/octet-stream';
-            if (ext === '.pdf') {
-                contentType = 'application/pdf';
-            } else if (ext === '.jpg' || ext === '.jpeg') {
-                contentType = 'image/jpeg';
-            } else if (ext === '.png') {
-                contentType = 'image/png';
-            }
-            
-            // 🔥 Leer el archivo y enviarlo con el Content-Type correcto
-            const fileBuffer = fs.readFileSync(filePath);
-            
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
-            res.setHeader('Content-Length', fileBuffer.length);
-            res.send(fileBuffer);
-            
-            return;
         }
-        
-        // Si tiene url (documento de Cloudinary) - redirigir
+
+        // 🔥 PRIORIDAD 3: Si tiene url (aunque no sea http), usarlo
         if (documento.url) {
-            console.log('📤 Redirigiendo a Cloudinary:', documento.url);
+            console.log('📤 Usando url del documento:', documento.url);
             return res.redirect(documento.url);
         }
 
