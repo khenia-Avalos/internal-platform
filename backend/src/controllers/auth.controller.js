@@ -330,9 +330,6 @@ export const resetPassword = async (req, res) => {
 };
 
 
-// ============================================
-// CREAR RECEPCIONISTA (NUEVO)
-// ============================================
 export const createRecepcion = async (req, res) => {
   try {
     const { username, lastname, email, phoneNumber } = req.body;
