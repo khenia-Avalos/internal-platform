@@ -46,9 +46,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // =============================================
 // 🔥 RUTAS ESPECIFICAS - DEBEN IR PRIMERO
 // =============================================
-app.use('/api/auth', authRoutes);        // ← MOVER AQUÍ
 app.use('/api/historial', historialRoutes);
 app.use('/api/documentos', documentoRoutes);
+
+// 🔥 authRoutes usa app.use("/api", authRoutes) pero debe ir ANTES de tasksRoutes
+app.use("/api", authRoutes);  // ← ESTO DEBE IR ANTES de tasksRoutes
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend OK' });
