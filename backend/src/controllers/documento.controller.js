@@ -40,13 +40,13 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Subir a Cloudinary
+        // 🔥 Subir a Cloudinary como raw (no image)
         const result = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
                     folder: 'expedientes',
-                    resource_type: 'auto',
-                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+                    resource_type: 'raw',
+                    allowed_formats: ['pdf'],
                     access_mode: 'public'
                 },
                 (error, result) => {
@@ -62,7 +62,7 @@ export const uploadDocumento = async (req, res) => {
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: result.secure_url,
+            url: result.secure_url, // ← Esta URL ya es /raw/
             publicId: result.public_id,
             subidoPor: req.user.id
         });
