@@ -330,11 +330,14 @@ export const resetPassword = async (req, res) => {
 };
 
 
+// ✅ DEBE ESTAR AL FINAL DEL ARCHIVO, ANTES DEL ÚLTIMO }
 export const createRecepcion = async (req, res) => {
+  console.log('🔥🔥🔥 createRecepcion LLAMADO 🔥🔥🔥');
+  console.log('📝 Body:', req.body);
+  console.log('📝 Usuario autenticado:', req.user);
+  
   try {
     const { username, lastname, email, phoneNumber } = req.body;
-    
-    console.log('📝 Creando recepcionista:', { username, email });
     
     // Validar campos obligatorios
     if (!username || !email) {
@@ -353,7 +356,8 @@ export const createRecepcion = async (req, res) => {
     
     // Contraseña predeterminada
     const DEFAULT_PASSWORD = 'VeteElExito2026';
-    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, salt);
     
     // Crear usuario con rol recepcion
     const newUser = new User({
@@ -368,7 +372,6 @@ export const createRecepcion = async (req, res) => {
     const savedUser = await newUser.save();
     console.log('✅ Recepcionista creado:', savedUser._id);
     
-    // No enviar password en la respuesta
     const userResponse = savedUser.toObject();
     delete userResponse.password;
     
