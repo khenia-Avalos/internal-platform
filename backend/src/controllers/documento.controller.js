@@ -40,8 +40,7 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 SUBIR A CLOUDINARY - USAR CARPETA PÚBLICA
-  // Después de subir a Cloudinary, agrega esto:
+  // 🔥 Al subir, forzar el formato
 const result = await new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -50,10 +49,9 @@ const result = await new Promise((resolve, reject) => {
             allowed_formats: ['pdf'],
             access_mode: 'public',
             type: 'upload',
-            format: 'pdf', // ← FORZAR FORMATO PDF
-            eager: [
-                { format: 'pdf' } // ← CREAR VERSIÓN EN FORMATO PDF
-            ]
+            format: 'pdf',          // ← FORZAR FORMATO
+            use_filename: true,
+            unique_filename: true
         },
         (error, result) => {
             if (error) reject(error);
@@ -70,15 +68,15 @@ const url = cloudinary.url(result.public_id, {
     secure: true
 });
 
-        const nuevoDocumento = new Documento({
-            pacienteId,
-            nombre: nombre || req.file.originalname,
-            tipo: tipo || 'otro',
-            descripcion: descripcion || '',
-            url: result.secure_url,
-            publicId: result.public_id,
-            subidoPor: req.user.id
-        });
+const nuevoDocumento = new Documento({
+    pacienteId,
+    nombre: nombre || req.file.originalname,
+    tipo: tipo || 'otro',
+    descripcion: descripcion || '',
+    url: url,  // ← URL CON .pdf
+    publicId: result.public_id,
+    subidoPor: req.user.id
+});
 
         const guardado = await nuevoDocumento.save();
         res.status(201).json({ 
