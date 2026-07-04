@@ -365,27 +365,33 @@ function PacienteDetallePage() {
             {/* Contenido principal */}
             {!loading && paciente && (
                 <>
-                    {/* Información del paciente */}
+                    {/* ========================================== */}
+                    {/* SECCIÓN 1: DATOS DEL PACIENTE */}
+                    {/* ========================================== */}
                     <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Paciente</h2>
                         <InfoCard
-                            title={`Informacion de ${paciente.nombre}`}
+                            title={paciente.nombre}
                             data={[
                                 { label: "Nombre", value: paciente.nombre },
                                 { label: "Especie", value: paciente.especie },
-                                { label: "Raza", value: paciente.raza || 'Sin raza' },
+                                { label: "Raza", value: paciente.raza || 'Sin especificar' },
                                 { label: "Edad", value: paciente.edad ? `${paciente.edad} años` : 'No especificada' },
                                 { label: "Sexo", value: paciente.sexo || 'No especificado' },
                                 { label: "Color de pelaje", value: paciente.colorPelaje || 'No especificado' },
-                                { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No especificado' },
-                                { label: "Antecedentes medicos", value: paciente.antecedentesMedicos || 'No especificados' },
+                                { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No registrado' },
+                                { label: "Temperatura", value: paciente.temperatura ? `${paciente.temperatura} °C` : 'No registrada' },
+                                { label: "Antecedentes medicos", value: paciente.antecedentesMedicos || 'Sin antecedentes' },
                             ]}
                         />
                     </div>
 
-                    {/* Información del dueño */}
+                    {/* ========================================== */}
+                    {/* SECCIÓN 2: DATOS DEL DUEÑO */}
+                    {/* ========================================== */}
                     {dueno && (
                         <div className="mb-8">
-                            <h3 className="text-xl font-semibold text-gray-800 mb-4">Dueño de {paciente.nombre}</h3>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Dueño</h2>
                             <InfoCard
                                 title={`${dueno.username} ${dueno.lastname}`}
                                 data={[
@@ -399,11 +405,13 @@ function PacienteDetallePage() {
                         </div>
                     )}
                     
-                    {/* Historial clínico */}
+                    {/* ========================================== */}
+                    {/* SECCIÓN 3: HISTORIAL CLÍNICO */}
+                    {/* ========================================== */}
                     <div className="mb-10">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-800">Historial Clinico</h3>
+                                <h2 className="text-2xl font-bold text-gray-800">Historial Clinico</h2>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Registro completo de todas las consultas medicas de {paciente.nombre}
                                 </p>
@@ -560,11 +568,13 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* Documentos adjuntos */}
+                    {/* ========================================== */}
+                    {/* SECCIÓN 4: DOCUMENTOS ADJUNTOS */}
+                    {/* ========================================== */}
                     <div className="mb-10">
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-800">Documentos Adjuntos</h3>
+                                <h2 className="text-2xl font-bold text-gray-800">Documentos Adjuntos</h2>
                                 <p className="text-sm text-gray-500 mt-1">
                                     Resultados de laboratorio, radiografias, recetas y otros documentos
                                 </p>
@@ -731,10 +741,12 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* Internados */}
+                    {/* ========================================== */}
+                    {/* SECCIÓN 5: HISTORIAL DE INTERNADOS */}
+                    {/* ========================================== */}
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                            <h3 className="text-2xl font-bold text-gray-800">Historial de Internados</h3>
+                            <h2 className="text-2xl font-bold text-gray-800">Historial de Internados</h2>
                             {canAddInternado && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
