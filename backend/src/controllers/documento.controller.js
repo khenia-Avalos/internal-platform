@@ -1,11 +1,6 @@
 import Documento from '../models/documento.model.js';
+import { v2 as cloudinary } from 'cloudinary';
 import { manejarError } from '../utils/errorHandler.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
@@ -24,7 +19,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento a carpeta local
+// 🔥 Subir documento - CON ACCESO PÚBLICO (versión manual)
 export const uploadDocumento = async (req, res) => {
     try {
         console.log('📝 Subiendo documento...');
@@ -40,15 +35,32 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        const url = `/uploads/${req.file.filename}`;
+        // 🔥 Subir a Cloudinary manualmente con acceso público
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'expedientes',
+                    resource_type: 'auto',
+                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+                    access_mode: 'public' // ← CLAVE: Hace el archivo público
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
+            uploadStream.end(req.file.buffer);
+        });
+
+        console.log('✅ Subido a Cloudinary:', result.secure_url);
 
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: url,
-            filename: req.file.filename,
+            url: result.secure_url,
+            publicId: result.public_id,
             subidoPor: req.user.id
         });
 
@@ -70,68 +82,6 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 Descargar documento - CORREGIDO (prioriza url sobre filename)
-export const downloadDocumento = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const documento = await Documento.findById(id);
-        
-        if (!documento) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Documento no encontrado' 
-            });
-        }
-
-        // 🔥 PRIORIDAD 1: Si tiene url (Cloudinary), redirigir
-        if (documento.url && documento.url.startsWith('http')) {
-            console.log('📤 Redirigiendo a Cloudinary:', documento.url);
-            return res.redirect(documento.url);
-        }
-
-        // 🔥 PRIORIDAD 2: Si tiene filename, intentar descarga local
-        if (documento.filename) {
-            const filePath = path.join(__dirname, '../../uploads', documento.filename);
-            console.log('📂 Ruta del archivo:', filePath);
-            
-            if (fs.existsSync(filePath)) {
-                // Determinar Content-Type
-                const ext = path.extname(documento.filename).toLowerCase();
-                let contentType = 'application/octet-stream';
-                if (ext === '.pdf') contentType = 'application/pdf';
-                else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-                else if (ext === '.png') contentType = 'image/png';
-                
-                const fileBuffer = fs.readFileSync(filePath);
-                res.setHeader('Content-Type', contentType);
-                res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
-                res.setHeader('Content-Length', fileBuffer.length);
-                return res.send(fileBuffer);
-            } else {
-                console.log('⚠️ Archivo local no encontrado, buscando url...');
-            }
-        }
-
-        // 🔥 PRIORIDAD 3: Si tiene url (aunque no sea http), usarlo
-        if (documento.url) {
-            console.log('📤 Usando url del documento:', documento.url);
-            return res.redirect(documento.url);
-        }
-
-        return res.status(404).json({ 
-            success: false,
-            message: 'No se encontró el archivo' 
-        });
-    } catch (error) {
-        console.error('❌ Error al descargar documento:', error);
-        const errorResponse = manejarError(error);
-        res.status(errorResponse.status).json({ 
-            success: false,
-            message: errorResponse.message 
-        });
-    }
-};
-
 // Eliminar documento
 export const deleteDocumento = async (req, res) => {
     try {
@@ -145,12 +95,9 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        if (documento.filename) {
-            const filePath = path.join(__dirname, '../../uploads', documento.filename);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                console.log('🗑️ Archivo eliminado del servidor');
-            }
+        // Eliminar de Cloudinary
+        if (documento.publicId) {
+            await cloudinary.uploader.destroy(documento.publicId);
         }
 
         await documento.deleteOne();
