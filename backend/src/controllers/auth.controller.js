@@ -328,3 +328,63 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
+
+
+// ============================================
+// CREAR RECEPCIONISTA (NUEVO)
+// ============================================
+export const createRecepcion = async (req, res) => {
+  try {
+    const { username, lastname, email, phoneNumber } = req.body;
+    
+    console.log('📝 Creando recepcionista:', { username, email });
+    
+    // Validar campos obligatorios
+    if (!username || !email) {
+      return res.status(400).json({ 
+        message: 'Nombre y email son obligatorios' 
+      });
+    }
+    
+    // Verificar si el email ya existe
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ 
+        message: 'El email ya está registrado' 
+      });
+    }
+    
+    // Contraseña predeterminada
+    const DEFAULT_PASSWORD = 'VeteElExito2026';
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    
+    // Crear usuario con rol recepcion
+    const newUser = new User({
+      username,
+      lastname: lastname || '',
+      email,
+      phoneNumber: phoneNumber || '',
+      password: hashedPassword,
+      role: 'recepcion'
+    });
+    
+    const savedUser = await newUser.save();
+    console.log('✅ Recepcionista creado:', savedUser._id);
+    
+    // No enviar password en la respuesta
+    const userResponse = savedUser.toObject();
+    delete userResponse.password;
+    
+    res.status(201).json({
+      message: 'Recepcionista creado exitosamente. Contraseña: VeteElExito2026',
+      user: userResponse
+    });
+    
+  } catch (error) {
+    console.error('❌ Error al crear recepcionista:', error);
+    const errorResponse = manejarError(error);
+    res.status(errorResponse.status).json({ 
+      message: errorResponse.message 
+    });
+  }
+};
