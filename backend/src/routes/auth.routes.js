@@ -24,5 +24,10 @@ router.get('/profile', validateToken, profile)
 router.get('/verify', validateToken, verifyToken)
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+// 🔥 RUTA DE PRUEBA - PONER JUSTO DESPUÉS DE const router = Router()
+router.get('/test', (req, res) => {
+  console.log('🔥🔥🔥 RUTA TEST FUNCIONA 🔥🔥🔥');
+  res.json({ message: 'Auth router funciona' });
+});
 
 export default router;
