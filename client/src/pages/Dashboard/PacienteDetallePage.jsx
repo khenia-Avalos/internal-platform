@@ -270,18 +270,30 @@ function PacienteDetallePage() {
         }
     };
 
-    // 🔥 FUNCIÓN DE DESCARGA - VERSIÓN DEFINITIVA
-    const handleDownload = (doc) => {
+    // 🔥 FUNCIÓN DE DESCARGA CON FETCH (garantizada)
+    const handleDownload = async (doc) => {
         console.log('📥 Descargando documento:', doc.nombre);
         console.log('📂 URL:', doc.url);
         
-        // 🔥 Crear un enlace directamente a la URL del archivo
-        const link = document.createElement('a');
-        link.href = doc.url;
-        link.download = doc.nombre || 'documento.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            const response = await fetch(doc.url);
+            if (!response.ok) {
+                throw new Error('Error al descargar');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = doc.nombre || 'documento.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Documento descargado');
+        } catch (error) {
+            console.error('❌ Error:', error);
+            toast.error('Error al descargar el documento');
+        }
     };
 
     const handleDeleteDocumento = async (documentoId) => {
@@ -557,7 +569,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA DIRECTA */}
+                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA FETCH */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -672,7 +684,7 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de documentos con botón de descarga directa */}
+                        {/* Lista de documentos con botón de descarga FETCH */}
                         {documentosLoading ? (
                             <div className="flex justify-center items-center h-20">
                                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
@@ -709,15 +721,12 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-                                             <a
-    href={doc.url}
-    download={doc.nombre}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
->
-    📥 Descargar
-</a>
+                                                <button
+                                                    onClick={() => handleDownload(doc)}
+                                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                                >
+                                                    📥 Descargar
+                                                </button>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}
