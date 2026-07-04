@@ -14,7 +14,6 @@ import {
   updateDoctorRequest, 
   deleteDoctorRequest 
 } from "/src/api/doctores";
-import { createUserRequest } from "/src/api/users";
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 
@@ -31,60 +30,10 @@ function DoctoresPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [editSuccessMessage, setEditSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tipoUsuario, setTipoUsuario] = useState('doctor'); // 'doctor' o 'recepcion'
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const doctorId = user?._id || user?.id;
-
-  // Configuración para crear recepcionista
-  const createRecepcionConfig = {
-    title: "Nuevo Recepcionista",
-    fields: [
-      {
-        name: "username",
-        type: "text",
-        label: "Nombre",
-        placeholder: "Nombre del recepcionista",
-        validation: { required: "El nombre es requerido" }
-      },
-      {
-        name: "lastname",
-        type: "text",
-        label: "Apellido",
-        placeholder: "Apellido del recepcionista",
-        validation: { required: "El apellido es requerido" }
-      },
-      {
-        name: "phoneNumber",
-        type: "tel",
-        label: "Número de teléfono",
-        placeholder: "+50670983832",
-        validation: {
-          required: "El número de teléfono con código de país es requerido",
-          pattern: {
-            value: /^\+\d{1,4}[0-9\s\-]{8,15}$/,
-            message: "Formato: +50670983832 o +506 7098 3832"
-          }
-        },
-        helperText: "Incluye código de país (+506 Costa Rica)"
-      },
-      {
-        name: "email",
-        type: "email",
-        label: "Correo electrónico",
-        placeholder: "recepcion@ejemplo.com",
-        validation: {
-          required: "El email es requerido",
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: "Email inválido"
-          }
-        }
-      }
-    ],
-    submitLabel: "Crear Recepcionista"
-  };
 
   const handleCreateDoctor = async (data) => {
     try {
@@ -92,27 +41,7 @@ function DoctoresPage() {
       setMostrarFormulario(false);
       const response = await getDoctoresRequest();
       setDoctores(response.data);
-      setSuccessMessage("Doctor creado exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      manejarErrorResponse(error, setErrors, setSuccessMessage);
-    }
-  };
-
-  // 🔥 Función para crear recepcionista
-  const handleCreateRecepcion = async (data) => {
-    try {
-      // Datos predefinidos para recepcionista
-      const recepcionData = {
-        ...data,
-        role: 'recepcion',
-        password: 'VeteElExito2026',
-        email: data.email || 'recepcionelexito@gmail.com'
-      };
-      
-      await createUserRequest(recepcionData);
-      setMostrarFormulario(false);
-      setSuccessMessage("Recepcionista creado exitosamente. Credenciales enviadas al correo.");
+      setSuccessMessage("Usuario creado exitosamente");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -197,26 +126,12 @@ function DoctoresPage() {
             />
           </div>
           {isAdmin && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setTipoUsuario('doctor');
-                  setMostrarFormulario(true);
-                }}
-                className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
-              >
-                Nuevo Doctor
-              </button>
-              <button
-                onClick={() => {
-                  setTipoUsuario('recepcion');
-                  setMostrarFormulario(true);
-                }}
-                className="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700 transition shadow-sm whitespace-nowrap font-medium"
-              >
-                Nuevo Recepcionista
-              </button>
-            </div>
+            <button
+              onClick={() => setMostrarFormulario(true)}
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
+            >
+              Nuevo Doctor
+            </button>
           )}
         </div>
       </div>
@@ -225,9 +140,7 @@ function DoctoresPage() {
       {mostrarFormulario && isAdmin && (
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700">
-              {tipoUsuario === 'doctor' ? 'Crear Nuevo Doctor' : 'Crear Nuevo Recepcionista'}
-            </h2>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Usuario</h2>
             <button
               onClick={() => setMostrarFormulario(false)}
               className="text-gray-400 hover:text-gray-600 transition text-xl"
@@ -236,9 +149,9 @@ function DoctoresPage() {
             </button>
           </div>
           <DynamicForm
-            {...(tipoUsuario === 'doctor' ? createConfig.registerDoctor : createRecepcionConfig)}
+            {...createConfig.registerDoctor}
             layout="grid"
-            onSubmit={tipoUsuario === 'doctor' ? handleCreateDoctor : handleCreateRecepcion}
+            onSubmit={handleCreateDoctor}
             errors={errors}
             successMessage={successMessage}
           />
@@ -279,7 +192,7 @@ function DoctoresPage() {
           <div className="text-center py-16 px-4">
             <div className="text-6xl mb-4"></div>
             <p className="text-gray-500 text-lg">No hay doctores o recepcionistas registrados</p>
-            <p className="text-gray-400 mt-2">Haz clic en "Nuevo Doctor" o "Nuevo Recepcionista" para comenzar</p>
+            <p className="text-gray-400 mt-2">Haz clic en "Nuevo Doctor" para comenzar</p>
           </div>
         ) : doctoresFiltrados.length === 0 ? (
           <div className="text-center py-16 px-4">

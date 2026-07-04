@@ -1,6 +1,6 @@
   
   export const createConfig = {
-  registerDoctor: {
+registerDoctor: {
   title: "Nuevo Doctor",
   fields: [
  {
@@ -63,7 +63,7 @@
   name: "especialidad",
   type: "select",
   label: "Especialidad",
-  options: ["Medicina General", "Groomer", "Cirugía"],
+  options: ["Medicina General", "Groomer", "Cirugía", "Recepcionista"],
   validation: { required: "La especialidad es requerida" }
 }
   ],
@@ -389,7 +389,6 @@ completarRegistroCliente: {
   }
 },
 
-// Agregar al final del objeto createConfig
 historialClinico: {
   title: "Registro Clínico",
   fields: [
