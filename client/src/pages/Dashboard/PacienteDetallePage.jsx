@@ -721,14 +721,13 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-      <a
-    href={`${doc.url}?fl_attachment=1`}
-    download={doc.nombre}
+ <a
+    href={`${doc.url}?fl_attachment=0`}
     target="_blank"
     rel="noopener noreferrer"
     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
 >
-    📥 Descargar PDF
+    👁️ Ver PDF
 </a>
                                                 {canAddInternado && (
                                                     <button
