@@ -19,13 +19,9 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// 🔥 Subir documento - CON ACCESO PÚBLICO (versión manual)
+// Subir documento
 export const uploadDocumento = async (req, res) => {
     try {
-        console.log('📝 Subiendo documento...');
-        console.log('📝 Body:', req.body);
-        console.log('📝 File:', req.file);
-        
         const { pacienteId, nombre, tipo, descripcion } = req.body;
         
         if (!req.file) {
@@ -35,24 +31,12 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Subir a Cloudinary manualmente con acceso público
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'expedientes',
-                    resource_type: 'auto',
-                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
-                    access_mode: 'public' // ← CLAVE: Hace el archivo público
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(req.file.buffer);
+        // Subir a Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'expedientes',
+            resource_type: 'auto',
+            allowed_formats: ['pdf', 'jpg', 'jpeg', 'png']
         });
-
-        console.log('✅ Subido a Cloudinary:', result.secure_url);
 
         const nuevoDocumento = new Documento({
             pacienteId,
@@ -65,8 +49,6 @@ export const uploadDocumento = async (req, res) => {
         });
 
         const guardado = await nuevoDocumento.save();
-        console.log('✅ Documento guardado en MongoDB');
-        
         res.status(201).json({ 
             success: true, 
             message: 'Documento subido exitosamente',
