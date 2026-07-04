@@ -40,23 +40,18 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-// Servir archivos estáticos
+// 🔥 SERVIR ARCHIVOS ESTÁTICOS
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// =============================================
-// RUTAS ESPECIFICAS - DEBEN IR PRIMERO
-// =============================================
+// 🔥 RUTAS
 app.use('/api/historial', historialRoutes);
 app.use('/api/documentos', documentoRoutes);
-app.use('/api/auth', authRoutes);
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend OK' });
 });
 
-// =============================================
-// RUTAS GENERICAS - VAN DESPUES
-// =============================================
+app.use("/api", authRoutes);
 app.use("/api", tasksRoutes);
 app.use("/api", doctorRoutes);
 app.use("/api", clientesRoutes);
