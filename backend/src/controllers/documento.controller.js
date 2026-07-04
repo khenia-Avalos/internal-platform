@@ -1,18 +1,17 @@
 import Documento from '../models/documento.model.js';
+import { v2 as cloudinary } from 'cloudinary';
 import { manejarError } from '../utils/errorHandler.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { 
+    CLOUDINARY_CLOUD_NAME, 
+    CLOUDINARY_API_KEY, 
+    CLOUDINARY_API_SECRET 
+} from '../config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const uploadDir = path.join(__dirname, '../../uploads');
-
-// Asegurar que la carpeta uploads existe
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET
+});
 
 export const getDocumentosByPaciente = async (req, res) => {
     try {
@@ -41,13 +40,30 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
+        // Subir a Cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'expedientes',
+                    resource_type: 'auto',
+                    allowed_formats: ['pdf', 'jpg', 'jpeg', 'png'],
+                    access_mode: 'public'
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
+            uploadStream.end(req.file.buffer);
+        });
+
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: `/uploads/${req.file.filename}`,
-            filename: req.file.filename,
+            url: result.secure_url,
+            publicId: result.public_id,
             subidoPor: req.user.id
         });
 
@@ -58,52 +74,12 @@ export const uploadDocumento = async (req, res) => {
             data: guardado 
         });
     } catch (error) {
+        console.error('❌ Error al subir documento:', error);
         const errorResponse = manejarError(error);
         res.status(errorResponse.status).json({ 
             success: false,
             message: errorResponse.message 
         });
-    }
-};
-
-// 🔥🔥🔥 FUNCIÓN DE DESCARGA CORREGIDA 🔥🔥🔥
-export const downloadDocumento = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const documento = await Documento.findById(id);
-        
-        if (!documento) {
-            return res.status(404).json({ message: 'Documento no encontrado' });
-        }
-
-        if (!documento.filename) {
-            return res.status(404).json({ message: 'Archivo no encontrado' });
-        }
-
-        const filePath = path.join(uploadDir, documento.filename);
-        console.log('📂 Buscando archivo en:', filePath);
-        
-        if (!fs.existsSync(filePath)) {
-            console.log('❌ Archivo no existe en el servidor');
-            return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
-        }
-
-        // 🔥 LEER EL ARCHIVO Y ENVIARLO MANUALMENTE
-        const fileBuffer = fs.readFileSync(filePath);
-        
-        // 🔥 FORZAR EL CONTENT-TYPE A PDF
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(documento.nombre)}"`);
-        res.setHeader('Content-Length', fileBuffer.length);
-        
-        // 🔥 ENVIAR EL BUFFER
-        res.send(fileBuffer);
-        
-        console.log('✅ Archivo enviado:', documento.nombre);
-        
-    } catch (error) {
-        console.error('❌ Error al descargar:', error);
-        res.status(500).json({ message: error.message });
     }
 };
 
@@ -113,15 +89,14 @@ export const deleteDocumento = async (req, res) => {
         const documento = await Documento.findById(id);
         
         if (!documento) {
-            return res.status(404).json({ message: 'Documento no encontrado' });
+            return res.status(404).json({ 
+                success: false,
+                message: 'Documento no encontrado' 
+            });
         }
 
-        if (documento.filename) {
-            const filePath = path.join(uploadDir, documento.filename);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-                console.log('🗑️ Archivo eliminado');
-            }
+        if (documento.publicId) {
+            await cloudinary.uploader.destroy(documento.publicId);
         }
 
         await documento.deleteOne();
