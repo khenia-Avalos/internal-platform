@@ -40,23 +40,23 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Subir a Cloudinary como raw (no image)
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'expedientes',
-                    resource_type: 'raw',
-                    allowed_formats: ['pdf'],
-                    access_mode: 'public'
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(req.file.buffer);
-        });
-
+      const result = await new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+        {
+            // 🔥 ELIMINA LA CARPETA
+            // folder: 'expedientes',
+            resource_type: 'raw',
+            allowed_formats: ['pdf'],
+            access_mode: 'public',
+            type: 'upload'
+        },
+        (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+        }
+    );
+    uploadStream.end(req.file.buffer);
+});
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
