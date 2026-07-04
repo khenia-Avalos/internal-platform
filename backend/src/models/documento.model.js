@@ -21,13 +21,13 @@ const documentoSchema = new mongoose.Schema({
         default: '',
         trim: true
     },
-    url: {
-        type: String,
+    fileId: {
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    publicId: {
-        type: String,
-        required: true
+    tamaño: {
+        type: Number,
+        default: 0
     },
     subidoPor: {
         type: mongoose.Schema.Types.ObjectId,

@@ -1,18 +1,16 @@
+import mongoose from 'mongoose';
 import Documento from '../models/documento.model.js';
-import { v2 as cloudinary } from 'cloudinary';
 import { manejarError } from '../utils/errorHandler.js';
-import { 
-    CLOUDINARY_CLOUD_NAME, 
-    CLOUDINARY_API_KEY, 
-    CLOUDINARY_API_SECRET 
-} from '../config.js';
 
-cloudinary.config({
-    cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: CLOUDINARY_API_KEY,
-    api_secret: CLOUDINARY_API_SECRET
+let gfs;
+const conn = mongoose.connection;
+conn.once('open', () => {
+    gfs = new mongoose.mongo.GridFSBucket(conn.db, {
+        bucketName: 'uploads'
+    });
 });
 
+// Obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
     try {
         const { pacienteId } = req.params;
@@ -29,6 +27,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
+// Subir documento a GridFS
 export const uploadDocumento = async (req, res) => {
     try {
         const { pacienteId, nombre, tipo, descripcion } = req.body;
@@ -40,43 +39,30 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // Subir a Cloudinary
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'public_pdfs',
-                    resource_type: 'raw',
-                    allowed_formats: ['pdf'],
-                    access_mode: 'public',
-                    type: 'upload',
-                    use_filename: true,
-                    unique_filename: true
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
+        // 🔥 Guardar en GridFS
+        const uploadStream = gfs.openUploadStream(
+            req.file.originalname,
+            {
+                metadata: {
+                    pacienteId,
+                    nombre: nombre || req.file.originalname,
+                    tipo: tipo || 'otro',
+                    descripcion: descripcion || '',
+                    subidoPor: req.user.id
                 }
-            );
-            uploadStream.end(req.file.buffer);
-        });
-
-        // 🔥 Generar URL completa con la versión correcta
-        const url = cloudinary.url(result.public_id, {
-            resource_type: 'raw',
-            format: 'pdf',
-            secure: true,
-            version: result.version
-        });
-
-        console.log('📤 URL generada:', url);
+            }
+        );
+        
+        uploadStream.write(req.file.buffer);
+        uploadStream.end();
 
         const nuevoDocumento = new Documento({
             pacienteId,
             nombre: nombre || req.file.originalname,
             tipo: tipo || 'otro',
             descripcion: descripcion || '',
-            url: url,
-            publicId: result.public_id,
+            fileId: uploadStream.id,
+            tamaño: req.file.size,
             subidoPor: req.user.id
         });
 
@@ -96,6 +82,37 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
+// 🔥 Ver y descargar documento desde GridFS
+export const verDocumento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const documento = await Documento.findById(id);
+        
+        if (!documento) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Documento no encontrado' 
+            });
+        }
+
+        const downloadStream = gfs.openDownloadStream(documento.fileId);
+        
+        // 🔥 Forzar el Content-Type para PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(documento.nombre)}"`);
+        
+        downloadStream.pipe(res);
+    } catch (error) {
+        console.error('❌ Error al ver documento:', error);
+        const errorResponse = manejarError(error);
+        res.status(errorResponse.status).json({ 
+            success: false,
+            message: errorResponse.message 
+        });
+    }
+};
+
+// Eliminar documento
 export const deleteDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -108,8 +125,8 @@ export const deleteDocumento = async (req, res) => {
             });
         }
 
-        if (documento.publicId) {
-            await cloudinary.uploader.destroy(documento.publicId);
+        if (documento.fileId) {
+            await gfs.delete(documento.fileId);
         }
 
         await documento.deleteOne();

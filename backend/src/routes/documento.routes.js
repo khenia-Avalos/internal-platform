@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { 
     getDocumentosByPaciente,
     uploadDocumento,
-    deleteDocumento
+    deleteDocumento,
+    verDocumento
 } from '../controllers/documento.controller.js';
 import { validateToken, adminRequired } from '../middlewares/validateToken.js';
 import multer from 'multer';
@@ -19,6 +20,7 @@ router.use(validateToken);
 
 router.get('/paciente/:pacienteId', getDocumentosByPaciente);
 router.post('/', adminRequired, upload.single('archivo'), uploadDocumento);
+router.get('/ver/:id', verDocumento);
 router.delete('/:id', adminRequired, deleteDocumento);
 
 export default router;
