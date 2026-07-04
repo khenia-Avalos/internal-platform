@@ -41,22 +41,34 @@ export const uploadDocumento = async (req, res) => {
         }
 
         // 🔥 SUBIR A CLOUDINARY - USAR CARPETA PÚBLICA
-        const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: 'public_pdfs',  // ← NUEVA CARPETA
-                    resource_type: 'raw',
-                    allowed_formats: ['pdf'],
-                    access_mode: 'public',
-                    type: 'upload'
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                }
-            );
-            uploadStream.end(req.file.buffer);
-        });
+  // Después de subir a Cloudinary, agrega esto:
+const result = await new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+        {
+            folder: 'public_pdfs',
+            resource_type: 'raw',
+            allowed_formats: ['pdf'],
+            access_mode: 'public',
+            type: 'upload',
+            format: 'pdf', // ← FORZAR FORMATO PDF
+            eager: [
+                { format: 'pdf' } // ← CREAR VERSIÓN EN FORMATO PDF
+            ]
+        },
+        (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+        }
+    );
+    uploadStream.end(req.file.buffer);
+});
+
+// 🔥 Generar URL con formato PDF
+const url = cloudinary.url(result.public_id, {
+    resource_type: 'raw',
+    format: 'pdf',
+    secure: true
+});
 
         const nuevoDocumento = new Documento({
             pacienteId,
