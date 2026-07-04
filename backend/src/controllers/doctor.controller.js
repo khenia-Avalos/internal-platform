@@ -9,7 +9,7 @@ import { sendWelcomeEmailDoctor } from '../services/authService.js';
 // Obtener todos los doctores
 export const getDoctores = async (req, res) => {
   try {
-    const doctores = await User.find({ role: "doctor" }).select('-password');
+    const doctores = await User.find({ role: { $in: ["doctor", "recepcion"] } }).select('-password');
     res.json(doctores);
   } catch (error) {
   const errorResponse = manejarError(error);
@@ -18,10 +18,10 @@ export const getDoctores = async (req, res) => {
   });  }
 };
 
-// Crear un nuevo doctor
+// Crear un nuevo doctor / recepcionista
 export const createDoctor = async (req, res) => {
   try {
-    const { username, lastname, email, phoneNumber, especialidad } = req.body; // ←Eliminado password
+    const { username, lastname, email, phoneNumber, especialidad } = req.body;
     
     // Verificar si ya existe el email
     const existeDoctor = await User.findOne({ email });
@@ -32,50 +32,66 @@ export const createDoctor = async (req, res) => {
       throw error;
     }
     
-    //  Contraseña predeterminada para doctores
-    const DEFAULT_PASSWORD = "veteDocElExito123";
+    // Determinar rol y contraseña según especialidad
+    let DEFAULT_PASSWORD;
+    let role;
+    
+    if (especialidad === 'Recepcionista') {
+      DEFAULT_PASSWORD = 'recepcionElExito2026';
+      role = 'recepcion';
+    } else {
+      DEFAULT_PASSWORD = 'veteDocElExito123';
+      role = 'doctor';
+    }
+    
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, salt);
     
-    const newDoctor = new User({
+    const newUser = new User({
       username,
       lastname,
       email,
       password: hashedPassword,
       phoneNumber,
-      role: "doctor",
-      especialidad
+      role: role,
+      especialidad: especialidad === 'Recepcionista' ? 'Recepcionista' : especialidad
     });
     
-    const savedDoctor = await newDoctor.save();
+    const savedUser = await newUser.save();
     
-    //  Crear horarios por defecto según especialidad
-    const horarioConfig = getHorarioPorDefecto(especialidad);
-    const horariosPorDefecto = horarioConfig.dias.map(dia => ({
-      doctorId: savedDoctor._id,
-      dia,
-      horaInicio: horarioConfig.horaInicio,
-      horaFin: horarioConfig.horaFin,
-      intervalo: horarioConfig.intervalo,
-      activo: horarioConfig.activo
-    }));
-    await Horario.insertMany(horariosPorDefecto);
+    // Crear horarios por defecto solo si es doctor
+    if (role === 'doctor') {
+      const horarioConfig = getHorarioPorDefecto(especialidad);
+      const horariosPorDefecto = horarioConfig.dias.map(dia => ({
+        doctorId: savedUser._id,
+        dia,
+        horaInicio: horarioConfig.horaInicio,
+        horaFin: horarioConfig.horaFin,
+        intervalo: horarioConfig.intervalo,
+        activo: horarioConfig.activo
+      }));
+      await Horario.insertMany(horariosPorDefecto);
+    }
     
-    //  Enviar correo de bienvenida al doctor
-    try {
-      await sendWelcomeEmailDoctor(email, username, DEFAULT_PASSWORD);
-      console.log(` Correo de bienvenida enviado al doctor: ${email}`);
-    } catch (emailError) {
-      console.error(" Error enviando correo:", emailError.message);
+    // Enviar correo de bienvenida solo si es doctor
+    if (role === 'doctor') {
+      try {
+        await sendWelcomeEmailDoctor(email, username, DEFAULT_PASSWORD);
+        console.log(`Correo de bienvenida enviado al doctor: ${email}`);
+      } catch (emailError) {
+        console.error("Error enviando correo:", emailError.message);
+      }
     }
     
     // No enviar password en la respuesta
-    const doctorResponse = savedDoctor.toObject();
-    delete doctorResponse.password;
+    const userResponse = savedUser.toObject();
+    delete userResponse.password;
     
     res.status(201).json({
-      message: "Doctor creado exitosamente. Se ha enviado un correo con las credenciales.",
-      doctor: doctorResponse
+      message: role === 'recepcion' 
+        ? `Recepcionista creado exitosamente. Contraseña: ${DEFAULT_PASSWORD}`
+        : 'Doctor creado exitosamente. Se ha enviado un correo con las credenciales.',
+      user: userResponse
     });
     
   } catch (error) {
@@ -102,7 +118,7 @@ export const updateDoctor = async (req, res) => {
     }
     
     const doctorActualizado = await User.findByIdAndUpdate(id, data, { new: true })
-      .select('-password'); //  Excluir password
+      .select('-password');
     
     if (!doctorActualizado) {
       return res.status(404).json({ message: "Doctor no encontrado" });
@@ -158,21 +174,20 @@ export const getDoctorByIdRequest = async (req, res) => {
 
 
 // OBTENER DOCTORES PÚBLICOS (SIN AUTENTICACIÓN)
-
 export const getDoctoresPublicos = async (req, res) => {
   try {
     console.log('\n========== GET DOCTORES PUBLICOS ==========');
     
-    // Solo devolver campos públicos
+    // Solo devolver doctores (no recepcionistas)
     const doctores = await User.find({ 
       role: 'doctor',
     }).select('username lastname especialidad _id');
     
-    console.log(` Enviando ${doctores.length} doctores públicos`);
+    console.log(`Enviando ${doctores.length} doctores públicos`);
     res.json(doctores);
     
   } catch (error) {
-    console.error(' Error en getDoctoresPublicos:', error);
+    console.error('Error en getDoctoresPublicos:', error);
     res.status(500).json({ message: 'Error al cargar veterinarios' });
   }
 };
