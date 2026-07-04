@@ -1,5 +1,5 @@
-import axios from 'axios';
+import axios from './axios';  // ← USAR LA INSTANCIA CONFIGURADA
 
 export const createUserRequest = async (data) => {
-  return await axios.post('/api/auth/create-recepcion', data);
+  return await axios.post('/auth/create-recepcion', data);
 };
