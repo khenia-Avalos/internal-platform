@@ -12,7 +12,7 @@ import { createPacienteRequest } from "/src/api/pacientes";
 import { getPacienteByIdRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
-import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest } from "/src/api/documentos";
+import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest, verDocumentoRequest } from "/src/api/documentos";
 import { useAuth } from "../../hooks/useAuth";
 import { useEdit } from "../../hooks/useEdit";
 import { toast } from 'sonner';
@@ -211,7 +211,7 @@ function PacienteDetallePage() {
     };
 
     // ============================================
-    // FUNCIONES PARA DOCUMENTOS
+    // FUNCIONES PARA DOCUMENTOS CON GRIDFS
     // ============================================
 
     const handleFileChange = (e) => {
@@ -270,24 +270,19 @@ function PacienteDetallePage() {
         }
     };
 
-    // 🔥 FUNCIÓN DE DESCARGA CON FETCH (garantizada)
-   const handleDownload = async (doc) => {
-    try {
-        const response = await fetch(`${doc.url}?fl_attachment=1`);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = doc.nombre || 'documento.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error('❌ Error:', error);
-        toast.error('Error al descargar');
-    }
-};
+    // 🔥 FUNCIÓN PARA VER PDF CON GRIDFS
+    const handleVerPDF = async (doc) => {
+        console.log('📄 Abriendo PDF:', doc.nombre);
+        try {
+            const response = await verDocumentoRequest(doc._id);
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('❌ Error al abrir PDF:', error);
+            toast.error('Error al abrir el PDF');
+        }
+    };
 
     const handleDeleteDocumento = async (documentoId) => {
         console.log('🗑️ Eliminando documento:', documentoId);
@@ -562,7 +557,7 @@ function PacienteDetallePage() {
                     </div>
 
                     {/* ========================================== */}
-                    {/* SECCIÓN DE DOCUMENTOS CON DESCARGA FETCH */}
+                    {/* SECCIÓN DE DOCUMENTOS CON GRIDFS */}
                     {/* ========================================== */}
                     <div className="mt-10">
                         <div className="flex justify-between items-center mb-4">
@@ -677,7 +672,7 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de documentos con botón de descarga FETCH */}
+                        {/* Lista de documentos con botón Ver PDF (GridFS) */}
                         {documentosLoading ? (
                             <div className="flex justify-center items-center h-20">
                                 <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
@@ -714,14 +709,12 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
-<a
-    href={doc.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
->
-    📄 Ver PDF
-</a>
+                                                <button
+                                                    onClick={() => handleVerPDF(doc)}
+                                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                                >
+                                                    📄 Ver PDF
+                                                </button>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}
