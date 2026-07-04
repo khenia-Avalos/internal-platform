@@ -271,30 +271,23 @@ function PacienteDetallePage() {
     };
 
     // 🔥 FUNCIÓN DE DESCARGA CON FETCH (garantizada)
-    const handleDownload = async (doc) => {
-        console.log('📥 Descargando documento:', doc.nombre);
-        console.log('📂 URL:', doc.url);
-        
-        try {
-            const response = await fetch(doc.url);
-            if (!response.ok) {
-                throw new Error('Error al descargar');
-            }
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = doc.nombre || 'documento.pdf';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            toast.success('Documento descargado');
-        } catch (error) {
-            console.error('❌ Error:', error);
-            toast.error('Error al descargar el documento');
-        }
-    };
+   const handleDownload = async (doc) => {
+    try {
+        const response = await fetch(`${doc.url}?fl_attachment=1`);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = doc.nombre || 'documento.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('❌ Error:', error);
+        toast.error('Error al descargar');
+    }
+};
 
     const handleDeleteDocumento = async (documentoId) => {
         console.log('🗑️ Eliminando documento:', documentoId);
@@ -721,14 +714,12 @@ function PacienteDetallePage() {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-1 ml-2">
- <a
-    href={`${doc.url}?fl_attachment=0`}
-    target="_blank"
-    rel="noopener noreferrer"
+<button
+    onClick={() => handleDownload(doc)}
     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
 >
-    👁️ Ver PDF
-</a>
+    📥 Descargar PDF
+</button>
                                                 {canAddInternado && (
                                                     <button
                                                         onClick={() => handleDeleteDocumento(doc._id)}
