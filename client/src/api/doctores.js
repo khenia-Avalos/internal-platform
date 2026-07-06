@@ -1,3 +1,4 @@
+// src/api/doctores.js
 import axios from "./axios";
 
 export const getDoctoresRequest = () => axios.get("/doctores");

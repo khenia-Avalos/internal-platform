@@ -1,3 +1,4 @@
+// src/pages/Dashboard/DoctorDetallePage.jsx
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../../hooks/useAuth";
@@ -5,13 +6,16 @@ import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
-import { getDoctorByIdRequest } from "/src/api/doctores";
-import { getHorariosByDoctorRequest } from "/src/api/horarios";
+import { 
+    getDoctorByIdRequest, 
+    bloquearDoctorRequest, 
+    activarVacacionesRequest, 
+    desactivarVacacionesRequest 
+} from "/src/api/doctores";
+import { getHorariosByDoctorRequest, updateHorarioRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
 import { editConfig } from "../config/editConfig";
-import { updateHorarioRequest, updateHorariosByDoctorRequest } from "/src/api/horarios";  
 import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest, getPausasByDoctorRequest } from "/src/api/pausas";
-import { bloquearDoctorRequest, activarVacacionesRequest, desactivarVacacionesRequest } from "/src/api/doctores";
 import { toast } from 'sonner';
 
 function DoctorDetallePage() {
@@ -30,7 +34,6 @@ function DoctorDetallePage() {
   const [historialPausas, setHistorialPausas] = useState([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
-  const isDoctor = user?.role === 'doctor';
   const isAdmin = user?.role === 'admin';
   const isRecepcion = user?.role === 'recepcion';
   const puedeVerHorarios = isAdmin || isRecepcion;
@@ -48,7 +51,6 @@ function DoctorDetallePage() {
           setHorarios(horariosRes.data);
         }
         
-        // Cargar historial de pausas
         const pausasRes = await getPausasByDoctorRequest(id);
         setHistorialPausas(pausasRes.data || []);
         
@@ -128,7 +130,6 @@ function DoctorDetallePage() {
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
       setPausaActiva(res.data);
       toast.success('Almuerzo iniciado');
-      // Recargar historial
       const pausasRes = await getPausasByDoctorRequest(id);
       setHistorialPausas(pausasRes.data || []);
     } catch (error) {
@@ -141,7 +142,6 @@ function DoctorDetallePage() {
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
       toast.success('Almuerzo terminado');
-      // Recargar historial
       const pausasRes = await getPausasByDoctorRequest(id);
       setHistorialPausas(pausasRes.data || []);
     } catch (error) {
@@ -157,6 +157,7 @@ function DoctorDetallePage() {
       `⚠️ ¿Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
       `Esta acción:\n` +
       `• Desactivará TODOS sus horarios\n` +
+      `• Cambiará su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
       `• Cambiará su contraseña a: UsuarioRetiradoElExito\n` +
       `• El doctor no podrá iniciar sesión\n\n` +
       `¿Deseas continuar?`
@@ -165,10 +166,9 @@ function DoctorDetallePage() {
     if (!confirmar) return;
     
     try {
-      await bloquearDoctorRequest(id);
-      toast.success('Doctor bloqueado exitosamente');
+      const response = await bloquearDoctorRequest(id);
+      toast.success(`Doctor bloqueado exitosamente. Nuevo correo: ${response.data.nuevoEmail}`);
       
-      // Recargar datos
       const doctorRes = await getDoctorByIdRequest(id);
       setDoctor(doctorRes.data);
       
@@ -197,7 +197,6 @@ function DoctorDetallePage() {
       await activarVacacionesRequest(id);
       toast.success('Vacaciones activadas exitosamente');
       
-      // Recargar datos
       const doctorRes = await getDoctorByIdRequest(id);
       setDoctor(doctorRes.data);
       
@@ -223,7 +222,6 @@ function DoctorDetallePage() {
       await desactivarVacacionesRequest(id);
       toast.success('Vacaciones desactivadas exitosamente');
       
-      // Recargar datos
       const doctorRes = await getDoctorByIdRequest(id);
       setDoctor(doctorRes.data);
       
@@ -243,38 +241,17 @@ function DoctorDetallePage() {
     return date.toLocaleDateString('es-CR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const formatearFechaHora = (fecha) => {
-    if (!fecha) return 'No registrada';
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-CR', {
-      day: '2-digit',
-      month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  // Agrupar pausas por día
-  const pausasPorDia = historialPausas.reduce((acc, pausa) => {
-    const fecha = new Date(pausa.inicio).toLocaleDateString('es-CR');
-    if (!acc[fecha]) {
-      acc[fecha] = [];
-    }
-    acc[fecha].push(pausa);
-    return acc;
-  }, {});
-
-  // Verificar si el doctor está en vacaciones
   const estaEnVacaciones = doctor?.vacacionesActivas === true;
+  const estaBloqueado = doctor?.bloqueado === true;
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Boton volver */}
       <button
         onClick={() => navigate('/doctores')}
         className="mb-4 md:mb-6 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-gray-600 hover:text-gray-900 transition"
@@ -305,7 +282,6 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
-          {/* CARD 1: INFORMACION DEL DOCTOR */}
           <InfoCard
             title="Información del Doctor"
             data={[
@@ -317,20 +293,20 @@ function DoctorDetallePage() {
           />
 
           {/* ========================================== */}
-          {/* CARD 2: ESTADO DEL DOCTOR (SOLO ADMIN) */}
+          {/* CARDS DE GESTIÓN (SOLO ADMIN) */}
           {/* ========================================== */}
           {isAdmin && (
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Estado del Doctor */}
+              {/* Card 1: Estado del Doctor */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    doctor.bloqueado ? 'bg-red-100 text-red-700' :
+                    estaBloqueado ? 'bg-red-100 text-red-700' :
                     estaEnVacaciones ? 'bg-yellow-100 text-yellow-700' :
                     'bg-green-100 text-green-700'
                   }`}>
-                    {doctor.bloqueado ? 'Bloqueado' :
+                    {estaBloqueado ? 'Bloqueado' :
                      estaEnVacaciones ? 'Vacaciones' :
                      'Activo'}
                   </span>
@@ -370,51 +346,75 @@ function DoctorDetallePage() {
                     <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
                   </div>
                 </div>
+
+                {/* Información de bloqueo */}
+                {estaBloqueado && (
+                  <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Email original:</span>
+                        <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Email actual:</span>
+                        <span className="font-medium text-red-600 break-all">{doctor.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Contraseña:</span>
+                        <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
+                      </div>
+                      {doctor.motivoBloqueo && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Motivo:</span>
+                          <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mt-4 space-y-2">
-                  {/* Botón Bloquear Doctor */}
-                  <button
-                    onClick={handleBloquearDoctor}
-                    disabled={doctor.bloqueado}
-                    className={`w-full px-4 py-2 rounded-lg text-white font-medium transition ${
-                      doctor.bloqueado
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                  >
-                    {doctor.bloqueado ? 'Doctor Bloqueado' : '🔒 Bloquear Doctor (Retiro)'}
-                  </button>
-                  
-                  {/* Botón Vacaciones */}
-                  {!doctor.bloqueado && (
-                    !estaEnVacaciones ? (
+                  {!estaBloqueado ? (
+                    <>
                       <button
-                        onClick={handleActivarVacaciones}
-                        className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                        onClick={handleBloquearDoctor}
+                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
                       >
-                        🌴 Activar Vacaciones
+                        🔒 Bloquear Doctor (Retiro)
                       </button>
-                    ) : (
-                      <button
-                        onClick={handleDesactivarVacaciones}
-                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-                      >
-                        ✅ Finalizar Vacaciones
-                      </button>
-                    )
+                      
+                      {!estaEnVacaciones ? (
+                        <button
+                          onClick={handleActivarVacaciones}
+                          className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                        >
+                          🌴 Activar Vacaciones
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleDesactivarVacaciones}
+                          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                        >
+                          ✅ Finalizar Vacaciones
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-red-600 font-medium">Doctor Bloqueado</p>
+                      <p className="text-xs text-gray-500 mt-1">No puede iniciar sesión</p>
+                    </div>
                   )}
                   
                   <p className="text-xs text-gray-400 text-center mt-2">
-                    {doctor.bloqueado ? 'El doctor ha sido retirado y no puede iniciar sesión' :
+                    {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesión' :
                      estaEnVacaciones ? 'El doctor está en vacaciones, todos sus horarios están desactivados' :
                      'El doctor está activo y disponible para citas'}
                   </p>
                 </div>
               </div>
 
-              {/* ========================================== */}
-              {/* CARD 3: CONTROL DE ALMUERZO Y HISTORIAL */}
-              {/* ========================================== */}
+              {/* Card 2: Control de Almuerzo */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
@@ -429,9 +429,9 @@ function DoctorDetallePage() {
                   {!pausaActiva ? (
                     <button
                       onClick={iniciarPausa}
-                      disabled={doctor.bloqueado || estaEnVacaciones}
+                      disabled={estaBloqueado || estaEnVacaciones}
                       className={`flex-1 px-4 py-2 rounded-lg transition text-sm ${
-                        doctor.bloqueado || estaEnVacaciones
+                        estaBloqueado || estaEnVacaciones
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'bg-yellow-600 text-white hover:bg-yellow-700'
                       }`}
@@ -462,47 +462,28 @@ function DoctorDetallePage() {
                   </div>
                 )}
 
-                {/* Historial de pausas - acordeon por día */}
                 {mostrarHistorial && (
                   <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
-                    
-                    {Object.keys(pausasPorDia).length === 0 ? (
+                    {historialPausas.length === 0 ? (
                       <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
                     ) : (
-                      Object.entries(pausasPorDia)
-                        .sort((a, b) => new Date(b[0]) - new Date(a[0]))
-                        .map(([fecha, pausas]) => (
-                          <div key={fecha} className="mb-3 border border-gray-100 rounded-lg overflow-hidden">
-                            <div className="bg-gray-50 px-3 py-2 font-medium text-sm text-gray-700">
-                              {fecha}
-                              <span className="ml-2 text-xs text-gray-400 font-normal">
-                                ({pausas.length} registro{pausas.length > 1 ? 's' : ''})
-                              </span>
-                            </div>
-                            <div className="p-2 space-y-1">
-                              {pausas.map((pausa, idx) => (
-                                <div key={idx} className="flex justify-between text-sm px-2 py-1 hover:bg-gray-50 rounded">
-                                  <span>
-                                    <span className="text-gray-500">Inicio:</span>
-                                    <span className="ml-1">{new Date(pausa.inicio).toLocaleTimeString()}</span>
-                                  </span>
-                                  <span>
-                                    <span className="text-gray-500">Fin:</span>
-                                    <span className="ml-1">
-                                      {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
-                                    </span>
-                                  </span>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                                  }`}>
-                                    {pausa.activa ? 'Activo' : 'Finalizado'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
+                      <div className="space-y-2">
+                        {historialPausas.map((pausa, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                            <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
+                            <span>
+                              {new Date(pausa.inicio).toLocaleTimeString()} - 
+                              {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {pausa.activa ? 'Activo' : 'Finalizado'}
+                            </span>
                           </div>
-                        ))
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
@@ -511,13 +492,13 @@ function DoctorDetallePage() {
           )}
 
           {/* ========================================== */}
-          {/* SECCION HORARIOS - Admin y Recepcion */}
+          {/* SECCIÓN HORARIOS - Admin y Recepción */}
           {/* ========================================== */}
           {puedeVerHorarios && (
             <>
               <div className="flex justify-between items-center mt-6 md:mt-8 mb-4">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
-                {doctor.bloqueado && (
+                {estaBloqueado && (
                   <span className="text-sm text-red-600 font-medium">
                     ⚠️ Doctor bloqueado - Todos los horarios desactivados
                   </span>

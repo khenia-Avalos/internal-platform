@@ -1,3 +1,4 @@
+// src/api/horarios.js
 import axios from "./axios";
 
 export const getHorariosByDoctorRequest = (doctorId) => axios.get(`/horarios/doctor/${doctorId}`);
