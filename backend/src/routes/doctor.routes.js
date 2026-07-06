@@ -1,3 +1,4 @@
+// routes/doctor.routes.js
 import { Router } from 'express';
 import { 
     getDoctores, 
@@ -6,15 +7,15 @@ import {
     deleteDoctor, 
     getDoctorByIdRequest, 
     getDoctoresPublicos,
-    bloquearDoctor,           // NUEVA
-    activarVacaciones,        // NUEVA
-    desactivarVacaciones      // NUEVA
+    bloquearDoctor,
+    activarVacaciones,
+    desactivarVacaciones
 } from '../controllers/doctor.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
 const router = Router();
 
-// Ruta publica para obtener doctores (sin autenticación)
+// Ruta pública para obtener doctores (sin autenticación)
 router.get('/public/doctores', getDoctoresPublicos);
 
 // Todas las rutas de doctores requieren autenticación

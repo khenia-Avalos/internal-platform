@@ -1,3 +1,4 @@
+// controllers/doctor.controller.js
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import { manejarError } from '../utils/errorHandler.js';  
@@ -53,7 +54,6 @@ export const createDoctor = async (req, res) => {
       phoneNumber,
       role: role,
       especialidad: especialidad === 'Recepcionista' ? 'Recepcionista' : especialidad,
-      // Nuevos campos por defecto
       bloqueado: false,
       vacacionesActivas: false,
       activo: true
@@ -181,8 +181,8 @@ export const getDoctoresPublicos = async (req, res) => {
     
     const doctores = await User.find({ 
       role: 'doctor',
-      bloqueado: { $ne: true },  // Excluir bloqueados
-      activo: true               // Solo activos
+      bloqueado: { $ne: true },
+      activo: true
     }).select('username lastname especialidad _id');
     
     console.log(`Enviando ${doctores.length} doctores públicos`);
@@ -195,50 +195,93 @@ export const getDoctoresPublicos = async (req, res) => {
 };
 
 // ============================================
-// NUEVAS FUNCIONES PARA BLOQUEAR Y VACACIONES
+// FUNCIÓN PARA GENERAR EMAIL DE RETIRO
 // ============================================
+const generarEmailRetirado = async (nombre) => {
+    const nombreLimpio = nombre
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+    
+    const emailBase = `${nombreLimpio}retirado@gmail.com`;
+    
+    // Verificar si el email ya existe
+    const existe = await User.findOne({ email: emailBase });
+    if (!existe) {
+        return emailBase;
+    }
+    
+    // Si existe, agregar número
+    let contador = 1;
+    let emailAlternativo = `${nombreLimpio}retirado${contador}@gmail.com`;
+    
+    while (await User.findOne({ email: emailAlternativo })) {
+        contador++;
+        emailAlternativo = `${nombreLimpio}retirado${contador}@gmail.com`;
+    }
+    
+    return emailAlternativo;
+};
 
-// Bloquear doctor (retiro)
+// ============================================
+// BLOQUEAR DOCTOR (CON CAMBIO DE CORREO Y CONTRASEÑA)
+// ============================================
 export const bloquearDoctor = async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log(`🔒 Bloqueando doctor con ID: ${id}`);
     
-    // 1. Cambiar contraseña
+    const doctor = await User.findById(id);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    
+    // Generar nuevo email
+    const nuevoEmail = await generarEmailRetirado(doctor.username);
+    
+    // Cambiar contraseña
     const nuevaPassword = 'UsuarioRetiradoElExito';
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
     
-    // 2. Actualizar usuario
+    // Actualizar usuario
     const usuarioActualizado = await User.findByIdAndUpdate(
       id,
       { 
+        email: nuevoEmail,
+        emailOriginal: doctor.email,
         password: hashedPassword,
         bloqueado: true,
         fechaRetiro: new Date(),
         activo: false,
-        vacacionesActivas: false // Desactivar vacaciones si estaba en ellas
+        vacacionesActivas: false,
+        motivoBloqueo: 'Retiro voluntario'
       },
       { new: true }
     ).select('-password');
     
-    if (!usuarioActualizado) {
-      return res.status(404).json({ message: "Doctor no encontrado" });
-    }
-    
-    // 3. Desactivar todos los horarios del doctor
+    // Desactivar todos los horarios
     await Horario.updateMany(
       { doctorId: id },
       { activo: false }
     );
     
     console.log(`✅ Doctor ${usuarioActualizado.username} bloqueado exitosamente`);
+    console.log(`📧 Correo cambiado de ${doctor.email} a ${nuevoEmail}`);
+    console.log(`🔑 Contraseña cambiada a: ${nuevaPassword}`);
     
     res.json({
-      message: 'Doctor bloqueado exitosamente. Contraseña cambiada a: UsuarioRetiradoElExito',
-      data: usuarioActualizado
+      message: `Doctor bloqueado exitosamente. Correo cambiado a: ${nuevoEmail}`,
+      data: {
+        ...usuarioActualizado.toObject(),
+        emailOriginal: doctor.email,
+        nuevoEmail: nuevoEmail,
+        nuevaPassword: nuevaPassword
+      }
     });
+    
   } catch (error) {
     console.error('Error en bloquearDoctor:', error);
     const errorResponse = manejarError(error);
@@ -248,20 +291,21 @@ export const bloquearDoctor = async (req, res) => {
   }
 };
 
-// Activar vacaciones
+// ============================================
+// ACTIVAR VACACIONES
+// ============================================
 export const activarVacaciones = async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log(`🌴 Activando vacaciones para doctor ID: ${id}`);
     
-    // 1. Actualizar usuario
     const usuarioActualizado = await User.findByIdAndUpdate(
       id,
       { 
         vacacionesActivas: true,
         fechaInicioVacaciones: new Date(),
-        fechaFinVacaciones: null // Limpiar fecha de fin anterior
+        fechaFinVacaciones: null
       },
       { new: true }
     ).select('-password');
@@ -270,7 +314,6 @@ export const activarVacaciones = async (req, res) => {
       return res.status(404).json({ message: "Doctor no encontrado" });
     }
     
-    // 2. Desactivar todos los horarios del doctor
     await Horario.updateMany(
       { doctorId: id },
       { activo: false }
@@ -291,14 +334,15 @@ export const activarVacaciones = async (req, res) => {
   }
 };
 
-// Desactivar vacaciones
+// ============================================
+// DESACTIVAR VACACIONES
+// ============================================
 export const desactivarVacaciones = async (req, res) => {
   try {
     const { id } = req.params;
     
     console.log(`✅ Desactivando vacaciones para doctor ID: ${id}`);
     
-    // 1. Actualizar usuario
     const usuarioActualizado = await User.findByIdAndUpdate(
       id,
       { 
@@ -312,7 +356,6 @@ export const desactivarVacaciones = async (req, res) => {
       return res.status(404).json({ message: "Doctor no encontrado" });
     }
     
-    // 2. Activar todos los horarios del doctor
     await Horario.updateMany(
       { doctorId: id },
       { activo: true }

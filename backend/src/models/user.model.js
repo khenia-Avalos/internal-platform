@@ -1,3 +1,4 @@
+// models/user.model.js
 import mongoose from 'mongoose'
 
 const userSchema = new mongoose.Schema(
@@ -12,6 +13,10 @@ const userSchema = new mongoose.Schema(
             required: true,
             trim: true,
             unique: true
+        },
+        emailOriginal: {
+            type: String,
+            default: null
         },
         phoneNumber: {
             type: String,
@@ -54,7 +59,7 @@ const userSchema = new mongoose.Schema(
                 return this.role === 'doctor' || this.role === 'recepcion'; 
             }
         },
-        // ========== NUEVOS CAMPOS ==========
+        // ========== CAMPOS DE BLOQUEO Y VACACIONES ==========
         bloqueado: {
             type: Boolean,
             default: false
@@ -78,6 +83,10 @@ const userSchema = new mongoose.Schema(
         activo: {
             type: Boolean,
             default: true
+        },
+        motivoBloqueo: {
+            type: String,
+            default: 'Retiro voluntario'
         }
     }, {
         timestamps: true
