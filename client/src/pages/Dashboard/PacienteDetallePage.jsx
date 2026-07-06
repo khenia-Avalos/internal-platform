@@ -50,6 +50,8 @@ function PacienteDetallePage() {
     const isDoctor = user?.role === 'doctor';
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
+    const isRecepcion = user?.role === 'recepcion';
+    const puedeGestionar = canAddInternado || isRecepcion;
 
     // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
@@ -579,7 +581,7 @@ function PacienteDetallePage() {
                                     Resultados de laboratorio, radiografias, recetas y otros documentos
                                 </p>
                             </div>
-                            {canAddInternado && (
+                            {puedeGestionar && (
                                 <button
                                     onClick={() => {
                                         console.log('Abriendo formulario de subida de documentos');
@@ -701,10 +703,10 @@ function PacienteDetallePage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="text-2xl">
-                                                    {doc.tipo === 'resultado_lab' ? '🔬' :
-                                                     doc.tipo === 'radiografia' ? '🩻' :
-                                                     doc.tipo === 'receta' ? '📋' :
-                                                     doc.tipo === 'informe' ? '📄' : '📎'}
+                                                    {doc.tipo === 'resultado_lab' ? '' :
+                                                     doc.tipo === 'radiografia' ? '' :
+                                                     doc.tipo === 'receta' ? '' :
+                                                     doc.tipo === 'informe' ? '' : ''}
                                                 </span>
                                                 <h4 className="font-medium text-gray-800 truncate">{doc.nombre}</h4>
                                             </div>
@@ -726,7 +728,7 @@ function PacienteDetallePage() {
                                             >
                                                 Ver PDF
                                             </button>
-                                            {canAddInternado && (
+                                            {puedeGestionar && (
                                                 <button
                                                     onClick={() => handleDeleteDocumento(doc._id)}
                                                     className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors ml-auto"
@@ -747,7 +749,7 @@ function PacienteDetallePage() {
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                             <h2 className="text-2xl font-bold text-gray-800">Historial de Internados</h2>
-                            {canAddInternado && (
+                            {puedeGestionar && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
                                     className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
@@ -758,7 +760,7 @@ function PacienteDetallePage() {
                         </div>
 
                         {/* Formulario de internado */}
-                        {mostrarFormInternado && canAddInternado && (
+                        {mostrarFormInternado && puedeGestionar && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
@@ -781,7 +783,7 @@ function PacienteDetallePage() {
                         )}
 
                         {/* Editar internado */}
-                        {showEditInternadoForm && canAddInternado && (
+                        {showEditInternadoForm && puedeGestionar && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Internado</h2>
@@ -850,7 +852,7 @@ function PacienteDetallePage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {canAddInternado && (
+                                        {puedeGestionar && (
                                             <div className="absolute bottom-3 right-3 flex gap-2">
                                                 <button
                                                     onClick={() => handleEditInternadoWithSelection(internado)}
