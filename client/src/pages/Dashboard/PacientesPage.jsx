@@ -33,6 +33,8 @@ function PacientesPage() {
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
+      const isRecepcion = user?.role === 'recepcion';
+
 
   // Cargar dueños (solo necesario para admin y doctor)
   useEffect(() => {
@@ -184,7 +186,7 @@ function PacientesPage() {
           </div>
         )}
 
-      {showEditForm && (isAdmin || isDoctor) && (
+      {showEditForm && (isAdmin || isDoctor || isRecepcion ) && (
   <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
     <div className="flex justify-between items-center mb-4">
       <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Paciente</h2>
@@ -249,7 +251,7 @@ customProps={{
             ]}
             data={pacientesConDueño}
             onRowClick={(paciente) => navigate(`/pacientes/${paciente._id}`)}
-            onEdit={(isAdmin || isDoctor) ? (paciente) => {
+            onEdit={(isAdmin || isDoctor || isRecepcion ) ? (paciente) => {
               setPacienteSeleccionado(paciente);
               handleEdit(paciente);
             } : undefined}
