@@ -35,8 +35,14 @@ function DoctorDetallePage() {
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor';
   const isRecepcion = user?.role === 'recepcion';
-  const puedeVerHorarios = isAdmin || isRecepcion;
+  const puedeVerHorarios = isAdmin; // Solo admin ve horarios
+  const puedeVerControlAlmuerzo = isAdmin || isDoctor || isRecepcion; // Admin, doctor y recepcion ven control de almuerzo
+  const puedeGestionarDoctor = isAdmin; // Solo admin puede gestionar estado del doctor
+
+  // Verificar si el usuario logueado es el mismo doctor que se está viendo
+  const esMiPerfil = isDoctor && user?._id === id;
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -51,8 +57,11 @@ function DoctorDetallePage() {
           setHorarios(horariosRes.data);
         }
         
-        const pausasRes = await getPausasByDoctorRequest(id);
-        setHistorialPausas(pausasRes.data || []);
+        // Cargar historial de pausas solo si tiene permiso
+        if (puedeVerControlAlmuerzo) {
+          const pausasRes = await getPausasByDoctorRequest(id);
+          setHistorialPausas(pausasRes.data || []);
+        }
         
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -64,13 +73,15 @@ function DoctorDetallePage() {
     if (id) {
       cargarDatos();
     }
-  }, [id, puedeVerHorarios]);
+  }, [id, puedeVerHorarios, puedeVerControlAlmuerzo]);
 
-  // Cargar pausa activa
+  // Cargar pausa activa solo si tiene permiso
   useEffect(() => {
     let isMounted = true;
     
     const cargarPausaActiva = async () => {
+      if (!puedeVerControlAlmuerzo) return;
+      
       try {
         const res = await getPausasActivasRequest(id);
         if (isMounted) {
@@ -92,7 +103,7 @@ function DoctorDetallePage() {
     return () => {
       isMounted = false;
     };
-  }, [id, location.key]);
+  }, [id, location.key, puedeVerControlAlmuerzo]);
 
   const getNombreDia = (dia) => {
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -150,7 +161,7 @@ function DoctorDetallePage() {
   };
 
   // ============================================
-  // FUNCIONES PARA BLOQUEAR DOCTOR
+  // FUNCIONES PARA BLOQUEAR DOCTOR (SOLO ADMIN)
   // ============================================
   const handleBloquearDoctor = async () => {
     const confirmar = window.confirm(
@@ -182,7 +193,7 @@ function DoctorDetallePage() {
   };
 
   // ============================================
-  // FUNCIONES PARA VACACIONES
+  // FUNCIONES PARA VACACIONES (SOLO ADMIN)
   // ============================================
   const handleActivarVacaciones = async () => {
     const confirmar = window.confirm(
@@ -293,9 +304,91 @@ function DoctorDetallePage() {
           />
 
           {/* ========================================== */}
+          {/* CARD DE CONTROL DE ALMUERZO */}
+          {/* Visible para: Admin, Doctor (su propio perfil) y Recepción */}
+          {/* ========================================== */}
+          {puedeVerControlAlmuerzo && (
+            <div className="mt-6">
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    pausaActiva ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                  }`}>
+                    {pausaActiva ? 'En pausa' : 'Disponible'}
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {!pausaActiva ? (
+                    <button
+                      onClick={iniciarPausa}
+                      disabled={estaBloqueado || estaEnVacaciones}
+                      className={`flex-1 min-w-[140px] px-4 py-2 rounded-lg transition text-sm ${
+                        estaBloqueado || estaEnVacaciones
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      }`}
+                    >
+                      Iniciar Almuerzo
+                    </button>
+                  ) : (
+                    <button
+                      onClick={terminarPausa}
+                      className="flex-1 min-w-[140px] bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                    >
+                      Volver del Almuerzo
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                  >
+                    {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
+                  </button>
+                </div>
+                
+                {pausaActiva && (
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
+                    <p className="text-xs text-yellow-800">
+                      Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
+                    </p>
+                  </div>
+                )}
+
+                {mostrarHistorial && (
+                  <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
+                    {historialPausas.length === 0 ? (
+                      <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {historialPausas.map((pausa, idx) => (
+                          <div key={idx} className="flex flex-wrap justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                            <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
+                            <span>
+                              {new Date(pausa.inicio).toLocaleTimeString()} - 
+                              {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {pausa.activa ? 'Activo' : 'Finalizado'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
           {/* CARDS DE GESTIÓN (SOLO ADMIN) */}
           {/* ========================================== */}
-          {isAdmin && (
+          {puedeGestionarDoctor && (
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Card 1: Estado del Doctor */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -414,89 +507,53 @@ function DoctorDetallePage() {
                 </div>
               </div>
 
-              {/* Card 2: Control de Almuerzo */}
+              {/* Card 2: Horarios (Solo Admin) */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    pausaActiva ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                  }`}>
-                    {pausaActiva ? 'En pausa' : 'Disponible'}
-                  </span>
-                </div>
-                
-                <div className="flex gap-3 mb-4">
-                  {!pausaActiva ? (
-                    <button
-                      onClick={iniciarPausa}
-                      disabled={estaBloqueado || estaEnVacaciones}
-                      className={`flex-1 px-4 py-2 rounded-lg transition text-sm ${
-                        estaBloqueado || estaEnVacaciones
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                      }`}
-                    >
-                      Iniciar Almuerzo
-                    </button>
-                  ) : (
-                    <button
-                      onClick={terminarPausa}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
-                    >
-                      Volver del Almuerzo
-                    </button>
+                  <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
+                  {estaBloqueado && (
+                    <span className="text-sm text-red-600 font-medium">
+                      ⚠️ Bloqueado
+                    </span>
                   )}
-                  <button
-                    onClick={() => setMostrarHistorial(!mostrarHistorial)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
-                  >
-                    {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
-                  </button>
+                  {estaEnVacaciones && (
+                    <span className="text-sm text-yellow-600 font-medium">
+                      🌴 Vacaciones
+                    </span>
+                  )}
                 </div>
                 
-                {pausaActiva && (
-                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
-                    <p className="text-xs text-yellow-800">
-                      Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
-                    </p>
-                  </div>
-                )}
-
-                {mostrarHistorial && (
-                  <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
-                    {historialPausas.length === 0 ? (
-                      <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {historialPausas.map((pausa, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                            <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
-                            <span>
-                              {new Date(pausa.inicio).toLocaleTimeString()} - 
-                              {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
-                            </span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
-                            }`}>
-                              {pausa.activa ? 'Activo' : 'Finalizado'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="overflow-x-auto">
+                  <DataTable
+                    columns={[
+                      { header: "Día", accessor: "diaNombre" },
+                      { header: "Hora Inicio", accessor: "horaInicio" },
+                      { header: "Hora Fin", accessor: "horaFin" },
+                      { header: "Intervalo", accessor: "intervaloTexto" },
+                      { 
+                        header: "Estado", 
+                        accessor: "estadoTexto",
+                        render: (horario) => (
+                          <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+                            {horario.estadoTexto}
+                          </span>
+                        )
+                      }
+                    ]}
+                    data={horariosFormateados}
+                    onEdit={isAdmin ? handleEditHorario : undefined}  
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* ========================================== */}
-          {/* SECCIÓN HORARIOS - Admin y Recepción */}
+          {/* SECCIÓN HORARIOS - Solo Admin (vista completa) */}
           {/* ========================================== */}
-          {puedeVerHorarios && (
-            <>
-              <div className="flex justify-between items-center mt-6 md:mt-8 mb-4">
+          {puedeVerHorarios && !puedeGestionarDoctor && (
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
                 {estaBloqueado && (
                   <span className="text-sm text-red-600 font-medium">
@@ -509,7 +566,7 @@ function DoctorDetallePage() {
                   </span>
                 )}
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto bg-white rounded-xl shadow-md border border-gray-200 p-4">
                 <DataTable
                   columns={[
                     { header: "Día", accessor: "diaNombre" },
@@ -530,7 +587,7 @@ function DoctorDetallePage() {
                   onEdit={isAdmin ? handleEditHorario : undefined}  
                 />
               </div>
-            </>
+            </div>
           )}
         </>
       )}
