@@ -47,12 +47,12 @@ phoneNumber: {
         },
           role: {
             type: String,
-            enum: ['admin', 'employee', 'client', 'doctor'],
+            enum: ['admin', 'employee', 'client', 'doctor','recepcion'],
             default: 'client' 
         },
         especialidad: {
   type: String,
-  enum: ['Medicina General', 'Groomer', 'Cirugía'],
+  enum: ['Medicina General', 'Groomer', 'Cirugía','Recepcionista'],
   required: function() { 
     return this.role === 'doctor'; 
   }
