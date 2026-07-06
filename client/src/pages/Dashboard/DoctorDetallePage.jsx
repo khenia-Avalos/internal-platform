@@ -5,12 +5,13 @@ import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
-import { getDoctorByIdRequest, updateDoctorRequest } from "/src/api/doctores";
+import { getDoctorByIdRequest } from "/src/api/doctores";
 import { getHorariosByDoctorRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
 import { editConfig } from "../config/editConfig";
-import { updateHorarioRequest } from "/src/api/horarios";  
+import { updateHorarioRequest, updateHorariosByDoctorRequest } from "/src/api/horarios";  
 import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest, getPausasByDoctorRequest } from "/src/api/pausas";
+import { bloquearDoctorRequest, activarVacacionesRequest, desactivarVacacionesRequest } from "/src/api/doctores";
 import { toast } from 'sonner';
 
 function DoctorDetallePage() {
@@ -92,7 +93,7 @@ function DoctorDetallePage() {
   }, [id, location.key]);
 
   const getNombreDia = (dia) => {
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return dias[dia];
   };
   
@@ -148,23 +149,94 @@ function DoctorDetallePage() {
     }
   };
 
-  // Activar/Desactivar doctor completo (vacaciones)
-  const toggleDoctorActivo = async () => {
-    const nuevoEstado = !doctor.activo;
-    const mensaje = nuevoEstado ? 'activar' : 'desactivar';
+  // ============================================
+  // FUNCIONES PARA BLOQUEAR DOCTOR
+  // ============================================
+  const handleBloquearDoctor = async () => {
+    const confirmar = window.confirm(
+      `⚠️ ¿Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
+      `Esta acción:\n` +
+      `• Desactivará TODOS sus horarios\n` +
+      `• Cambiará su contraseña a: UsuarioRetiradoElExito\n` +
+      `• El doctor no podrá iniciar sesión\n\n` +
+      `¿Deseas continuar?`
+    );
     
-    if (!window.confirm(`¿Estas seguro de ${mensaje} a ${doctor.username}?`)) return;
+    if (!confirmar) return;
     
     try {
-      await updateDoctorRequest(id, { activo: nuevoEstado });
-      setDoctor({ ...doctor, activo: nuevoEstado });
-      toast.success(`Doctor ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
+      await bloquearDoctorRequest(id);
+      toast.success('Doctor bloqueado exitosamente');
+      
+      // Recargar datos
+      const doctorRes = await getDoctorByIdRequest(id);
+      setDoctor(doctorRes.data);
+      
+      const horariosRes = await getHorariosByDoctorRequest(id);
+      setHorarios(horariosRes.data);
+      
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error('Error al bloquear doctor');
     }
   };
 
-  // Formatear fecha para mostrar
+  // ============================================
+  // FUNCIONES PARA VACACIONES
+  // ============================================
+  const handleActivarVacaciones = async () => {
+    const confirmar = window.confirm(
+      `🌴 ¿Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta acción desactivará TODOS sus horarios.\n\n` +
+      `¿Deseas continuar?`
+    );
+    
+    if (!confirmar) return;
+    
+    try {
+      await activarVacacionesRequest(id);
+      toast.success('Vacaciones activadas exitosamente');
+      
+      // Recargar datos
+      const doctorRes = await getDoctorByIdRequest(id);
+      setDoctor(doctorRes.data);
+      
+      const horariosRes = await getHorariosByDoctorRequest(id);
+      setHorarios(horariosRes.data);
+      
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error('Error al activar vacaciones');
+    }
+  };
+
+  const handleDesactivarVacaciones = async () => {
+    const confirmar = window.confirm(
+      `✅ ¿Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta acción activará TODOS sus horarios.\n\n` +
+      `¿Deseas continuar?`
+    );
+    
+    if (!confirmar) return;
+    
+    try {
+      await desactivarVacacionesRequest(id);
+      toast.success('Vacaciones desactivadas exitosamente');
+      
+      // Recargar datos
+      const doctorRes = await getDoctorByIdRequest(id);
+      setDoctor(doctorRes.data);
+      
+      const horariosRes = await getHorariosByDoctorRequest(id);
+      setHorarios(horariosRes.data);
+      
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+      toast.error('Error al desactivar vacaciones');
+    }
+  };
+
+  // Formatear fecha
   const formatearFecha = (fecha) => {
     if (!fecha) return 'No registrada';
     const date = new Date(fecha);
@@ -196,6 +268,9 @@ function DoctorDetallePage() {
     acc[fecha].push(pausa);
     return acc;
   }, {});
+
+  // Verificar si el doctor está en vacaciones
+  const estaEnVacaciones = doctor?.vacacionesActivas === true;
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -232,11 +307,11 @@ function DoctorDetallePage() {
         <>
           {/* CARD 1: INFORMACION DEL DOCTOR */}
           <InfoCard
-            title="Informacion del Doctor"
+            title="Información del Doctor"
             data={[
               { label: "Nombre completo", value: `${doctor.username} ${doctor.lastname}` },
               { label: "Email", value: doctor.email },
-              { label: "Telefono", value: doctor.phoneNumber },
+              { label: "Teléfono", value: doctor.phoneNumber },
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
@@ -251,9 +326,13 @@ function DoctorDetallePage() {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    doctor.activo !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    doctor.bloqueado ? 'bg-red-100 text-red-700' :
+                    estaEnVacaciones ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-green-100 text-green-700'
                   }`}>
-                    {doctor.activo !== false ? 'Activo' : 'Inactivo'}
+                    {doctor.bloqueado ? 'Bloqueado' :
+                     estaEnVacaciones ? 'Vacaciones' :
+                     'Activo'}
                   </span>
                 </div>
                 
@@ -262,39 +341,75 @@ function DoctorDetallePage() {
                     <span className="text-gray-500">Fecha de registro</span>
                     <span className="font-medium">{formatearFecha(doctor.createdAt)}</span>
                   </div>
+                  
+                  {doctor.fechaRetiro && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Fecha de retiro</span>
+                      <span className="font-medium text-red-600">{formatearFecha(doctor.fechaRetiro)}</span>
+                    </div>
+                  )}
+                  
+                  {doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Inicio de vacaciones</span>
+                      <span className="font-medium text-yellow-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
+                    </div>
+                  )}
+                  
+                  {doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Vacaciones</span>
+                      <span className="font-medium text-green-600">
+                        {formatearFecha(doctor.fechaInicioVacaciones)} - {formatearFecha(doctor.fechaFinVacaciones)}
+                      </span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Ultima actualizacion</span>
+                    <span className="text-gray-500">Última actualización</span>
                     <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
                   </div>
-                  {doctor.fechaDesactivacion && (
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Fecha de desactivacion</span>
-                      <span className="font-medium text-red-600">{formatearFecha(doctor.fechaDesactivacion)}</span>
-                    </div>
-                  )}
-                  {doctor.motivoDesactivacion && (
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Motivo</span>
-                      <span className="font-medium">{doctor.motivoDesactivacion}</span>
-                    </div>
-                  )}
                 </div>
                 
-                <button
-                  onClick={toggleDoctorActivo}
-                  className={`w-full mt-4 px-4 py-2 rounded-lg text-white font-medium transition ${
-                    doctor.activo !== false 
-                      ? 'bg-red-600 hover:bg-red-700' 
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
-                >
-                  {doctor.activo !== false ? 'Desactivar Doctor (Vacaciones)' : 'Activar Doctor'}
-                </button>
-                <p className="text-xs text-gray-400 mt-2 text-center">
-                  {doctor.activo !== false 
-                    ? 'Al desactivar, el doctor no aparecera en las citas' 
-                    : 'Al activar, el doctor volvera a estar disponible'}
-                </p>
+                <div className="mt-4 space-y-2">
+                  {/* Botón Bloquear Doctor */}
+                  <button
+                    onClick={handleBloquearDoctor}
+                    disabled={doctor.bloqueado}
+                    className={`w-full px-4 py-2 rounded-lg text-white font-medium transition ${
+                      doctor.bloqueado
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    {doctor.bloqueado ? 'Doctor Bloqueado' : '🔒 Bloquear Doctor (Retiro)'}
+                  </button>
+                  
+                  {/* Botón Vacaciones */}
+                  {!doctor.bloqueado && (
+                    !estaEnVacaciones ? (
+                      <button
+                        onClick={handleActivarVacaciones}
+                        className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                      >
+                        🌴 Activar Vacaciones
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleDesactivarVacaciones}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                      >
+                        ✅ Finalizar Vacaciones
+                      </button>
+                    )
+                  )}
+                  
+                  <p className="text-xs text-gray-400 text-center mt-2">
+                    {doctor.bloqueado ? 'El doctor ha sido retirado y no puede iniciar sesión' :
+                     estaEnVacaciones ? 'El doctor está en vacaciones, todos sus horarios están desactivados' :
+                     'El doctor está activo y disponible para citas'}
+                  </p>
+                </div>
               </div>
 
               {/* ========================================== */}
@@ -314,7 +429,12 @@ function DoctorDetallePage() {
                   {!pausaActiva ? (
                     <button
                       onClick={iniciarPausa}
-                      className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm"
+                      disabled={doctor.bloqueado || estaEnVacaciones}
+                      className={`flex-1 px-4 py-2 rounded-lg transition text-sm ${
+                        doctor.bloqueado || estaEnVacaciones
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      }`}
                     >
                       Iniciar Almuerzo
                     </button>
@@ -397,11 +517,21 @@ function DoctorDetallePage() {
             <>
               <div className="flex justify-between items-center mt-6 md:mt-8 mb-4">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
+                {doctor.bloqueado && (
+                  <span className="text-sm text-red-600 font-medium">
+                    ⚠️ Doctor bloqueado - Todos los horarios desactivados
+                  </span>
+                )}
+                {estaEnVacaciones && (
+                  <span className="text-sm text-yellow-600 font-medium">
+                    🌴 En vacaciones - Todos los horarios desactivados
+                  </span>
+                )}
               </div>
               <div className="overflow-x-auto">
                 <DataTable
                   columns={[
-                    { header: "Dia", accessor: "diaNombre" },
+                    { header: "Día", accessor: "diaNombre" },
                     { header: "Hora Inicio", accessor: "horaInicio" },
                     { header: "Hora Fin", accessor: "horaFin" },
                     { header: "Intervalo", accessor: "intervaloTexto" },
