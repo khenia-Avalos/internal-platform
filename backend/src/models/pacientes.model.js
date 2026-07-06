@@ -1,3 +1,4 @@
+// models/pacientes.model.js
 import mongoose from 'mongoose'
 
 const pacienteSchema = new mongoose.Schema(
@@ -7,65 +8,78 @@ const pacienteSchema = new mongoose.Schema(
             required: true,
             trim: true
         },
-
-  especie: {
+        especie: {
             type: String,
             required: true,
-                enum: ['perro', 'gato', 'ave', 'conejo', 'otro'],  
-
+            enum: ['perro', 'gato', 'ave', 'conejo', 'otro'],
             trim: true
         },
-          raza: {
+        raza: {
             type: String,
-                trim: true
-
+            trim: true
         },
-          edad: {
+        edad: {
             type: Number,
-                min: 0
-
+            min: 0
         },
-         sexo: {
+        sexo: {
             type: String,
             enum: ['Macho', 'Hembra'],
             trim: true
         },
-            
-         colorPelaje: {
+        colorPelaje: {
             type: String,
             trim: true
         },
-          peso: {
-  valor: Number,
-  unidad: {
-    type: String,
-    enum: ['kg', 'lb', 'g'],
-    default: 'kg'
-  }
+        peso: {
+            valor: Number,
+            unidad: {
+                type: String,
+                enum: ['kg', 'lb', 'g'],
+                default: 'kg'
+            }
         },
-          temperatura: {
+        temperatura: {
             type: Number,
-        
         },
-antecedentesMedicos: {
-    type: String,
-    trim: true
-},
-ownerId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'Owner',
-  required: true  
-},
-codigoIdentificacion: {
-  type: String,
-  unique: true,
-  sparse: true,   
-  trim: true
-}
+        antecedentesMedicos: {
+            type: String,
+            trim: true
+        },
+        ownerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Owner',
+            required: true
+        },
+        codigoIdentificacion: {
+            type: String,
+            unique: true,
+            sparse: true,
+            trim: true
+        },
+        // ========== NUEVOS CAMPOS PARA FALLECIDO ==========
+        fallecido: {
+            type: Boolean,
+            default: false
+        },
+        fechaFallecimiento: {
+            type: Date,
+            default: null
+        },
+        motivoFallecimiento: {
+            type: String,
+            default: ''
+        },
+        fechaRegistro: {
+            type: Date,
+            default: Date.now
+        }
     }, {
         timestamps: true
     }
 )
+
 // Índice compuesto para evitar duplicados de (ownerId + nombre)
 pacienteSchema.index({ ownerId: 1, nombre: 1 }, { unique: true });
-export default mongoose.model('Paciente', pacienteSchema)
+
+export default mongoose.model('Paciente', pacienteSchema);
