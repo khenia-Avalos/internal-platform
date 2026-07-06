@@ -1,3 +1,4 @@
+// controllers/cita.controller.js
 import User from '../models/user.model.js';
 import Paciente from '../models/pacientes.model.js';
 import Cita from '../models/cita.model.js'
@@ -8,11 +9,8 @@ import { sendAppointmentConfirmationEmail } from '../services/authService.js';
 import { createAccessToken } from '../libs/jwt.js';
 import { FRONTEND_URL } from '../config.js';
 import { renderizarPagina } from '../utils/htmlRenderer.js';
-
-
 import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
-
 
 // Suma minutos a una hora en formato "HH:MM"
 const sumarMinutos = (hora, minutos) => {
@@ -21,6 +19,7 @@ const sumarMinutos = (hora, minutos) => {
   fecha.setHours(horas, mins + minutos, 0);
   return fecha.toTimeString().slice(0, 5);
 };
+
 const sumarMinutosAHora = (horaStr, minutos) => {
   const [horas, mins] = horaStr.split(':').map(Number);
   let totalMinutos = horas * 60 + mins + minutos;
@@ -58,6 +57,15 @@ export const createCita = async (req, res) => {
     }
     console.log(" Paciente encontrado:", paciente.nombre);
     
+    // ========== VALIDACIÓN: Verificar si el paciente está fallecido ==========
+    if (paciente.fallecido === true) {
+      console.log(" Paciente fallecido, no se puede agendar cita");
+      return res.status(400).json({ 
+        message: `No se puede agendar una cita para ${paciente.nombre} porque está marcado como fallecido.`,
+        field: 'pacienteId'
+      });
+    }
+    
     const nuevaCita = new Cita({
       doctorId,
       pacienteId,
@@ -74,13 +82,13 @@ export const createCita = async (req, res) => {
     const citaGuardada = await nuevaCita.save();
     console.log(" Cita guardada con ID:", citaGuardada._id);
 
-    // . PRIMERO: Generar y guardar el token
+    // Generar y guardar el token
     const tokenConfirmacion = await createAccessToken({ id: citaGuardada._id }, "7d");
     citaGuardada.tokenConfirmacion = tokenConfirmacion;
     await citaGuardada.save();
     console.log(" Token generado y guardado");
 
-    //  SEGUNDO: Volver a buscar la cita con populate (AHORA con token incluido)
+    // Volver a buscar la cita con populate
     const citaConDatos = await Cita.findById(citaGuardada._id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -91,7 +99,7 @@ export const createCita = async (req, res) => {
         }
       });
     
-    // . TERCERO: Enviar correo de confirmación
+    // Enviar correo de confirmación
     if (correo) {
       console.log(" Intentando enviar correo a:", correo);
       try {
@@ -125,7 +133,7 @@ export const getCitasByDoctor = async (req, res) => {
     const { doctorId } = req.params;
     
     const citas = await Cita.find({ doctorId })
-      .populate('doctorId', 'username lastname especialidad') //  AGREGAR ESTO
+      .populate('doctorId', 'username lastname especialidad')
       .populate('pacienteId', 'nombre especie raza')
       .sort({ fecha: -1, horaInicio: 1 });
     
@@ -144,7 +152,7 @@ export const getCitasByPaciente = async (req, res) => {
     
     const citas = await Cita.find({ pacienteId })
       .populate('doctorId', 'username lastname especialidad')
-      .populate('pacienteId', 'nombre especie raza') //  AGREGADO: para mostrar nombre de la mascota
+      .populate('pacienteId', 'nombre especie raza')
       .sort({ fecha: -1, horaInicio: 1 });
     
     res.json(citas);
@@ -175,7 +183,6 @@ export const updateCita = async (req, res) => {
     }
     
     if (data.estado === 'cancelada') {
-      // Construccion manual (METODO 2)
       const fechaCitaUTC = new Date(cita.fecha);
       const año = fechaCitaUTC.getUTCFullYear();
       const mes = fechaCitaUTC.getUTCMonth();
@@ -289,16 +296,15 @@ export const getHorariosDisponibles = async (req, res) => {
       activa: true
     });
     
- const citas = await Cita.find({ 
-  doctorId, 
-  fecha: {
-    $gte: new Date(fecha + "T00:00:00"),
-    $lt: new Date(fecha + "T23:59:59")
-  },
-  estado: { $ne: 'cancelada' }  // ← EXCLUIR CITAS CANCELADAS
-});
+    const citas = await Cita.find({ 
+      doctorId, 
+      fecha: {
+        $gte: new Date(fecha + "T00:00:00"),
+        $lt: new Date(fecha + "T23:59:59")
+      },
+      estado: { $ne: 'cancelada' }
+    });
     
-    //  SIMPLIFICADO: usar horario.intervalo como duración
     const duracion = horario.intervalo;
     
     const slots = [];
@@ -314,7 +320,6 @@ export const getHorariosDisponibles = async (req, res) => {
       let disponible = true;
       let motivo = "";
       
-      // 1. Horas pasadas (margen 15 min)
       if (esHoy) {
         const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
         const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
@@ -324,7 +329,6 @@ export const getHorariosDisponibles = async (req, res) => {
         }
       }
       
-      // 2. Pausas
       if (disponible) {
         const enPausa = pausas.some(pausa => {
           const inicioPausa = new Date(pausa.inicio).toLocaleTimeString('en-US', { 
@@ -345,7 +349,6 @@ export const getHorariosDisponibles = async (req, res) => {
         }
       }
       
-      // 3. Citas existentes
       if (disponible) {
         const ocupado = citas.some(cita => {
           return (slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
@@ -394,7 +397,6 @@ export const getCitaById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Primero obtener la cita con todos los populates
     const cita = await Cita.findById(id)
       .populate('doctorId', 'username lastname especialidad')
       .populate({
@@ -404,7 +406,7 @@ export const getCitaById = async (req, res) => {
           select: 'username email phoneNumber'
         }
       })
-      .populate('clienteTemporalId', 'username email phoneNumber estado direccion'); // ← Asegurar que trae estos campos
+      .populate('clienteTemporalId', 'username email phoneNumber estado direccion');
     
     console.log(" Cita encontrada:", JSON.stringify(cita, null, 2));
     console.log(" clienteTemporalId:", cita?.clienteTemporalId);
@@ -428,7 +430,6 @@ export const confirmarCitaConToken = async (req, res) => {
     const { id } = req.params;
     const { token } = req.query;
     
-    // Verificar el token
     try {
       jwt.verify(token, TOKEN_SECRET);
     } catch (error) {
@@ -439,7 +440,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Buscar la cita
     const cita = await Cita.findById(id);
     
     if (!cita) {
@@ -450,7 +450,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar que el token coincida
     if (cita.tokenConfirmacion !== token) {
       return res.status(400).send(renderizarPagina(
         'Token inválido',
@@ -459,7 +458,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar si ya está cancelada
     if (cita.estado === 'cancelada') {
       return res.status(400).send(renderizarPagina(
         'Cita cancelada',
@@ -468,7 +466,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar si ya está confirmada
     if (cita.estado === 'confirmada') {
       return res.send(renderizarPagina(
         'Cita ya confirmada',
@@ -477,7 +474,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar si ya está completada
     if (cita.estado === 'completada') {
       return res.status(400).send(renderizarPagina(
         'Cita completada',
@@ -486,7 +482,6 @@ export const confirmarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Confirmar la cita
     cita.estado = 'confirmada';
     await cita.save();
     
@@ -515,7 +510,6 @@ export const cancelarCitaConToken = async (req, res) => {
     console.log('CANCELAR CITA CON TOKEN - INICIO');
     console.log(`Cita ID: ${id}`);
     
-    // Verificar el token
     try {
       jwt.verify(token, TOKEN_SECRET);
     } catch (error) {
@@ -526,7 +520,6 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Buscar la cita
     const cita = await Cita.findById(id);
     
     if (!cita) {
@@ -540,7 +533,6 @@ export const cancelarCitaConToken = async (req, res) => {
     console.log(`cita.fecha (raw): ${cita.fecha}`);
     console.log(`cita.horaInicio: ${cita.horaInicio}`);
     
-    // Verificar que el token coincida
     if (cita.tokenConfirmacion !== token) {
       return res.status(400).send(renderizarPagina(
         'Token invalido',
@@ -549,7 +541,6 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar si ya esta cancelada
     if (cita.estado === 'cancelada') {
       return res.send(renderizarPagina(
         'Cita ya cancelada',
@@ -558,7 +549,6 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Verificar si ya esta completada
     if (cita.estado === 'completada') {
       return res.status(400).send(renderizarPagina(
         'Cita completada',
@@ -567,20 +557,14 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // --- METODO CORRECTO: Construccion manual (METODO 2) ---
     const fechaCitaUTC = new Date(cita.fecha);
     const año = fechaCitaUTC.getUTCFullYear();
     const mes = fechaCitaUTC.getUTCMonth();
     const dia = fechaCitaUTC.getUTCDate();
     
     const [horaInicio, minutoInicio] = cita.horaInicio.split(':').map(Number);
-    
-    // Crear fecha cita en hora local (Costa Rica)
     const fechaCitaCR = new Date(año, mes, dia, horaInicio, minutoInicio, 0);
-    
-    // Fecha actual en Costa Rica
     const ahoraCR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
-    
     const horasDiferencia = (fechaCitaCR - ahoraCR) / (1000 * 60 * 60);
     const limiteHoras = 2;
     
@@ -588,7 +572,6 @@ export const cancelarCitaConToken = async (req, res) => {
     console.log(`ahoraCR: ${ahoraCR}`);
     console.log(`horasDiferencia: ${horasDiferencia}`);
     
-    // Si la cita ya paso
     if (fechaCitaCR < ahoraCR) {
       console.log('CANCELACION DENEGADA: Cita ya pasada');
       return res.status(400).send(renderizarPagina(
@@ -598,7 +581,6 @@ export const cancelarCitaConToken = async (req, res) => {
       ));
     }
     
-    // Si faltan menos de 2 horas
     if (horasDiferencia < limiteHoras) {
       const horasRestantes = Math.floor(horasDiferencia);
       const minutosRestantes = Math.floor((horasDiferencia % 1) * 60);
