@@ -59,20 +59,23 @@ export const createDoctor = async (req, res) => {
     
     const savedUser = await newUser.save();
     
-    // Crear horarios por defecto solo si es doctor
-    if (role === 'doctor') {
-      const horarioConfig = getHorarioPorDefecto(especialidad);
-      const horariosPorDefecto = horarioConfig.dias.map(dia => ({
-        doctorId: savedUser._id,
-        dia,
-        horaInicio: horarioConfig.horaInicio,
-        horaFin: horarioConfig.horaFin,
-        intervalo: horarioConfig.intervalo,
-        activo: horarioConfig.activo
-      }));
-      await Horario.insertMany(horariosPorDefecto);
-    }
-    
+  // Crear horarios por defecto solo si es doctor o recepcion
+if (role === 'doctor' || role === 'recepcion') {
+  const horarioConfig = getHorarioPorDefecto(especialidad);
+  
+  if (horarioConfig && horarioConfig.dias) {
+    const horariosPorDefecto = horarioConfig.dias.map(dia => ({
+      doctorId: savedUser._id,
+      dia,
+      horaInicio: horarioConfig.horaInicio,
+      horaFin: horarioConfig.horaFin,
+      intervalo: horarioConfig.intervalo, // ← 0 para recepcion, >0 para doctores
+      activo: horarioConfig.activo
+    }));
+    await Horario.insertMany(horariosPorDefecto);
+    console.log(`✅ Horarios creados para ${savedUser.username} (${especialidad})`);
+  }
+}
     // Enviar correo de bienvenida solo si es doctor
     if (role === 'doctor') {
       try {
