@@ -9,7 +9,7 @@ import { InfoCard } from "../../components/desCard";
 import { getClienteByIdRequest } from "/src/api/clientes";
 import { getPacienteByOwnerRequest } from "/src/api/pacientes";
 import { createPacienteRequest } from "/src/api/pacientes";
-import { getPacienteByIdRequest } from "/src/api/pacientes";
+import { getPacienteByIdRequest, marcarFallecidoRequest, reactivarPacienteRequest } from "/src/api/pacientes";
 import { getInternadosByPacienteRequest, createInternadoRequest, updateInternadoRequest, deleteInternadoRequest } from "/src/api/internados";
 import { getHistorialByPacienteRequest } from "/src/api/historialClinico";
 import { getDocumentosByPacienteRequest, uploadDocumentoRequest, deleteDocumentoRequest, verDocumentoRequest } from "/src/api/documentos";
@@ -46,12 +46,17 @@ function PacienteDetallePage() {
     const [consultaAbierta, setConsultaAbierta] = useState(null);
     const consultasPorPagina = 5;
 
+    // Estado para modal de fallecimiento
+    const [mostrarModalFallecimiento, setMostrarModalFallecimiento] = useState(false);
+    const [motivoFallecimiento, setMotivoFallecimiento] = useState('');
+
     const isAdmin = user?.role === 'admin';
     const isDoctor = user?.role === 'doctor';
     const isClient = user?.role === 'client';
     const canAddInternado = isAdmin || isDoctor;
     const isRecepcion = user?.role === 'recepcion';
     const puedeGestionar = canAddInternado || isRecepcion;
+    const puedeGestionarFallecido = isAdmin || isDoctor; // Solo admin y doctor pueden marcar fallecido
 
     // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
@@ -300,6 +305,63 @@ function PacienteDetallePage() {
         }
     };
 
+    // ============================================
+    // FUNCIONES PARA FALLECIDO
+    // ============================================
+    const handleMarcarFallecido = async () => {
+        if (!motivoFallecimiento.trim()) {
+            toast.error('Por favor ingresa el motivo del fallecimiento');
+            return;
+        }
+
+        const confirmar = window.confirm(
+            `🕊️ ¿Estás seguro de marcar a ${paciente.nombre} como fallecido?\n\n` +
+            `Esta acción:\n` +
+            `• No permitirá agendar nuevas citas\n` +
+            `• No permitirá subir documentos\n` +
+            `• No permitirá crear internados\n` +
+            `• No permitirá agregar registros clínicos\n\n` +
+            `Motivo: ${motivoFallecimiento}\n\n` +
+            `¿Deseas continuar?`
+        );
+        
+        if (!confirmar) return;
+        
+        try {
+            await marcarFallecidoRequest(id, { motivoFallecimiento });
+            toast.success(`Paciente ${paciente.nombre} marcado como fallecido`);
+            setMostrarModalFallecimiento(false);
+            setMotivoFallecimiento('');
+            await cargarTodosLosDatos();
+        } catch (error) {
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+            toast.error('Error al marcar como fallecido');
+        }
+    };
+
+    const handleReactivarPaciente = async () => {
+        const confirmar = window.confirm(
+            `🔄 ¿Estás seguro de REACTIVAR a ${paciente.nombre}?\n\n` +
+            `Esta acción:\n` +
+            `• Permitirá agendar nuevas citas\n` +
+            `• Permitirá subir documentos\n` +
+            `• Permitirá crear internados\n` +
+            `• Permitirá agregar registros clínicos\n\n` +
+            `¿Deseas continuar?`
+        );
+        
+        if (!confirmar) return;
+        
+        try {
+            await reactivarPacienteRequest(id);
+            toast.success(`Paciente ${paciente.nombre} reactivado exitosamente`);
+            await cargarTodosLosDatos();
+        } catch (error) {
+            manejarErrorResponse(error, setErrors, setSuccessMessage);
+            toast.error('Error al reactivar el paciente');
+        }
+    };
+
     useEffect(() => {
         if (id) {
             cargarTodosLosDatos();
@@ -330,6 +392,8 @@ function PacienteDetallePage() {
     const inicio = (paginaActual - 1) * consultasPorPagina;
     const fin = inicio + consultasPorPagina;
     const consultasPagina = historialCompleto.slice(inicio, fin);
+
+    const estaFallecido = paciente?.fallecido === true;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -371,7 +435,34 @@ function PacienteDetallePage() {
                     {/* SECCIÓN 1: DATOS DEL PACIENTE */}
                     {/* ========================================== */}
                     <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Paciente</h2>
+                        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                            <h2 className="text-2xl font-bold text-gray-800">Informacion del Paciente</h2>
+                            <div className="flex items-center gap-3">
+                                {estaFallecido && (
+                                    <span className="bg-gray-600 text-white px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
+                                        <span>🕊️</span> Fallecido
+                                    </span>
+                                )}
+                                {puedeGestionarFallecido && (
+                                    !estaFallecido ? (
+                                        <button
+                                            onClick={() => setMostrarModalFallecimiento(true)}
+                                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                        >
+                                            <span>🕊️</span> Marcar Fallecido
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleReactivarPaciente}
+                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                        >
+                                            <span>🔄</span> Reactivar Paciente
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        </div>
+
                         <InfoCard
                             title={paciente.nombre}
                             data={[
@@ -384,6 +475,11 @@ function PacienteDetallePage() {
                                 { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No registrado' },
                                 { label: "Temperatura", value: paciente.temperatura ? `${paciente.temperatura} °C` : 'No registrada' },
                                 { label: "Antecedentes medicos", value: paciente.antecedentesMedicos || 'Sin antecedentes' },
+                                { label: "Fecha de registro", value: formatearFechaLocal(paciente.fechaRegistro || paciente.createdAt) },
+                                ...(estaFallecido ? [
+                                    { label: "Fecha de fallecimiento", value: formatearFechaLocal(paciente.fechaFallecimiento) },
+                                    { label: "Motivo de fallecimiento", value: paciente.motivoFallecimiento || 'No especificado' }
+                                ] : [])
                             ]}
                         />
                     </div>
@@ -581,7 +677,7 @@ function PacienteDetallePage() {
                                     Resultados de laboratorio, radiografias, recetas y otros documentos
                                 </p>
                             </div>
-                            {puedeGestionar && (
+                            {puedeGestionar && !estaFallecido && (
                                 <button
                                     onClick={() => {
                                         console.log('Abriendo formulario de subida de documentos');
@@ -595,7 +691,7 @@ function PacienteDetallePage() {
                         </div>
 
                         {/* Formulario de subida */}
-                        {mostrarFormDocumento && (
+                        {mostrarFormDocumento && !estaFallecido && (
                             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg font-semibold text-gray-700">Subir Documento</h2>
@@ -728,7 +824,7 @@ function PacienteDetallePage() {
                                             >
                                                 Ver PDF
                                             </button>
-                                            {puedeGestionar && (
+                                            {puedeGestionar && !estaFallecido && (
                                                 <button
                                                     onClick={() => handleDeleteDocumento(doc._id)}
                                                     className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors ml-auto"
@@ -749,7 +845,7 @@ function PacienteDetallePage() {
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                             <h2 className="text-2xl font-bold text-gray-800">Historial de Internados</h2>
-                            {puedeGestionar && (
+                            {puedeGestionar && !estaFallecido && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
                                     className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
@@ -760,7 +856,7 @@ function PacienteDetallePage() {
                         </div>
 
                         {/* Formulario de internado */}
-                        {mostrarFormInternado && puedeGestionar && (
+                        {mostrarFormInternado && puedeGestionar && !estaFallecido && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
@@ -783,7 +879,7 @@ function PacienteDetallePage() {
                         )}
 
                         {/* Editar internado */}
-                        {showEditInternadoForm && puedeGestionar && (
+                        {showEditInternadoForm && puedeGestionar && !estaFallecido && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Internado</h2>
@@ -852,7 +948,7 @@ function PacienteDetallePage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {puedeGestionar && (
+                                        {puedeGestionar && !estaFallecido && (
                                             <div className="absolute bottom-3 right-3 flex gap-2">
                                                 <button
                                                     onClick={() => handleEditInternadoWithSelection(internado)}
@@ -873,6 +969,66 @@ function PacienteDetallePage() {
                             </div>
                         )}
                     </div>
+
+                    {/* ========================================== */}
+                    {/* MODAL PARA MOTIVO DE FALLECIMIENTO */}
+                    {/* ========================================== */}
+                    {mostrarModalFallecimiento && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-semibold text-gray-800">🕊️ Marcar como Fallecido</h3>
+                                    <button
+                                        onClick={() => {
+                                            setMostrarModalFallecimiento(false);
+                                            setMotivoFallecimiento('');
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                
+                                <p className="text-gray-600 mb-4">
+                                    Estás a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
+                                    Esta acción no permitirá crear citas, documentos ni internados.
+                                </p>
+                                
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Motivo del fallecimiento *
+                                    </label>
+                                    <textarea
+                                        value={motivoFallecimiento}
+                                        onChange={(e) => setMotivoFallecimiento(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition"
+                                        rows={3}
+                                        placeholder="Ej: Paro cardíaco, enfermedad crónica, accidente..."
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">Este motivo quedará registrado en el historial</p>
+                                </div>
+                                
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleMarcarFallecido}
+                                        className="flex-1 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                                    >
+                                        Confirmar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setMostrarModalFallecimiento(false);
+                                            setMotivoFallecimiento('');
+                                        }}
+                                        className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>
