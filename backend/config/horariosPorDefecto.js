@@ -10,15 +10,7 @@ const intervalosPorEspecialidad = {
 
 export const getHorarioPorDefecto = (especialidad) => {
   //  Si es Recepcionista, horarios sin intervalo
-  if (especialidad === 'Recepcionista') {
-    return {
-      dias: [1, 2, 3, 4, 5], // Lunes a viernes
-      horaInicio: "08:00",
-      horaFin: "17:00",
-      intervalo: 0, // ← Sin intervalo
-      activo: true
-    };
-  }
+ 
   
   const intervalo = intervalosPorEspecialidad[especialidad] || 30;
   
