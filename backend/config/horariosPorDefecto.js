@@ -3,7 +3,9 @@
 const intervalosPorEspecialidad = {
   'Groomer': 120,
   'Cirugía': 60,
-  'Medicina General': 30
+  'Medicina General': 30,
+    'Recepcionista': 30
+
 };
 
 export const getHorarioPorDefecto = (especialidad) => {
