@@ -1,3 +1,4 @@
+// src/pages/Citas/CitaDetallePage.jsx
 import { useParams, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
@@ -36,6 +37,9 @@ function CitaDetallePage() {
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
   const canEditHistorial = isAdmin || isDoctor;
+
+  // Verificar si la mascota está fallecida
+  const pacienteFallecido = cita?.pacienteId?.fallecido === true;
 
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
@@ -121,17 +125,14 @@ function CitaDetallePage() {
       console.log('✅ Historial encontrado:', res.data);
       setHistorial(res.data.data);
       
-      // Preparar datos para edición si existe
       if (res.data.data) {
         const h = res.data.data;
-        // Convertir medicamentos de array a texto
         const medicamentosText = Array.isArray(h.medicamentos) && h.medicamentos.length > 0
           ? h.medicamentos.map(m => 
               `${m.nombre || ''} | ${m.dosis || ''} | ${m.frecuencia || ''} | ${m.duracion || ''} | ${m.via || ''}`
             ).join('\n')
           : '';
         
-        // Convertir examenes de array a texto
         const examenesText = Array.isArray(h.examenes) && h.examenes.length > 0
           ? h.examenes.map(e => 
               `${e.nombre || ''} | ${e.resultado || ''} | ${e.fecha ? new Date(e.fecha).toISOString().split('T')[0] : ''}`
@@ -171,7 +172,12 @@ function CitaDetallePage() {
         return;
       }
       
-      // 🔥 SOLO LOS CAMPOS QUE EXISTEN EN EL MODELO
+      // Verificar si el paciente está fallecido
+      if (pacienteFallecido) {
+        toast.error('No se puede crear un registro clínico porque la mascota está marcada como fallecida');
+        return;
+      }
+      
       const datosEnvio = {
         pacienteId: cita.pacienteId._id,
         citaId: id,
@@ -198,8 +204,13 @@ function CitaDetallePage() {
     } catch (error) {
       console.error('❌ Error al crear historial:', error);
       console.error('❌ Respuesta del error:', error.response?.data);
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Error al crear el registro clínico');
+      }
       manejarErrorResponse(error, setErrors);
-      toast.error('Error al crear el registro clínico');
     }
   };
 
@@ -210,6 +221,12 @@ function CitaDetallePage() {
     try {
       if (!historial?._id) {
         toast.error('No hay registro clínico para actualizar');
+        return;
+      }
+      
+      // Verificar si el paciente está fallecido
+      if (pacienteFallecido) {
+        toast.error('No se puede actualizar el registro clínico porque la mascota está marcada como fallecida');
         return;
       }
       
@@ -237,8 +254,13 @@ function CitaDetallePage() {
     } catch (error) {
       console.error('❌ Error al actualizar historial:', error);
       console.error('❌ Respuesta del error:', error.response?.data);
+      
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Error al actualizar el registro clínico');
+      }
       manejarErrorResponse(error, setErrors);
-      toast.error('Error al actualizar el registro clínico');
     }
   };
 
@@ -360,7 +382,10 @@ function CitaDetallePage() {
     { label: "Teléfono del dueño", value: obtenerTelefonoDueño() },
     { label: "Mascota", value: cita?.pacienteId?.nombre || 'No especificada (pendiente de registro)' },
     { label: "Especie de la mascota", value: cita?.pacienteId?.especie || 'No especificada' },
-    { label: "Estado de la cita", value: obtenerEstadoTexto() }
+    { label: "Estado de la cita", value: obtenerEstadoTexto() },
+    ...(pacienteFallecido ? [
+      { label: "🕊️ Estado de la mascota", value: "FALLECIDA - No se pueden crear nuevos registros" }
+    ] : [])
   ];
 
   return (
@@ -399,19 +424,34 @@ function CitaDetallePage() {
         <>
           <InfoCard title="Información de la cita" data={informacionCita} />
 
+          {/* Mensaje de alerta si la mascota está fallecida */}
+          {pacienteFallecido && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-300 rounded-lg">
+              <p className="text-red-800 font-medium flex items-center gap-2">
+                <span>🕊️</span> Esta cita corresponde a una mascota fallecida
+              </p>
+              <p className="text-red-700 text-sm mt-1">
+                No se pueden crear ni actualizar registros clínicos para esta mascota.
+              </p>
+            </div>
+          )}
+
           {/* ========================================== */}
           {/* SECCIÓN DE HISTORIAL CLÍNICO */}
           {/* ========================================== */}
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-gray-800">Registro Clínico</h3>
-              {canEditHistorial && !showHistorialForm && (
+              {canEditHistorial && !showHistorialForm && !pacienteFallecido && (
                 <button
                   onClick={historial ? abrirFormularioEditar : abrirFormularioCrear}
                   className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
                 >
                   {historial ? 'Actualizar Registro Clínico' : 'Crear Registro Clínico'}
                 </button>
+              )}
+              {pacienteFallecido && (
+                <span className="text-gray-500 text-sm">🔒 Registro bloqueado - Mascota fallecida</span>
               )}
             </div>
 
@@ -496,13 +536,16 @@ function CitaDetallePage() {
             ) : (
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">No hay registro clínico para esta cita</p>
-                {canEditHistorial && (
+                {canEditHistorial && !pacienteFallecido && (
                   <button
                     onClick={abrirFormularioCrear}
                     className="mt-4 text-cyan-600 hover:text-cyan-700 font-medium"
                   >
                     Crear Registro Clínico
                   </button>
+                )}
+                {pacienteFallecido && (
+                  <p className="text-gray-400 text-sm mt-2">No se pueden crear registros para mascotas fallecidas</p>
                 )}
               </div>
             )}
@@ -545,7 +588,7 @@ function CitaDetallePage() {
               <>
                 <button 
                   onClick={() => cambiarEstado('confirmada')} 
-                  disabled={updating}
+                  disabled={updating || pacienteFallecido}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                 >
                   Confirmar Cita
@@ -582,7 +625,7 @@ function CitaDetallePage() {
                 {(isAdmin || isDoctor) && (
                   <button 
                     onClick={() => cambiarEstado('completada')} 
-                    disabled={updating}
+                    disabled={updating || pacienteFallecido}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                   >
                     Marcar como Completada
