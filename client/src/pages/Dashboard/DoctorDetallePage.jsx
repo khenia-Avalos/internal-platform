@@ -37,12 +37,10 @@ function DoctorDetallePage() {
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isRecepcion = user?.role === 'recepcion';
-  const puedeVerHorarios = isAdmin; // Solo admin ve horarios
-  const puedeVerControlAlmuerzo = isAdmin || isDoctor || isRecepcion; // Admin, doctor y recepcion ven control de almuerzo
-  const puedeGestionarDoctor = isAdmin; // Solo admin puede gestionar estado del doctor
-
-  // Verificar si el usuario logueado es el mismo doctor que se está viendo
-  const esMiPerfil = isDoctor && user?._id === id;
+  const puedeVerHorarios = isAdmin;
+  const puedeVerControlAlmuerzo = isAdmin || isDoctor || isRecepcion;
+  const puedeGestionarDoctor = isAdmin;
+  const puedeVerHistorial = isAdmin; // Solo admin puede ver historial
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -57,7 +55,6 @@ function DoctorDetallePage() {
           setHorarios(horariosRes.data);
         }
         
-        // Cargar historial de pausas solo si tiene permiso
         if (puedeVerControlAlmuerzo) {
           const pausasRes = await getPausasByDoctorRequest(id);
           setHistorialPausas(pausasRes.data || []);
@@ -141,8 +138,10 @@ function DoctorDetallePage() {
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
       setPausaActiva(res.data);
       toast.success('Almuerzo iniciado');
-      const pausasRes = await getPausasByDoctorRequest(id);
-      setHistorialPausas(pausasRes.data || []);
+      if (puedeVerHistorial) {
+        const pausasRes = await getPausasByDoctorRequest(id);
+        setHistorialPausas(pausasRes.data || []);
+      }
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
@@ -153,8 +152,10 @@ function DoctorDetallePage() {
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
       toast.success('Almuerzo terminado');
-      const pausasRes = await getPausasByDoctorRequest(id);
-      setHistorialPausas(pausasRes.data || []);
+      if (puedeVerHistorial) {
+        const pausasRes = await getPausasByDoctorRequest(id);
+        setHistorialPausas(pausasRes.data || []);
+      }
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
@@ -319,12 +320,12 @@ function DoctorDetallePage() {
                   </span>
                 </div>
                 
-                <div className="flex flex-wrap gap-3 mb-4">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
                   {!pausaActiva ? (
                     <button
                       onClick={iniciarPausa}
                       disabled={estaBloqueado || estaEnVacaciones}
-                      className={`flex-1 min-w-[140px] px-4 py-2 rounded-lg transition text-sm ${
+                      className={`px-4 py-2 rounded-lg transition text-sm ${
                         estaBloqueado || estaEnVacaciones
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'bg-yellow-600 text-white hover:bg-yellow-700'
@@ -335,17 +336,21 @@ function DoctorDetallePage() {
                   ) : (
                     <button
                       onClick={terminarPausa}
-                      className="flex-1 min-w-[140px] bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
                     >
                       Volver del Almuerzo
                     </button>
                   )}
-                  <button
-                    onClick={() => setMostrarHistorial(!mostrarHistorial)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
-                  >
-                    {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
-                  </button>
+                  
+                  {/* Botón de historial SOLO para admin */}
+                  {puedeVerHistorial && (
+                    <button
+                      onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                    >
+                      {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
+                    </button>
+                  )}
                 </div>
                 
                 {pausaActiva && (
@@ -356,7 +361,8 @@ function DoctorDetallePage() {
                   </div>
                 )}
 
-                {mostrarHistorial && (
+                {/* Historial de pausas - SOLO visible para admin */}
+                {puedeVerHistorial && mostrarHistorial && (
                   <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
                     {historialPausas.length === 0 ? (
