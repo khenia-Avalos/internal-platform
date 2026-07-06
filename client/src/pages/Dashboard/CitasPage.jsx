@@ -33,6 +33,8 @@ function CitasPage() {
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
   const isClient = user?.role === 'client';
+    const isRecepcion = user?.role === 'recepcion';
+
 
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return '';
@@ -173,7 +175,7 @@ function CitasPage() {
               className="px-4 py-2 border border-cyan-400 rounded-lg mt-2" 
             />
           </div>
-          {(isAdmin || isDoctor || isClient) && (
+          {(isAdmin || isDoctor || isClient   || isRecepcion) && (
             <button 
               onClick={() => setMostrarFormulario(true)} 
               className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition"
@@ -184,7 +186,7 @@ function CitasPage() {
         </div>
       </div>
 
-      {mostrarFormulario && (isAdmin || isDoctor || isClient) && (
+      {mostrarFormulario && (isAdmin || isDoctor || isClient   || isRecepcion) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Crear Nueva Cita</h2>
@@ -204,7 +206,7 @@ function CitasPage() {
         </div>
       )}
 
-      {showEditForm && citaSeleccionada && (isAdmin || isDoctor) && (
+      {showEditForm && citaSeleccionada && (isAdmin || isDoctor || isRecepcion) && (
         <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold"> Editar Cita</h2>
@@ -253,7 +255,7 @@ function CitasPage() {
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-            onEdit={(isAdmin || isDoctor) ? (cita) => { 
+            onEdit={(isAdmin || isDoctor || isRecepcion) ? (cita) => { 
               setCitaSeleccionada(cita); 
               setShowEditForm(true);
             } : undefined}
