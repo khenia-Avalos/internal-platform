@@ -275,7 +275,7 @@ export const deleteHistorial = async (req, res) => {
       message: 'Registro clínico eliminado exitosamente' 
     });
   } catch (error) {
-    console.error('❌ Error al eliminar:', error);
+    console.error(' Error al eliminar:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -291,7 +291,7 @@ export const verificarPacienteFallecido = async (req, res) => {
   try {
     const { pacienteId } = req.params;
     
-    console.log('🔍 Verificando si paciente está fallecido:', pacienteId);
+    console.log(' Verificando si paciente está fallecido:', pacienteId);
     
     const paciente = await Paciente.findById(pacienteId).select('nombre fallecido fechaFallecimiento');
     
@@ -312,7 +312,7 @@ export const verificarPacienteFallecido = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error en verificarPacienteFallecido:', error);
+    console.error(' Error en verificarPacienteFallecido:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
