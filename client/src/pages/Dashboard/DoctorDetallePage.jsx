@@ -5,12 +5,13 @@ import Modal from '../../components/Modal';
 import { DynamicForm } from "../../components/DynamicForm";
 import { manejarErrorResponse } from '../../utils/apiErrorHandler';
 import { InfoCard } from "../../components/desCard";
-import { getDoctorByIdRequest } from "/src/api/doctores";
+import { getDoctorByIdRequest, updateDoctorRequest } from "/src/api/doctores";
 import { getHorariosByDoctorRequest } from "/src/api/horarios";
 import { DataTable } from "../../components/DataTable";
 import { editConfig } from "../config/editConfig";
 import { updateHorarioRequest } from "/src/api/horarios";  
-import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest } from "/src/api/pausas";
+import { iniciarPausaRequest, terminarPausaRequest, getPausasActivasRequest, getPausasByDoctorRequest } from "/src/api/pausas";
+import { toast } from 'sonner';
 
 function DoctorDetallePage() {
   const { user } = useAuth();
@@ -25,9 +26,13 @@ function DoctorDetallePage() {
   const [horarios, setHorarios] = useState([]);
   const [horarioEditando, setHorarioEditando] = useState(null);
   const [pausaActiva, setPausaActiva] = useState(null);
+  const [historialPausas, setHistorialPausas] = useState([]);
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   const isDoctor = user?.role === 'doctor';
   const isAdmin = user?.role === 'admin';
+  const isRecepcion = user?.role === 'recepcion';
+  const puedeVerHorarios = isAdmin || isRecepcion;
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -37,11 +42,15 @@ function DoctorDetallePage() {
         const doctorRes = await getDoctorByIdRequest(id);
         setDoctor(doctorRes.data);
         
-        //  Solo cargar horarios si es ADMIN (para el doctor NO se muestran)
-        if (isAdmin) {
+        if (puedeVerHorarios) {
           const horariosRes = await getHorariosByDoctorRequest(id);
           setHorarios(horariosRes.data);
         }
+        
+        // Cargar historial de pausas
+        const pausasRes = await getPausasByDoctorRequest(id);
+        setHistorialPausas(pausasRes.data || []);
+        
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
       } finally {
@@ -52,9 +61,9 @@ function DoctorDetallePage() {
     if (id) {
       cargarDatos();
     }
-  }, [id, isAdmin]);
+  }, [id, puedeVerHorarios]);
 
-  // Cargar pausa activa - siempre (tanto para admin como para doctor)
+  // Cargar pausa activa
   useEffect(() => {
     let isMounted = true;
     
@@ -83,7 +92,7 @@ function DoctorDetallePage() {
   }, [id, location.key]);
 
   const getNombreDia = (dia) => {
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     return dias[dia];
   };
   
@@ -107,8 +116,7 @@ function DoctorDetallePage() {
       setModalAbierto(false);
       const horariosRes = await getHorariosByDoctorRequest(id);
       setHorarios(horariosRes.data);
-      setSuccessMessage("Horario actualizado correctamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      toast.success('Horario actualizado correctamente');
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
@@ -118,8 +126,10 @@ function DoctorDetallePage() {
     try {
       const res = await iniciarPausaRequest({ doctorId: id, motivo: "almuerzo" });
       setPausaActiva(res.data);
-      setSuccessMessage("Almuerzo iniciado");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      toast.success('Almuerzo iniciado');
+      // Recargar historial
+      const pausasRes = await getPausasByDoctorRequest(id);
+      setHistorialPausas(pausasRes.data || []);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
@@ -129,16 +139,67 @@ function DoctorDetallePage() {
     try {
       await terminarPausaRequest(pausaActiva._id);
       setPausaActiva(null);
-      setSuccessMessage("Almuerzo terminado");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      toast.success('Almuerzo terminado');
+      // Recargar historial
+      const pausasRes = await getPausasByDoctorRequest(id);
+      setHistorialPausas(pausasRes.data || []);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
     }
   };
 
+  // Activar/Desactivar doctor completo (vacaciones)
+  const toggleDoctorActivo = async () => {
+    const nuevoEstado = !doctor.activo;
+    const mensaje = nuevoEstado ? 'activar' : 'desactivar';
+    
+    if (!window.confirm(`¿Estas seguro de ${mensaje} a ${doctor.username}?`)) return;
+    
+    try {
+      await updateDoctorRequest(id, { activo: nuevoEstado });
+      setDoctor({ ...doctor, activo: nuevoEstado });
+      toast.success(`Doctor ${nuevoEstado ? 'activado' : 'desactivado'} exitosamente`);
+    } catch (error) {
+      manejarErrorResponse(error, setErrors, setSuccessMessage);
+    }
+  };
+
+  // Formatear fecha para mostrar
+  const formatearFecha = (fecha) => {
+    if (!fecha) return 'No registrada';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-CR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatearFechaHora = (fecha) => {
+    if (!fecha) return 'No registrada';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-CR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Agrupar pausas por día
+  const pausasPorDia = historialPausas.reduce((acc, pausa) => {
+    const fecha = new Date(pausa.inicio).toLocaleDateString('es-CR');
+    if (!acc[fecha]) {
+      acc[fecha] = [];
+    }
+    acc[fecha].push(pausa);
+    return acc;
+  }, {});
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/*  Botón volver - responsivo */}
+      {/* Boton volver */}
       <button
         onClick={() => navigate('/doctores')}
         className="mb-4 md:mb-6 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-gray-600 hover:text-gray-900 transition"
@@ -169,57 +230,178 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
-          {/*  InfoCard ya es responsiva, no necesita cambios */}
+          {/* CARD 1: INFORMACION DEL DOCTOR */}
           <InfoCard
-            title="Información del Doctor"
+            title="Informacion del Doctor"
             data={[
               { label: "Nombre completo", value: `${doctor.username} ${doctor.lastname}` },
               { label: "Email", value: doctor.email },
-              { label: "Teléfono", value: doctor.phoneNumber },
+              { label: "Telefono", value: doctor.phoneNumber },
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
 
-          {/*  SECCIÓN PAUSAS - Responsiva */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6 md:mt-8 mb-4">
-            <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Control de Almuerzo</h2>
-            <div className="flex gap-3 w-full sm:w-auto">
-              {!pausaActiva ? (
+          {/* ========================================== */}
+          {/* CARD 2: ESTADO DEL DOCTOR (SOLO ADMIN) */}
+          {/* ========================================== */}
+          {isAdmin && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Estado del Doctor */}
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    doctor.activo !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {doctor.activo !== false ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Fecha de registro</span>
+                    <span className="font-medium">{formatearFecha(doctor.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Ultima actualizacion</span>
+                    <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
+                  </div>
+                  {doctor.fechaDesactivacion && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Fecha de desactivacion</span>
+                      <span className="font-medium text-red-600">{formatearFecha(doctor.fechaDesactivacion)}</span>
+                    </div>
+                  )}
+                  {doctor.motivoDesactivacion && (
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Motivo</span>
+                      <span className="font-medium">{doctor.motivoDesactivacion}</span>
+                    </div>
+                  )}
+                </div>
+                
                 <button
-                  onClick={iniciarPausa}
-                  className="flex-1 sm:flex-none bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm md:text-base"
+                  onClick={toggleDoctorActivo}
+                  className={`w-full mt-4 px-4 py-2 rounded-lg text-white font-medium transition ${
+                    doctor.activo !== false 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
                 >
-                  Iniciar Almuerzo
+                  {doctor.activo !== false ? 'Desactivar Doctor (Vacaciones)' : 'Activar Doctor'}
                 </button>
-              ) : (
-                <button
-                  onClick={terminarPausa}
-                  className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm md:text-base"
-                >
-                  Volver del Almuerzo
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {pausaActiva && (
-            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2 mb-4">
-              <p className="text-xs md:text-sm text-yellow-800">
-                 Almuerzo iniciado a las: {new Date(pausaActiva.inicio).toLocaleTimeString()}
-              </p>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  {doctor.activo !== false 
+                    ? 'Al desactivar, el doctor no aparecera en las citas' 
+                    : 'Al activar, el doctor volvera a estar disponible'}
+                </p>
+              </div>
+
+              {/* ========================================== */}
+              {/* CARD 3: CONTROL DE ALMUERZO Y HISTORIAL */}
+              {/* ========================================== */}
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    pausaActiva ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                  }`}>
+                    {pausaActiva ? 'En pausa' : 'Disponible'}
+                  </span>
+                </div>
+                
+                <div className="flex gap-3 mb-4">
+                  {!pausaActiva ? (
+                    <button
+                      onClick={iniciarPausa}
+                      className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition text-sm"
+                    >
+                      Iniciar Almuerzo
+                    </button>
+                  ) : (
+                    <button
+                      onClick={terminarPausa}
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                    >
+                      Volver del Almuerzo
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                  >
+                    {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
+                  </button>
+                </div>
+                
+                {pausaActiva && (
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
+                    <p className="text-xs text-yellow-800">
+                      Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
+                    </p>
+                  </div>
+                )}
+
+                {/* Historial de pausas - acordeon por día */}
+                {mostrarHistorial && (
+                  <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
+                    
+                    {Object.keys(pausasPorDia).length === 0 ? (
+                      <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
+                    ) : (
+                      Object.entries(pausasPorDia)
+                        .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+                        .map(([fecha, pausas]) => (
+                          <div key={fecha} className="mb-3 border border-gray-100 rounded-lg overflow-hidden">
+                            <div className="bg-gray-50 px-3 py-2 font-medium text-sm text-gray-700">
+                              {fecha}
+                              <span className="ml-2 text-xs text-gray-400 font-normal">
+                                ({pausas.length} registro{pausas.length > 1 ? 's' : ''})
+                              </span>
+                            </div>
+                            <div className="p-2 space-y-1">
+                              {pausas.map((pausa, idx) => (
+                                <div key={idx} className="flex justify-between text-sm px-2 py-1 hover:bg-gray-50 rounded">
+                                  <span>
+                                    <span className="text-gray-500">Inicio:</span>
+                                    <span className="ml-1">{new Date(pausa.inicio).toLocaleTimeString()}</span>
+                                  </span>
+                                  <span>
+                                    <span className="text-gray-500">Fin:</span>
+                                    <span className="ml-1">
+                                      {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
+                                    </span>
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                    pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {pausa.activa ? 'Activo' : 'Finalizado'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/*  SECCIÓN HORARIOS - SOLO para admin, responsiva */}
-          {isAdmin && (
+          {/* ========================================== */}
+          {/* SECCION HORARIOS - Admin y Recepcion */}
+          {/* ========================================== */}
+          {puedeVerHorarios && (
             <>
               <div className="flex justify-between items-center mt-6 md:mt-8 mb-4">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Horarios</h2>
+                <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
               </div>
               <div className="overflow-x-auto">
                 <DataTable
                   columns={[
-                    { header: "Día", accessor: "diaNombre" },
+                    { header: "Dia", accessor: "diaNombre" },
                     { header: "Hora Inicio", accessor: "horaInicio" },
                     { header: "Hora Fin", accessor: "horaFin" },
                     { header: "Intervalo", accessor: "intervaloTexto" },
@@ -234,7 +416,7 @@ function DoctorDetallePage() {
                     }
                   ]}
                   data={horariosFormateados}
-                  onEdit={handleEditHorario}  
+                  onEdit={isAdmin ? handleEditHorario : undefined}  
                 />
               </div>
             </>
