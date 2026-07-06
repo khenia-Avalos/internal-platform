@@ -42,7 +42,7 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
 
   // FUNCIONES AUXILIARES
 
-  const cargarDoctores = async () => {
+ const cargarDoctores = async () => {
     try {
       console.log("=== INICIO cargarDoctores ===");
       console.log("userRole actual:", userRole);
@@ -57,9 +57,11 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       });
       
       // Filtrar para excluir Cirugia solo para clientes
+      let doctoresFiltrados = doctoresData;
+      
       if (userRole === 'client') {
         console.log("Aplicando filtro para cliente...");
-        const doctoresFiltrados = doctoresData.filter(doctor => {
+        doctoresFiltrados = doctoresData.filter(doctor => {
           const especialidad = doctor.especialidad;
           const esCirugia = especialidad === 'Cirugia' || especialidad === 'Cirugía' || especialidad === 'cirugia' || especialidad === 'CIRUGIA';
           if (esCirugia) {
@@ -69,14 +71,26 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
           }
           return !esCirugia;
         });
-        
-        console.log(`Doctores antes del filtro: ${doctoresData.length}`);
-        console.log(`Doctores despues del filtro: ${doctoresFiltrados.length}`);
-        setDoctores(doctoresFiltrados);
-      } else {
-        console.log("No se aplica filtro. userRole no es 'client':", userRole);
-        setDoctores(doctoresData);
       }
+      
+      // Excluir recepcionistas para TODOS los roles
+      console.log("Excluyendo recepcionistas...");
+      const doctoresSinRecepcionistas = doctoresFiltrados.filter(doctor => {
+        const esRecepcionista = doctor.role === 'recepcion' || 
+                               doctor.role === 'recepcionista' || 
+                               doctor.role === 'RECEPCION' ||
+                               doctor.role === 'recepcionist';
+        if (esRecepcionista) {
+          console.log(`  EXCLUYENDO a ${doctor.username} (${doctor.role})`);
+        } else {
+          console.log(`  MANTENIENDO a ${doctor.username} (${doctor.role})`);
+        }
+        return !esRecepcionista;
+      });
+      
+      console.log(`Doctores antes del filtro de recepcionistas: ${doctoresFiltrados.length}`);
+      console.log(`Doctores despues del filtro de recepcionistas: ${doctoresSinRecepcionistas.length}`);
+      setDoctores(doctoresSinRecepcionistas);
       
       console.log("=== FIN cargarDoctores ===");
     } catch (error) {
@@ -84,7 +98,6 @@ export const FormularioCita = ({ onSubmit, cita, isEdit = false, onCancel, datos
       manejarErrorResponse(error, setErrors);
     }
   };
-
   const cargarDuenos = async () => {
     try {
       const res = await getClientesRequest();
