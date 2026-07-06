@@ -56,7 +56,8 @@ function PacienteDetallePage() {
     const canAddInternado = isAdmin || isDoctor;
     const isRecepcion = user?.role === 'recepcion';
     const puedeGestionar = canAddInternado || isRecepcion;
-    const puedeGestionarFallecido = isAdmin || isDoctor; // Solo admin y doctor pueden marcar fallecido
+    const puedeMarcarFallecido = isAdmin || isDoctor || isRecepcion;
+    const puedeReactivar = isAdmin; // Solo admin puede reactivar
 
     // Función para cargar todos los datos
     const cargarTodosLosDatos = async () => {
@@ -131,17 +132,28 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para formatear fechas SIN desfase horario
+    // ============================================
+    // FUNCIÓN FORMATEAR FECHA - CORREGIDA
+    // ============================================
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
+        // Si es un string ISO, extraer solo la fecha
+        if (typeof fecha === 'string' && fecha.includes('T')) {
+            const [year, month, day] = fecha.split('T')[0].split('-');
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Si es un string con formato YYYY-MM-DD
         if (typeof fecha === 'string' && fecha.includes('-')) {
             const [year, month, day] = fecha.split('-');
             return `${day}/${month}/${year}`;
         }
         
+        // Si es un objeto Date
         try {
             const date = new Date(fecha);
+            if (isNaN(date.getTime())) return 'No especificada';
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -437,13 +449,13 @@ function PacienteDetallePage() {
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                             <h2 className="text-2xl font-bold text-gray-800">Informacion del Paciente</h2>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                                 {estaFallecido && (
                                     <span className="bg-gray-600 text-white px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
                                         <span>🕊️</span> Fallecido
                                     </span>
                                 )}
-                                {puedeGestionarFallecido && (
+                                {puedeMarcarFallecido && (
                                     !estaFallecido ? (
                                         <button
                                             onClick={() => setMostrarModalFallecimiento(true)}
@@ -452,12 +464,15 @@ function PacienteDetallePage() {
                                             <span>🕊️</span> Marcar Fallecido
                                         </button>
                                     ) : (
-                                        <button
-                                            onClick={handleReactivarPaciente}
-                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
-                                        >
-                                            <span>🔄</span> Reactivar Paciente
-                                        </button>
+                                        // Solo admin puede reactivar
+                                        puedeReactivar && (
+                                            <button
+                                                onClick={handleReactivarPaciente}
+                                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                            >
+                                                <span>🔄</span> Reactivar Paciente
+                                            </button>
+                                        )
                                     )
                                 )}
                             </div>
