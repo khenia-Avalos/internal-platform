@@ -17,8 +17,10 @@ import {
 import { DataTable } from "../../components/DataTable";
 import { useDelete } from "../../hooks/useDelete";
 import { useEdit } from "../../hooks/useEdit";
+import { useAuth } from "../../hooks/useAuth";
 
 function ClientesPage() {
+  const { user } = useAuth();
   const [clientes, setClientes] = useState([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
@@ -26,6 +28,9 @@ function ClientesPage() {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin';
+  const isRecepcion = user?.role === 'recepcion';
 
   const handleCreateCliente = async (data) => {
     try {
@@ -100,19 +105,21 @@ function ClientesPage() {
               placeholder="Buscar cliente por nombre, email, cédula..."
             />
           </div>
-          <button
-            onClick={() => setMostrarFormulario(true)}
-            className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
-          >
-            Nuevo Cliente
-          </button>
+          {(isAdmin || isRecepcion) && (
+            <button
+              onClick={() => setMostrarFormulario(true)}
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg hover:bg-cyan-700 transition shadow-sm whitespace-nowrap font-medium"
+            >
+              Nuevo Cliente
+            </button>
+          )}
         </div>
       </div>
 
       {/* Contenedor de formularios - Se desplazan hacia abajo sin tapar */}
       <div className="space-y-6 mb-6">
         {/* Formulario de creación */}
-        {mostrarFormulario && (
+        {mostrarFormulario && (isAdmin || isRecepcion) && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Crear Nuevo Cliente</h2>
@@ -136,7 +143,7 @@ function ClientesPage() {
         )}
 
         {/* Formulario de edición */}
-        {showEditForm && (
+        {showEditForm && (isAdmin || isRecepcion) && (
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg md:text-xl font-semibold text-gray-700"> Editar Cliente</h2>
@@ -187,17 +194,18 @@ function ClientesPage() {
               { header: "Email", accessor: "email" },
               { header: "Teléfono", accessor: "phoneNumber" },
               { header: "Cedula", accessor: "cedula" },
-              { header: "Dirección", accessor: "direccion" }]}
+              { header: "Dirección", accessor: "direccion" }
+            ]}
             data={clientesFiltrados}
             onRowClick={(cliente) => navigate(`/clientes/${cliente._id}`)}
-
             onEdit={(cliente) => {
               setClienteSeleccionado(cliente);
               handleEdit(cliente);
             }}
-            onDelete={(cliente) => {
+            onDelete={isAdmin ? (cliente) => {
               handleDeleteCliente(cliente._id, cliente.username);
-            }} />
+            } : undefined}
+          />
         )}
       </div>
     </div>
