@@ -95,7 +95,7 @@ function CitasPage() {
       let response;
       
       if (isDoctor && user?._id) {
-        // 🔥 Obtener TODAS las citas (con populate completo) y filtrar por doctor
+        // Obtener TODAS las citas (con populate completo) y filtrar por doctor
         const todasLasCitas = await getCitasRequest();
         const citasDoctor = todasLasCitas.data.filter(cita => 
           cita.doctorId?._id === user._id || cita.doctorId === user._id
@@ -250,8 +250,12 @@ function CitasPage() {
               { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
               { header: "Hora", accessor: "horaInicio" },
               { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username },
-              { header: "Mascota", accessor: "pacienteId", render: (cita) => cita.pacienteId?.nombre },
-              { header: "Estado", accessor: "estado" }
+{ 
+  header: "Mascota", 
+  accessor: "pacienteId", 
+  render: (cita) => cita.pacienteId?.nombre || 'Pendiente de registro' 
+}            ,
+  { header: "Estado", accessor: "estado" }
             ]}
             data={citasFiltradas}
             onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
@@ -259,7 +263,7 @@ function CitasPage() {
               setCitaSeleccionada(cita); 
               setShowEditForm(true);
             } : undefined}
-            onDelete={isAdmin ? (cita) => {
+            onDelete={isAdmin || isRecepcion ? (cita) => {
               handleDeleteCita(cita._id);
             } : undefined}
           />
