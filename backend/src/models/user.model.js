@@ -13,30 +13,27 @@ const userSchema = new mongoose.Schema(
             trim: true,
             unique: true
         },
-
-phoneNumber: {
-  type: String,
-  required: true,
-  trim: true,
-  validate: {
-    validator: function(v) {
-      const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
-      return phoneRegex.test(v);
-    },
-    message: "Invalid phone format. Use +50670983832 or +506 7098 3832"
-  }
-},
+        phoneNumber: {
+            type: String,
+            required: true,
+            trim: true,
+            validate: {
+                validator: function(v) {
+                    const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
+                    return phoneRegex.test(v);
+                },
+                message: "Invalid phone format. Use +50670983832 or +506 7098 3832"
+            }
+        },
         lastname: {
             type: String,
             required: true,
             trim: true,
-          
         },
         password: {
             type: String,
             required: true,
         },
-       
         resetPasswordToken: {
             type: String,
             default: null
@@ -45,18 +42,43 @@ phoneNumber: {
             type: Date,
             default: null
         },
-          role: {
+        role: {
             type: String,
-            enum: ['admin', 'employee', 'client', 'doctor','recepcion'],
+            enum: ['admin', 'employee', 'client', 'doctor', 'recepcion'],
             default: 'client' 
         },
         especialidad: {
-  type: String,
-  enum: ['Medicina General', 'Groomer', 'Cirugía','Recepcionista'],
-  required: function() { 
-    return this.role === 'doctor'; 
-  }
-}
+            type: String,
+            enum: ['Medicina General', 'Groomer', 'Cirugía', 'Recepcionista'],
+            required: function() { 
+                return this.role === 'doctor' || this.role === 'recepcion'; 
+            }
+        },
+        // ========== NUEVOS CAMPOS ==========
+        bloqueado: {
+            type: Boolean,
+            default: false
+        },
+        fechaRetiro: {
+            type: Date,
+            default: null
+        },
+        vacacionesActivas: {
+            type: Boolean,
+            default: false
+        },
+        fechaInicioVacaciones: {
+            type: Date,
+            default: null
+        },
+        fechaFinVacaciones: {
+            type: Date,
+            default: null
+        },
+        activo: {
+            type: Boolean,
+            default: true
+        }
     }, {
         timestamps: true
     }
