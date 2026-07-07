@@ -34,7 +34,7 @@ function ClienteTemporalDetallePage() {
     antecedentesMedicos: ''
   });
 
-  // Función para mostrar fecha local CORREGIDA
+  // Funcion para mostrar fecha local
   const mostrarFechaLocal = (fechaISO) => {
     if (!fechaISO) return 'No especificada';
     const fechaPartes = fechaISO.split('T')[0].split('-');
@@ -131,42 +131,42 @@ function ClienteTemporalDetallePage() {
       nuevosFieldErrors.lastname = 'El apellido es requerido';
     }
     
-    // Validar cédula
+    // Validar cedula
     if (!formData.cedula || formData.cedula.trim() === '') {
-      nuevosErrores.push('La cédula es requerida');
-      nuevosFieldErrors.cedula = 'La cédula es requerida';
+      nuevosErrores.push('La cedula es requerida');
+      nuevosFieldErrors.cedula = 'La cedula es requerida';
     } else if (!validarCedula(formData.cedula)) {
-      nuevosErrores.push('La cédula debe contener solo números (6-12 dígitos)');
-      nuevosFieldErrors.cedula = 'La cédula debe tener 6-12 dígitos numéricos';
+      nuevosErrores.push('La cedula debe contener solo numeros (6-12 digitos)');
+      nuevosFieldErrors.cedula = 'La cedula debe tener 6-12 digitos numericos';
     }
     
-    // Validar dirección
+    // Validar direccion
     if (!formData.direccion || formData.direccion.trim() === '') {
-      nuevosErrores.push('La dirección es requerida');
-      nuevosFieldErrors.direccion = 'La dirección es requerida';
+      nuevosErrores.push('La direccion es requerida');
+      nuevosFieldErrors.direccion = 'La direccion es requerida';
     }
     
     // Validar email
     if (!formData.email || formData.email.trim() === '') {
-      nuevosErrores.push('El correo electrónico es requerido');
-      nuevosFieldErrors.email = 'El correo electrónico es requerido';
+      nuevosErrores.push('El correo electronico es requerido');
+      nuevosFieldErrors.email = 'El correo electronico es requerido';
     } else if (!validarEmail(formData.email)) {
-      nuevosErrores.push('Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com)');
-      nuevosFieldErrors.email = 'Formato de email inválido';
+      nuevosErrores.push('Ingrese un correo electronico valido (ejemplo: usuario@dominio.com)');
+      nuevosFieldErrors.email = 'Formato de email invalido';
     }
     
     // VALIDACIONES DE LA MASCOTA
     
     // Validar raza (opcional)
     if (formData.raza && formData.raza.length > 50) {
-      nuevosErrores.push('La raza no puede tener más de 50 caracteres');
-      nuevosFieldErrors.raza = 'Máximo 50 caracteres';
+      nuevosErrores.push('La raza no puede tener mas de 50 caracteres');
+      nuevosFieldErrors.raza = 'Maximo 50 caracteres';
     }
     
     // Validar edad
     if (formData.edad && !validarEdad(formData.edad)) {
-      nuevosErrores.push('Ingrese una edad válida (0-50 años)');
-      nuevosFieldErrors.edad = 'Edad inválida (0-50 años)';
+      nuevosErrores.push('Ingrese una edad valida (0-50 años)');
+      nuevosFieldErrors.edad = 'Edad invalida (0-50 años)';
     }
     
     // Validar sexo
@@ -178,14 +178,14 @@ function ClienteTemporalDetallePage() {
     
     // Validar peso
     if (formData.peso && !validarPeso(formData.peso)) {
-      nuevosErrores.push('Ingrese un peso válido (ejemplo: 8.5)');
-      nuevosFieldErrors.peso = 'Formato de peso inválido';
+      nuevosErrores.push('Ingrese un peso valido (ejemplo: 8.5)');
+      nuevosFieldErrors.peso = 'Formato de peso invalido';
     }
     
     // Validar temperatura
     if (formData.temperatura && !validarTemperatura(formData.temperatura)) {
-      nuevosErrores.push('Ingrese una temperatura válida (ejemplo: 38.5)');
-      nuevosFieldErrors.temperatura = 'Formato de temperatura inválido';
+      nuevosErrores.push('Ingrese una temperatura valida (ejemplo: 38.5)');
+      nuevosFieldErrors.temperatura = 'Formato de temperatura invalido';
     }
     
     if (nuevosErrores.length > 0) {
@@ -224,7 +224,7 @@ function ClienteTemporalDetallePage() {
       
       await completarRegistroClienteTemporalRequest(id, dataToSend);
       
-      toast.success(" ¡Registro completado! Se ha enviado un correo con las credenciales de acceso", {
+      toast.success("Registro completado. Se ha enviado un correo con las credenciales de acceso", {
         duration: 5000,
         position: "top-right"
       });
@@ -242,15 +242,15 @@ function ClienteTemporalDetallePage() {
         if (field) {
           setFieldErrors({ [field]: mensaje });
           setErrors([mensaje]);
-          toast.error(` ${mensaje}`);
+          toast.error(mensaje);
         } else {
           setErrors([mensaje]);
-          toast.error(` ${mensaje}`);
+          toast.error(mensaje);
         }
       } else {
         const mensajeError = 'Error al completar registro. Intente nuevamente.';
         setErrors([mensajeError]);
-        toast.error(` ${mensajeError}`);
+        toast.error(mensajeError);
       }
     } finally {
       setSubmitting(false);
@@ -263,7 +263,7 @@ function ClienteTemporalDetallePage() {
       
       <button
         onClick={() => navigate('/dashboard/clientes-temporales')}
-        className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
+        className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition text-sm md:text-base"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -282,7 +282,7 @@ function ClienteTemporalDetallePage() {
           <p className="text-gray-500 text-lg">Cliente temporal no encontrado</p>
           <button
             onClick={() => navigate('/dashboard/clientes-temporales')}
-            className="mt-4 text-cyan-600 hover:text-cyan-700"
+            className="mt-4 text-cyan-600 hover:text-cyan-700 text-sm md:text-base"
           >
             Volver a la lista
           </button>
@@ -291,14 +291,32 @@ function ClienteTemporalDetallePage() {
 
       {!loading && cliente && (
         <>
+          {/* Seccion: Informacion del Cliente Temporal con boton a la derecha */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">Informacion del Cliente Temporal</h2>
+            {cliente.estado !== 'completo' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrarModalCompletar(true);
+                  setErrors([]);
+                  setFieldErrors({});
+                }}
+                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium text-sm"
+              >
+                Completar Registro
+              </button>
+            )}
+          </div>
+
           <InfoCard
-            title="Información del Cliente Temporal"
+            title=""
             data={[
               { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname || ''}` },
-              { label: "Cédula", value: cliente.cedula || 'No registrada' },
-              { label: "Teléfono", value: cliente.phoneNumber },
+              { label: "Cedula", value: cliente.cedula || 'No registrada' },
+              { label: "Telefono", value: cliente.phoneNumber },
               { label: "Email", value: cliente.email || 'No registrado' },
-              { label: "Estado", value: cliente.estado === 'temporal' ? ' Pendiente de registro' : ' Registro completado' },
+              { label: "Estado", value: cliente.estado === 'temporal' ? 'Pendiente de registro' : 'Registro completado' },
               { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
             ]}
           />
@@ -308,52 +326,41 @@ function ClienteTemporalDetallePage() {
               <InfoCard
                 title="Datos de Registro Completo"
                 data={[
-                  { label: "Dirección", value: cliente.direccion },
+                  { label: "Direccion", value: cliente.direccion },
                 ]}
               />
             </div>
           )}
 
-          <h3 className="text-xl font-semibold mb-4 mt-6">Citas Agendadas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
-              cliente.citasTemporales.map((cita, index) => (
-                <InfoCard
-                  key={index}
-                  title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? ' Consulta' : ' Estética'}`}
-                  data={[
-                    { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
-                    { label: "Horario", value: `${cita.horaInicio} - ${cita.horaFin}` },
-                    { label: "Mascota", value: cita.pacienteTemporal?.nombre || 'No especificada' },
-                    { label: "Especie", value: cita.pacienteTemporal?.especie || 'No especificada' },
-                    { label: "Síntomas", value: cita.sintomas || 'No registrados' },
-                    { label: "Tiempo de síntomas", value: cita.tiempoSintomas || 'No registrado' },
-                    { label: "Notas", value: cita.notas || 'Sin notas' },
-                  ]}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">No hay citas agendadas</p>
-              </div>
-            )}
-          </div>
-
-          {cliente.estado !== 'completo' && (
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setMostrarModalCompletar(true);
-                  setErrors([]);
-                  setFieldErrors({});
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-              >
-                 Completar Registro
-              </button>
+          {/* Seccion: Citas Agendadas - Ocupa todo el ancho */}
+          <div className="mt-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Citas Agendadas</h3>
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+              {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {cliente.citasTemporales.map((cita, index) => (
+                    <InfoCard
+                      key={index}
+                      title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? 'Consulta' : 'Estetica'}`}
+                      data={[
+                        { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
+                        { label: "Horario", value: `${cita.horaInicio} - ${cita.horaFin}` },
+                        { label: "Mascota", value: cita.pacienteTemporal?.nombre || 'No especificada' },
+                        { label: "Especie", value: cita.pacienteTemporal?.especie || 'No especificada' },
+                        { label: "Sintomas", value: cita.sintomas || 'No registrados' },
+                        { label: "Tiempo de sintomas", value: cita.tiempoSintomas || 'No registrado' },
+                        { label: "Notas", value: cita.notas || 'Sin notas' },
+                      ]}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No hay citas agendadas</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </>
       )}
 
@@ -369,8 +376,8 @@ function ClienteTemporalDetallePage() {
         size="lg"
       >
         <form onSubmit={(e) => { e.preventDefault(); handleSubmitCompletar(); }} className="space-y-4 bg-white p-6 rounded-lg max-h-[70vh] overflow-y-auto">
-          <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
-            <p className="text-sm text-cyan-600">
+          <div className="bg-cyan-50 p-3 rounded-lg mb-4 border border-cyan-200">
+            <p className="text-sm text-cyan-700">
               Complete los datos faltantes. Los campos marcados con * son obligatorios.
             </p>
           </div>
@@ -379,14 +386,14 @@ function ClienteTemporalDetallePage() {
           {errors.length > 0 && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
               {errors.map((err, i) => (
-                <p key={i} className="text-sm"> {err}</p>
+                <p key={i} className="text-sm">{err}</p>
               ))}
             </div>
           )}
 
-          {/* SECCIÓN: DATOS DEL CLIENTE */}
+          {/* SECCION: DATOS DEL CLIENTE */}
           <div className="border-b border-gray-200 pb-2 mb-2">
-            <h3 className="text-md font-semibold text-gray-700"> Datos del Cliente</h3>
+            <h3 className="text-md font-semibold text-gray-700">Datos del Cliente</h3>
           </div>
 
           {/* Apellido */}
@@ -401,14 +408,14 @@ function ClienteTemporalDetallePage() {
               value={formData.lastname || ''}
               onChange={(e) => handleFormChange('lastname', e.target.value)}
               className={getInputClass('lastname')}
-              placeholder="Ej: Pérez Gómez"
+              placeholder="Ej: Perez Gomez"
             />
           </div>
 
-          {/* Cédula */}
+          {/* Cedula */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cédula *
+              Cedula *
               {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
             </label>
             <input
@@ -419,13 +426,13 @@ function ClienteTemporalDetallePage() {
               className={getInputClass('cedula')}
               placeholder="000000000"
             />
-            <p className="text-xs text-gray-400 mt-1">Solo números, 6-12 dígitos</p>
+            <p className="text-xs text-gray-400 mt-1">Solo numeros, 6-12 digitos</p>
           </div>
 
-          {/* Dirección */}
+          {/* Direccion */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dirección *
+              Direccion *
               {fieldErrors.direccion && <span className="text-red-500 ml-2 text-xs">{fieldErrors.direccion}</span>}
             </label>
             <input
@@ -434,14 +441,14 @@ function ClienteTemporalDetallePage() {
               value={formData.direccion || ''}
               onChange={(e) => handleFormChange('direccion', e.target.value)}
               className={getInputClass('direccion')}
-              placeholder="San José, Costa Rica"
+              placeholder="San Jose, Costa Rica"
             />
           </div>
 
-          {/* Correo electrónico */}
+          {/* Correo electronico */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo electrónico *
+              Correo electronico *
               {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
             </label>
             <input
@@ -453,14 +460,14 @@ function ClienteTemporalDetallePage() {
               placeholder="cliente@ejemplo.com"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Se enviará un correo con las credenciales de acceso
+              Se enviara un correo con las credenciales de acceso
             </p>
           </div>
 
-          {/* SECCIÓN: DATOS DE LA MASCOTA */}
+          {/* SECCION: DATOS DE LA MASCOTA */}
           <div className="border-b border-gray-200 pb-2 mt-4 mb-2">
-            <h3 className="text-md font-semibold text-gray-700"> Datos de la Mascota</h3>
-            <p className="text-xs text-gray-400">Completa la información de tu mascota</p>
+            <h3 className="text-md font-semibold text-gray-700">Datos de la Mascota</h3>
+            <p className="text-xs text-gray-400">Completa la informacion de tu mascota</p>
           </div>
 
           {/* Raza */}
@@ -475,7 +482,7 @@ function ClienteTemporalDetallePage() {
               value={formData.raza || ''}
               onChange={(e) => handleFormChange('raza', e.target.value)}
               className={getInputClass('raza')}
-              placeholder="Ej: Golden Retriever, Pastor Alemán"
+              placeholder="Ej: Golden Retriever, Pastor Aleman"
             />
           </div>
 
@@ -528,7 +535,7 @@ function ClienteTemporalDetallePage() {
               value={formData.colorPelaje || ''}
               onChange={(e) => handleFormChange('colorPelaje', e.target.value)}
               className={getInputClass('colorPelaje')}
-              placeholder="Ej: Blanco, Negro, Café, Manchado"
+              placeholder="Ej: Blanco, Negro, Cafe, Manchado"
             />
           </div>
 
@@ -570,10 +577,10 @@ function ClienteTemporalDetallePage() {
             />
           </div>
 
-          {/* Antecedentes Médicos */}
+          {/* Antecedentes Medicos */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Antecedentes Médicos
+              Antecedentes Medicos
               {fieldErrors.antecedentesMedicos && <span className="text-red-500 ml-2 text-xs">{fieldErrors.antecedentesMedicos}</span>}
             </label>
             <textarea
@@ -582,9 +589,9 @@ function ClienteTemporalDetallePage() {
               onChange={(e) => handleFormChange('antecedentesMedicos', e.target.value)}
               rows={3}
               className={getInputClass('antecedentesMedicos')}
-              placeholder="Ej: Alergias, enfermedades previas, cirugías, medicamentos actuales..."
+              placeholder="Ej: Alergias, enfermedades previas, cirugias, medicamentos actuales..."
             />
-            <p className="text-xs text-gray-400 mt-1">Información relevante sobre la salud de tu mascota</p>
+            <p className="text-xs text-gray-400 mt-1">Informacion relevante sobre la salud de tu mascota</p>
           </div>
 
           {/* Botones */}
@@ -596,14 +603,14 @@ function ClienteTemporalDetallePage() {
                 setErrors([]);
                 setFieldErrors({});
               }}
-              className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium"
+              className="flex-1 bg-gray-300 text-gray-700 py-2.5 rounded-md hover:bg-gray-400 transition font-medium text-sm"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium"
+              className="flex-1 bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition disabled:opacity-50 font-medium text-sm"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
