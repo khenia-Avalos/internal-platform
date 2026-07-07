@@ -104,7 +104,7 @@ function DoctorDetallePage() {
   }, [id, location.key, puedeVerControlAlmuerzo]);
 
   const getNombreDia = (dia) => {
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return dias[dia];
   };
   
@@ -171,14 +171,14 @@ function DoctorDetallePage() {
     const motivoFinal = motivoBloqueo.trim() || 'No asignado';
     
     const confirmar = window.confirm(
-      `Estas seguro de BLOQUEAR a ${doctor.username}?\n\n` +
-      `Esta accion:\n` +
-      `• Desactivara TODOS sus horarios\n` +
-      `• Cambiara su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
-      `• Cambiara su contrasena a: UsuarioRetiradoElExito\n` +
-      `• El doctor no podra iniciar sesion\n` +
+      `¿Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
+      `Esta acción:\n` +
+      `• Desactivará TODOS sus horarios\n` +
+      `• Cambiará su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
+      `• Cambiará su contraseña a: UsuarioRetiradoElExito\n` +
+      `• El doctor no podrá iniciar sesión\n` +
       `• Motivo: ${motivoFinal}\n\n` +
-      `Deseas continuar?`
+      `¿Deseas continuar?`
     );
     
     if (!confirmar) {
@@ -205,9 +205,9 @@ function DoctorDetallePage() {
 
   const handleActivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `Estas seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
-      `Esta accion desactivara TODOS sus horarios.\n\n` +
-      `Deseas continuar?`
+      `¿Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta acción desactivará TODOS sus horarios.\n\n` +
+      `¿Deseas continuar?`
     );
     
     if (!confirmar) return;
@@ -230,9 +230,9 @@ function DoctorDetallePage() {
 
   const handleDesactivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `Estas seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
-      `Esta accion activara TODOS sus horarios.\n\n` +
-      `Deseas continuar?`
+      `¿Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta acción activará TODOS sus horarios.\n\n` +
+      `¿Deseas continuar?`
     );
     
     if (!confirmar) return;
@@ -281,7 +281,7 @@ function DoctorDetallePage() {
   const estaBloqueado = doctor?.bloqueado === true;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="px-4 md:px-6 py-4 md:py-6 max-w-full">
       <button
         onClick={() => navigate('/doctores')}
         className="mb-4 md:mb-6 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-gray-600 hover:text-gray-900 transition"
@@ -314,11 +314,11 @@ function DoctorDetallePage() {
         <>
           {/* CARD 1: INFORMACION DEL DOCTOR */}
           <InfoCard
-            title="Informacion del Doctor"
+            title="Información del Doctor"
             data={[
               { label: "Nombre completo", value: `${doctor.username} ${doctor.lastname}` },
               { label: "Email", value: doctor.email },
-              { label: "Telefono", value: doctor.phoneNumber },
+              { label: "Teléfono", value: doctor.phoneNumber },
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
@@ -344,7 +344,7 @@ function DoctorDetallePage() {
                   ...(doctor.fechaRetiro ? [{ label: "Fecha de retiro", value: formatearFecha(doctor.fechaRetiro), valueColor: 'text-red-600' }] : []),
                   ...(doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones ? [{ label: "Inicio de vacaciones", value: formatearFecha(doctor.fechaInicioVacaciones), valueColor: 'text-cyan-600' }] : []),
                   ...(doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones ? [{ label: "Vacaciones", value: `${formatearFecha(doctor.fechaInicioVacaciones)} - ${formatearFecha(doctor.fechaFinVacaciones)}`, valueColor: 'text-green-600' }] : []),
-                  { label: "Ultima actualizacion", value: formatearFecha(doctor.updatedAt) },
+                  { label: "Última actualización", value: formatearFecha(doctor.updatedAt) },
                 ]}
               >
                 {/* Informacion de bloqueo */}
@@ -359,7 +359,7 @@ function DoctorDetallePage() {
                       <span className="font-medium text-red-600 break-all">{doctor.email}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Contrasena:</span>
+                      <span className="text-gray-500">Contraseña:</span>
                       <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
                     </div>
                     {doctor.motivoBloqueo && (
@@ -369,7 +369,7 @@ function DoctorDetallePage() {
                       </div>
                     )}
                     <div className="mt-2 text-center text-red-600 font-medium text-sm">
-                      Doctor Bloqueado - No puede iniciar sesion
+                      Doctor Bloqueado - No puede iniciar sesión
                     </div>
                   </div>
                 )}
@@ -405,14 +405,14 @@ function DoctorDetallePage() {
                 {estaBloqueado && (
                   <div className="mt-4 text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <p className="text-red-600 font-medium">Doctor Bloqueado</p>
-                    <p className="text-xs text-gray-500 mt-1">No puede iniciar sesion</p>
+                    <p className="text-xs text-gray-500 mt-1">No puede iniciar sesión</p>
                   </div>
                 )}
                 
                 <p className="text-xs text-gray-400 text-center mt-4">
-                  {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesion' :
-                   estaEnVacaciones ? 'El doctor esta en vacaciones, todos sus horarios estan desactivados' :
-                   'El doctor esta activo y disponible para citas'}
+                  {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesión' :
+                   estaEnVacaciones ? 'El doctor está en vacaciones, todos sus horarios están desactivados' :
+                   'El doctor está activo y disponible para citas'}
                 </p>
               </InfoCard>
             </div>
@@ -428,7 +428,7 @@ function DoctorDetallePage() {
                 {/* Seccion: Control de Almuerzo */}
                 {puedeVerControlAlmuerzo && (
                   <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="text-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
                       <span className={`text-sm font-medium ${
                         pausaActiva ? 'text-cyan-600' : 'text-green-600'
@@ -437,7 +437,7 @@ function DoctorDetallePage() {
                       </span>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <div className="flex flex-wrap justify-center items-center gap-3 mb-4">
                       {!pausaActiva ? (
                         <button
                           onClick={iniciarPausa}
@@ -470,7 +470,7 @@ function DoctorDetallePage() {
                     </div>
                     
                     {pausaActiva && (
-                      <div className="bg-cyan-50 p-3 rounded-lg border border-cyan-200 mb-3">
+                      <div className="bg-cyan-50 p-3 rounded-lg border border-cyan-200 mb-3 text-center">
                         <p className="text-xs text-cyan-800">
                           Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
                         </p>
@@ -480,9 +480,9 @@ function DoctorDetallePage() {
                     {/* Historial de pausas */}
                     {puedeVerHistorial && mostrarHistorial && (
                       <div className="mb-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3 text-center">Historial de Almuerzos</h4>
                         {historialPausas.length === 0 ? (
-                          <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
+                          <p className="text-sm text-gray-500 text-center">No hay registros de almuerzos</p>
                         ) : (
                           <div className="space-y-2">
                             {historialPausas.map((pausa, idx) => (
@@ -513,7 +513,7 @@ function DoctorDetallePage() {
                 {/* Seccion: Horarios */}
                 {puedeVerHorarios && (
                   <div className="p-6">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="text-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
                       {estaBloqueado && (
                         <span className="text-sm text-red-600 font-medium">Bloqueado</span>
@@ -526,7 +526,7 @@ function DoctorDetallePage() {
                     <div className="overflow-x-auto">
                       <DataTable
                         columns={[
-                          { header: "Dia", accessor: "diaNombre" },
+                          { header: "Día", accessor: "diaNombre" },
                           { header: "Hora Inicio", accessor: "horaInicio" },
                           { header: "Hora Fin", accessor: "horaFin" },
                           { header: "Intervalo", accessor: "intervaloTexto" },
@@ -568,7 +568,7 @@ function DoctorDetallePage() {
               rows="3"
             />
             <p className="text-xs text-gray-400 mt-1">
-              {motivoBloqueo.trim() === '' ? 'Si no se escribe nada, se asignara "No asignado"' : ''}
+              {motivoBloqueo.trim() === '' ? 'Si no se escribe nada, se asignará "No asignado"' : ''}
             </p>
             <div className="flex gap-3 mt-4">
               <button
