@@ -163,7 +163,6 @@ function DoctorDetallePage() {
   };
 
   const handleBloquearDoctor = async () => {
-    // Mostrar modal para ingresar el motivo
     setMotivoBloqueo('');
     setMostrarModalMotivo(true);
   };
@@ -172,7 +171,7 @@ function DoctorDetallePage() {
     const motivoFinal = motivoBloqueo.trim() || 'No asignado';
     
     const confirmar = window.confirm(
-      ` Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
+      `Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
       `Esta accion:\n` +
       `• Desactivara TODOS sus horarios\n` +
       `• Cambiara su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
@@ -206,7 +205,7 @@ function DoctorDetallePage() {
 
   const handleActivarVacaciones = async () => {
     const confirmar = window.confirm(
-      ` Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
       `Esta accion desactivara TODOS sus horarios.\n\n` +
       `Deseas continuar?`
     );
@@ -231,7 +230,7 @@ function DoctorDetallePage() {
 
   const handleDesactivarVacaciones = async () => {
     const confirmar = window.confirm(
-      ` Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
       `Esta accion activara TODOS sus horarios.\n\n` +
       `Deseas continuar?`
     );
@@ -313,7 +312,7 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
-          {/* CARD 1: INFORMACION DEL DOCTOR */}
+          {/* CARD 1: INFORMACION DEL DOCTOR - Componente reutilizable */}
           <InfoCard
             title="Informacion del Doctor"
             data={[
@@ -324,8 +323,7 @@ function DoctorDetallePage() {
             ]}
           />
 
-          {/* CARD 2: ESTADO DEL DOCTOR (Ancho completo) */}
-       
+          {/* CARD 2: ESTADO DEL DOCTOR - Card personalizada */}
           {puedeGestionarDoctor && (
             <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -378,7 +376,7 @@ function DoctorDetallePage() {
                     </div>
                   </div>
 
-                  {/* Informacion de bloqueo sin recuadro rojo */}
+                  {/* Informacion de bloqueo */}
                   {estaBloqueado && (
                     <div className="space-y-3 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-4">
                       <div className="flex justify-between">
@@ -403,7 +401,7 @@ function DoctorDetallePage() {
                   )}
                 </div>
                 
-                {/* Botones de gestión - ahora más pequeños y alineados */}
+                {/* Botones de gestión */}
                 {!estaBloqueado && (
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
@@ -447,7 +445,7 @@ function DoctorDetallePage() {
             </div>
           )}
 
-          {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS (Unificada) */}
+          {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS - Card personalizada */}
           {(puedeVerControlAlmuerzo || puedeVerHorarios) && (
             <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -485,7 +483,6 @@ function DoctorDetallePage() {
                         </button>
                       )}
                       
-                      {/* Boton de historial SOLO para admin */}
                       {puedeVerHistorial && (
                         <button
                           onClick={() => setMostrarHistorial(!mostrarHistorial)}
@@ -504,7 +501,7 @@ function DoctorDetallePage() {
                       </div>
                     )}
 
-                    {/* Historial de pausas - SOLO visible para admin */}
+                    {/* Historial de pausas */}
                     {puedeVerHistorial && mostrarHistorial && (
                       <div className="mb-6 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
                         <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
@@ -532,7 +529,7 @@ function DoctorDetallePage() {
                   </>
                 )}
 
-                {/* Separador entre secciones */}
+                {/* Separador */}
                 {puedeVerControlAlmuerzo && puedeVerHorarios && (
                   <div className="border-t border-gray-200 my-6"></div>
                 )}
@@ -543,14 +540,10 @@ function DoctorDetallePage() {
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
                       {estaBloqueado && (
-                        <span className="text-sm text-red-600 font-medium">
-                          Bloqueado
-                        </span>
+                        <span className="text-sm text-red-600 font-medium">Bloqueado</span>
                       )}
                       {estaEnVacaciones && (
-                        <span className="text-sm text-cyan-600 font-medium">
-                          Vacaciones
-                        </span>
+                        <span className="text-sm text-cyan-600 font-medium">Vacaciones</span>
                       )}
                     </div>
                     
@@ -583,7 +576,7 @@ function DoctorDetallePage() {
         </>
       )}
 
-      {/* Modal para ingresar motivo de bloqueo */}
+      {/* Modal para motivo de bloqueo */}
       {mostrarModalMotivo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
