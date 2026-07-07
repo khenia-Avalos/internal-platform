@@ -34,7 +34,6 @@ function App() {
                   <Route path="/register" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/clientes-temporales/:id" element={<ClienteTemporalDetallePage />} />
                 </Route>
 
                 {/* Rutas con Navbar */}
