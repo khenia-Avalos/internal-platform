@@ -96,7 +96,7 @@ function ClienteTemporalDetallePage() {
     }
   };
 
-  // construir data para InfoCard unificada
+  // construir data para InfoCard unificada con todos los datos
   const getDatosUnificados = () => {
     if (!cliente) return [];
     
@@ -114,40 +114,66 @@ function ClienteTemporalDetallePage() {
       datos.push({ label: "Dirección", value: cliente.direccion });
     }
     
+    // agregar citas agendadas de forma detallada
+    if (cliente.citasTemporales && cliente.citasTemporales.length > 0) {
+      // agregar un separador visual
+      datos.push({ 
+        label: "─".repeat(40), 
+        value: "", 
+        isSeparator: true 
+      });
+      
+      // agregar titulo de citas
+      datos.push({ 
+        label: `📋 Citas Agendadas (${cliente.citasTemporales.length})`, 
+        value: "", 
+        isTitle: true 
+      });
+      
+      // agregar cada cita con sus detalles
+      cliente.citasTemporales.forEach((cita, index) => {
+        const tipo = cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética';
+        const mascota = cita.pacienteTemporal?.nombre || 'No especificada';
+        const especie = cita.pacienteTemporal?.especie || 'No especificada';
+        const fecha = mostrarFechaLocal(cita.fecha);
+        const horario = `${cita.horaInicio} - ${cita.horaFin}`;
+        const sintomas = cita.sintomas || 'No registrados';
+        const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
+        const notas = cita.notas || 'Sin notas';
+        
+        // separador entre citas
+        if (index > 0) {
+          datos.push({ 
+            label: "─".repeat(30), 
+            value: "", 
+            isSeparator: true 
+          });
+        }
+        
+        datos.push({ 
+          label: `Cita ${index + 1}: ${tipo}`, 
+          value: "", 
+          isSubtitle: true 
+        });
+        datos.push({ label: "  • Fecha", value: fecha });
+        datos.push({ label: "  • Horario", value: horario });
+        datos.push({ label: "  • Mascota", value: mascota });
+        datos.push({ label: "  • Especie", value: especie });
+        datos.push({ label: "  • Síntomas", value: sintomas });
+        datos.push({ label: "  • Tiempo de síntomas", value: tiempoSintomas });
+        datos.push({ label: "  • Notas", value: notas });
+      });
+    } else {
+      datos.push({ 
+        label: "─".repeat(40), 
+        value: "", 
+        isSeparator: true 
+      });
+      datos.push({ label: "📋 Citas Agendadas", value: "No hay citas agendadas" });
+    }
+    
     return datos;
   };
-
-  // obtener citas para mostrar con detalle
-  const getCitasDetalladas = () => {
-    if (!cliente || !cliente.citasTemporales || cliente.citasTemporales.length === 0) {
-      return null;
-    }
-
-    return cliente.citasTemporales.map((cita, index) => {
-      const tipo = cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética';
-      const mascota = cita.pacienteTemporal?.nombre || 'No especificada';
-      const especie = cita.pacienteTemporal?.especie || 'No especificada';
-      const fecha = mostrarFechaLocal(cita.fecha);
-      const horario = `${cita.horaInicio} - ${cita.horaFin}`;
-      const sintomas = cita.sintomas || 'No registrados';
-      const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
-      const notas = cita.notas || 'Sin notas';
-
-      return {
-        index: index + 1,
-        tipo,
-        mascota,
-        especie,
-        fecha,
-        horario,
-        sintomas,
-        tiempoSintomas,
-        notas
-      };
-    });
-  };
-
-  const citas = getCitasDetalladas();
 
   return (
     <div className="px-4 md:px-6 py-4 md:py-6 max-w-full">
@@ -200,42 +226,11 @@ function ClienteTemporalDetallePage() {
             )}
           </div>
 
-          {/* card principal con informacion del cliente */}
+          {/* card unificada con toda la informacion */}
           <InfoCard
             title=""
             data={getDatosUnificados()}
           />
-
-          {/* card de citas agendadas con detalle */}
-          {citas && citas.length > 0 ? (
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Citas Agendadas ({citas.length})</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {citas.map((cita) => (
-                  <InfoCard
-                    key={cita.index}
-                    title={`Cita ${cita.index} - ${cita.tipo}`}
-                    data={[
-                      { label: "Fecha", value: cita.fecha },
-                      { label: "Horario", value: cita.horario },
-                      { label: "Mascota", value: cita.mascota },
-                      { label: "Especie", value: cita.especie },
-                      { label: "Síntomas", value: cita.sintomas },
-                      { label: "Tiempo de síntomas", value: cita.tiempoSintomas },
-                      { label: "Notas", value: cita.notas },
-                    ]}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Citas Agendadas</h3>
-              <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 text-center">
-                <p className="text-gray-500">No hay citas agendadas</p>
-              </div>
-            </div>
-          )}
         </>
       )}
 
