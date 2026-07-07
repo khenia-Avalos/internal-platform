@@ -33,7 +33,7 @@ function PacienteDetallePage() {
     const [historialCompleto, setHistorialCompleto] = useState([]);
     const [historialLoading, setHistorialLoading] = useState(false);
     
-    // Estados para documentos
+    // estados para documentos
     const [documentos, setDocumentos] = useState([]);
     const [documentosLoading, setDocumentosLoading] = useState(false);
     const [mostrarFormDocumento, setMostrarFormDocumento] = useState(false);
@@ -41,12 +41,12 @@ function PacienteDetallePage() {
     const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
     const [subiendoDocumento, setSubiendoDocumento] = useState(false);
 
-    // Estados para paginación y acordeón
+    // estados para paginacion y acordeon
     const [paginaActual, setPaginaActual] = useState(1);
     const [consultaAbierta, setConsultaAbierta] = useState(null);
     const consultasPorPagina = 5;
 
-    // Estado para modal de fallecimiento
+    // estado para modal de fallecimiento
     const [mostrarModalFallecimiento, setMostrarModalFallecimiento] = useState(false);
     const [motivoFallecimiento, setMotivoFallecimiento] = useState('');
 
@@ -57,9 +57,9 @@ function PacienteDetallePage() {
     const isRecepcion = user?.role === 'recepcion';
     const puedeGestionar = canAddInternado || isRecepcion;
     const puedeMarcarFallecido = isAdmin || isDoctor || isRecepcion;
-    const puedeReactivar = isAdmin; // Solo admin puede reactivar
+    const puedeReactivar = isAdmin;
 
-    // Función para cargar todos los datos
+    // funcion para cargar todos los datos
     const cargarTodosLosDatos = async () => {
         console.log('Cargando todos los datos para paciente:', id);
         setLoading(true);
@@ -70,7 +70,7 @@ function PacienteDetallePage() {
             
             if (pacienteRes.data.ownerId) {
                 setDueno(pacienteRes.data.ownerId);
-                console.log('Dueño cargado');           
+                console.log('Dueno cargado');           
             }
             
             const internadosRes = await getInternadosByPacienteRequest(id);
@@ -87,15 +87,15 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para cargar historial clínico completo del paciente
+    // funcion para cargar historial clinico completo del paciente
     const cargarHistorialCompleto = async () => {
         if (!id) return;
         
         setHistorialLoading(true);
         try {
-            console.log('Cargando historial clínico para paciente:', id);
+            console.log('Cargando historial clinico para paciente:', id);
             const res = await getHistorialByPacienteRequest(id);
-            console.log('Historial clínico cargado:', res.data);
+            console.log('Historial clinico cargado:', res.data);
             const historialOrdenado = (res.data.data || []).sort((a, b) => {
                 const fechaA = a.citaId?.fecha || a.createdAt;
                 const fechaB = b.citaId?.fecha || b.createdAt;
@@ -105,7 +105,7 @@ function PacienteDetallePage() {
             setPaginaActual(1);
             setConsultaAbierta(null);
         } catch (error) {
-            console.error('Error cargando historial clínico:', error);
+            console.error('Error cargando historial clinico:', error);
             if (error.response?.status !== 404) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             }
@@ -115,7 +115,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para cargar documentos
+    // funcion para cargar documentos
     const cargarDocumentos = async () => {
         if (!id) return;
         console.log('Cargando documentos para paciente:', id);
@@ -132,25 +132,20 @@ function PacienteDetallePage() {
         }
     };
 
-    // ============================================
-    // FUNCIÓN FORMATEAR FECHA - CORREGIDA
-    // ============================================
+    // funcion formatear fecha
     const formatearFechaLocal = (fecha) => {
         if (!fecha) return 'No especificada';
         
-        // Si es un string ISO, extraer solo la fecha
         if (typeof fecha === 'string' && fecha.includes('T')) {
             const [year, month, day] = fecha.split('T')[0].split('-');
             return `${day}/${month}/${year}`;
         }
         
-        // Si es un string con formato YYYY-MM-DD
         if (typeof fecha === 'string' && fecha.includes('-')) {
             const [year, month, day] = fecha.split('-');
             return `${day}/${month}/${year}`;
         }
         
-        // Si es un objeto Date
         try {
             const date = new Date(fecha);
             if (isNaN(date.getTime())) return 'No especificada';
@@ -163,7 +158,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Función para formatear fecha y hora SIN desfase horario
+    // funcion para formatear fecha y hora sin desfase horario
     const formatearFechaHora = (fechaISO) => {
         if (!fechaISO) return 'No especificada';
         
@@ -183,7 +178,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Hook para editar internados
+    // hook para editar internados
     const {
         showForm: showEditInternadoForm,
         errors: editErrors,
@@ -205,7 +200,7 @@ function PacienteDetallePage() {
     };
 
     const handleDeleteInternado = async (internadoId, internadoFecha) => {
-        if (!window.confirm(`¿Estas seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
+        if (!window.confirm(`Estas seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
         
         try {
             await deleteInternadoRequest(internadoId);
@@ -229,17 +224,14 @@ function PacienteDetallePage() {
         }
     };
 
-    // ============================================
-    // FUNCIONES PARA DOCUMENTOS CON GRIDFS
-    // ============================================
-
+    // funciones para documentos con gridfs
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         console.log('Archivo seleccionado:', file);
         if (file) {
             setArchivoSeleccionado(file);
             console.log('Nombre:', file.name);
-            console.log('Tamaño:', file.size, 'bytes');
+            console.log('Tamanio:', file.size, 'bytes');
             console.log('Tipo:', file.type);
         }
     };
@@ -289,7 +281,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Funcion para ver PDF con GridFS
+    // funcion para ver pdf con gridfs
     const handleVerPDF = async (doc) => {
         console.log('Abriendo PDF:', doc.nombre);
         try {
@@ -305,7 +297,7 @@ function PacienteDetallePage() {
 
     const handleDeleteDocumento = async (documentoId) => {
         console.log('Eliminando documento:', documentoId);
-        if (!window.confirm('¿Estas seguro de eliminar este documento?')) return;
+        if (!window.confirm('Estas seguro de eliminar este documento?')) return;
         try {
             await deleteDocumentoRequest(documentoId);
             await cargarDocumentos();
@@ -317,9 +309,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // ============================================
-    // FUNCIONES PARA FALLECIDO
-    // ============================================
+    // funciones para fallecido
     const handleMarcarFallecido = async () => {
         if (!motivoFallecimiento.trim()) {
             toast.error('Por favor ingresa el motivo del fallecimiento');
@@ -327,14 +317,14 @@ function PacienteDetallePage() {
         }
 
         const confirmar = window.confirm(
-            `🕊️ ¿Estás seguro de marcar a ${paciente.nombre} como fallecido?\n\n` +
-            `Esta acción:\n` +
-            `• No permitirá agendar nuevas citas\n` +
-            `• No permitirá subir documentos\n` +
-            `• No permitirá crear internados\n` +
-            `• No permitirá agregar registros clínicos\n\n` +
+            `Estas seguro de marcar a ${paciente.nombre} como fallecido?\n\n` +
+            `Esta accion:\n` +
+            `• No permitira agendar nuevas citas\n` +
+            `• No permitira subir documentos\n` +
+            `• No permitira crear internados\n` +
+            `• No permitira agregar registros clinicos\n\n` +
             `Motivo: ${motivoFallecimiento}\n\n` +
-            `¿Deseas continuar?`
+            `Deseas continuar?`
         );
         
         if (!confirmar) return;
@@ -353,13 +343,13 @@ function PacienteDetallePage() {
 
     const handleReactivarPaciente = async () => {
         const confirmar = window.confirm(
-            `🔄 ¿Estás seguro de REACTIVAR a ${paciente.nombre}?\n\n` +
-            `Esta acción:\n` +
-            `• Permitirá agendar nuevas citas\n` +
-            `• Permitirá subir documentos\n` +
-            `• Permitirá crear internados\n` +
-            `• Permitirá agregar registros clínicos\n\n` +
-            `¿Deseas continuar?`
+            `Estas seguro de REACTIVAR a ${paciente.nombre}?\n\n` +
+            `Esta accion:\n` +
+            `• Permitira agendar nuevas citas\n` +
+            `• Permitira subir documentos\n` +
+            `• Permitira crear internados\n` +
+            `• Permitira agregar registros clinicos\n\n` +
+            `Deseas continuar?`
         );
         
         if (!confirmar) return;
@@ -399,7 +389,7 @@ function PacienteDetallePage() {
         }
     };
 
-    // Calcular paginación
+    // calcular paginacion
     const totalPaginas = Math.ceil(historialCompleto.length / consultasPorPagina);
     const inicio = (paginaActual - 1) * consultasPorPagina;
     const fin = inicio + consultasPorPagina;
@@ -409,7 +399,7 @@ function PacienteDetallePage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {/* Botón de volver */}
+            {/* boton de volver */}
             <button
                 onClick={() => navigate('/pacientes')}
                 className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
@@ -420,14 +410,14 @@ function PacienteDetallePage() {
                 Volver a Pacientes
             </button>
 
-            {/* Loading */}
+            {/* loading */}
             {loading && (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
                 </div>
             )}
 
-            {/* Paciente no encontrado */}
+            {/* paciente no encontrado */}
             {!loading && !paciente && (
                 <div className="text-center py-16">
                     <p className="text-gray-500 text-lg">Paciente no encontrado</p>
@@ -440,19 +430,17 @@ function PacienteDetallePage() {
                 </div>
             )}
 
-            {/* Contenido principal */}
+            {/* contenido principal */}
             {!loading && paciente && (
                 <>
-                    {/* ========================================== */}
-                    {/* SECCIÓN 1: DATOS DEL PACIENTE */}
-                    {/* ========================================== */}
+                    {/* seccion 1: datos del paciente */}
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                             <h2 className="text-2xl font-bold text-gray-800">Informacion del Paciente</h2>
                             <div className="flex items-center gap-3 flex-wrap">
                                 {estaFallecido && (
-                                    <span className="bg-gray-600 text-white px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
-                                        <span>🕊️</span> Fallecido
+                                    <span className="text-gray-600 text-sm font-medium flex items-center gap-2">
+                                        Fallecido
                                     </span>
                                 )}
                                 {puedeMarcarFallecido && (
@@ -461,16 +449,15 @@ function PacienteDetallePage() {
                                             onClick={() => setMostrarModalFallecimiento(true)}
                                             className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2"
                                         >
-                                            <span>🕊️</span> Marcar Fallecido
+                                            Marcar Fallecido
                                         </button>
                                     ) : (
-                                        // Solo admin puede reactivar
                                         puedeReactivar && (
                                             <button
                                                 onClick={handleReactivarPaciente}
                                                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
                                             >
-                                                <span>🔄</span> Reactivar Paciente
+                                                Reactivar Paciente
                                             </button>
                                         )
                                     )
@@ -499,12 +486,10 @@ function PacienteDetallePage() {
                         />
                     </div>
 
-                    {/* ========================================== */}
-                    {/* SECCIÓN 2: DATOS DEL DUEÑO */}
-                    {/* ========================================== */}
+                    {/* seccion 2: datos del dueno */}
                     {dueno && (
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Dueño</h2>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Dueno</h2>
                             <InfoCard
                                 title={`${dueno.username} ${dueno.lastname}`}
                                 data={[
@@ -518,9 +503,7 @@ function PacienteDetallePage() {
                         </div>
                     )}
                     
-                    {/* ========================================== */}
-                    {/* SECCIÓN 3: HISTORIAL CLÍNICO */}
-                    {/* ========================================== */}
+                    {/* seccion 3: historial clinico */}
                     <div className="mb-10">
                         <div className="flex items-center justify-between mb-6">
                             <div>
@@ -587,11 +570,11 @@ function PacienteDetallePage() {
                                                                 Ver cita →
                                                             </button>
                                                         )}
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${
-                                                            cita.estado === 'completada' ? 'bg-green-100 text-green-700' :
-                                                            cita.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
-                                                            cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-red-100 text-red-700'
+                                                        <span className={`text-xs font-medium ${
+                                                            cita.estado === 'completada' ? 'text-green-600' :
+                                                            cita.estado === 'confirmada' ? 'text-blue-600' :
+                                                            cita.estado === 'pendiente' ? 'text-yellow-600' :
+                                                            'text-red-600'
                                                         }`}>
                                                             {cita.estado || 'Sin estado'}
                                                         </span>
@@ -681,9 +664,7 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* ========================================== */}
-                    {/* SECCIÓN 4: DOCUMENTOS ADJUNTOS */}
-                    {/* ========================================== */}
+                    {/* seccion 4: documentos adjuntos */}
                     <div className="mb-10">
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                             <div>
@@ -698,14 +679,14 @@ function PacienteDetallePage() {
                                         console.log('Abriendo formulario de subida de documentos');
                                         setMostrarFormDocumento(true);
                                     }}
-                                    className="bg-purple-600 text-white px-5 py-2.5 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm shadow-sm"
+                                    className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
                                 >
                                     Subir Documento
                                 </button>
                             )}
                         </div>
 
-                        {/* Formulario de subida */}
+                        {/* formulario de subida */}
                         {mostrarFormDocumento && !estaFallecido && (
                             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
@@ -734,7 +715,7 @@ function PacienteDetallePage() {
                                                 console.log('Nombre actualizado:', e.target.value);
                                                 setDocumentoFormData({ ...documentoFormData, nombre: e.target.value });
                                             }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
                                             placeholder="Ej: Resultados de laboratorio"
                                             required
                                         />
@@ -749,7 +730,7 @@ function PacienteDetallePage() {
                                                 console.log('Tipo actualizado:', e.target.value);
                                                 setDocumentoFormData({ ...documentoFormData, tipo: e.target.value });
                                             }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
                                         >
                                             <option value="resultado_lab">Resultado de laboratorio</option>
                                             <option value="radiografia">Radiografia</option>
@@ -768,7 +749,7 @@ function PacienteDetallePage() {
                                                 console.log('Descripcion actualizada:', e.target.value);
                                                 setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value });
                                             }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
                                             rows={2}
                                             placeholder="Breve descripcion del documento..."
                                         />
@@ -781,7 +762,7 @@ function PacienteDetallePage() {
                                             type="file"
                                             onChange={handleFileChange}
                                             accept=".pdf,.jpg,.jpeg,.png"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
                                             required
                                         />
                                         <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (max. 10MB)</p>
@@ -789,7 +770,7 @@ function PacienteDetallePage() {
                                     <button
                                         type="submit"
                                         disabled={subiendoDocumento}
-                                        className="w-full bg-purple-600 text-white py-2.5 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 font-medium"
+                                        className="w-full bg-cyan-600 text-white py-2.5 rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50 font-medium"
                                     >
                                         {subiendoDocumento ? 'Subiendo...' : 'Subir Documento'}
                                     </button>
@@ -797,10 +778,10 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de documentos */}
+                        {/* lista de documentos */}
                         {documentosLoading ? (
                             <div className="flex justify-center items-center h-20">
-                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-cyan-500"></div>
                             </div>
                         ) : documentos.length === 0 ? (
                             <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
@@ -813,12 +794,6 @@ function PacienteDetallePage() {
                                     <div key={doc._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col justify-between">
                                         <div>
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-2xl">
-                                                    {doc.tipo === 'resultado_lab' ? '' :
-                                                     doc.tipo === 'radiografia' ? '' :
-                                                     doc.tipo === 'receta' ? '' :
-                                                     doc.tipo === 'informe' ? '' : ''}
-                                                </span>
                                                 <h4 className="font-medium text-gray-800 truncate">{doc.nombre}</h4>
                                             </div>
                                             <p className="text-xs text-gray-500 mb-1">
@@ -854,9 +829,7 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* ========================================== */}
-                    {/* SECCIÓN 5: HISTORIAL DE INTERNADOS */}
-                    {/* ========================================== */}
+                    {/* seccion 5: historial de internados */}
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                             <h2 className="text-2xl font-bold text-gray-800">Historial de Internados</h2>
@@ -870,7 +843,7 @@ function PacienteDetallePage() {
                             )}
                         </div>
 
-                        {/* Formulario de internado */}
+                        {/* formulario de internado */}
                         {mostrarFormInternado && puedeGestionar && !estaFallecido && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
@@ -893,7 +866,7 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Editar internado */}
+                        {/* editar internado */}
                         {showEditInternadoForm && puedeGestionar && !estaFallecido && (
                             <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
                                 <div className="flex justify-between items-center mb-4">
@@ -923,7 +896,7 @@ function PacienteDetallePage() {
                             </div>
                         )}
 
-                        {/* Lista de internados */}
+                        {/* lista de internados */}
                         {internados.length === 0 ? (
                             <p className="text-gray-500">No hay internados registrados</p>
                         ) : (
@@ -985,14 +958,12 @@ function PacienteDetallePage() {
                         )}
                     </div>
 
-                    {/* ========================================== */}
-                    {/* MODAL PARA MOTIVO DE FALLECIMIENTO */}
-                    {/* ========================================== */}
+                    {/* modal para motivo de fallecimiento */}
                     {mostrarModalFallecimiento && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-semibold text-gray-800">🕊️ Marcar como Fallecido</h3>
+                                    <h3 className="text-xl font-semibold text-gray-800">Marcar como Fallecido</h3>
                                     <button
                                         onClick={() => {
                                             setMostrarModalFallecimiento(false);
@@ -1005,8 +976,8 @@ function PacienteDetallePage() {
                                 </div>
                                 
                                 <p className="text-gray-600 mb-4">
-                                    Estás a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
-                                    Esta acción no permitirá crear citas, documentos ni internados.
+                                    Estas a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
+                                    Esta accion no permitira crear citas, documentos ni internados.
                                 </p>
                                 
                                 <div className="mb-4">
@@ -1018,10 +989,10 @@ function PacienteDetallePage() {
                                         onChange={(e) => setMotivoFallecimiento(e.target.value)}
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition"
                                         rows={3}
-                                        placeholder="Ej: Paro cardíaco, enfermedad crónica, accidente..."
+                                        placeholder="Ej: Paro cardiaco, enfermedad cronica, accidente..."
                                         required
                                     />
-                                    <p className="text-xs text-gray-400 mt-1">Este motivo quedará registrado en el historial</p>
+                                    <p className="text-xs text-gray-400 mt-1">Este motivo quedara registrado en el historial</p>
                                 </div>
                                 
                                 <div className="flex gap-3">
