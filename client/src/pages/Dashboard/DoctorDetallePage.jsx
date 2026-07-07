@@ -286,6 +286,9 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
+          {/* ========================================== */}
+          {/* CARD 1: INFORMACION DEL DOCTOR */}
+          {/* ========================================== */}
           <InfoCard
             title="Informacion del Doctor"
             data={[
@@ -297,98 +300,10 @@ function DoctorDetallePage() {
           />
 
           {/* ========================================== */}
-          {/* CARD DE CONTROL DE ALMUERZO */}
-          {/* Visible para: Admin, Doctor (su propio perfil) y Recepcion */}
-          {/* ========================================== */}
-          {puedeVerControlAlmuerzo && (
-            <div className="mt-6">
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
-                  <span className={`text-sm font-medium ${
-                    pausaActiva ? 'text-yellow-600' : 'text-green-600'
-                  }`}>
-                    {pausaActiva ? 'En pausa' : 'Disponible'}
-                  </span>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                  {!pausaActiva ? (
-                    <button
-                      onClick={iniciarPausa}
-                      disabled={estaBloqueado || estaEnVacaciones}
-                      className={`px-4 py-2 rounded-lg transition text-sm ${
-                        estaBloqueado || estaEnVacaciones
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                      }`}
-                    >
-                      Iniciar Almuerzo
-                    </button>
-                  ) : (
-                    <button
-                      onClick={terminarPausa}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
-                    >
-                      Volver del Almuerzo
-                    </button>
-                  )}
-                  
-                  {/* Boton de historial SOLO para admin */}
-                  {puedeVerHistorial && (
-                    <button
-                      onClick={() => setMostrarHistorial(!mostrarHistorial)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
-                    >
-                      {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
-                    </button>
-                  )}
-                </div>
-                
-                {pausaActiva && (
-                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
-                    <p className="text-xs text-yellow-800">
-                      Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
-                    </p>
-                  </div>
-                )}
-
-                {/* Historial de pausas - SOLO visible para admin */}
-                {puedeVerHistorial && mostrarHistorial && (
-                  <div className="mt-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
-                    {historialPausas.length === 0 ? (
-                      <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {historialPausas.map((pausa, idx) => (
-                          <div key={idx} className="flex flex-wrap justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                            <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
-                            <span>
-                              {new Date(pausa.inicio).toLocaleTimeString()} - 
-                              {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
-                            </span>
-                            <span className={`text-xs ${
-                              pausa.activa ? 'text-yellow-600' : 'text-green-600'
-                            }`}>
-                              {pausa.activa ? 'Activo' : 'Finalizado'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ========================================== */}
-          {/* CARDS DE GESTION (SOLO ADMIN) */}
+          {/* CARD 2: ESTADO DEL DOCTOR (Ancho completo) */}
           {/* ========================================== */}
           {puedeGestionarDoctor && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Card 1: Estado del Doctor */}
+            <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
@@ -403,67 +318,69 @@ function DoctorDetallePage() {
                   </span>
                 </div>
                 
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Fecha de registro</span>
-                    <span className="font-medium">{formatearFecha(doctor.createdAt)}</span>
-                  </div>
-                  
-                  {doctor.fechaRetiro && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-3">
                     <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Fecha de retiro</span>
-                      <span className="font-medium text-red-600">{formatearFecha(doctor.fechaRetiro)}</span>
+                      <span className="text-gray-500">Fecha de registro</span>
+                      <span className="font-medium">{formatearFecha(doctor.createdAt)}</span>
                     </div>
-                  )}
-                  
-                  {doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones && (
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Inicio de vacaciones</span>
-                      <span className="font-medium text-yellow-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
-                    </div>
-                  )}
-                  
-                  {doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones && (
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Vacaciones</span>
-                      <span className="font-medium text-green-600">
-                        {formatearFecha(doctor.fechaInicioVacaciones)} - {formatearFecha(doctor.fechaFinVacaciones)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Ultima actualizacion</span>
-                    <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
-                  </div>
-                </div>
-
-                {/* Informacion de bloqueo sin recuadro rojo */}
-                {estaBloqueado && (
-                  <div className="mt-4 space-y-2 text-sm border-t border-gray-200 pt-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Email original:</span>
-                      <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Email actual:</span>
-                      <span className="font-medium text-red-600 break-all">{doctor.email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Contrasena:</span>
-                      <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
-                    </div>
-                    {doctor.motivoBloqueo && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Motivo:</span>
-                        <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
+                    
+                    {doctor.fechaRetiro && (
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500">Fecha de retiro</span>
+                        <span className="font-medium text-red-600">{formatearFecha(doctor.fechaRetiro)}</span>
                       </div>
                     )}
-                    <div className="mt-3 text-center text-red-600 font-medium">
-                      Doctor Bloqueado - No puede iniciar sesion
+                    
+                    {doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones && (
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500">Inicio de vacaciones</span>
+                        <span className="font-medium text-yellow-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
+                      </div>
+                    )}
+                    
+                    {doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones && (
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-gray-500">Vacaciones</span>
+                        <span className="font-medium text-green-600">
+                          {formatearFecha(doctor.fechaInicioVacaciones)} - {formatearFecha(doctor.fechaFinVacaciones)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-gray-500">Ultima actualizacion</span>
+                      <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
                     </div>
                   </div>
-                )}
+
+                  {/* Informacion de bloqueo sin recuadro rojo */}
+                  {estaBloqueado && (
+                    <div className="space-y-3 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-4">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Email original:</span>
+                        <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Email actual:</span>
+                        <span className="font-medium text-red-600 break-all">{doctor.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Contrasena:</span>
+                        <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
+                      </div>
+                      {doctor.motivoBloqueo && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Motivo:</span>
+                          <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
+                        </div>
+                      )}
+                      <div className="mt-2 text-center text-red-600 font-medium">
+                        Doctor Bloqueado - No puede iniciar sesion
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="mt-4 space-y-2">
                   {!estaBloqueado ? (
@@ -505,86 +422,142 @@ function DoctorDetallePage() {
                   </p>
                 </div>
               </div>
-
-              {/* Card 2: Horarios (Solo Admin) */}
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
-                  {estaBloqueado && (
-                    <span className="text-sm text-red-600 font-medium">
-                      Bloqueado
-                    </span>
-                  )}
-                  {estaEnVacaciones && (
-                    <span className="text-sm text-yellow-600 font-medium">
-                      Vacaciones
-                    </span>
-                  )}
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <DataTable
-                    columns={[
-                      { header: "Dia", accessor: "diaNombre" },
-                      { header: "Hora Inicio", accessor: "horaInicio" },
-                      { header: "Hora Fin", accessor: "horaFin" },
-                      { header: "Intervalo", accessor: "intervaloTexto" },
-                      { 
-                        header: "Estado", 
-                        accessor: "estadoTexto",
-                        render: (horario) => (
-                          <span className={`font-medium ${horario.estadoColor}`}>
-                            {horario.estadoTexto}
-                          </span>
-                        )
-                      }
-                    ]}
-                    data={horariosFormateados}
-                    onEdit={isAdmin ? handleEditHorario : undefined}  
-                  />
-                </div>
-              </div>
             </div>
           )}
 
           {/* ========================================== */}
-          {/* SECCION HORARIOS - Solo Admin (vista completa) */}
+          {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS (Unificada) */}
           {/* ========================================== */}
-          {puedeVerHorarios && !puedeGestionarDoctor && (
+          {(puedeVerControlAlmuerzo || puedeVerHorarios) && (
             <div className="mt-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
-                {estaBloqueado && (
-                  <span className="text-sm text-red-600 font-medium">
-                    Doctor bloqueado - Todos los horarios desactivados
-                  </span>
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                {/* Sección: Control de Almuerzo */}
+                {puedeVerControlAlmuerzo && (
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
+                      <span className={`text-sm font-medium ${
+                        pausaActiva ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {pausaActiva ? 'En pausa' : 'Disponible'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                      {!pausaActiva ? (
+                        <button
+                          onClick={iniciarPausa}
+                          disabled={estaBloqueado || estaEnVacaciones}
+                          className={`px-4 py-2 rounded-lg transition text-sm ${
+                            estaBloqueado || estaEnVacaciones
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                          }`}
+                        >
+                          Iniciar Almuerzo
+                        </button>
+                      ) : (
+                        <button
+                          onClick={terminarPausa}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                        >
+                          Volver del Almuerzo
+                        </button>
+                      )}
+                      
+                      {/* Boton de historial SOLO para admin */}
+                      {puedeVerHistorial && (
+                        <button
+                          onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                        >
+                          {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {pausaActiva && (
+                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
+                        <p className="text-xs text-yellow-800">
+                          Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Historial de pausas - SOLO visible para admin */}
+                    {puedeVerHistorial && mostrarHistorial && (
+                      <div className="mb-6 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
+                        {historialPausas.length === 0 ? (
+                          <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {historialPausas.map((pausa, idx) => (
+                              <div key={idx} className="flex flex-wrap justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                                <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
+                                <span>
+                                  {new Date(pausa.inicio).toLocaleTimeString()} - 
+                                  {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
+                                </span>
+                                <span className={`text-xs ${
+                                  pausa.activa ? 'text-yellow-600' : 'text-green-600'
+                                }`}>
+                                  {pausa.activa ? 'Activo' : 'Finalizado'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
-                {estaEnVacaciones && (
-                  <span className="text-sm text-yellow-600 font-medium">
-                    En vacaciones - Todos los horarios desactivados
-                  </span>
+
+                {/* Separador entre secciones */}
+                {puedeVerControlAlmuerzo && puedeVerHorarios && (
+                  <div className="border-t border-gray-200 my-6"></div>
                 )}
-              </div>
-              <div className="overflow-x-auto bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <DataTable
-                  columns={[
-                    { header: "Dia", accessor: "diaNombre" },
-                    { header: "Hora Inicio", accessor: "horaInicio" },
-                    { header: "Hora Fin", accessor: "horaFin" },
-                    { header: "Intervalo", accessor: "intervaloTexto" },
-                    { 
-                      header: "Estado", 
-                      accessor: "estadoTexto",
-                      render: (horario) => (
-                        <span className={`font-medium ${horario.estadoColor}`}>
-                          {horario.estadoTexto}
+
+                {/* Sección: Horarios */}
+                {puedeVerHorarios && (
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
+                      {estaBloqueado && (
+                        <span className="text-sm text-red-600 font-medium">
+                          Bloqueado
                         </span>
-                      )
-                    }
-                  ]}
-                  data={horariosFormateados}
-                  onEdit={isAdmin ? handleEditHorario : undefined}  
-                />
+                      )}
+                      {estaEnVacaciones && (
+                        <span className="text-sm text-yellow-600 font-medium">
+                          Vacaciones
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <DataTable
+                        columns={[
+                          { header: "Dia", accessor: "diaNombre" },
+                          { header: "Hora Inicio", accessor: "horaInicio" },
+                          { header: "Hora Fin", accessor: "horaFin" },
+                          { header: "Intervalo", accessor: "intervaloTexto" },
+                          { 
+                            header: "Estado", 
+                            accessor: "estadoTexto",
+                            render: (horario) => (
+                              <span className={`font-medium ${horario.estadoColor}`}>
+                                {horario.estadoTexto}
+                              </span>
+                            )
+                          }
+                        ]}
+                        data={horariosFormateados}
+                        onEdit={isAdmin ? handleEditHorario : undefined}  
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
