@@ -332,34 +332,32 @@ function ClienteTemporalDetallePage() {
             </div>
           )}
 
-          {/* Seccion: Citas Agendadas - Ocupa todo el ancho */}
+          {/* Seccion: Citas Agendadas - Usando la misma InfoCard pero ocupando todo el ancho */}
           <div className="mt-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Citas Agendadas</h3>
-            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-              {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {cliente.citasTemporales.map((cita, index) => (
-                    <InfoCard
-                      key={index}
-                      title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? 'Consulta' : 'Estetica'}`}
-                      data={[
-                        { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
-                        { label: "Horario", value: `${cita.horaInicio} - ${cita.horaFin}` },
-                        { label: "Mascota", value: cita.pacienteTemporal?.nombre || 'No especificada' },
-                        { label: "Especie", value: cita.pacienteTemporal?.especie || 'No especificada' },
-                        { label: "Sintomas", value: cita.sintomas || 'No registrados' },
-                        { label: "Tiempo de sintomas", value: cita.tiempoSintomas || 'No registrado' },
-                        { label: "Notas", value: cita.notas || 'Sin notas' },
-                      ]}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No hay citas agendadas</p>
-                </div>
-              )}
-            </div>
+            {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cliente.citasTemporales.map((cita, index) => (
+                  <InfoCard
+                    key={index}
+                    title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? 'Consulta' : 'Estetica'}`}
+                    data={[
+                      { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
+                      { label: "Horario", value: `${cita.horaInicio} - ${cita.horaFin}` },
+                      { label: "Mascota", value: cita.pacienteTemporal?.nombre || 'No especificada' },
+                      { label: "Especie", value: cita.pacienteTemporal?.especie || 'No especificada' },
+                      { label: "Sintomas", value: cita.sintomas || 'No registrados' },
+                      { label: "Tiempo de sintomas", value: cita.tiempoSintomas || 'No registrado' },
+                      { label: "Notas", value: cita.notas || 'Sin notas' },
+                    ]}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-500">No hay citas agendadas</p>
+              </div>
+            )}
           </div>
         </>
       )}
