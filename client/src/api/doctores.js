@@ -9,6 +9,7 @@ export const getDoctorByIdRequest = (id) => axios.get(`/doctores/${id}`);
 export const getDoctoresPublicosRequest = () => axios.get("/public/doctores");
 
 // ========== NUEVAS FUNCIONES ==========
-export const bloquearDoctorRequest = (id) => axios.put(`/doctores/${id}/bloquear`);
+// CORREGIDO: Ahora envía el motivo en el body
+export const bloquearDoctorRequest = (id, motivo) => axios.put(`/doctores/${id}/bloquear`, { motivo });
 export const activarVacacionesRequest = (id) => axios.put(`/doctores/${id}/vacaciones/activar`);
 export const desactivarVacacionesRequest = (id) => axios.put(`/doctores/${id}/vacaciones/desactivar`);
