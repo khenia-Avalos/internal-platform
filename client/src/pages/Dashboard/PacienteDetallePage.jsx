@@ -439,7 +439,7 @@ function PacienteDetallePage() {
                             <h2 className="text-xl font-semibold text-gray-800">Informacion del Paciente</h2>
                             <div className="flex items-center gap-3 flex-wrap">
                                 {estaFallecido && (
-                                    <span className="text-gray-600 text-sm font-medium flex items-center gap-2">
+                                    <span className="text-gray-600 text-sm font-medium">
                                         Fallecido
                                     </span>
                                 )}
@@ -447,7 +447,7 @@ function PacienteDetallePage() {
                                     !estaFallecido ? (
                                         <button
                                             onClick={() => setMostrarModalFallecimiento(true)}
-                                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
                                         >
                                             Marcar Fallecido
                                         </button>
@@ -455,7 +455,7 @@ function PacienteDetallePage() {
                                         puedeReactivar && (
                                             <button
                                                 onClick={handleReactivarPaciente}
-                                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                                             >
                                                 Reactivar Paciente
                                             </button>
@@ -505,169 +505,174 @@ function PacienteDetallePage() {
                     
                     {/* seccion 3: historial clinico, documentos e internados unificados */}
                     <div className="mb-10">
-                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                        <InfoCard
+                            title=""
+                            className="p-0"
+                        >
                             {/* subseccion: historial clinico */}
-                            <div className="text-center mb-6">
-                                <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Registro completo de todas las consultas medicas de {paciente.nombre}
-                                </p>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block mt-2">
-                                    {historialCompleto.length} consultas registradas
-                                </span>
-                            </div>
-
-                            {historialLoading ? (
-                                <div className="flex justify-center items-center h-32">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                            <div className="p-6">
+                                <div className="text-center mb-6">
+                                    <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Registro completo de todas las consultas medicas de {paciente.nombre}
+                                    </p>
+                                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block mt-2">
+                                        {historialCompleto.length} consultas registradas
+                                    </span>
                                 </div>
-                            ) : historialCompleto.length === 0 ? (
-                                <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                                    <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
-                                    <p className="text-gray-400 text-sm mt-2">Las consultas se registran automaticamente al completar una cita</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-4">
-                                        {consultasPagina.map((registro, index) => {
-                                            const globalIndex = inicio + index;
-                                            const isOpen = consultaAbierta === globalIndex;
-                                            const cita = registro.citaId || {};
-                                            const fechaCita = cita.fecha || registro.createdAt;
-                                            const citaId = cita._id || registro.citaId;
-                                            
-                                            return (
-                                                <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                                    <div 
-                                                        className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
-                                                            isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
-                                                        }`}
-                                                        onClick={() => setConsultaAbierta(isOpen ? null : globalIndex)}
-                                                    >
-                                                        <div className="flex items-center gap-3 flex-wrap">
-                                                            <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                                Consulta #{globalIndex + 1}
-                                                            </span>
-                                                            <span className="text-sm font-medium text-gray-700">
-                                                                Fecha: {formatearFechaHora(fechaCita)}
-                                                            </span>
-                                                            {cita.horaInicio && (
-                                                                <span className="text-sm text-gray-500">Hora: {cita.horaInicio}</span>
-                                                            )}
-                                                            <span className="text-sm text-gray-600 max-w-[200px] truncate">
-                                                                {registro.motivoConsulta || 'Sin motivo'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            {citaId && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        navigate(`/citas/${citaId}`);
-                                                                    }}
-                                                                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                                                                >
-                                                                    Ver cita →
-                                                                </button>
-                                                            )}
-                                                            <span className={`text-xs font-medium ${
-                                                                cita.estado === 'completada' ? 'text-green-600' :
-                                                                cita.estado === 'confirmada' ? 'text-blue-600' :
-                                                                cita.estado === 'pendiente' ? 'text-yellow-600' :
-                                                                'text-red-600'
-                                                            }`}>
-                                                                {cita.estado || 'Sin estado'}
-                                                            </span>
-                                                            <span className="text-gray-400 text-sm">
-                                                                {isOpen ? '−' : '+'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
 
-                                                    {isOpen && (
-                                                        <div className="p-6 bg-white">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sintomas reportados</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnostico</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">
-                                                                        {registro.medicamentos && registro.medicamentos.length > 0 
-                                                                            ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
-                                                                            : 'No especificados'}
-                                                                    </p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Examenes realizados</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">
-                                                                        {registro.examenes && registro.examenes.length > 0 
-                                                                            ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
-                                                                            : 'No especificados'}
-                                                                    </p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
-                                                                </div>
-                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Proxima cita sugerida</p>
-                                                                    <p className="text-gray-800 font-medium mt-1">
-                                                                        {registro.proximaCitaSugerida 
-                                                                            ? formatearFechaHora(registro.proximaCitaSugerida)
-                                                                            : 'No sugerida'}
-                                                                    </p>
-                                                                </div>
+                                {historialLoading ? (
+                                    <div className="flex justify-center items-center h-32">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                                    </div>
+                                ) : historialCompleto.length === 0 ? (
+                                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                                        <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
+                                        <p className="text-gray-400 text-sm mt-2">Las consultas se registran automaticamente al completar una cita</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-4">
+                                            {consultasPagina.map((registro, index) => {
+                                                const globalIndex = inicio + index;
+                                                const isOpen = consultaAbierta === globalIndex;
+                                                const cita = registro.citaId || {};
+                                                const fechaCita = cita.fecha || registro.createdAt;
+                                                const citaId = cita._id || registro.citaId;
+                                                
+                                                return (
+                                                    <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                                        <div 
+                                                            className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
+                                                                isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
+                                                            }`}
+                                                            onClick={() => setConsultaAbierta(isOpen ? null : globalIndex)}
+                                                        >
+                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                                    Consulta #{globalIndex + 1}
+                                                                </span>
+                                                                <span className="text-sm font-medium text-gray-700">
+                                                                    Fecha: {formatearFechaHora(fechaCita)}
+                                                                </span>
+                                                                {cita.horaInicio && (
+                                                                    <span className="text-sm text-gray-500">Hora: {cita.horaInicio}</span>
+                                                                )}
+                                                                <span className="text-sm text-gray-600 max-w-[200px] truncate">
+                                                                    {registro.motivoConsulta || 'Sin motivo'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                {citaId && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigate(`/citas/${citaId}`);
+                                                                        }}
+                                                                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                                                    >
+                                                                        Ver cita →
+                                                                    </button>
+                                                                )}
+                                                                <span className={`text-xs font-medium ${
+                                                                    cita.estado === 'completada' ? 'text-green-600' :
+                                                                    cita.estado === 'confirmada' ? 'text-blue-600' :
+                                                                    cita.estado === 'pendiente' ? 'text-yellow-600' :
+                                                                    'text-red-600'
+                                                                }`}>
+                                                                    {cita.estado || 'Sin estado'}
+                                                                </span>
+                                                                <span className="text-gray-400 text-sm">
+                                                                    {isOpen ? '−' : '+'}
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
 
-                                    {totalPaginas > 1 && (
-                                        <div className="flex justify-center items-center gap-3 mt-6">
-                                            <button 
-                                                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                                                disabled={paginaActual === 1}
-                                                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                            >
-                                                Anterior
-                                            </button>
-                                            <span className="text-sm text-gray-600">
-                                                Pagina {paginaActual} de {totalPaginas}
-                                            </span>
-                                            <button 
-                                                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                                                disabled={paginaActual === totalPaginas}
-                                                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                            >
-                                                Siguiente
-                                            </button>
+                                                        {isOpen && (
+                                                            <div className="p-6 bg-white">
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sintomas reportados</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnostico</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                            {registro.medicamentos && registro.medicamentos.length > 0 
+                                                                                ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
+                                                                                : 'No especificados'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Examenes realizados</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                            {registro.examenes && registro.examenes.length > 0 
+                                                                                ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
+                                                                                : 'No especificados'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
+                                                                    </div>
+                                                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Proxima cita sugerida</p>
+                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                            {registro.proximaCitaSugerida 
+                                                                                ? formatearFechaHora(registro.proximaCitaSugerida)
+                                                                                : 'No sugerida'}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                    )}
-                                </>
-                            )}
+
+                                        {totalPaginas > 1 && (
+                                            <div className="flex justify-center items-center gap-3 mt-6">
+                                                <button 
+                                                    onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                                                    disabled={paginaActual === 1}
+                                                    className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                >
+                                                    Anterior
+                                                </button>
+                                                <span className="text-sm text-gray-600">
+                                                    Pagina {paginaActual} de {totalPaginas}
+                                                </span>
+                                                <button 
+                                                    onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                                                    disabled={paginaActual === totalPaginas}
+                                                    className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                >
+                                                    Siguiente
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
 
                             {/* separador */}
-                            <div className="border-t border-gray-200 my-8"></div>
+                            <div className="border-t border-gray-200"></div>
 
                             {/* subseccion: documentos adjuntos */}
-                            <div>
+                            <div className="p-6">
                                 <div className="text-center mb-6">
                                     <h2 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h2>
                                     <p className="text-sm text-gray-500 mt-1">
@@ -833,10 +838,10 @@ function PacienteDetallePage() {
                             </div>
 
                             {/* separador */}
-                            <div className="border-t border-gray-200 my-8"></div>
+                            <div className="border-t border-gray-200"></div>
 
                             {/* subseccion: historial de internados */}
-                            <div>
+                            <div className="p-6">
                                 <div className="text-center mb-6">
                                     <h2 className="text-xl font-semibold text-gray-800">Historial de Internados</h2>
                                     <p className="text-sm text-gray-500 mt-1">
@@ -972,7 +977,7 @@ function PacienteDetallePage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </InfoCard>
                     </div>
 
                     {/* modal para motivo de fallecimiento */}
