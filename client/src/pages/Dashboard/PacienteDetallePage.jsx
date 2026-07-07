@@ -503,18 +503,16 @@ function PacienteDetallePage() {
                         </div>
                     )}
                     
-                    {/* seccion 3: historial clinico y documentos unificados */}
+                    {/* seccion 3: historial clinico, documentos e internados unificados */}
                     <div className="mb-10">
                         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                             {/* subseccion: historial clinico */}
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Registro completo de todas las consultas medicas de {paciente.nombre}
-                                    </p>
-                                </div>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                            <div className="text-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Registro completo de todas las consultas medicas de {paciente.nombre}
+                                </p>
+                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block mt-2">
                                     {historialCompleto.length} consultas registradas
                                 </span>
                             </div>
@@ -670,13 +668,14 @@ function PacienteDetallePage() {
 
                             {/* subseccion: documentos adjuntos */}
                             <div>
-                                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                                    <div>
-                                        <h2 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h2>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Resultados de laboratorio, radiografias, recetas y otros documentos
-                                        </p>
-                                    </div>
+                                <div className="text-center mb-6">
+                                    <h2 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Resultados de laboratorio, radiografias, recetas y otros documentos
+                                    </p>
+                                </div>
+
+                                <div className="flex justify-end mb-4">
                                     {puedeGestionar && !estaFallecido && (
                                         <button
                                             onClick={() => {
@@ -832,136 +831,148 @@ function PacienteDetallePage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    </div>
 
-                    {/* seccion 4: historial de internados */}
-                    <div>
-                        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                            <h2 className="text-xl font-semibold text-gray-800">Historial de Internados</h2>
-                            {puedeGestionar && !estaFallecido && (
-                                <button
-                                    onClick={() => setMostrarFormInternado(true)}
-                                    className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
-                                >
-                                    Agregar Internado
-                                </button>
-                            )}
-                        </div>
+                            {/* separador */}
+                            <div className="border-t border-gray-200 my-8"></div>
 
-                        {/* formulario de internado */}
-                        {mostrarFormInternado && puedeGestionar && !estaFallecido && (
-                            <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
-                                    <button
-                                        onClick={() => setMostrarFormInternado(false)}
-                                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-                                    >
-                                        ×
-                                    </button>
+                            {/* subseccion: historial de internados */}
+                            <div>
+                                <div className="text-center mb-6">
+                                    <h2 className="text-xl font-semibold text-gray-800">Historial de Internados</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Registro de internados y hospitalizaciones de {paciente.nombre}
+                                    </p>
                                 </div>
-                                <DynamicForm
-                                    {...createConfig.internado}
-                                    layout="grid"
-                                    defaultValues={{ pacienteId: id }}
-                                    onSubmit={handleCrearInternado}
-                                    errors={errors}
-                                    successMessage={successMessage}
-                                />
-                            </div>
-                        )}
 
-                        {/* editar internado */}
-                        {showEditInternadoForm && puedeGestionar && !estaFallecido && (
-                            <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Internado</h2>
-                                    <button
-                                        onClick={handleCancelEditInternado}
-                                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-                                    >
-                                        ×
-                                    </button>
+                                <div className="flex justify-end mb-4">
+                                    {puedeGestionar && !estaFallecido && (
+                                        <button
+                                            onClick={() => setMostrarFormInternado(true)}
+                                            className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
+                                        >
+                                            Agregar Internado
+                                        </button>
+                                    )}
                                 </div>
-                                <DynamicForm
-                                    {...editConfig.editInternado}
-                                    layout="grid"
-                                    defaultValues={{
-                                        fechaIngreso: internadoSeleccionado?.fechaIngreso?.split('T')[0] || '',
-                                        fechaEgreso: internadoSeleccionado?.fechaEgreso?.split('T')[0] || '',
-                                        medicamento: internadoSeleccionado?.medicamento || '',
-                                        via: internadoSeleccionado?.via || '',
-                                        dosis: internadoSeleccionado?.dosis || '',
-                                        notas: internadoSeleccionado?.notas || ''
-                                    }}
-                                    onSubmit={handleUpdateInternadoConRecarga}
-                                    errors={editErrors}
-                                    successMessage={editSuccessMessage}
-                                />
-                            </div>
-                        )}
 
-                        {/* lista de internados */}
-                        {internados.length === 0 ? (
-                            <p className="text-gray-500">No hay internados registrados</p>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {internados.map((internado) => (
-                                    <div key={internado._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col min-h-[220px]">
-                                        <div className="p-5 pb-20 flex-1">
-                                            <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
-                                                Internado {formatearFechaLocal(internado.fechaIngreso)}
-                                            </h4>
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Fecha Ingreso:</span>
-                                                    <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaIngreso)}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Fecha Egreso:</span>
-                                                    <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaEgreso) || 'En curso'}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Medicamento:</span>
-                                                    <span className="font-medium text-gray-700">{internado.medicamento || 'No especificado'}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Via:</span>
-                                                    <span className="font-medium text-gray-700">{internado.via || 'No especificada'}</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-500">Dosis:</span>
-                                                    <span className="font-medium text-gray-700">{internado.dosis || 'No especificada'}</span>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-gray-500">Notas:</span>
-                                                    <span className="font-medium text-gray-700 break-words whitespace-normal">
-                                                        {internado.notas || 'Sin notas'}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                {/* formulario de internado */}
+                                {mostrarFormInternado && puedeGestionar && !estaFallecido && (
+                                    <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-lg md:text-xl font-semibold text-gray-700">Crear Nuevo Internado</h2>
+                                            <button
+                                                onClick={() => setMostrarFormInternado(false)}
+                                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                                            >
+                                                ×
+                                            </button>
                                         </div>
-                                        {puedeGestionar && !estaFallecido && (
-                                            <div className="absolute bottom-3 right-3 flex gap-2">
-                                                <button
-                                                    onClick={() => handleEditInternadoWithSelection(internado)}
-                                                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
-                                                >
-                                                    Actualizar
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteInternado(internado._id, internado.fechaIngreso)}
-                                                    className="bg-red-600 text-white px-4 py-1.5 rounded-lg hover:bg-red-700 transition text-sm font-medium shadow-sm"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        )}
+                                        <DynamicForm
+                                            {...createConfig.internado}
+                                            layout="grid"
+                                            defaultValues={{ pacienteId: id }}
+                                            onSubmit={handleCrearInternado}
+                                            errors={errors}
+                                            successMessage={successMessage}
+                                        />
                                     </div>
-                                ))}
+                                )}
+
+                                {/* editar internado */}
+                                {showEditInternadoForm && puedeGestionar && !estaFallecido && (
+                                    <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-lg md:text-xl font-semibold text-gray-700">Editar Internado</h2>
+                                            <button
+                                                onClick={handleCancelEditInternado}
+                                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                        <DynamicForm
+                                            {...editConfig.editInternado}
+                                            layout="grid"
+                                            defaultValues={{
+                                                fechaIngreso: internadoSeleccionado?.fechaIngreso?.split('T')[0] || '',
+                                                fechaEgreso: internadoSeleccionado?.fechaEgreso?.split('T')[0] || '',
+                                                medicamento: internadoSeleccionado?.medicamento || '',
+                                                via: internadoSeleccionado?.via || '',
+                                                dosis: internadoSeleccionado?.dosis || '',
+                                                notas: internadoSeleccionado?.notas || ''
+                                            }}
+                                            onSubmit={handleUpdateInternadoConRecarga}
+                                            errors={editErrors}
+                                            successMessage={editSuccessMessage}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* lista de internados */}
+                                {internados.length === 0 ? (
+                                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                                        <p className="text-gray-500 text-lg">No hay internados registrados</p>
+                                        <p className="text-gray-400 text-sm mt-2">Registra los internados y hospitalizaciones de {paciente.nombre}</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {internados.map((internado) => (
+                                            <div key={internado._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col min-h-[220px]">
+                                                <div className="p-5 pb-20 flex-1">
+                                                    <h4 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                                                        Internado {formatearFechaLocal(internado.fechaIngreso)}
+                                                    </h4>
+                                                    <div className="space-y-2 text-sm">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-500">Fecha Ingreso:</span>
+                                                            <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaIngreso)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-500">Fecha Egreso:</span>
+                                                            <span className="font-medium text-gray-700">{formatearFechaLocal(internado.fechaEgreso) || 'En curso'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-500">Medicamento:</span>
+                                                            <span className="font-medium text-gray-700">{internado.medicamento || 'No especificado'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-500">Via:</span>
+                                                            <span className="font-medium text-gray-700">{internado.via || 'No especificada'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-500">Dosis:</span>
+                                                            <span className="font-medium text-gray-700">{internado.dosis || 'No especificada'}</span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-gray-500">Notas:</span>
+                                                            <span className="font-medium text-gray-700 break-words whitespace-normal">
+                                                                {internado.notas || 'Sin notas'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {puedeGestionar && !estaFallecido && (
+                                                    <div className="absolute bottom-3 right-3 flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditInternadoWithSelection(internado)}
+                                                            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
+                                                        >
+                                                            Actualizar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteInternado(internado._id, internado.fechaIngreso)}
+                                                            className="bg-red-600 text-white px-4 py-1.5 rounded-lg hover:bg-red-700 transition text-sm font-medium shadow-sm"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* modal para motivo de fallecimiento */}
