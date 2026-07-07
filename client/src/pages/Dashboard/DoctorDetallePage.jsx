@@ -33,6 +33,8 @@ function DoctorDetallePage() {
   const [pausaActiva, setPausaActiva] = useState(null);
   const [historialPausas, setHistorialPausas] = useState([]);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [motivoBloqueo, setMotivoBloqueo] = useState('');
+  const [mostrarModalMotivo, setMostrarModalMotivo] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isDoctor = user?.role === 'doctor';
@@ -161,20 +163,32 @@ function DoctorDetallePage() {
   };
 
   const handleBloquearDoctor = async () => {
+    // Mostrar modal para ingresar el motivo
+    setMotivoBloqueo('');
+    setMostrarModalMotivo(true);
+  };
+
+  const confirmarBloqueo = async () => {
+    const motivoFinal = motivoBloqueo.trim() || 'No asignado';
+    
     const confirmar = window.confirm(
       ` Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
       `Esta accion:\n` +
       `• Desactivara TODOS sus horarios\n` +
       `• Cambiara su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
       `• Cambiara su contrasena a: UsuarioRetiradoElExito\n` +
-      `• El doctor no podra iniciar sesion\n\n` +
+      `• El doctor no podra iniciar sesion\n` +
+      `• Motivo: ${motivoFinal}\n\n` +
       `Deseas continuar?`
     );
     
-    if (!confirmar) return;
+    if (!confirmar) {
+      setMostrarModalMotivo(false);
+      return;
+    }
     
     try {
-      const response = await bloquearDoctorRequest(id);
+      const response = await bloquearDoctorRequest(id, motivoFinal);
       toast.success(`Doctor bloqueado exitosamente. Nuevo correo: ${response.data.nuevoEmail}`);
       
       const doctorRes = await getDoctorByIdRequest(id);
@@ -183,6 +197,7 @@ function DoctorDetallePage() {
       const horariosRes = await getHorariosByDoctorRequest(id);
       setHorarios(horariosRes.data);
       
+      setMostrarModalMotivo(false);
     } catch (error) {
       manejarErrorResponse(error, setErrors, setSuccessMessage);
       toast.error('Error al bloquear doctor');
@@ -251,6 +266,18 @@ function DoctorDetallePage() {
     });
   };
 
+  const formatearFechaCompleta = (fecha) => {
+    if (!fecha) return 'No registrada';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-CR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const estaEnVacaciones = doctor?.vacacionesActivas === true;
   const estaBloqueado = doctor?.bloqueado === true;
 
@@ -286,9 +313,7 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
-          {/* ========================================== */}
           {/* CARD 1: INFORMACION DEL DOCTOR */}
-          {/* ========================================== */}
           <InfoCard
             title="Informacion del Doctor"
             data={[
@@ -299,9 +324,8 @@ function DoctorDetallePage() {
             ]}
           />
 
-          {/* ========================================== */}
           {/* CARD 2: ESTADO DEL DOCTOR (Ancho completo) */}
-          {/* ========================================== */}
+       
           {puedeGestionarDoctor && (
             <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -375,9 +399,6 @@ function DoctorDetallePage() {
                           <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
                         </div>
                       )}
-                      <div className="mt-2 text-center text-red-600 font-medium">
-                        Doctor Bloqueado - No puede iniciar sesion
-                      </div>
                     </div>
                   )}
                 </div>
@@ -426,9 +447,7 @@ function DoctorDetallePage() {
             </div>
           )}
 
-          {/* ========================================== */}
           {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS (Unificada) */}
-          {/* ========================================== */}
           {(puedeVerControlAlmuerzo || puedeVerHorarios) && (
             <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
@@ -495,10 +514,9 @@ function DoctorDetallePage() {
                           <div className="space-y-2">
                             {historialPausas.map((pausa, idx) => (
                               <div key={idx} className="flex flex-wrap justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                                <span>{new Date(pausa.inicio).toLocaleDateString('es-CR')}</span>
+                                <span>{formatearFechaCompleta(pausa.inicio)}</span>
                                 <span>
-                                  {new Date(pausa.inicio).toLocaleTimeString()} - 
-                                  {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
+                                  {pausa.fin ? formatearFechaCompleta(pausa.fin) : 'En curso'}
                                 </span>
                                 <span className={`text-xs ${
                                   pausa.activa ? 'text-cyan-600' : 'text-green-600'
@@ -563,6 +581,42 @@ function DoctorDetallePage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Modal para ingresar motivo de bloqueo */}
+      {mostrarModalMotivo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Motivo de Bloqueo</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Ingresa el motivo por el cual se bloquea al doctor {doctor?.username}
+            </p>
+            <textarea
+              value={motivoBloqueo}
+              onChange={(e) => setMotivoBloqueo(e.target.value)}
+              placeholder="Ej: Retiro voluntario, Despido, etc."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+              rows="3"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              {motivoBloqueo.trim() === '' ? 'Si no se escribe nada, se asignara "No asignado"' : ''}
+            </p>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setMostrarModalMotivo(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarBloqueo}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
+              >
+                Confirmar Bloqueo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Modal 
