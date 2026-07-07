@@ -402,7 +402,7 @@ function PacienteDetallePage() {
             {/* boton de volver */}
             <button
                 onClick={() => navigate('/pacientes')}
-                className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+                className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100 text-sm md:text-base"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -420,10 +420,10 @@ function PacienteDetallePage() {
             {/* paciente no encontrado */}
             {!loading && !paciente && (
                 <div className="text-center py-16">
-                    <p className="text-gray-500 text-lg">Paciente no encontrado</p>
+                    <p className="text-gray-500 text-base md:text-lg">Paciente no encontrado</p>
                     <button
                         onClick={() => navigate('/pacientes')}
-                        className="mt-4 text-cyan-600 hover:text-cyan-700"
+                        className="mt-4 text-cyan-600 hover:text-cyan-700 text-sm md:text-base"
                     >
                         Volver a la lista
                     </button>
@@ -436,7 +436,7 @@ function PacienteDetallePage() {
                     {/* seccion 1: datos del paciente */}
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                            <h2 className="text-2xl font-bold text-gray-800">Informacion del Paciente</h2>
+                            <h2 className="text-xl font-semibold text-gray-800">Informacion del Paciente</h2>
                             <div className="flex items-center gap-3 flex-wrap">
                                 {estaFallecido && (
                                     <span className="text-gray-600 text-sm font-medium flex items-center gap-2">
@@ -489,7 +489,7 @@ function PacienteDetallePage() {
                     {/* seccion 2: datos del dueno */}
                     {dueno && (
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Informacion del Dueno</h2>
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Informacion del Dueno</h2>
                             <InfoCard
                                 title={`${dueno.username} ${dueno.lastname}`}
                                 data={[
@@ -503,336 +503,342 @@ function PacienteDetallePage() {
                         </div>
                     )}
                     
-                    {/* seccion 3: historial clinico */}
+                    {/* seccion 3: historial clinico y documentos unificados */}
                     <div className="mb-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-800">Historial Clinico</h2>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Registro completo de todas las consultas medicas de {paciente.nombre}
-                                </p>
+                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                            {/* subseccion: historial clinico */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Registro completo de todas las consultas medicas de {paciente.nombre}
+                                    </p>
+                                </div>
+                                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                    {historialCompleto.length} consultas registradas
+                                </span>
                             </div>
-                            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                                {historialCompleto.length} consultas registradas
-                            </span>
-                        </div>
 
-                        {historialLoading ? (
-                            <div className="flex justify-center items-center h-32">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                            </div>
-                        ) : historialCompleto.length === 0 ? (
-                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                                <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
-                                <p className="text-gray-400 text-sm mt-2">Las consultas se registran automaticamente al completar una cita</p>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="space-y-4">
-                                    {consultasPagina.map((registro, index) => {
-                                        const globalIndex = inicio + index;
-                                        const isOpen = consultaAbierta === globalIndex;
-                                        const cita = registro.citaId || {};
-                                        const fechaCita = cita.fecha || registro.createdAt;
-                                        const citaId = cita._id || registro.citaId;
-                                        
-                                        return (
-                                            <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                                <div 
-                                                    className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
-                                                        isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
-                                                    }`}
-                                                    onClick={() => setConsultaAbierta(isOpen ? null : globalIndex)}
-                                                >
-                                                    <div className="flex items-center gap-3 flex-wrap">
-                                                        <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
-                                                            Consulta #{globalIndex + 1}
-                                                        </span>
-                                                        <span className="text-sm font-medium text-gray-700">
-                                                            Fecha: {formatearFechaHora(fechaCita)}
-                                                        </span>
-                                                        {cita.horaInicio && (
-                                                            <span className="text-sm text-gray-500">Hora: {cita.horaInicio}</span>
-                                                        )}
-                                                        <span className="text-sm text-gray-600 max-w-[200px] truncate">
-                                                            {registro.motivoConsulta || 'Sin motivo'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        {citaId && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate(`/citas/${citaId}`);
-                                                                }}
-                                                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                                                            >
-                                                                Ver cita →
-                                                            </button>
-                                                        )}
-                                                        <span className={`text-xs font-medium ${
-                                                            cita.estado === 'completada' ? 'text-green-600' :
-                                                            cita.estado === 'confirmada' ? 'text-blue-600' :
-                                                            cita.estado === 'pendiente' ? 'text-yellow-600' :
-                                                            'text-red-600'
-                                                        }`}>
-                                                            {cita.estado || 'Sin estado'}
-                                                        </span>
-                                                        <span className="text-gray-400 text-sm">
-                                                            {isOpen ? '−' : '+'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {isOpen && (
-                                                    <div className="p-6 bg-white">
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
-                                                                <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sintomas reportados</p>
-                                                                <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnostico</p>
-                                                                <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
-                                                                <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
-                                                                <p className="text-gray-800 font-medium mt-1">
-                                                                    {registro.medicamentos && registro.medicamentos.length > 0 
-                                                                        ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
-                                                                        : 'No especificados'}
-                                                                </p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Examenes realizados</p>
-                                                                <p className="text-gray-800 font-medium mt-1">
-                                                                    {registro.examenes && registro.examenes.length > 0 
-                                                                        ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
-                                                                        : 'No especificados'}
-                                                                </p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
-                                                                <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Proxima cita sugerida</p>
-                                                                <p className="text-gray-800 font-medium mt-1">
-                                                                    {registro.proximaCitaSugerida 
-                                                                        ? formatearFechaHora(registro.proximaCitaSugerida)
-                                                                        : 'No sugerida'}
-                                                                </p>
-                                                            </div>
+                            {historialLoading ? (
+                                <div className="flex justify-center items-center h-32">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                                </div>
+                            ) : historialCompleto.length === 0 ? (
+                                <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                                    <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
+                                    <p className="text-gray-400 text-sm mt-2">Las consultas se registran automaticamente al completar una cita</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="space-y-4">
+                                        {consultasPagina.map((registro, index) => {
+                                            const globalIndex = inicio + index;
+                                            const isOpen = consultaAbierta === globalIndex;
+                                            const cita = registro.citaId || {};
+                                            const fechaCita = cita.fecha || registro.createdAt;
+                                            const citaId = cita._id || registro.citaId;
+                                            
+                                            return (
+                                                <div key={registro._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                                    <div 
+                                                        className={`px-6 py-4 flex flex-wrap items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
+                                                            isOpen ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-b border-gray-100' : ''
+                                                        }`}
+                                                        onClick={() => setConsultaAbierta(isOpen ? null : globalIndex)}
+                                                    >
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            <span className="text-sm font-semibold text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+                                                                Consulta #{globalIndex + 1}
+                                                            </span>
+                                                            <span className="text-sm font-medium text-gray-700">
+                                                                Fecha: {formatearFechaHora(fechaCita)}
+                                                            </span>
+                                                            {cita.horaInicio && (
+                                                                <span className="text-sm text-gray-500">Hora: {cita.horaInicio}</span>
+                                                            )}
+                                                            <span className="text-sm text-gray-600 max-w-[200px] truncate">
+                                                                {registro.motivoConsulta || 'Sin motivo'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            {citaId && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        navigate(`/citas/${citaId}`);
+                                                                    }}
+                                                                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                                                >
+                                                                    Ver cita →
+                                                                </button>
+                                                            )}
+                                                            <span className={`text-xs font-medium ${
+                                                                cita.estado === 'completada' ? 'text-green-600' :
+                                                                cita.estado === 'confirmada' ? 'text-blue-600' :
+                                                                cita.estado === 'pendiente' ? 'text-yellow-600' :
+                                                                'text-red-600'
+                                                            }`}>
+                                                                {cita.estado || 'Sin estado'}
+                                                            </span>
+                                                            <span className="text-gray-400 text-sm">
+                                                                {isOpen ? '−' : '+'}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+
+                                                    {isOpen && (
+                                                        <div className="p-6 bg-white">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sintomas reportados</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnostico</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">
+                                                                        {registro.medicamentos && registro.medicamentos.length > 0 
+                                                                            ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
+                                                                            : 'No especificados'}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Examenes realizados</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">
+                                                                        {registro.examenes && registro.examenes.length > 0 
+                                                                            ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
+                                                                            : 'No especificados'}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
+                                                                </div>
+                                                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
+                                                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Proxima cita sugerida</p>
+                                                                    <p className="text-gray-800 font-medium mt-1">
+                                                                        {registro.proximaCitaSugerida 
+                                                                            ? formatearFechaHora(registro.proximaCitaSugerida)
+                                                                            : 'No sugerida'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {totalPaginas > 1 && (
+                                        <div className="flex justify-center items-center gap-3 mt-6">
+                                            <button 
+                                                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                                                disabled={paginaActual === 1}
+                                                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                            >
+                                                Anterior
+                                            </button>
+                                            <span className="text-sm text-gray-600">
+                                                Pagina {paginaActual} de {totalPaginas}
+                                            </span>
+                                            <button 
+                                                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                                                disabled={paginaActual === totalPaginas}
+                                                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                            >
+                                                Siguiente
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* separador */}
+                            <div className="border-t border-gray-200 my-8"></div>
+
+                            {/* subseccion: documentos adjuntos */}
+                            <div>
+                                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h2>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Resultados de laboratorio, radiografias, recetas y otros documentos
+                                        </p>
+                                    </div>
+                                    {puedeGestionar && !estaFallecido && (
+                                        <button
+                                            onClick={() => {
+                                                console.log('Abriendo formulario de subida de documentos');
+                                                setMostrarFormDocumento(true);
+                                            }}
+                                            className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
+                                        >
+                                            Subir Documento
+                                        </button>
+                                    )}
                                 </div>
 
-                                {totalPaginas > 1 && (
-                                    <div className="flex justify-center items-center gap-3 mt-6">
-                                        <button 
-                                            onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                                            disabled={paginaActual === 1}
-                                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                        >
-                                            Anterior
-                                        </button>
-                                        <span className="text-sm text-gray-600">
-                                            Pagina {paginaActual} de {totalPaginas}
-                                        </span>
-                                        <button 
-                                            onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                                            disabled={paginaActual === totalPaginas}
-                                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                                        >
-                                            Siguiente
-                                        </button>
+                                {/* formulario de subida */}
+                                {mostrarFormDocumento && !estaFallecido && (
+                                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-lg font-semibold text-gray-700">Subir Documento</h2>
+                                            <button
+                                                onClick={() => {
+                                                    console.log('Cerrando formulario de subida');
+                                                    setMostrarFormDocumento(false);
+                                                    setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
+                                                    setArchivoSeleccionado(null);
+                                                }}
+                                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                        <form onSubmit={handleSubirDocumento} className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Nombre del documento *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={documentoFormData.nombre}
+                                                    onChange={(e) => {
+                                                        console.log('Nombre actualizado:', e.target.value);
+                                                        setDocumentoFormData({ ...documentoFormData, nombre: e.target.value });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
+                                                    placeholder="Ej: Resultados de laboratorio"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Tipo de documento
+                                                </label>
+                                                <select
+                                                    value={documentoFormData.tipo}
+                                                    onChange={(e) => {
+                                                        console.log('Tipo actualizado:', e.target.value);
+                                                        setDocumentoFormData({ ...documentoFormData, tipo: e.target.value });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
+                                                >
+                                                    <option value="resultado_lab">Resultado de laboratorio</option>
+                                                    <option value="radiografia">Radiografia</option>
+                                                    <option value="receta">Receta medica</option>
+                                                    <option value="informe">Informe medico</option>
+                                                    <option value="otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Descripcion (opcional)
+                                                </label>
+                                                <textarea
+                                                    value={documentoFormData.descripcion}
+                                                    onChange={(e) => {
+                                                        console.log('Descripcion actualizada:', e.target.value);
+                                                        setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
+                                                    rows={2}
+                                                    placeholder="Breve descripcion del documento..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Archivo (PDF o imagen) *
+                                                </label>
+                                                <input
+                                                    type="file"
+                                                    onChange={handleFileChange}
+                                                    accept=".pdf,.jpg,.jpeg,.png"
+                                                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
+                                                    required
+                                                />
+                                                <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (max. 10MB)</p>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={subiendoDocumento}
+                                                className="w-full bg-cyan-600 text-white py-2.5 rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50 font-medium text-sm"
+                                            >
+                                                {subiendoDocumento ? 'Subiendo...' : 'Subir Documento'}
+                                            </button>
+                                        </form>
                                     </div>
                                 )}
-                            </>
-                        )}
-                    </div>
 
-                    {/* seccion 4: documentos adjuntos */}
-                    <div className="mb-10">
-                        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-800">Documentos Adjuntos</h2>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Resultados de laboratorio, radiografias, recetas y otros documentos
-                                </p>
-                            </div>
-                            {puedeGestionar && !estaFallecido && (
-                                <button
-                                    onClick={() => {
-                                        console.log('Abriendo formulario de subida de documentos');
-                                        setMostrarFormDocumento(true);
-                                    }}
-                                    className="bg-cyan-600 text-white px-5 py-2.5 rounded-lg hover:bg-cyan-700 transition-colors font-medium text-sm shadow-sm"
-                                >
-                                    Subir Documento
-                                </button>
-                            )}
-                        </div>
-
-                        {/* formulario de subida */}
-                        {mostrarFormDocumento && !estaFallecido && (
-                            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-semibold text-gray-700">Subir Documento</h2>
-                                    <button
-                                        onClick={() => {
-                                            console.log('Cerrando formulario de subida');
-                                            setMostrarFormDocumento(false);
-                                            setDocumentoFormData({ nombre: '', tipo: 'otro', descripcion: '' });
-                                            setArchivoSeleccionado(null);
-                                        }}
-                                        className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                                <form onSubmit={handleSubirDocumento} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Nombre del documento *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={documentoFormData.nombre}
-                                            onChange={(e) => {
-                                                console.log('Nombre actualizado:', e.target.value);
-                                                setDocumentoFormData({ ...documentoFormData, nombre: e.target.value });
-                                            }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
-                                            placeholder="Ej: Resultados de laboratorio"
-                                            required
-                                        />
+                                {/* lista de documentos */}
+                                {documentosLoading ? (
+                                    <div className="flex justify-center items-center h-20">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-cyan-500"></div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Tipo de documento
-                                        </label>
-                                        <select
-                                            value={documentoFormData.tipo}
-                                            onChange={(e) => {
-                                                console.log('Tipo actualizado:', e.target.value);
-                                                setDocumentoFormData({ ...documentoFormData, tipo: e.target.value });
-                                            }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
-                                        >
-                                            <option value="resultado_lab">Resultado de laboratorio</option>
-                                            <option value="radiografia">Radiografia</option>
-                                            <option value="receta">Receta medica</option>
-                                            <option value="informe">Informe medico</option>
-                                            <option value="otro">Otro</option>
-                                        </select>
+                                ) : documentos.length === 0 ? (
+                                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                                        <p className="text-gray-500 text-lg">No hay documentos adjuntos</p>
+                                        <p className="text-gray-400 text-sm mt-2">Sube resultados, radiografias o recetas para este paciente</p>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Descripcion (opcional)
-                                        </label>
-                                        <textarea
-                                            value={documentoFormData.descripcion}
-                                            onChange={(e) => {
-                                                console.log('Descripcion actualizada:', e.target.value);
-                                                setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value });
-                                            }}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
-                                            rows={2}
-                                            placeholder="Breve descripcion del documento..."
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Archivo (PDF o imagen) *
-                                        </label>
-                                        <input
-                                            type="file"
-                                            onChange={handleFileChange}
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
-                                            required
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (max. 10MB)</p>
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={subiendoDocumento}
-                                        className="w-full bg-cyan-600 text-white py-2.5 rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50 font-medium"
-                                    >
-                                        {subiendoDocumento ? 'Subiendo...' : 'Subir Documento'}
-                                    </button>
-                                </form>
-                            </div>
-                        )}
-
-                        {/* lista de documentos */}
-                        {documentosLoading ? (
-                            <div className="flex justify-center items-center h-20">
-                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-cyan-500"></div>
-                            </div>
-                        ) : documentos.length === 0 ? (
-                            <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                                <p className="text-gray-500 text-lg">No hay documentos adjuntos</p>
-                                <p className="text-gray-400 text-sm mt-2">Sube resultados, radiografias o recetas para este paciente</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {documentos.map((doc) => (
-                                    <div key={doc._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <h4 className="font-medium text-gray-800 truncate">{doc.nombre}</h4>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {documentos.map((doc) => (
+                                            <div key={doc._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <h4 className="font-medium text-gray-800 truncate text-sm">{doc.nombre}</h4>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mb-1">
+                                                        {doc.tipo && doc.tipo !== 'otro' ? 
+                                                            doc.tipo.replace('_', ' ').toUpperCase() : 'Documento'}
+                                                    </p>
+                                                    {doc.descripcion && (
+                                                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">{doc.descripcion}</p>
+                                                    )}
+                                                    <p className="text-xs text-gray-400">
+                                                        Subido: {new Date(doc.createdAt).toLocaleDateString('es-CR')}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                                    <button
+                                                        onClick={() => handleVerPDF(doc)}
+                                                        className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+                                                    >
+                                                        Ver PDF
+                                                    </button>
+                                                    {puedeGestionar && !estaFallecido && (
+                                                        <button
+                                                            onClick={() => handleDeleteDocumento(doc._id)}
+                                                            className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors ml-auto"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-gray-500 mb-1">
-                                                {doc.tipo && doc.tipo !== 'otro' ? 
-                                                    doc.tipo.replace('_', ' ').toUpperCase() : 'Documento'}
-                                            </p>
-                                            {doc.descripcion && (
-                                                <p className="text-sm text-gray-600 line-clamp-2 mb-2">{doc.descripcion}</p>
-                                            )}
-                                            <p className="text-xs text-gray-400">
-                                                Subido: {new Date(doc.createdAt).toLocaleDateString('es-CR')}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                                            <button
-                                                onClick={() => handleVerPDF(doc)}
-                                                className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-                                            >
-                                                Ver PDF
-                                            </button>
-                                            {puedeGestionar && !estaFallecido && (
-                                                <button
-                                                    onClick={() => handleDeleteDocumento(doc._id)}
-                                                    className="text-red-500 hover:text-red-700 text-sm font-medium transition-colors ml-auto"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* seccion 5: historial de internados */}
+                    {/* seccion 4: historial de internados */}
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Historial de Internados</h2>
+                            <h2 className="text-xl font-semibold text-gray-800">Historial de Internados</h2>
                             {puedeGestionar && !estaFallecido && (
                                 <button
                                     onClick={() => setMostrarFormInternado(true)}
@@ -975,7 +981,7 @@ function PacienteDetallePage() {
                                     </button>
                                 </div>
                                 
-                                <p className="text-gray-600 mb-4">
+                                <p className="text-gray-600 mb-4 text-sm">
                                     Estas a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
                                     Esta accion no permitira crear citas, documentos ni internados.
                                 </p>
@@ -987,7 +993,7 @@ function PacienteDetallePage() {
                                     <textarea
                                         value={motivoFallecimiento}
                                         onChange={(e) => setMotivoFallecimiento(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition"
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition text-sm"
                                         rows={3}
                                         placeholder="Ej: Paro cardiaco, enfermedad cronica, accidente..."
                                         required
@@ -998,7 +1004,7 @@ function PacienteDetallePage() {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={handleMarcarFallecido}
-                                        className="flex-1 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                                        className="flex-1 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
                                     >
                                         Confirmar
                                     </button>
@@ -1007,7 +1013,7 @@ function PacienteDetallePage() {
                                             setMostrarModalFallecimiento(false);
                                             setMotivoFallecimiento('');
                                         }}
-                                        className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                                        className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm"
                                     >
                                         Cancelar
                                     </button>
