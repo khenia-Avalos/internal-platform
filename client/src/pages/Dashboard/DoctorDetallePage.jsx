@@ -309,7 +309,7 @@ function DoctorDetallePage() {
                   <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
                   <span className={`text-sm font-medium ${
                     estaBloqueado ? 'text-red-600' :
-                    estaEnVacaciones ? 'text-yellow-600' :
+                    estaEnVacaciones ? 'text-cyan-600' :
                     'text-green-600'
                   }`}>
                     {estaBloqueado ? 'Bloqueado' :
@@ -335,7 +335,7 @@ function DoctorDetallePage() {
                     {doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones && (
                       <div className="flex justify-between border-b border-gray-100 pb-2">
                         <span className="text-gray-500">Inicio de vacaciones</span>
-                        <span className="font-medium text-yellow-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
+                        <span className="font-medium text-cyan-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
                       </div>
                     )}
                     
@@ -382,45 +382,46 @@ function DoctorDetallePage() {
                   )}
                 </div>
                 
-                <div className="mt-4 space-y-2">
-                  {!estaBloqueado ? (
-                    <>
+                {/* Botones de gestión - ahora más pequeños y alineados */}
+                {!estaBloqueado && (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button
+                      onClick={handleBloquearDoctor}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
+                    >
+                      Bloquear Doctor
+                    </button>
+                    
+                    {!estaEnVacaciones ? (
                       <button
-                        onClick={handleBloquearDoctor}
-                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                        onClick={handleActivarVacaciones}
+                        className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium text-sm"
                       >
-                        Bloquear Doctor (Retiro)
+                        Activar Vacaciones
                       </button>
-                      
-                      {!estaEnVacaciones ? (
-                        <button
-                          onClick={handleActivarVacaciones}
-                          className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
-                        >
-                          Activar Vacaciones
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleDesactivarVacaciones}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
-                        >
-                          Finalizar Vacaciones
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-red-600 font-medium">Doctor Bloqueado</p>
-                      <p className="text-xs text-gray-500 mt-1">No puede iniciar sesion</p>
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-gray-400 text-center mt-2">
-                    {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesion' :
-                     estaEnVacaciones ? 'El doctor esta en vacaciones, todos sus horarios estan desactivados' :
-                     'El doctor esta activo y disponible para citas'}
-                  </p>
-                </div>
+                    ) : (
+                      <button
+                        onClick={handleDesactivarVacaciones}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm"
+                      >
+                        Finalizar Vacaciones
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {estaBloqueado && (
+                  <div className="mt-4 text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-red-600 font-medium">Doctor Bloqueado</p>
+                    <p className="text-xs text-gray-500 mt-1">No puede iniciar sesion</p>
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-400 text-center mt-4">
+                  {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesion' :
+                   estaEnVacaciones ? 'El doctor esta en vacaciones, todos sus horarios estan desactivados' :
+                   'El doctor esta activo y disponible para citas'}
+                </p>
               </div>
             </div>
           )}
@@ -437,7 +438,7 @@ function DoctorDetallePage() {
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
                       <span className={`text-sm font-medium ${
-                        pausaActiva ? 'text-yellow-600' : 'text-green-600'
+                        pausaActiva ? 'text-cyan-600' : 'text-green-600'
                       }`}>
                         {pausaActiva ? 'En pausa' : 'Disponible'}
                       </span>
@@ -451,7 +452,7 @@ function DoctorDetallePage() {
                           className={`px-4 py-2 rounded-lg transition text-sm ${
                             estaBloqueado || estaEnVacaciones
                               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                              : 'bg-cyan-600 text-white hover:bg-cyan-700'
                           }`}
                         >
                           Iniciar Almuerzo
@@ -477,8 +478,8 @@ function DoctorDetallePage() {
                     </div>
                     
                     {pausaActiva && (
-                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
-                        <p className="text-xs text-yellow-800">
+                      <div className="bg-cyan-50 p-3 rounded-lg border border-cyan-200 mb-3">
+                        <p className="text-xs text-cyan-800">
                           Inicio: {new Date(pausaActiva.inicio).toLocaleTimeString()}
                         </p>
                       </div>
@@ -500,7 +501,7 @@ function DoctorDetallePage() {
                                   {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
                                 </span>
                                 <span className={`text-xs ${
-                                  pausa.activa ? 'text-yellow-600' : 'text-green-600'
+                                  pausa.activa ? 'text-cyan-600' : 'text-green-600'
                                 }`}>
                                   {pausa.activa ? 'Activo' : 'Finalizado'}
                                 </span>
@@ -529,7 +530,7 @@ function DoctorDetallePage() {
                         </span>
                       )}
                       {estaEnVacaciones && (
-                        <span className="text-sm text-yellow-600 font-medium">
+                        <span className="text-sm text-cyan-600 font-medium">
                           Vacaciones
                         </span>
                       )}
