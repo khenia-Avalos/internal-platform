@@ -96,11 +96,11 @@ function ClienteTemporalDetallePage() {
     }
   };
 
-  // construir data para InfoCard unificada con todos los datos
-  const getDatosUnificados = () => {
+  // construir seccion de datos del cliente
+  const getDatosCliente = () => {
     if (!cliente) return [];
     
-    const datos = [
+    return [
       { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname || ''}` },
       { label: "Cédula", value: cliente.cedula || 'No registrada' },
       { label: "Teléfono", value: cliente.phoneNumber },
@@ -108,71 +108,79 @@ function ClienteTemporalDetallePage() {
       { label: "Estado", value: cliente.estado === 'temporal' ? 'Pendiente de registro' : 'Registro completado' },
       { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
     ];
+  };
+
+  // construir seccion de datos de la mascota
+  const getDatosMascota = () => {
+    if (!cliente) return [];
     
-    // agregar direccion si existe
-    if (cliente.direccion) {
-      datos.push({ label: "Dirección", value: cliente.direccion });
+    // si no hay mascota o no tiene datos de mascota
+    const tieneDatosMascota = cliente.citasTemporales && 
+                              cliente.citasTemporales.length > 0 && 
+                              cliente.citasTemporales[0].pacienteTemporal;
+    
+    if (!tieneDatosMascota) {
+      return [
+        { label: "Mascota", value: "No hay datos de mascota registrados" }
+      ];
     }
     
-    // agregar citas agendadas de forma detallada
-    if (cliente.citasTemporales && cliente.citasTemporales.length > 0) {
-      // agregar un separador visual
-      datos.push({ 
-        label: "─".repeat(40), 
-        value: "", 
-        isSeparator: true 
-      });
-      
-      // agregar titulo de citas
-      datos.push({ 
-        label: `📋 Citas Agendadas (${cliente.citasTemporales.length})`, 
-        value: "", 
-        isTitle: true 
-      });
-      
-      // agregar cada cita con sus detalles
-      cliente.citasTemporales.forEach((cita, index) => {
-        const tipo = cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética';
-        const mascota = cita.pacienteTemporal?.nombre || 'No especificada';
-        const especie = cita.pacienteTemporal?.especie || 'No especificada';
-        const fecha = mostrarFechaLocal(cita.fecha);
-        const horario = `${cita.horaInicio} - ${cita.horaFin}`;
-        const sintomas = cita.sintomas || 'No registrados';
-        const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
-        const notas = cita.notas || 'Sin notas';
-        
-        // separador entre citas
-        if (index > 0) {
-          datos.push({ 
-            label: "─".repeat(30), 
-            value: "", 
-            isSeparator: true 
-          });
-        }
-        
-        datos.push({ 
-          label: `Cita ${index + 1}: ${tipo}`, 
-          value: "", 
-          isSubtitle: true 
-        });
-        datos.push({ label: "  • Fecha", value: fecha });
-        datos.push({ label: "  • Horario", value: horario });
-        datos.push({ label: "  • Mascota", value: mascota });
-        datos.push({ label: "  • Especie", value: especie });
-        datos.push({ label: "  • Síntomas", value: sintomas });
-        datos.push({ label: "  • Tiempo de síntomas", value: tiempoSintomas });
-        datos.push({ label: "  • Notas", value: notas });
-      });
-    } else {
-      datos.push({ 
-        label: "─".repeat(40), 
-        value: "", 
-        isSeparator: true 
-      });
-      datos.push({ label: "📋 Citas Agendadas", value: "No hay citas agendadas" });
-    }
+    const mascota = cliente.citasTemporales[0].pacienteTemporal;
     
-    return datos;
+    return [
+      { label: "Nombre de la mascota", value: mascota.nombre || 'No especificado' },
+      { label: "Especie", value: mascota.especie || 'No especificada' },
+      { label: "Raza", value: mascota.raza || 'No especificada' },
+      { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
+      { label: "Sexo", value: mascota.sexo || 'No especificado' },
+      { label: "Color de pelaje", value: mascota.colorPelaje || 'No especificado' },
+      { label: "Peso", value: mascota.peso ? `${mascota.peso.valor} ${mascota.peso.unidad}` : 'No registrado' },
+      { label: "Temperatura", value: mascota.temperatura ? `${mascota.temperatura} °C` : 'No registrada' },
+      { label: "Antecedentes médicos", value: mascota.antecedentesMedicos || 'Sin antecedentes' },
+    ];
+  };
+
+  // construir seccion de citas agendadas
+  const getDatosCitas = () => {
+    if (!cliente) return [];
+    
+    if (!cliente.citasTemporales || cliente.citasTemporales.length === 0) {
+      return [
+        { label: "Citas agendadas", value: "No hay citas agendadas" }
+      ];
+    }
+
+    const datosCitas = [];
+    
+    cliente.citasTemporales.forEach((cita, index) => {
+      const tipo = cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética';
+      const mascota = cita.pacienteTemporal?.nombre || 'No especificada';
+      const especie = cita.pacienteTemporal?.especie || 'No especificada';
+      const fecha = mostrarFechaLocal(cita.fecha);
+      const horario = `${cita.horaInicio} - ${cita.horaFin}`;
+      const sintomas = cita.sintomas || 'No registrados';
+      const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
+      const notas = cita.notas || 'Sin notas';
+      
+      datosCitas.push({ 
+        label: `Cita ${index + 1}: ${tipo} - ${mascota}`, 
+        value: "" 
+      });
+      datosCitas.push({ label: "  Fecha", value: fecha });
+      datosCitas.push({ label: "  Horario", value: horario });
+      datosCitas.push({ label: "  Mascota", value: mascota });
+      datosCitas.push({ label: "  Especie", value: especie });
+      datosCitas.push({ label: "  Síntomas", value: sintomas });
+      datosCitas.push({ label: "  Tiempo de síntomas", value: tiempoSintomas });
+      datosCitas.push({ label: "  Notas", value: notas });
+      
+      // agregar separador entre citas
+      if (index < cliente.citasTemporales.length - 1) {
+        datosCitas.push({ label: "", value: "", isSeparator: true });
+      }
+    });
+    
+    return datosCitas;
   };
 
   return (
@@ -226,11 +234,32 @@ function ClienteTemporalDetallePage() {
             )}
           </div>
 
-          {/* card unificada con toda la informacion */}
-          <InfoCard
-            title=""
-            data={getDatosUnificados()}
-          />
+          {/* SECCION 1: Información del Cliente */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">Información del Cliente</h3>
+            <InfoCard
+              title=""
+              data={getDatosCliente()}
+            />
+          </div>
+
+          {/* SECCION 2: Información de la Mascota */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">Información de la Mascota</h3>
+            <InfoCard
+              title=""
+              data={getDatosMascota()}
+            />
+          </div>
+
+          {/* SECCION 3: Citas Agendadas */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">Citas Agendadas</h3>
+            <InfoCard
+              title=""
+              data={getDatosCitas()}
+            />
+          </div>
         </>
       )}
 
