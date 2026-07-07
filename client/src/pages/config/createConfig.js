@@ -331,9 +331,14 @@ internado: {
 // En tu createConfig.js
 
 
+// src/pages/config/createConfig.js
+
+// ... tu código existente ...
+
 completarRegistroCliente: {
   title: "Completar Registro de Cliente",
   fields: [
+    // DATOS DEL CLIENTE
     {
       name: "lastname",
       type: "text",
@@ -348,8 +353,10 @@ completarRegistroCliente: {
       placeholder: "000000000",
       validation: { 
         required: "La cédula es requerida",
-        minLength: { value: 5, message: "Mínimo 5 dígitos" },
-        maxLength: { value: 20, message: "Máximo 20 dígitos" }
+        pattern: {
+          value: /^\d{6,12}$/,
+          message: "La cédula debe tener 6-12 dígitos numéricos"
+        }
       }
     },
     {
@@ -365,26 +372,102 @@ completarRegistroCliente: {
       label: "Correo electrónico *",
       placeholder: "cliente@ejemplo.com",
       validation: { 
-        required: "El email es requerido",
+        required: "El correo electrónico es requerido",
         pattern: {
           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-          message: "Ingrese un email válido"
+          message: "Ingrese un correo electrónico válido"
         }
       }
+    },
+    // DATOS DE LA MASCOTA
+    {
+      name: "raza",
+      type: "text",
+      label: "Raza",
+      placeholder: "Ej: Golden Retriever, Pastor Alemán",
+      validation: {
+        maxLength: { value: 50, message: "Máximo 50 caracteres" }
+      }
+    },
+    {
+      name: "edad",
+      type: "number",
+      label: "Edad (años)",
+      placeholder: "Ej: 3",
+      validation: {
+        min: { value: 0, message: "La edad mínima es 0 años" },
+        max: { value: 50, message: "La edad máxima es 50 años" }
+      }
+    },
+    {
+      name: "sexo",
+      type: "select",
+      label: "Sexo",
+      options: [
+        { value: "", label: "Seleccione el sexo" },
+        { value: "macho", label: "Macho" },
+        { value: "hembra", label: "Hembra" }
+      ]
+    },
+    {
+      name: "colorPelaje",
+      type: "text",
+      label: "Color de Pelaje",
+      placeholder: "Ej: Blanco, Negro, Café, Manchado"
+    },
+    {
+      name: "peso",
+      type: "number",
+      label: "Peso (kg)",
+      placeholder: "Ej: 8.5",
+      validation: {
+        min: { value: 0, message: "El peso mínimo es 0 kg" },
+        max: { value: 100, message: "El peso máximo es 100 kg" },
+        pattern: {
+          value: /^\d+(\.\d{1,2})?$/,
+          message: "Ingrese un peso válido (ejemplo: 8.5)"
+        }
+      }
+    },
+    {
+      name: "temperatura",
+      type: "number",
+      label: "Temperatura (°C)",
+      placeholder: "Ej: 38.5",
+      validation: {
+        min: { value: 35, message: "La temperatura mínima es 35°C" },
+        max: { value: 42, message: "La temperatura máxima es 42°C" },
+        pattern: {
+          value: /^\d+(\.\d{1,1})?$/,
+          message: "Ingrese una temperatura válida (ejemplo: 38.5)"
+        }
+      }
+    },
+    {
+      name: "antecedentesMedicos",
+      type: "textarea",
+      label: "Antecedentes Médicos",
+      placeholder: "Ej: Alergias, enfermedades previas, cirugías, medicamentos actuales...",
+      rows: 3
     }
   ],
   submitLabel: "Completar Registro",
+  successMessage: "Registro completado. Se ha enviado un correo con las credenciales de acceso",
   
-  // Mensaje de éxito personalizado
-  successMessage: "¡Registro completado! Se ha enviado un correo con las credenciales de acceso.",
-  
-  //  Función para procesar datos antes de enviar (opcional)
+  // Funcion para procesar datos antes de enviar (opcional)
   transformData: (formData) => {
     return {
       lastname: formData.lastname,
       cedula: formData.cedula,
       direccion: formData.direccion,
-      email: formData.email
+      email: formData.email,
+      raza: formData.raza || '',
+      edad: formData.edad ? parseInt(formData.edad) : null,
+      sexo: formData.sexo || '',
+      colorPelaje: formData.colorPelaje || '',
+      peso: formData.peso ? parseFloat(formData.peso) : null,
+      temperatura: formData.temperatura ? parseFloat(formData.temperatura) : null,
+      antecedentesMedicos: formData.antecedentesMedicos || ''
     };
   }
 },
