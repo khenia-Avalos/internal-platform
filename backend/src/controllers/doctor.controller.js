@@ -74,7 +74,7 @@ export const createDoctor = async (req, res) => {
           activo: horarioConfig.activo
         }));
         await Horario.insertMany(horariosPorDefecto);
-        console.log(`✅ Horarios creados para ${savedUser.username} (${especialidad})`);
+        console.log(`Horarios creados para ${savedUser.username} (${especialidad})`);
       }
     }
     
@@ -174,10 +174,10 @@ export const getDoctorByIdRequest = async (req, res) => {
   }
 };
 
-// OBTENER DOCTORES PÚBLICOS (SIN AUTENTICACIÓN)
+// Obtener doctores publicos (sin autenticacion)
 export const getDoctoresPublicos = async (req, res) => {
   try {
-    console.log('\n========== GET DOCTORES PUBLICOS ==========');
+    console.log(' GET DOCTORES PUBLICOS ');
     
     const doctores = await User.find({ 
       role: 'doctor',
@@ -185,7 +185,7 @@ export const getDoctoresPublicos = async (req, res) => {
       activo: true
     }).select('username lastname especialidad _id');
     
-    console.log(`Enviando ${doctores.length} doctores públicos`);
+    console.log(`Enviando ${doctores.length} doctores publicos`);
     res.json(doctores);
     
   } catch (error) {
@@ -194,9 +194,7 @@ export const getDoctoresPublicos = async (req, res) => {
   }
 };
 
-// ============================================
-// FUNCIÓN PARA GENERAR EMAIL DE RETIRO
-// ============================================
+// Funcion para generar email de retiro
 const generarEmailRetirado = async (nombre) => {
     const nombreLimpio = nombre
         .toLowerCase()
@@ -212,7 +210,7 @@ const generarEmailRetirado = async (nombre) => {
         return emailBase;
     }
     
-    // Si existe, agregar número
+    // Si existe, agregar numero
     let contador = 1;
     let emailAlternativo = `${nombreLimpio}retirado${contador}@gmail.com`;
     
@@ -224,14 +222,14 @@ const generarEmailRetirado = async (nombre) => {
     return emailAlternativo;
 };
 
-// ============================================
-// BLOQUEAR DOCTOR (CON CAMBIO DE CORREO Y CONTRASEÑA)
-// ============================================
+// Bloquear doctor (con cambio de correo y contrasena)
 export const bloquearDoctor = async (req, res) => {
   try {
     const { id } = req.params;
+    const { motivo } = req.body; // Recibir el motivo del body
     
-    console.log(`🔒 Bloqueando doctor con ID: ${id}`);
+    console.log(`Bloqueando doctor con ID: ${id}`);
+    console.log(`Motivo: ${motivo || 'No asignado'}`);
     
     const doctor = await User.findById(id);
     if (!doctor) {
@@ -241,10 +239,13 @@ export const bloquearDoctor = async (req, res) => {
     // Generar nuevo email
     const nuevoEmail = await generarEmailRetirado(doctor.username);
     
-    // Cambiar contraseña
+    // Cambiar contrasena
     const nuevaPassword = 'UsuarioRetiradoElExito';
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(nuevaPassword, salt);
+    
+    // Usar el motivo recibido o 'No asignado' si no viene
+    const motivoFinal = motivo?.trim() || 'No asignado';
     
     // Actualizar usuario
     const usuarioActualizado = await User.findByIdAndUpdate(
@@ -257,7 +258,7 @@ export const bloquearDoctor = async (req, res) => {
         fechaRetiro: new Date(),
         activo: false,
         vacacionesActivas: false,
-        motivoBloqueo: 'Retiro voluntario'
+        motivoBloqueo: motivoFinal // Usar el motivo recibido
       },
       { new: true }
     ).select('-password');
@@ -268,9 +269,10 @@ export const bloquearDoctor = async (req, res) => {
       { activo: false }
     );
     
-    console.log(`✅ Doctor ${usuarioActualizado.username} bloqueado exitosamente`);
-    console.log(`📧 Correo cambiado de ${doctor.email} a ${nuevoEmail}`);
-    console.log(`🔑 Contraseña cambiada a: ${nuevaPassword}`);
+    console.log(`Doctor ${usuarioActualizado.username} bloqueado exitosamente`);
+    console.log(`Correo cambiado de ${doctor.email} a ${nuevoEmail}`);
+    console.log(`Contrasena cambiada a: ${nuevaPassword}`);
+    console.log(`Motivo: ${motivoFinal}`);
     
     res.json({
       message: `Doctor bloqueado exitosamente. Correo cambiado a: ${nuevoEmail}`,
@@ -291,14 +293,12 @@ export const bloquearDoctor = async (req, res) => {
   }
 };
 
-// ============================================
-// ACTIVAR VACACIONES
-// ============================================
+// Activar vacaciones
 export const activarVacaciones = async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log(`🌴 Activando vacaciones para doctor ID: ${id}`);
+    console.log(`Activando vacaciones para doctor ID: ${id}`);
     
     const usuarioActualizado = await User.findByIdAndUpdate(
       id,
@@ -319,7 +319,7 @@ export const activarVacaciones = async (req, res) => {
       { activo: false }
     );
     
-    console.log(`✅ Vacaciones activadas para ${usuarioActualizado.username}`);
+    console.log(`Vacaciones activadas para ${usuarioActualizado.username}`);
     
     res.json({
       message: 'Vacaciones activadas exitosamente. Todos los horarios desactivados.',
@@ -334,14 +334,12 @@ export const activarVacaciones = async (req, res) => {
   }
 };
 
-// ============================================
-// DESACTIVAR VACACIONES
-// ============================================
+// Desactivar vacaciones
 export const desactivarVacaciones = async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log(`✅ Desactivando vacaciones para doctor ID: ${id}`);
+    console.log(`Desactivando vacaciones para doctor ID: ${id}`);
     
     const usuarioActualizado = await User.findByIdAndUpdate(
       id,
@@ -361,7 +359,7 @@ export const desactivarVacaciones = async (req, res) => {
       { activo: true }
     );
     
-    console.log(`✅ Vacaciones desactivadas para ${usuarioActualizado.username}`);
+    console.log(`Vacaciones desactivadas para ${usuarioActualizado.username}`);
     
     res.json({
       message: 'Vacaciones desactivadas exitosamente. Todos los horarios activados.',
