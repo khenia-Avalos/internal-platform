@@ -40,7 +40,7 @@ function DoctorDetallePage() {
   const puedeVerHorarios = isAdmin;
   const puedeVerControlAlmuerzo = isAdmin || isDoctor || isRecepcion;
   const puedeGestionarDoctor = isAdmin;
-  const puedeVerHistorial = isAdmin; // Solo admin puede ver historial
+  const puedeVerHistorial = isAdmin;
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -72,7 +72,6 @@ function DoctorDetallePage() {
     }
   }, [id, puedeVerHorarios, puedeVerControlAlmuerzo]);
 
-  // Cargar pausa activa solo si tiene permiso
   useEffect(() => {
     let isMounted = true;
     
@@ -103,7 +102,7 @@ function DoctorDetallePage() {
   }, [id, location.key, puedeVerControlAlmuerzo]);
 
   const getNombreDia = (dia) => {
-    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     return dias[dia];
   };
   
@@ -112,7 +111,7 @@ function DoctorDetallePage() {
     diaNombre: getNombreDia(horario.dia),
     intervaloTexto: `${horario.intervalo} min`,
     estadoTexto: horario.activo ? 'Activo' : 'Inactivo',
-    estadoColor: horario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    estadoColor: horario.activo ? 'text-green-600' : 'text-red-600'
   }));
 
   const handleEditHorario = (horario) => {
@@ -161,18 +160,15 @@ function DoctorDetallePage() {
     }
   };
 
-  // ============================================
-  // FUNCIONES PARA BLOQUEAR DOCTOR (SOLO ADMIN)
-  // ============================================
   const handleBloquearDoctor = async () => {
     const confirmar = window.confirm(
-      `⚠️ ¿Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
-      `Esta acción:\n` +
-      `• Desactivará TODOS sus horarios\n` +
-      `• Cambiará su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
-      `• Cambiará su contraseña a: UsuarioRetiradoElExito\n` +
-      `• El doctor no podrá iniciar sesión\n\n` +
-      `¿Deseas continuar?`
+      ` Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
+      `Esta accion:\n` +
+      `• Desactivara TODOS sus horarios\n` +
+      `• Cambiara su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
+      `• Cambiara su contrasena a: UsuarioRetiradoElExito\n` +
+      `• El doctor no podra iniciar sesion\n\n` +
+      `Deseas continuar?`
     );
     
     if (!confirmar) return;
@@ -193,14 +189,11 @@ function DoctorDetallePage() {
     }
   };
 
-  // ============================================
-  // FUNCIONES PARA VACACIONES (SOLO ADMIN)
-  // ============================================
   const handleActivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `🌴 ¿Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
-      `Esta acción desactivará TODOS sus horarios.\n\n` +
-      `¿Deseas continuar?`
+      ` Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta accion desactivara TODOS sus horarios.\n\n` +
+      `Deseas continuar?`
     );
     
     if (!confirmar) return;
@@ -223,9 +216,9 @@ function DoctorDetallePage() {
 
   const handleDesactivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `✅ ¿Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
-      `Esta acción activará TODOS sus horarios.\n\n` +
-      `¿Deseas continuar?`
+      ` Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Esta accion activara TODOS sus horarios.\n\n` +
+      `Deseas continuar?`
     );
     
     if (!confirmar) return;
@@ -246,7 +239,6 @@ function DoctorDetallePage() {
     }
   };
 
-  // Formatear fecha
   const formatearFecha = (fecha) => {
     if (!fecha) return 'No registrada';
     const date = new Date(fecha);
@@ -295,26 +287,26 @@ function DoctorDetallePage() {
       {!loading && doctor && (
         <>
           <InfoCard
-            title="Información del Doctor"
+            title="Informacion del Doctor"
             data={[
               { label: "Nombre completo", value: `${doctor.username} ${doctor.lastname}` },
               { label: "Email", value: doctor.email },
-              { label: "Teléfono", value: doctor.phoneNumber },
+              { label: "Telefono", value: doctor.phoneNumber },
               { label: "Especialidad", value: doctor.especialidad },
             ]}
           />
 
           {/* ========================================== */}
           {/* CARD DE CONTROL DE ALMUERZO */}
-          {/* Visible para: Admin, Doctor (su propio perfil) y Recepción */}
+          {/* Visible para: Admin, Doctor (su propio perfil) y Recepcion */}
           {/* ========================================== */}
           {puedeVerControlAlmuerzo && (
             <div className="mt-6">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    pausaActiva ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                  <span className={`text-sm font-medium ${
+                    pausaActiva ? 'text-yellow-600' : 'text-green-600'
                   }`}>
                     {pausaActiva ? 'En pausa' : 'Disponible'}
                   </span>
@@ -342,7 +334,7 @@ function DoctorDetallePage() {
                     </button>
                   )}
                   
-                  {/* Botón de historial SOLO para admin */}
+                  {/* Boton de historial SOLO para admin */}
                   {puedeVerHistorial && (
                     <button
                       onClick={() => setMostrarHistorial(!mostrarHistorial)}
@@ -376,8 +368,8 @@ function DoctorDetallePage() {
                               {new Date(pausa.inicio).toLocaleTimeString()} - 
                               {pausa.fin ? new Date(pausa.fin).toLocaleTimeString() : 'En curso'}
                             </span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              pausa.activa ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                            <span className={`text-xs ${
+                              pausa.activa ? 'text-yellow-600' : 'text-green-600'
                             }`}>
                               {pausa.activa ? 'Activo' : 'Finalizado'}
                             </span>
@@ -392,7 +384,7 @@ function DoctorDetallePage() {
           )}
 
           {/* ========================================== */}
-          {/* CARDS DE GESTIÓN (SOLO ADMIN) */}
+          {/* CARDS DE GESTION (SOLO ADMIN) */}
           {/* ========================================== */}
           {puedeGestionarDoctor && (
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -400,10 +392,10 @@ function DoctorDetallePage() {
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    estaBloqueado ? 'bg-red-100 text-red-700' :
-                    estaEnVacaciones ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
+                  <span className={`text-sm font-medium ${
+                    estaBloqueado ? 'text-red-600' :
+                    estaEnVacaciones ? 'text-yellow-600' :
+                    'text-green-600'
                   }`}>
                     {estaBloqueado ? 'Bloqueado' :
                      estaEnVacaciones ? 'Vacaciones' :
@@ -441,33 +433,34 @@ function DoctorDetallePage() {
                   )}
                   
                   <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Última actualización</span>
+                    <span className="text-gray-500">Ultima actualizacion</span>
                     <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
                   </div>
                 </div>
 
-                {/* Información de bloqueo */}
+                {/* Informacion de bloqueo sin recuadro rojo */}
                 {estaBloqueado && (
-                  <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                    <div className="space-y-2 text-sm">
+                  <div className="mt-4 space-y-2 text-sm border-t border-gray-200 pt-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email original:</span>
+                      <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email actual:</span>
+                      <span className="font-medium text-red-600 break-all">{doctor.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Contrasena:</span>
+                      <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
+                    </div>
+                    {doctor.motivoBloqueo && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Email original:</span>
-                        <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
+                        <span className="text-gray-500">Motivo:</span>
+                        <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Email actual:</span>
-                        <span className="font-medium text-red-600 break-all">{doctor.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Contraseña:</span>
-                        <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
-                      </div>
-                      {doctor.motivoBloqueo && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Motivo:</span>
-                          <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
-                        </div>
-                      )}
+                    )}
+                    <div className="mt-3 text-center text-red-600 font-medium">
+                      Doctor Bloqueado - No puede iniciar sesion
                     </div>
                   </div>
                 )}
@@ -479,7 +472,7 @@ function DoctorDetallePage() {
                         onClick={handleBloquearDoctor}
                         className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
                       >
-                        🔒 Bloquear Doctor (Retiro)
+                        Bloquear Doctor (Retiro)
                       </button>
                       
                       {!estaEnVacaciones ? (
@@ -487,28 +480,28 @@ function DoctorDetallePage() {
                           onClick={handleActivarVacaciones}
                           className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
                         >
-                          🌴 Activar Vacaciones
+                          Activar Vacaciones
                         </button>
                       ) : (
                         <button
                           onClick={handleDesactivarVacaciones}
                           className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
                         >
-                          ✅ Finalizar Vacaciones
+                          Finalizar Vacaciones
                         </button>
                       )}
                     </>
                   ) : (
-                    <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <p className="text-red-600 font-medium">Doctor Bloqueado</p>
-                      <p className="text-xs text-gray-500 mt-1">No puede iniciar sesión</p>
+                      <p className="text-xs text-gray-500 mt-1">No puede iniciar sesion</p>
                     </div>
                   )}
                   
                   <p className="text-xs text-gray-400 text-center mt-2">
-                    {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesión' :
-                     estaEnVacaciones ? 'El doctor está en vacaciones, todos sus horarios están desactivados' :
-                     'El doctor está activo y disponible para citas'}
+                    {estaBloqueado ? 'El doctor ha sido retirado y no puede iniciar sesion' :
+                     estaEnVacaciones ? 'El doctor esta en vacaciones, todos sus horarios estan desactivados' :
+                     'El doctor esta activo y disponible para citas'}
                   </p>
                 </div>
               </div>
@@ -519,12 +512,12 @@ function DoctorDetallePage() {
                   <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
                   {estaBloqueado && (
                     <span className="text-sm text-red-600 font-medium">
-                      ⚠️ Bloqueado
+                      Bloqueado
                     </span>
                   )}
                   {estaEnVacaciones && (
                     <span className="text-sm text-yellow-600 font-medium">
-                      🌴 Vacaciones
+                      Vacaciones
                     </span>
                   )}
                 </div>
@@ -532,7 +525,7 @@ function DoctorDetallePage() {
                 <div className="overflow-x-auto">
                   <DataTable
                     columns={[
-                      { header: "Día", accessor: "diaNombre" },
+                      { header: "Dia", accessor: "diaNombre" },
                       { header: "Hora Inicio", accessor: "horaInicio" },
                       { header: "Hora Fin", accessor: "horaFin" },
                       { header: "Intervalo", accessor: "intervaloTexto" },
@@ -540,7 +533,7 @@ function DoctorDetallePage() {
                         header: "Estado", 
                         accessor: "estadoTexto",
                         render: (horario) => (
-                          <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+                          <span className={`font-medium ${horario.estadoColor}`}>
                             {horario.estadoTexto}
                           </span>
                         )
@@ -555,7 +548,7 @@ function DoctorDetallePage() {
           )}
 
           {/* ========================================== */}
-          {/* SECCIÓN HORARIOS - Solo Admin (vista completa) */}
+          {/* SECCION HORARIOS - Solo Admin (vista completa) */}
           {/* ========================================== */}
           {puedeVerHorarios && !puedeGestionarDoctor && (
             <div className="mt-6">
@@ -563,19 +556,19 @@ function DoctorDetallePage() {
                 <h2 className="text-lg md:text-xl font-semibold text-gray-700">Horarios</h2>
                 {estaBloqueado && (
                   <span className="text-sm text-red-600 font-medium">
-                    ⚠️ Doctor bloqueado - Todos los horarios desactivados
+                    Doctor bloqueado - Todos los horarios desactivados
                   </span>
                 )}
                 {estaEnVacaciones && (
                   <span className="text-sm text-yellow-600 font-medium">
-                    🌴 En vacaciones - Todos los horarios desactivados
+                    En vacaciones - Todos los horarios desactivados
                   </span>
                 )}
               </div>
               <div className="overflow-x-auto bg-white rounded-xl shadow-md border border-gray-200 p-4">
                 <DataTable
                   columns={[
-                    { header: "Día", accessor: "diaNombre" },
+                    { header: "Dia", accessor: "diaNombre" },
                     { header: "Hora Inicio", accessor: "horaInicio" },
                     { header: "Hora Fin", accessor: "horaFin" },
                     { header: "Intervalo", accessor: "intervaloTexto" },
@@ -583,7 +576,7 @@ function DoctorDetallePage() {
                       header: "Estado", 
                       accessor: "estadoTexto",
                       render: (horario) => (
-                        <span className={`px-2 py-1 rounded-full text-xs ${horario.estadoColor}`}>
+                        <span className={`font-medium ${horario.estadoColor}`}>
                           {horario.estadoTexto}
                         </span>
                       )
