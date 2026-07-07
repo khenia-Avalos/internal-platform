@@ -70,7 +70,7 @@ function PacienteDetallePage() {
             
             if (pacienteRes.data.ownerId) {
                 setDueno(pacienteRes.data.ownerId);
-                console.log('Dueno cargado');           
+                console.log('Dueño cargado');           
             }
             
             const internadosRes = await getInternadosByPacienteRequest(id);
@@ -93,9 +93,9 @@ function PacienteDetallePage() {
         
         setHistorialLoading(true);
         try {
-            console.log('Cargando historial clinico para paciente:', id);
+            console.log('Cargando historial clínico para paciente:', id);
             const res = await getHistorialByPacienteRequest(id);
-            console.log('Historial clinico cargado:', res.data);
+            console.log('Historial clínico cargado:', res.data);
             const historialOrdenado = (res.data.data || []).sort((a, b) => {
                 const fechaA = a.citaId?.fecha || a.createdAt;
                 const fechaB = b.citaId?.fecha || b.createdAt;
@@ -105,7 +105,7 @@ function PacienteDetallePage() {
             setPaginaActual(1);
             setConsultaAbierta(null);
         } catch (error) {
-            console.error('Error cargando historial clinico:', error);
+            console.error('Error cargando historial clínico:', error);
             if (error.response?.status !== 404) {
                 manejarErrorResponse(error, setErrors, setSuccessMessage);
             }
@@ -200,7 +200,7 @@ function PacienteDetallePage() {
     };
 
     const handleDeleteInternado = async (internadoId, internadoFecha) => {
-        if (!window.confirm(`Estas seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
+        if (!window.confirm(`¿Estás seguro de eliminar el internado del ${formatearFechaLocal(internadoFecha)}?`)) return;
         
         try {
             await deleteInternadoRequest(internadoId);
@@ -231,7 +231,7 @@ function PacienteDetallePage() {
         if (file) {
             setArchivoSeleccionado(file);
             console.log('Nombre:', file.name);
-            console.log('Tamanio:', file.size, 'bytes');
+            console.log('Tamaño:', file.size, 'bytes');
             console.log('Tipo:', file.type);
         }
     };
@@ -297,7 +297,7 @@ function PacienteDetallePage() {
 
     const handleDeleteDocumento = async (documentoId) => {
         console.log('Eliminando documento:', documentoId);
-        if (!window.confirm('Estas seguro de eliminar este documento?')) return;
+        if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
         try {
             await deleteDocumentoRequest(documentoId);
             await cargarDocumentos();
@@ -317,14 +317,14 @@ function PacienteDetallePage() {
         }
 
         const confirmar = window.confirm(
-            `Estas seguro de marcar a ${paciente.nombre} como fallecido?\n\n` +
-            `Esta accion:\n` +
-            `• No permitira agendar nuevas citas\n` +
-            `• No permitira subir documentos\n` +
-            `• No permitira crear internados\n` +
-            `• No permitira agregar registros clinicos\n\n` +
+            `¿Estás seguro de marcar a ${paciente.nombre} como fallecido?\n\n` +
+            `Esta acción:\n` +
+            `• No permitirá agendar nuevas citas\n` +
+            `• No permitirá subir documentos\n` +
+            `• No permitirá crear internados\n` +
+            `• No permitirá agregar registros clínicos\n\n` +
             `Motivo: ${motivoFallecimiento}\n\n` +
-            `Deseas continuar?`
+            `¿Deseas continuar?`
         );
         
         if (!confirmar) return;
@@ -343,13 +343,13 @@ function PacienteDetallePage() {
 
     const handleReactivarPaciente = async () => {
         const confirmar = window.confirm(
-            `Estas seguro de REACTIVAR a ${paciente.nombre}?\n\n` +
-            `Esta accion:\n` +
-            `• Permitira agendar nuevas citas\n` +
-            `• Permitira subir documentos\n` +
-            `• Permitira crear internados\n` +
-            `• Permitira agregar registros clinicos\n\n` +
-            `Deseas continuar?`
+            `¿Estás seguro de REACTIVAR a ${paciente.nombre}?\n\n` +
+            `Esta acción:\n` +
+            `• Permitirá agendar nuevas citas\n` +
+            `• Permitirá subir documentos\n` +
+            `• Permitirá crear internados\n` +
+            `• Permitirá agregar registros clínicos\n\n` +
+            `¿Deseas continuar?`
         );
         
         if (!confirmar) return;
@@ -398,7 +398,7 @@ function PacienteDetallePage() {
     const estaFallecido = paciente?.fallecido === true;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-full">
             {/* boton de volver */}
             <button
                 onClick={() => navigate('/pacientes')}
@@ -436,7 +436,7 @@ function PacienteDetallePage() {
                     {/* seccion 1: datos del paciente */}
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">Informacion del Paciente</h2>
+                            <h2 className="text-xl font-semibold text-gray-800">Información del Paciente</h2>
                             <div className="flex items-center gap-3 flex-wrap">
                                 {estaFallecido && (
                                     <span className="text-gray-600 text-sm font-medium">
@@ -476,7 +476,7 @@ function PacienteDetallePage() {
                                 { label: "Color de pelaje", value: paciente.colorPelaje || 'No especificado' },
                                 { label: "Peso", value: paciente.peso ? `${paciente.peso.valor} ${paciente.peso.unidad}` : 'No registrado' },
                                 { label: "Temperatura", value: paciente.temperatura ? `${paciente.temperatura} °C` : 'No registrada' },
-                                { label: "Antecedentes medicos", value: paciente.antecedentesMedicos || 'Sin antecedentes' },
+                                { label: "Antecedentes médicos", value: paciente.antecedentesMedicos || 'Sin antecedentes' },
                                 { label: "Fecha de registro", value: formatearFechaLocal(paciente.fechaRegistro || paciente.createdAt) },
                                 ...(estaFallecido ? [
                                     { label: "Fecha de fallecimiento", value: formatearFechaLocal(paciente.fechaFallecimiento) },
@@ -486,18 +486,18 @@ function PacienteDetallePage() {
                         />
                     </div>
 
-                    {/* seccion 2: datos del dueno */}
+                    {/* seccion 2: datos del dueño */}
                     {dueno && (
                         <div className="mb-8">
-                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Informacion del Dueno</h2>
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Información del Dueño</h2>
                             <InfoCard
                                 title={`${dueno.username} ${dueno.lastname}`}
                                 data={[
                                     { label: "Nombre completo", value: `${dueno.username} ${dueno.lastname}` },
-                                    { label: "Correo electronico", value: dueno.email },
-                                    { label: "Telefono", value: dueno.phoneNumber },
-                                    { label: "Cedula", value: dueno.cedula },
-                                    { label: "Direccion", value: dueno.direccion },
+                                    { label: "Correo electrónico", value: dueno.email },
+                                    { label: "Teléfono", value: dueno.phoneNumber },
+                                    { label: "Cédula", value: dueno.cedula },
+                                    { label: "Dirección", value: dueno.direccion },
                                 ]}
                             />
                         </div>
@@ -512,9 +512,9 @@ function PacienteDetallePage() {
                             {/* subseccion: historial clinico */}
                             <div className="p-6">
                                 <div className="text-center mb-6">
-                                    <h2 className="text-xl font-semibold text-gray-800">Historial Clinico</h2>
+                                    <h2 className="text-xl font-semibold text-gray-800">Historial Clínico</h2>
                                     <p className="text-sm text-gray-500 mt-1">
-                                        Registro completo de todas las consultas medicas de {paciente.nombre}
+                                        Registro completo de todas las consultas médicas de {paciente.nombre}
                                     </p>
                                     <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block mt-2">
                                         {historialCompleto.length} consultas registradas
@@ -528,7 +528,7 @@ function PacienteDetallePage() {
                                 ) : historialCompleto.length === 0 ? (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                                         <p className="text-gray-500 text-lg">No hay consultas registradas para esta mascota</p>
-                                        <p className="text-gray-400 text-sm mt-2">Las consultas se registran automaticamente al completar una cita</p>
+                                        <p className="text-gray-400 text-sm mt-2">Las consultas se registran automáticamente al completar una cita</p>
                                     </div>
                                 ) : (
                                     <>
@@ -596,11 +596,11 @@ function PacienteDetallePage() {
                                                                         <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Sintomas reportados</p>
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas reportados</p>
                                                                         <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnostico</p>
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
                                                                         <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -616,7 +616,7 @@ function PacienteDetallePage() {
                                                                         </p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Examenes realizados</p>
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
                                                                         <p className="text-gray-800 font-medium mt-1">
                                                                             {registro.examenes && registro.examenes.length > 0 
                                                                                 ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
@@ -628,7 +628,7 @@ function PacienteDetallePage() {
                                                                         <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
-                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Proxima cita sugerida</p>
+                                                                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
                                                                         <p className="text-gray-800 font-medium mt-1">
                                                                             {registro.proximaCitaSugerida 
                                                                                 ? formatearFechaHora(registro.proximaCitaSugerida)
@@ -653,7 +653,7 @@ function PacienteDetallePage() {
                                                     Anterior
                                                 </button>
                                                 <span className="text-sm text-gray-600">
-                                                    Pagina {paginaActual} de {totalPaginas}
+                                                    Página {paginaActual} de {totalPaginas}
                                                 </span>
                                                 <button 
                                                     onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
@@ -676,7 +676,7 @@ function PacienteDetallePage() {
                                 <div className="text-center mb-6">
                                     <h2 className="text-xl font-semibold text-gray-800">Documentos Adjuntos</h2>
                                     <p className="text-sm text-gray-500 mt-1">
-                                        Resultados de laboratorio, radiografias, recetas y otros documentos
+                                        Resultados de laboratorio, radiografías, recetas y otros documentos
                                     </p>
                                 </div>
 
@@ -741,25 +741,25 @@ function PacienteDetallePage() {
                                                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
                                                 >
                                                     <option value="resultado_lab">Resultado de laboratorio</option>
-                                                    <option value="radiografia">Radiografia</option>
-                                                    <option value="receta">Receta medica</option>
-                                                    <option value="informe">Informe medico</option>
+                                                    <option value="radiografia">Radiografía</option>
+                                                    <option value="receta">Receta médica</option>
+                                                    <option value="informe">Informe médico</option>
                                                     <option value="otro">Otro</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                    Descripcion (opcional)
+                                                    Descripción (opcional)
                                                 </label>
                                                 <textarea
                                                     value={documentoFormData.descripcion}
                                                     onChange={(e) => {
-                                                        console.log('Descripcion actualizada:', e.target.value);
+                                                        console.log('Descripción actualizada:', e.target.value);
                                                         setDocumentoFormData({ ...documentoFormData, descripcion: e.target.value });
                                                     }}
                                                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
                                                     rows={2}
-                                                    placeholder="Breve descripcion del documento..."
+                                                    placeholder="Breve descripción del documento..."
                                                 />
                                             </div>
                                             <div>
@@ -773,7 +773,7 @@ function PacienteDetallePage() {
                                                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
                                                     required
                                                 />
-                                                <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (max. 10MB)</p>
+                                                <p className="text-xs text-gray-400 mt-1">Formatos permitidos: PDF, JPG, PNG (máx. 10MB)</p>
                                             </div>
                                             <button
                                                 type="submit"
@@ -794,7 +794,7 @@ function PacienteDetallePage() {
                                 ) : documentos.length === 0 ? (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                                         <p className="text-gray-500 text-lg">No hay documentos adjuntos</p>
-                                        <p className="text-gray-400 text-sm mt-2">Sube resultados, radiografias o recetas para este paciente</p>
+                                        <p className="text-gray-400 text-sm mt-2">Sube resultados, radiografías o recetas para este paciente</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -941,7 +941,7 @@ function PacienteDetallePage() {
                                                             <span className="font-medium text-gray-700">{internado.medicamento || 'No especificado'}</span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                            <span className="text-gray-500">Via:</span>
+                                                            <span className="text-gray-500">Vía:</span>
                                                             <span className="font-medium text-gray-700">{internado.via || 'No especificada'}</span>
                                                         </div>
                                                         <div className="flex justify-between">
@@ -998,8 +998,8 @@ function PacienteDetallePage() {
                                 </div>
                                 
                                 <p className="text-gray-600 mb-4 text-sm">
-                                    Estas a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
-                                    Esta accion no permitira crear citas, documentos ni internados.
+                                    Estás a punto de marcar a <strong>{paciente?.nombre}</strong> como fallecido.
+                                    Esta acción no permitirá crear citas, documentos ni internados.
                                 </p>
                                 
                                 <div className="mb-4">
@@ -1011,10 +1011,10 @@ function PacienteDetallePage() {
                                         onChange={(e) => setMotivoFallecimiento(e.target.value)}
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-gray-500 focus:border-transparent transition text-sm"
                                         rows={3}
-                                        placeholder="Ej: Paro cardiaco, enfermedad cronica, accidente..."
+                                        placeholder="Ej: Paro cardíaco, enfermedad crónica, accidente..."
                                         required
                                     />
-                                    <p className="text-xs text-gray-400 mt-1">Este motivo quedara registrado en el historial</p>
+                                    <p className="text-xs text-gray-400 mt-1">Este motivo quedará registrado en el historial</p>
                                 </div>
                                 
                                 <div className="flex gap-3">
