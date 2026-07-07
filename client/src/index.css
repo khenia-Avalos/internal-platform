@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gradient-to-br from-white to-cyan-300 text-black min-h-screen m-0 p-0;
+  @apply bg-gradient-to-br from-white to-sky-300 text-black min-h-screen m-0 p-0;
 }
 
 /* ✅ Ajustes para pantallas pequeñas */

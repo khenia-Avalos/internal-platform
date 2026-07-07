@@ -131,42 +131,42 @@ function ClienteTemporalDetallePage() {
       nuevosFieldErrors.lastname = 'El apellido es requerido';
     }
     
-    // Validar cedula
+    // Validar cédula
     if (!formData.cedula || formData.cedula.trim() === '') {
-      nuevosErrores.push('La cedula es requerida');
-      nuevosFieldErrors.cedula = 'La cedula es requerida';
+      nuevosErrores.push('La cédula es requerida');
+      nuevosFieldErrors.cedula = 'La cédula es requerida';
     } else if (!validarCedula(formData.cedula)) {
-      nuevosErrores.push('La cedula debe contener solo numeros (6-12 digitos)');
-      nuevosFieldErrors.cedula = 'La cedula debe tener 6-12 digitos numericos';
+      nuevosErrores.push('La cédula debe contener solo números (6-12 dígitos)');
+      nuevosFieldErrors.cedula = 'La cédula debe tener 6-12 dígitos numéricos';
     }
     
-    // Validar direccion
+    // Validar dirección
     if (!formData.direccion || formData.direccion.trim() === '') {
-      nuevosErrores.push('La direccion es requerida');
-      nuevosFieldErrors.direccion = 'La direccion es requerida';
+      nuevosErrores.push('La dirección es requerida');
+      nuevosFieldErrors.direccion = 'La dirección es requerida';
     }
     
     // Validar email
     if (!formData.email || formData.email.trim() === '') {
-      nuevosErrores.push('El correo electronico es requerido');
-      nuevosFieldErrors.email = 'El correo electronico es requerido';
+      nuevosErrores.push('El correo electrónico es requerido');
+      nuevosFieldErrors.email = 'El correo electrónico es requerido';
     } else if (!validarEmail(formData.email)) {
-      nuevosErrores.push('Ingrese un correo electronico valido (ejemplo: usuario@dominio.com)');
-      nuevosFieldErrors.email = 'Formato de email invalido';
+      nuevosErrores.push('Ingrese un correo electrónico válido (ejemplo: usuario@dominio.com)');
+      nuevosFieldErrors.email = 'Formato de email inválido';
     }
     
     // VALIDACIONES DE LA MASCOTA
     
     // Validar raza (opcional)
     if (formData.raza && formData.raza.length > 50) {
-      nuevosErrores.push('La raza no puede tener mas de 50 caracteres');
-      nuevosFieldErrors.raza = 'Maximo 50 caracteres';
+      nuevosErrores.push('La raza no puede tener más de 50 caracteres');
+      nuevosFieldErrors.raza = 'Máximo 50 caracteres';
     }
     
     // Validar edad
     if (formData.edad && !validarEdad(formData.edad)) {
-      nuevosErrores.push('Ingrese una edad valida (0-50 años)');
-      nuevosFieldErrors.edad = 'Edad invalida (0-50 años)';
+      nuevosErrores.push('Ingrese una edad válida (0-50 años)');
+      nuevosFieldErrors.edad = 'Edad inválida (0-50 años)';
     }
     
     // Validar sexo
@@ -178,14 +178,14 @@ function ClienteTemporalDetallePage() {
     
     // Validar peso
     if (formData.peso && !validarPeso(formData.peso)) {
-      nuevosErrores.push('Ingrese un peso valido (ejemplo: 8.5)');
-      nuevosFieldErrors.peso = 'Formato de peso invalido';
+      nuevosErrores.push('Ingrese un peso válido (ejemplo: 8.5)');
+      nuevosFieldErrors.peso = 'Formato de peso inválido';
     }
     
     // Validar temperatura
     if (formData.temperatura && !validarTemperatura(formData.temperatura)) {
-      nuevosErrores.push('Ingrese una temperatura valida (ejemplo: 38.5)');
-      nuevosFieldErrors.temperatura = 'Formato de temperatura invalido';
+      nuevosErrores.push('Ingrese una temperatura válida (ejemplo: 38.5)');
+      nuevosFieldErrors.temperatura = 'Formato de temperatura inválido';
     }
     
     if (nuevosErrores.length > 0) {
@@ -258,7 +258,7 @@ function ClienteTemporalDetallePage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="px-4 md:px-6 py-4 md:py-6 max-w-full">
       <Toaster position="top-right" richColors closeButton duration={3000} />
       
       <button
@@ -293,7 +293,7 @@ function ClienteTemporalDetallePage() {
         <>
           {/* Seccion: Informacion del Cliente Temporal con boton a la derecha */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Informacion del Cliente Temporal</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Información del Cliente Temporal</h2>
             {cliente.estado !== 'completo' && (
               <button
                 type="button"
@@ -313,8 +313,8 @@ function ClienteTemporalDetallePage() {
             title=""
             data={[
               { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname || ''}` },
-              { label: "Cedula", value: cliente.cedula || 'No registrada' },
-              { label: "Telefono", value: cliente.phoneNumber },
+              { label: "Cédula", value: cliente.cedula || 'No registrada' },
+              { label: "Teléfono", value: cliente.phoneNumber },
               { label: "Email", value: cliente.email || 'No registrado' },
               { label: "Estado", value: cliente.estado === 'temporal' ? 'Pendiente de registro' : 'Registro completado' },
               { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
@@ -326,13 +326,13 @@ function ClienteTemporalDetallePage() {
               <InfoCard
                 title="Datos de Registro Completo"
                 data={[
-                  { label: "Direccion", value: cliente.direccion },
+                  { label: "Dirección", value: cliente.direccion },
                 ]}
               />
             </div>
           )}
 
-          {/* Seccion: Citas Agendadas - Usando la misma InfoCard pero ocupando todo el ancho */}
+          {/* Seccion: Citas Agendadas */}
           <div className="mt-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Citas Agendadas</h3>
             {cliente.citasTemporales && cliente.citasTemporales.length > 0 ? (
@@ -340,14 +340,14 @@ function ClienteTemporalDetallePage() {
                 {cliente.citasTemporales.map((cita, index) => (
                   <InfoCard
                     key={index}
-                    title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? 'Consulta' : 'Estetica'}`}
+                    title={`Cita ${index + 1} - ${cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética'}`}
                     data={[
                       { label: "Fecha", value: mostrarFechaLocal(cita.fecha) },
                       { label: "Horario", value: `${cita.horaInicio} - ${cita.horaFin}` },
                       { label: "Mascota", value: cita.pacienteTemporal?.nombre || 'No especificada' },
                       { label: "Especie", value: cita.pacienteTemporal?.especie || 'No especificada' },
-                      { label: "Sintomas", value: cita.sintomas || 'No registrados' },
-                      { label: "Tiempo de sintomas", value: cita.tiempoSintomas || 'No registrado' },
+                      { label: "Síntomas", value: cita.sintomas || 'No registrados' },
+                      { label: "Tiempo de síntomas", value: cita.tiempoSintomas || 'No registrado' },
                       { label: "Notas", value: cita.notas || 'Sin notas' },
                     ]}
                   />
@@ -406,14 +406,14 @@ function ClienteTemporalDetallePage() {
               value={formData.lastname || ''}
               onChange={(e) => handleFormChange('lastname', e.target.value)}
               className={getInputClass('lastname')}
-              placeholder="Ej: Perez Gomez"
+              placeholder="Ej: Pérez Gómez"
             />
           </div>
 
-          {/* Cedula */}
+          {/* Cédula */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cedula *
+              Cédula *
               {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
             </label>
             <input
@@ -424,13 +424,13 @@ function ClienteTemporalDetallePage() {
               className={getInputClass('cedula')}
               placeholder="000000000"
             />
-            <p className="text-xs text-gray-400 mt-1">Solo numeros, 6-12 digitos</p>
+            <p className="text-xs text-gray-400 mt-1">Solo números, 6-12 dígitos</p>
           </div>
 
-          {/* Direccion */}
+          {/* Dirección */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Direccion *
+              Dirección *
               {fieldErrors.direccion && <span className="text-red-500 ml-2 text-xs">{fieldErrors.direccion}</span>}
             </label>
             <input
@@ -439,14 +439,14 @@ function ClienteTemporalDetallePage() {
               value={formData.direccion || ''}
               onChange={(e) => handleFormChange('direccion', e.target.value)}
               className={getInputClass('direccion')}
-              placeholder="San Jose, Costa Rica"
+              placeholder="San José, Costa Rica"
             />
           </div>
 
-          {/* Correo electronico */}
+          {/* Correo electrónico */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo electronico *
+              Correo electrónico *
               {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
             </label>
             <input
@@ -458,14 +458,14 @@ function ClienteTemporalDetallePage() {
               placeholder="cliente@ejemplo.com"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Se enviara un correo con las credenciales de acceso
+              Se enviará un correo con las credenciales de acceso
             </p>
           </div>
 
           {/* SECCION: DATOS DE LA MASCOTA */}
           <div className="border-b border-gray-200 pb-2 mt-4 mb-2">
             <h3 className="text-md font-semibold text-gray-700">Datos de la Mascota</h3>
-            <p className="text-xs text-gray-400">Completa la informacion de tu mascota</p>
+            <p className="text-xs text-gray-400">Completa la información de tu mascota</p>
           </div>
 
           {/* Raza */}
@@ -480,7 +480,7 @@ function ClienteTemporalDetallePage() {
               value={formData.raza || ''}
               onChange={(e) => handleFormChange('raza', e.target.value)}
               className={getInputClass('raza')}
-              placeholder="Ej: Golden Retriever, Pastor Aleman"
+              placeholder="Ej: Golden Retriever, Pastor Alemán"
             />
           </div>
 
@@ -533,7 +533,7 @@ function ClienteTemporalDetallePage() {
               value={formData.colorPelaje || ''}
               onChange={(e) => handleFormChange('colorPelaje', e.target.value)}
               className={getInputClass('colorPelaje')}
-              placeholder="Ej: Blanco, Negro, Cafe, Manchado"
+              placeholder="Ej: Blanco, Negro, Café, Manchado"
             />
           </div>
 
@@ -575,10 +575,10 @@ function ClienteTemporalDetallePage() {
             />
           </div>
 
-          {/* Antecedentes Medicos */}
+          {/* Antecedentes Médicos */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Antecedentes Medicos
+              Antecedentes Médicos
               {fieldErrors.antecedentesMedicos && <span className="text-red-500 ml-2 text-xs">{fieldErrors.antecedentesMedicos}</span>}
             </label>
             <textarea
@@ -587,9 +587,9 @@ function ClienteTemporalDetallePage() {
               onChange={(e) => handleFormChange('antecedentesMedicos', e.target.value)}
               rows={3}
               className={getInputClass('antecedentesMedicos')}
-              placeholder="Ej: Alergias, enfermedades previas, cirugias, medicamentos actuales..."
+              placeholder="Ej: Alergias, enfermedades previas, cirugías, medicamentos actuales..."
             />
-            <p className="text-xs text-gray-400 mt-1">Informacion relevante sobre la salud de tu mascota</p>
+            <p className="text-xs text-gray-400 mt-1">Información relevante sobre la salud de tu mascota</p>
           </div>
 
           {/* Botones */}
