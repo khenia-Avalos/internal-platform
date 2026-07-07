@@ -171,7 +171,7 @@ function DoctorDetallePage() {
     const motivoFinal = motivoBloqueo.trim() || 'No asignado';
     
     const confirmar = window.confirm(
-      `Estás seguro de BLOQUEAR a ${doctor.username}?\n\n` +
+      `Estas seguro de BLOQUEAR a ${doctor.username}?\n\n` +
       `Esta accion:\n` +
       `• Desactivara TODOS sus horarios\n` +
       `• Cambiara su correo a: ${doctor.username.toLowerCase()}retirado@gmail.com\n` +
@@ -205,7 +205,7 @@ function DoctorDetallePage() {
 
   const handleActivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `Estás seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Estas seguro de ACTIVAR VACACIONES para ${doctor.username}?\n\n` +
       `Esta accion desactivara TODOS sus horarios.\n\n` +
       `Deseas continuar?`
     );
@@ -230,7 +230,7 @@ function DoctorDetallePage() {
 
   const handleDesactivarVacaciones = async () => {
     const confirmar = window.confirm(
-      `Estás seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
+      `Estas seguro de DESACTIVAR VACACIONES para ${doctor.username}?\n\n` +
       `Esta accion activara TODOS sus horarios.\n\n` +
       `Deseas continuar?`
     );
@@ -312,7 +312,7 @@ function DoctorDetallePage() {
 
       {!loading && doctor && (
         <>
-          {/* CARD 1: INFORMACION DEL DOCTOR - Componente reutilizable */}
+          {/* CARD 1: INFORMACION DEL DOCTOR */}
           <InfoCard
             title="Informacion del Doctor"
             data={[
@@ -323,87 +323,60 @@ function DoctorDetallePage() {
             ]}
           />
 
-          {/* CARD 2: ESTADO DEL DOCTOR - Card personalizada */}
+          {/* CARD 2: ESTADO DEL DOCTOR */}
           {puedeGestionarDoctor && (
             <div className="mt-6">
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Estado del Doctor</h3>
-                  <span className={`text-sm font-medium ${
-                    estaBloqueado ? 'text-red-600' :
-                    estaEnVacaciones ? 'text-cyan-600' :
-                    'text-green-600'
-                  }`}>
-                    {estaBloqueado ? 'Bloqueado' :
-                     estaEnVacaciones ? 'Vacaciones' :
-                     'Activo'}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-3">
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Fecha de registro</span>
-                      <span className="font-medium">{formatearFecha(doctor.createdAt)}</span>
+              <InfoCard
+                title="Estado del Doctor"
+                status={
+                  estaBloqueado ? 'Bloqueado' :
+                  estaEnVacaciones ? 'Vacaciones' :
+                  'Activo'
+                }
+                statusColor={
+                  estaBloqueado ? 'text-red-600' :
+                  estaEnVacaciones ? 'text-cyan-600' :
+                  'text-green-600'
+                }
+                layout="list"
+                data={[
+                  { label: "Fecha de registro", value: formatearFecha(doctor.createdAt) },
+                  ...(doctor.fechaRetiro ? [{ label: "Fecha de retiro", value: formatearFecha(doctor.fechaRetiro), valueColor: 'text-red-600' }] : []),
+                  ...(doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones ? [{ label: "Inicio de vacaciones", value: formatearFecha(doctor.fechaInicioVacaciones), valueColor: 'text-cyan-600' }] : []),
+                  ...(doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones ? [{ label: "Vacaciones", value: `${formatearFecha(doctor.fechaInicioVacaciones)} - ${formatearFecha(doctor.fechaFinVacaciones)}`, valueColor: 'text-green-600' }] : []),
+                  { label: "Ultima actualizacion", value: formatearFecha(doctor.updatedAt) },
+                ]}
+              >
+                {/* Informacion de bloqueo */}
+                {estaBloqueado && (
+                  <div className="mt-4 space-y-3 border-t pt-4 border-gray-200">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email original:</span>
+                      <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
                     </div>
-                    
-                    {doctor.fechaRetiro && (
-                      <div className="flex justify-between border-b border-gray-100 pb-2">
-                        <span className="text-gray-500">Fecha de retiro</span>
-                        <span className="font-medium text-red-600">{formatearFecha(doctor.fechaRetiro)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email actual:</span>
+                      <span className="font-medium text-red-600 break-all">{doctor.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Contrasena:</span>
+                      <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
+                    </div>
+                    {doctor.motivoBloqueo && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Motivo:</span>
+                        <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
                       </div>
                     )}
-                    
-                    {doctor.fechaInicioVacaciones && !doctor.fechaFinVacaciones && (
-                      <div className="flex justify-between border-b border-gray-100 pb-2">
-                        <span className="text-gray-500">Inicio de vacaciones</span>
-                        <span className="font-medium text-cyan-600">{formatearFecha(doctor.fechaInicioVacaciones)}</span>
-                      </div>
-                    )}
-                    
-                    {doctor.fechaInicioVacaciones && doctor.fechaFinVacaciones && (
-                      <div className="flex justify-between border-b border-gray-100 pb-2">
-                        <span className="text-gray-500">Vacaciones</span>
-                        <span className="font-medium text-green-600">
-                          {formatearFecha(doctor.fechaInicioVacaciones)} - {formatearFecha(doctor.fechaFinVacaciones)}
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between border-b border-gray-100 pb-2">
-                      <span className="text-gray-500">Ultima actualizacion</span>
-                      <span className="font-medium">{formatearFecha(doctor.updatedAt)}</span>
+                    <div className="mt-2 text-center text-red-600 font-medium text-sm">
+                      Doctor Bloqueado - No puede iniciar sesion
                     </div>
                   </div>
+                )}
 
-                  {/* Informacion de bloqueo */}
-                  {estaBloqueado && (
-                    <div className="space-y-3 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-4">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Email original:</span>
-                        <span className="font-medium text-gray-800">{doctor.emailOriginal || 'No registrado'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Email actual:</span>
-                        <span className="font-medium text-red-600 break-all">{doctor.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Contrasena:</span>
-                        <span className="font-medium text-red-600 font-mono text-xs">UsuarioRetiradoElExito</span>
-                      </div>
-                      {doctor.motivoBloqueo && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Motivo:</span>
-                          <span className="font-medium text-gray-800">{doctor.motivoBloqueo}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Botones de gestión */}
+                {/* Botones de gestion */}
                 {!estaBloqueado && (
-                  <div className="mt-4 flex flex-wrap gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3 pt-4 border-t border-gray-200">
                     <button
                       onClick={handleBloquearDoctor}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
@@ -441,17 +414,20 @@ function DoctorDetallePage() {
                    estaEnVacaciones ? 'El doctor esta en vacaciones, todos sus horarios estan desactivados' :
                    'El doctor esta activo y disponible para citas'}
                 </p>
-              </div>
+              </InfoCard>
             </div>
           )}
 
-          {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS - Card personalizada */}
+          {/* CARD 3: CONTROL DE ALMUERZO Y HORARIOS */}
           {(puedeVerControlAlmuerzo || puedeVerHorarios) && (
             <div className="mt-6">
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                {/* Sección: Control de Almuerzo */}
+              <InfoCard
+                title="Control de Almuerzo y Horarios"
+                className="p-0"
+              >
+                {/* Seccion: Control de Almuerzo */}
                 {puedeVerControlAlmuerzo && (
-                  <>
+                  <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Control de Almuerzo</h3>
                       <span className={`text-sm font-medium ${
@@ -503,7 +479,7 @@ function DoctorDetallePage() {
 
                     {/* Historial de pausas */}
                     {puedeVerHistorial && mostrarHistorial && (
-                      <div className="mb-6 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
+                      <div className="mb-4 border-t border-gray-200 pt-4 max-h-64 overflow-y-auto">
                         <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de Almuerzos</h4>
                         {historialPausas.length === 0 ? (
                           <p className="text-sm text-gray-500">No hay registros de almuerzos</p>
@@ -526,17 +502,17 @@ function DoctorDetallePage() {
                         )}
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
 
                 {/* Separador */}
                 {puedeVerControlAlmuerzo && puedeVerHorarios && (
-                  <div className="border-t border-gray-200 my-6"></div>
+                  <div className="border-t border-gray-200"></div>
                 )}
 
-                {/* Sección: Horarios */}
+                {/* Seccion: Horarios */}
                 {puedeVerHorarios && (
-                  <>
+                  <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Horarios del Doctor</h3>
                       {estaBloqueado && (
@@ -568,9 +544,9 @@ function DoctorDetallePage() {
                         onEdit={isAdmin ? handleEditHorario : undefined}  
                       />
                     </div>
-                  </>
+                  </div>
                 )}
-              </div>
+              </InfoCard>
             </div>
           )}
         </>
