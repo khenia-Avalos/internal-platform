@@ -116,6 +116,7 @@ export const deleteHorario = async (req, res) => {
     });
   }
 };
+
 // controllers/horario.controller.js
 
 export const getHorariosDisponiblesPublicos = async (req, res) => {
@@ -139,13 +140,14 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
-    // ========== USAR EL STRING DE FECHA DIRECTAMENTE ==========
-    // En lugar de crear objetos Date, usar el string para comparar
-    const hoyStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    // ========== OBTENER HOY EN ZONA HORARIA DE COSTA RICA ==========
+    // Usar la fecha actual en Costa Rica (UTC-6)
+    const hoyCR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
+    const hoyStr = hoyCR.toLocaleDateString('en-CA'); // YYYY-MM-DD
     
     console.log(` fecha recibida: ${fecha}`);
-    console.log(` hoy string: ${hoyStr}`);
-    console.log(` fecha < hoy: ${fecha < hoyStr}`);
+    console.log(` hoy CR: ${hoyStr}`);
+    console.log(` fecha < hoy CR: ${fecha < hoyStr}`);
     
     // Validar que la fecha no sea pasada (usando strings)
     if (fecha < hoyStr) {
@@ -153,14 +155,13 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       return res.json([]);
     }
     
-    // Verificar si es hoy
+    // Verificar si es hoy (en Costa Rica)
     const esHoy = fecha === hoyStr;
     console.log(` esHoy: ${esHoy}`);
     
     // Obtener hora actual en Costa Rica
-    const ahoraCR = new Date();
+    const ahoraCR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }));
     const horaActualStr = ahoraCR.toLocaleTimeString('en-US', { 
-      timeZone: 'America/Costa_Rica', 
       hour: '2-digit', 
       minute: '2-digit', 
       hour12: false 
@@ -169,7 +170,7 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     
     console.log(` Hora actual Costa Rica: ${horaActualStr} (${horaActualEnMinutos} minutos)`);
     
-    // Obtener el NÚMERO del día
+    // Obtener el NÚMERO del día (en Costa Rica)
     const fechaObj = new Date(fecha);
     const numeroDia = fechaObj.getDay();
     const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
