@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Select from 'react-select'; 
 
 export const DynamicForm = ({
@@ -8,21 +8,19 @@ export const DynamicForm = ({
   fields = [],
   onSubmit,
   errors = [],
-   successMessage = "",
+  successMessage = "",
   submitLabel = "Enviar",    
   redirect = {}, 
-   isLoading = false,
-   defaultValues = {},
-     customProps = {}  ,
-     layout = "centered"  //  NUEVA PROP con valor por defecto
-
+  isLoading = false,
+  defaultValues = {},
+  customProps = {}  ,
+  layout = "centered"  //  NUEVA PROP con valor por defecto
 }) => {
 
   //ESTADOS INTERNOS
   const [showPassword, setShowPassword] = useState({});
 
-//HOOKS DE RUTA
-
+  //HOOKS DE RUTA
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,11 +31,19 @@ export const DynamicForm = ({
     watch,
     setValue,
     formState: { errors: formErrors },
-  } = useForm({defaultValues}); //inicializa el formulario con valores predeterminados si se proporcionan
+  } = useForm({defaultValues});
+
+  // ========== FUNCIÓN PARA AUTO-CRECER TEXTAREA ==========
+  const autoGrowTextarea = (e) => {
+    const textarea = e.target;
+    // Resetear altura para calcular correctamente
+    textarea.style.height = 'auto';
+    // Establecer nueva altura basada en el scrollHeight
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
 
   const handleFormSubmit = handleSubmit(async (data) => {
-      await onSubmit(data);//solo ejecuta onSubmit , el padre maneja todo en context
- 
+    await onSubmit(data);
   });
 
   const togglePassword = (fieldName) => {
@@ -61,190 +67,208 @@ export const DynamicForm = ({
   }
 
   return (
-    <div className={layout === "centered" ? "flex h-[calc(100vh-100px)] items-center justify-center" : "w-full"}> {/* CAMBIO: condicional segun layout */}
+    <div className={layout === "centered" ? "flex h-[calc(100vh-100px)] items-center justify-center" : "w-full"}>
       
-      <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}> {/* CAMBIO: condicional segun layout */}
+      <div className={layout === "centered" ? "bg-white max-w-md w-full p-10 rounded-md shadow-md" : "w-full"}>
       
       {errors.map((error, i) => (
         <div className="bg-red-500 p-2 text-white text-center mb-2 rounded-lg" key={i}> 
           {error}
         </div>
       ))}
-           {successMessage && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-green-800 font-semibold">Exito</span>
-            </div>
-            <p className="text-green-700 mt-2">{successMessage}</p>
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <span className="text-green-800 font-semibold">Exito</span>
           </div>
-        )}
-        
-
-        <Link
-          to="/"
-          className="text-2xl font-bold text-cyan-600 text-center mb-6 block"
-        >
-          {title}
-        </Link>
-
-        <form onSubmit={handleFormSubmit} className={layout === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
-          {fields.map((field) => (
-            <div key={field.name} className={layout === "grid" ? "w-full" : ""}> {/* Cada campo ocupa el ancho de su columna si es grid */}
-              
-              {field.label && (
-                <h1 className="text-sm font-semibold text-black text-left mb-2">
-                  {field.label}
-                </h1>
-              )}
-
-              <div className="relative">
-                {field.type === "select" && field.isSearchable ? (
-                  // SOLUCION: Usar field.options si existe, sino usar customProps
-                  (() => {
-                    // Determinar que opciones usar: field.options o customProps
-                    const opciones = (field.options && field.options.length > 0) 
-                      ? field.options 
-                      : (customProps?.ownerOptions || []);
-                    
-                    // Determinar el valor seleccionado
-                    const valorActual = opciones.find(opt => opt.value === watch(field.name));
-                    
-                    return (
-                      <Select
-                        options={opciones}
-                        value={valorActual || null}
-                        onChange={(selected) => setValue(field.name, selected ? selected.value : '')}
-                        placeholder={`Selecciona ${field.label}`}
-                        isSearchable={true}
-                        className="my-2"
-                        styles={{
-                          control: (base) => ({
-                            ...base,
-                            borderColor: '#22d3ee',
-                            '&:hover': { borderColor: '#22d3ee' },
-                            boxShadow: 'none',
-                            minHeight: '42px'
-                          })
-                        }}
-                      />
-                    );
-                  })()
-                ) : field.type === "select" ? (
-                  <>
-                    <select
-                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      disabled={isLoading}
-                      {...register(field.name, field.validation)}
-                    >
-                      <option value="">Selecciona una opcion</option>
-                      {field.options?.map((opt) => (
-                        <option key={opt.value || opt} value={opt.value || opt}>
-                          {opt.label || opt}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/*  CAMPO CONDICIONAL PARA "OTRO" - AHORA DENTRO DEL FRAGMENTO */}
-                    {field.name === "especie" && watch('especie') === 'otro' && (
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          placeholder="Especifique la especie"
-                          className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
-                          {...register('especieOtro', { required: "Por favor especifica la especie" })}
-                        />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <input
-                      type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
-                      className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                      placeholder={field.placeholder}
-                      disabled={isLoading}
-                      {...register(field.name, field.validation)}
-                    />
-
-                    {field.type === "password" && (
-                      <div
-                        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                        onClick={() => !isLoading && togglePassword(field.name)}
-                      >
-                        {showPassword[field.name] ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="#06b6d4"
-                            className="w-5 h-5"
-                          >
-                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                            <path
-                              fillRule="evenodd"
-                              d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="#06b6d4"
-                            className="w-5 h-5"
-                          >
-                            <path d="M3.53 2.47a.75.75 0 00-1.06 1.06l18 18a.75.75 0 101.06-1.06l-18-18zM22.676 12.553a11.249 11.249 0 01-2.631 4.31l-3.099-3.099a5.25 5.25 0 00-6.71-6.71L7.759 4.577a11.217 11.217 0 014.242-.827c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113z" />
-                            <path d="M15.75 12c0 .18-.013.357-.037.53l-4.244-4.243A3.75 3.75 0 0115.75 12zM12.53 15.713l-4.243-4.244a3.75 3.75 0 004.243 4.243z" />
-                            <path d="M6.75 12c0-.619.107-1.213.304-1.764l-3.1-3.1a11.25 11.25 0 00-2.63 4.31c-.12.362-.12.752 0 1.114 1.489 4.467 5.704 7.69 10.675 7.69 1.5 0 2.933-.294 4.242-.827l-2.477-2.477A5.25 5.25 0 016.75 12z" />
-                          </svg>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {formErrors[field.name] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {formErrors[field.name].message || `${field.label} es requerido`}
-                </p>
-              )}
-
-              {field.helperText && (
-                <small className="text-gray-500 text-xs block mt-1">
-                  {field.helperText}
-                </small>
-              )}
-              
-            </div>
-          ))}
-
-       <button
-            type="submit"     
-            className={`w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed ${layout === "grid" ? "col-span-full" : ""}`}
-            disabled={isLoading}  
-          >
-            {isLoading ? "Processing..." : submitLabel} 
-          </button>
-          
-        </form>
-
-        <div className="mt-6 text-center">
-          {redirect.text && <p className="text-gray-700 mb-3">{redirect.text}</p>}
-          
-          {redirect.links?.map((link) => (
-            <div key={link.to + link.linkText}>
-              <Link to={link.to} className={link.className}>
-                {link.linkText}
-              </Link>
-              {link.separator && <div className="w-full h-px bg-gray-300 my-3"></div>}
-            </div>
-          ))}
+          <p className="text-green-700 mt-2">{successMessage}</p>
         </div>
+      )}
+
+      <Link
+        to="/"
+        className="text-2xl font-bold text-cyan-600 text-center mb-6 block"
+      >
+        {title}
+      </Link>
+
+      <form onSubmit={handleFormSubmit} className={layout === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
+        {fields.map((field) => (
+          <div key={field.name} className={layout === "grid" ? "w-full" : ""}>
+            
+            {field.label && (
+              <h1 className="text-sm font-semibold text-black text-left mb-2">
+                {field.label}
+              </h1>
+            )}
+
+            <div className="relative">
+              {field.type === "select" && field.isSearchable ? (
+                (() => {
+                  const opciones = (field.options && field.options.length > 0) 
+                    ? field.options 
+                    : (customProps?.ownerOptions || []);
+                  
+                  const valorActual = opciones.find(opt => opt.value === watch(field.name));
+                  
+                  return (
+                    <Select
+                      options={opciones}
+                      value={valorActual || null}
+                      onChange={(selected) => setValue(field.name, selected ? selected.value : '')}
+                      placeholder={`Selecciona ${field.label}`}
+                      isSearchable={true}
+                      className="my-2"
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          borderColor: '#22d3ee',
+                          '&:hover': { borderColor: '#22d3ee' },
+                          boxShadow: 'none',
+                          minHeight: '42px'
+                        })
+                      }}
+                    />
+                  );
+                })()
+              ) : field.type === "select" ? (
+                <>
+                  <select
+                    className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    disabled={isLoading}
+                    {...register(field.name, field.validation)}
+                  >
+                    <option value="">Selecciona una opcion</option>
+                    {field.options?.map((opt) => (
+                      <option key={opt.value || opt} value={opt.value || opt}>
+                        {opt.label || opt}
+                      </option>
+                    ))}
+                  </select>
+
+                  {field.name === "especie" && watch('especie') === 'otro' && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Especifique la especie"
+                        className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400"
+                        {...register('especieOtro', { required: "Por favor especifica la especie" })}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : field.type === "textarea" ? (
+                // ========== TEXTAREA CON ESTILOS MEJORADOS Y AUTO-CRECIMIENTO ==========
+                <textarea
+                  className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
+                  placeholder={field.placeholder}
+                  disabled={isLoading}
+                  rows={field.rows || 3}
+                  style={{
+                    minHeight: '60px',
+                    maxHeight: '400px',
+                    resize: 'vertical',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    overflowWrap: 'break-word',
+                    wordWrap: 'break-word',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: '1.5',
+                    boxSizing: 'border-box'
+                  }}
+                  onInput={autoGrowTextarea}
+                  {...register(field.name, field.validation)}
+                />
+              ) : (
+                <>
+                  <input
+                    type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
+                    className="w-full bg-white text-zinc-700 px-4 py-2.5 rounded-md my-2 border border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    placeholder={field.placeholder}
+                    disabled={isLoading}
+                    {...register(field.name, field.validation)}
+                  />
+
+                  {field.type === "password" && (
+                    <div
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                      onClick={() => !isLoading && togglePassword(field.name)}
+                    >
+                      {showPassword[field.name] ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="#06b6d4"
+                          className="w-5 h-5"
+                        >
+                          <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="#06b6d4"
+                          className="w-5 h-5"
+                        >
+                          <path d="M3.53 2.47a.75.75 0 00-1.06 1.06l18 18a.75.75 0 101.06-1.06l-18-18zM22.676 12.553a11.249 11.249 0 01-2.631 4.31l-3.099-3.099a5.25 5.25 0 00-6.71-6.71L7.759 4.577a11.217 11.217 0 014.242-.827c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113z" />
+                          <path d="M15.75 12c0 .18-.013.357-.037.53l-4.244-4.243A3.75 3.75 0 0115.75 12zM12.53 15.713l-4.243-4.244a3.75 3.75 0 004.243 4.243z" />
+                          <path d="M6.75 12c0-.619.107-1.213.304-1.764l-3.1-3.1a11.25 11.25 0 00-2.63 4.31c-.12.362-.12.752 0 1.114 1.489 4.467 5.704 7.69 10.675 7.69 1.5 0 2.933-.294 4.242-.827l-2.477-2.477A5.25 5.25 0 016.75 12z" />
+                        </svg>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {formErrors[field.name] && (
+              <p className="text-red-500 text-sm mt-1">
+                {formErrors[field.name].message || `${field.label} es requerido`}
+              </p>
+            )}
+
+            {field.helperText && (
+              <small className="text-gray-500 text-xs block mt-1">
+                {field.helperText}
+              </small>
+            )}
+            
+          </div>
+        ))}
+
+        <button
+          type="submit"     
+          className={`w-full bg-cyan-600 text-white py-2.5 rounded-md hover:bg-cyan-700 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed ${layout === "grid" ? "col-span-full" : ""}`}
+          disabled={isLoading}  
+        >
+          {isLoading ? "Processing..." : submitLabel} 
+        </button>
         
+      </form>
+
+      <div className="mt-6 text-center">
+        {redirect.text && <p className="text-gray-700 mb-3">{redirect.text}</p>}
+        
+        {redirect.links?.map((link) => (
+          <div key={link.to + link.linkText}>
+            <Link to={link.to} className={link.className}>
+              {link.linkText}
+            </Link>
+            {link.separator && <div className="w-full h-px bg-gray-300 my-3"></div>}
+          </div>
+        ))}
       </div>
-      </div>
+      
+    </div>
+    </div>
   );
 };
