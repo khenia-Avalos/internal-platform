@@ -55,13 +55,26 @@ export const InfoCard = ({
                 );
               }
               
-              // Item normal con fondo gris y alineación a la izquierda
+              // ========== Item normal con soporte para saltos de línea ==========
+              const isLongText = item.preserveLines || 
+                (typeof item.value === 'string' && item.value.includes('\n'));
+              
+              // Si el texto tiene saltos de línea o es muy largo, usar col-span completo
+              const colSpanClass = isLongText || item.fullWidth ? 'col-span-full' : '';
+              
               return (
-                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div key={index} className={`bg-gray-50 p-4 rounded-lg border border-gray-200 ${colSpanClass}`}>
                   <p className="text-sm text-gray-500">{item.label}</p>
-                  <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
+                  <div 
+                    className={`text-base font-medium ${item.valueColor || 'text-gray-800'} ${isLongText ? 'whitespace-pre-wrap break-words' : ''}`}
+                    style={isLongText ? { 
+                      whiteSpace: 'pre-wrap', 
+                      wordBreak: 'break-word',
+                      lineHeight: '1.5'
+                    } : {}}
+                  >
                     {item.value || 'No especificado'}
-                  </p>
+                  </div>
                 </div>
               );
             })}
