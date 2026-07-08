@@ -95,59 +95,26 @@ function ClienteTemporalDetallePage() {
     }
   };
 
-  // construir todos los datos en un solo array con separadores
-  const getDatosCompletos = () => {
+  // construir data para InfoCard unificada
+  const getDatosUnificados = () => {
     if (!cliente) return [];
     
-    const datos = [];
+    const datos = [
+      { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname || ''}` },
+      { label: "Cédula", value: cliente.cedula || 'No registrada' },
+      { label: "Teléfono", value: cliente.phoneNumber },
+      { label: "Email", value: cliente.email || 'No registrado' },
+      { label: "Estado", value: cliente.estado === 'temporal' ? 'Pendiente de registro' : 'Registro completado' },
+      { label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) },
+    ];
     
-    // SECCION 1: Información del Cliente
-    datos.push({ label: "INFORMACIÓN DEL CLIENTE", value: "", isTitle: true });
-    datos.push({ label: "Nombre completo", value: `${cliente.username} ${cliente.lastname || ''}` });
-    datos.push({ label: "Cédula", value: cliente.cedula || 'No registrada' });
-    datos.push({ label: "Teléfono", value: cliente.phoneNumber });
-    datos.push({ label: "Email", value: cliente.email || 'No registrado' });
-    datos.push({ label: "Estado", value: cliente.estado === 'temporal' ? 'Pendiente de registro' : 'Registro completado' });
-    datos.push({ label: "Fecha de registro", value: mostrarFechaLocal(cliente.createdAt) });
-    
+    // agregar direccion si existe
     if (cliente.direccion) {
       datos.push({ label: "Dirección", value: cliente.direccion });
     }
     
-    // separador
-    datos.push({ label: "", value: "", isSeparator: true });
-    
-    // SECCION 2: Información de la Mascota
-    datos.push({ label: "INFORMACIÓN DE LA MASCOTA", value: "", isTitle: true });
-    
-    const tieneDatosMascota = cliente.citasTemporales && 
-                              cliente.citasTemporales.length > 0 && 
-                              cliente.citasTemporales[0].pacienteTemporal;
-    
-    if (tieneDatosMascota) {
-      const mascota = cliente.citasTemporales[0].pacienteTemporal;
-      datos.push({ label: "Nombre de la mascota", value: mascota.nombre || 'No especificado' });
-      datos.push({ label: "Especie", value: mascota.especie || 'No especificada' });
-      datos.push({ label: "Raza", value: mascota.raza || 'No especificada' });
-      datos.push({ label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' });
-      datos.push({ label: "Sexo", value: mascota.sexo || 'No especificado' });
-      datos.push({ label: "Color de pelaje", value: mascota.colorPelaje || 'No especificado' });
-      datos.push({ label: "Peso", value: mascota.peso ? `${mascota.peso.valor} ${mascota.peso.unidad}` : 'No registrado' });
-      datos.push({ label: "Temperatura", value: mascota.temperatura ? `${mascota.temperatura} °C` : 'No registrada' });
-      datos.push({ label: "Antecedentes médicos", value: mascota.antecedentesMedicos || 'Sin antecedentes' });
-    } else {
-      datos.push({ label: "Mascota", value: "No hay datos de mascota registrados" });
-    }
-    
-    // separador
-    datos.push({ label: "", value: "", isSeparator: true });
-    
-    // SECCION 3: Citas Agendadas
-    datos.push({ label: "CITAS AGENDADAS", value: "", isTitle: true });
-    
-    if (!cliente.citasTemporales || cliente.citasTemporales.length === 0) {
-      datos.push({ label: "Citas", value: "No hay citas agendadas" });
-    } else {
+    // agregar citas agendadas con el mismo formato que tenias
+    if (cliente.citasTemporales && cliente.citasTemporales.length > 0) {
       cliente.citasTemporales.forEach((cita, index) => {
         const tipo = cita.tipoCita === 'consulta' ? 'Consulta' : 'Estética';
         const mascota = cita.pacienteTemporal?.nombre || 'No especificada';
@@ -158,21 +125,17 @@ function ClienteTemporalDetallePage() {
         const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
         const notas = cita.notas || 'Sin notas';
         
-        // subtitulo de cita
-        datos.push({ label: `Cita ${index + 1}: ${tipo}`, value: "", isSubtitle: true });
-        datos.push({ label: "  Fecha", value: fecha });
-        datos.push({ label: "  Horario", value: horario });
-        datos.push({ label: "  Mascota", value: mascota });
-        datos.push({ label: "  Especie", value: especie });
-        datos.push({ label: "  Síntomas", value: sintomas });
-        datos.push({ label: "  Tiempo de síntomas", value: tiempoSintomas });
-        datos.push({ label: "  Notas", value: notas });
-        
-        // separador entre citas
-        if (index < cliente.citasTemporales.length - 1) {
-          datos.push({ label: "", value: "", isSeparator: true });
-        }
+        datos.push({ label: `Cita ${index + 1} - ${tipo}`, value: "" });
+        datos.push({ label: "Fecha", value: fecha });
+        datos.push({ label: "Horario", value: horario });
+        datos.push({ label: "Mascota", value: mascota });
+        datos.push({ label: "Especie", value: especie });
+        datos.push({ label: "Síntomas", value: sintomas });
+        datos.push({ label: "Tiempo de síntomas", value: tiempoSintomas });
+        datos.push({ label: "Notas", value: notas });
       });
+    } else {
+      datos.push({ label: "Citas agendadas", value: "No hay citas agendadas" });
     }
     
     return datos;
@@ -229,10 +192,10 @@ function ClienteTemporalDetallePage() {
             )}
           </div>
 
-          {/* Card unificada con todas las secciones */}
+          {/* card unificada con toda la informacion */}
           <InfoCard
             title=""
-            data={getDatosCompletos()}
+            data={getDatosUnificados()}
           />
         </>
       )}
