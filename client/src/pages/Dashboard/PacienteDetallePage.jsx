@@ -593,23 +593,23 @@ function PacienteDetallePage() {
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Motivo de la consulta</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">{registro.motivoConsulta || 'No especificado'}</p>
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">{registro.motivoConsulta || 'No especificado'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Síntomas reportados</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">{registro.sintomas || 'No reportados'}</p>
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">{registro.sintomas || 'No reportados'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Diagnóstico</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">{registro.diagnostico || 'No especificado'}</p>
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">{registro.diagnostico || 'No especificado'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tratamiento indicado</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">{registro.tratamiento || 'No especificado'}</p>
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">{registro.tratamiento || 'No especificado'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">
                                                                             {Array.isArray(registro.medicamentos) && registro.medicamentos.length > 0 
                                                                                 ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
                                                                                 : 'No especificados'}
@@ -617,7 +617,7 @@ function PacienteDetallePage() {
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">
                                                                             {Array.isArray(registro.examenes) && registro.examenes.length > 0 
                                                                                 ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
                                                                                 : 'No especificados'}
@@ -625,11 +625,11 @@ function PacienteDetallePage() {
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Observaciones adicionales</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">{registro.observaciones || 'No especificadas'}</p>
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">{registro.observaciones || 'No especificadas'}</p>
                                                                     </div>
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 md:col-span-2">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Próxima cita sugerida</p>
-                                                                        <p className="text-gray-800 font-medium mt-1">
+                                                                        <p className="text-gray-800 font-medium mt-1 whitespace-pre-wrap break-words">
                                                                             {registro.proximaCitaSugerida 
                                                                                 ? formatearFechaHora(registro.proximaCitaSugerida)
                                                                                 : 'No sugerida'}
