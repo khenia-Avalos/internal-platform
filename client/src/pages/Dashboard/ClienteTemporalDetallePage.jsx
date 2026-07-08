@@ -125,7 +125,7 @@ function ClienteTemporalDetallePage() {
         const tiempoSintomas = cita.tiempoSintomas || 'No registrado';
         const notas = cita.notas || 'Sin notas';
         
-        datos.push({ label: `Cita ${index + 1} - ${tipo}`, value: "" });
+        datos.push({ label: `Cita ${index + 1} - ${tipo}`, value: "", isTitle: true });
         datos.push({ label: "Fecha", value: fecha });
         datos.push({ label: "Horario", value: horario });
         datos.push({ label: "Mascota", value: mascota });
