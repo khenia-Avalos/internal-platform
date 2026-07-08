@@ -197,7 +197,6 @@ function ClienteTemporalDetallePage() {
           <InfoCard
             title=""
             data={getDatosUnificados()}
-            layout="list"
           />
         </>
       )}
