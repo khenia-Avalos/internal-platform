@@ -31,7 +31,7 @@ export const InfoCard = ({
         {data && data.length > 0 && (
           <div className={
             layout === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'
+              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'
               : 'space-y-3'
           }>
             {data.map((item, index) => {
@@ -55,9 +55,9 @@ export const InfoCard = ({
                 );
               }
               
-              // Item normal con texto centrado
+              // Item normal con fondo gris y alineación a la izquierda
               return (
-                <div key={index} className="text-center">
+                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <p className="text-sm text-gray-500">{item.label}</p>
                   <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
                     {item.value || 'No especificado'}
