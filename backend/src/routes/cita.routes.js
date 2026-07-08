@@ -1,3 +1,4 @@
+// backend/src/routes/cita.routes.js
 import { Router } from 'express';
 import { 
   createCita,
@@ -13,17 +14,20 @@ import {
 } from '../controllers/cita.controller.js';
 import { validateToken } from '../middlewares/validateToken.js';
 
+// Importar el controlador de horarios
+import { getHorariosDisponiblesPublicos } from '../controllers/horario.controller.js';
+
 const router = Router();
 
 // ============================================
 // RUTAS PÚBLICAS (sin autenticación)
 // ============================================
 
-// Obtener horarios disponibles (ruta principal)
+// Obtener horarios disponibles (ruta principal - para usuarios autenticados)
 router.get('/citas/horarios/:doctorId/:fecha', getHorariosDisponibles);
 
-// Ruta pública para horarios (para compatibilidad con HomePage)
-router.get('/public/horarios/:doctorId/:fecha', getHorariosDisponibles);
+// Ruta pública para horarios (para HomePage) - USA EL CONTROLADOR CORRECTO
+router.get('/public/horarios/:doctorId/:fecha', getHorariosDisponiblesPublicos);
 
 // Crear cita (público para agendar sin login)
 router.post('/citas', createCita);
