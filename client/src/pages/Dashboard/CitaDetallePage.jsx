@@ -439,11 +439,22 @@ function CitaDetallePage() {
 
       {!loading && cita && (
         <>
-          {/* card 1: informacion de la mascota */}
-          <InfoCard
-            title="Información de la Mascota"
-            data={informacionMascota}
-          />
+          {/* card 1: informacion de la mascota con grid personalizado */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="bg-gray-100 px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Información de la Mascota</h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
+                {informacionMascota.map((item, index) => (
+                  <div key={index}>
+                    <p className="text-sm text-gray-500">{item.label}</p>
+                    <p className="text-base font-medium text-gray-800">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* card 2: informacion de la cita con botones dentro */}
           <div className="mt-6">
