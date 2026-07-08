@@ -251,6 +251,8 @@ export const deleteCita = async (req, res) => {
   }
 };
 
+// controllers/cita.controller.js
+
 export const getHorariosDisponibles = async (req, res) => {
   try {
     const { doctorId, fecha } = req.params;
@@ -259,17 +261,40 @@ export const getHorariosDisponibles = async (req, res) => {
     console.log("   doctorId:", doctorId);
     console.log("   fecha:", fecha);
     
+    // CORREGIDO: Crear fecha en zona horaria local
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaSeleccionada = new Date(year, month - 1, day);
+    fechaSeleccionada.setHours(0, 0, 0, 0);
+    
     const ahora = new Date();
-    const esHoy = new Date(fecha).toDateString() === ahora.toDateString();
-    const horaActual = ahora.toLocaleTimeString('en-US', { 
-      timeZone: 'America/Costa_Rica', 
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    hoy.setHours(0, 0, 0, 0);
+    
+    console.log("   fechaSeleccionada:", fechaSeleccionada);
+    console.log("   hoy:", hoy);
+    
+    // Validar que la fecha no sea pasada (solo si es menor a hoy)
+    if (fechaSeleccionada < hoy) {
+      console.log("Fecha pasada - no se muestran horarios");
+      return res.json([]);
+    }
+    
+    const esHoy = fechaSeleccionada.getTime() === hoy.getTime();
+    
+    // Obtener hora actual en formato HH:MM (zona local)
+    const ahoraLocal = new Date();
+    const horaActualStr = ahoraLocal.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit', 
       hour12: false 
     });
-    const horaActualEnMinutos = parseInt(horaActual.split(':')[0]) * 60 + parseInt(horaActual.split(':')[1]);
+    const horaActualEnMinutos = parseInt(horaActualStr.split(':')[0]) * 60 + parseInt(horaActualStr.split(':')[1]);
     
-    const diaSemana = new Date(fecha).getDay();
+    console.log("   esHoy:", esHoy);
+    console.log("   horaActualStr:", horaActualStr);
+    console.log("   horaActualEnMinutos:", horaActualEnMinutos);
+    
+    const diaSemana = fechaSeleccionada.getDay();
     const horario = await Horario.findOne({ doctorId, dia: diaSemana });
     
     if (!horario || !horario.activo) {
@@ -277,21 +302,17 @@ export const getHorariosDisponibles = async (req, res) => {
       return res.json([]);
     }
     
-    const fechaSeleccionada = new Date(fecha);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    fechaSeleccionada.setHours(0, 0, 0, 0);
-    
-    if (fechaSeleccionada < hoy) {
-      console.log("Fecha pasada");
-      return res.json([]);
-    }
+    // Obtener pausas y citas para la fecha seleccionada
+    const fechaInicio = new Date(year, month - 1, day);
+    fechaInicio.setHours(0, 0, 0, 0);
+    const fechaFin = new Date(year, month - 1, day);
+    fechaFin.setHours(23, 59, 59, 999);
     
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
-        $gte: new Date(fecha + "T00:00:00"),
-        $lt: new Date(fecha + "T23:59:59")
+        $gte: fechaInicio,
+        $lt: fechaFin
       },
       activa: true
     });
@@ -299,14 +320,15 @@ export const getHorariosDisponibles = async (req, res) => {
     const citas = await Cita.find({ 
       doctorId, 
       fecha: {
-        $gte: new Date(fecha + "T00:00:00"),
-        $lt: new Date(fecha + "T23:59:59")
+        $gte: fechaInicio,
+        $lt: fechaFin
       },
       estado: { $ne: 'cancelada' }
     });
     
     const duracion = horario.intervalo;
     
+    // Generar slots
     const slots = [];
     let horaActualSlot = horario.horaInicio;
     
@@ -316,16 +338,18 @@ export const getHorariosDisponibles = async (req, res) => {
       horaActualSlot = sumarMinutos(horaActualSlot, duracion);
     }
     
+    // Filtrar slots disponibles
     const slotsDisponibles = slots.filter(slot => {
       let disponible = true;
       let motivo = "";
       
+      // Si es hoy, filtrar slots que ya pasaron (con margen de 15 minutos)
       if (esHoy) {
         const slotInicioEnMinutos = parseInt(slot.inicio.split(':')[0]) * 60 + parseInt(slot.inicio.split(':')[1]);
-        const diferencia = horaActualEnMinutos - slotInicioEnMinutos;
-        if (diferencia > 15) {
+        // Permitir slots que empiecen al menos 15 minutos después de la hora actual
+        if (slotInicioEnMinutos < horaActualEnMinutos + 15) {
           disponible = false;
-          motivo = `hora pasada`;
+          motivo = `hora pasada (${slot.inicio})`;
         }
       }
       
@@ -365,6 +389,9 @@ export const getHorariosDisponibles = async (req, res) => {
       return disponible;
     });
     
+    console.log(`Slots disponibles: ${slotsDisponibles.length}`);
+    console.log("========== FIN getHorariosDisponibles ==========");
+    
     res.json(slotsDisponibles);
     
   } catch (error) {
@@ -372,7 +399,6 @@ export const getHorariosDisponibles = async (req, res) => {
     res.status(500).json({ message: "Error al obtener horarios disponibles" });
   }
 };
-
 export const getCitasRequest = async (req, res) => {
   try {
     const citas = await Cita.find()
