@@ -594,7 +594,7 @@ function CitaDetallePage() {
                   { label: "Diagnóstico", value: historial.diagnostico || 'No especificado' },
                   { label: "Tratamiento indicado", value: historial.tratamiento || 'No especificado' },
                   // ========== MEDICAMENTOS Y EXAMENES COMO TEXTO LIBRE ==========
-                  { label: "Medicamentos recetados", value: historial.medicamentos || 'No especificados' },
+                  { label: "Pronóstico", value: historial.medicamentos || 'No especificados' },
                   { label: "Exámenes realizados", value: historial.examenes || 'No especificados' },
                   { label: "Observaciones adicionales", value: historial.observaciones || 'No especificadas' },
                   { 
