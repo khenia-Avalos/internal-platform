@@ -111,9 +111,7 @@ function CitaDetallePage() {
     return `Hola, quisiera reagendar mi cita del ${fecha} a las ${hora} con ${doctor} para ${mascota}. ¿Podrían ayudarme?`;
   };
 
-  // ============================================
   // funciones de historial clinico
-  // ============================================
 
   const cargarHistorial = async () => {
     if (!id) return;
@@ -285,9 +283,8 @@ function CitaDetallePage() {
     setShowHistorialForm(true);
   };
 
-  // ============================================
   // funciones de estado de cita
-  // ============================================
+
 
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';

@@ -1,4 +1,3 @@
-// src/api/doctores.js
 import axios from "./axios";
 
 export const getDoctoresRequest = () => axios.get("/doctores");
@@ -8,8 +7,7 @@ export const deleteDoctorRequest = (id) => axios.delete(`/doctores/${id}`);
 export const getDoctorByIdRequest = (id) => axios.get(`/doctores/${id}`);
 export const getDoctoresPublicosRequest = () => axios.get("/public/doctores");
 
-// ========== NUEVAS FUNCIONES ==========
-// CORREGIDO: Ahora envía el motivo en el body
+
 export const bloquearDoctorRequest = (id, motivo) => axios.put(`/doctores/${id}/bloquear`, { motivo });
 export const activarVacacionesRequest = (id) => axios.put(`/doctores/${id}/vacaciones/activar`);
 export const desactivarVacacionesRequest = (id) => axios.put(`/doctores/${id}/vacaciones/desactivar`);

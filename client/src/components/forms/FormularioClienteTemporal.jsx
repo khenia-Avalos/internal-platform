@@ -19,7 +19,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     cedula: '',
     nombreMascota: '',
     especie: '',
-    otraEspecie: '', // Nuevo campo para especificar "otro"
+    otraEspecie: '', 
     doctorId: '',
     fechaCita: '',
     tipoCita: 'consulta',
@@ -94,7 +94,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     }
   };
 
-  // Validaciones en tiempo real
+  // 
   const validarTelefono = (telefono) => {
     const phoneRegex = /^\+\d{1,4}[0-9\s\-]{8,15}$/;
     return phoneRegex.test(telefono);

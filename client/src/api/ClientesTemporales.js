@@ -1,4 +1,3 @@
-// src/api/ClientesTemporales.js
 import axios from "./axios";
 
 export const getClientesTemporalesRequest = () => axios.get("/clientes-temporales");

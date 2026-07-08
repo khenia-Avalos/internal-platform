@@ -1,4 +1,3 @@
-// src/api/pacientes.js
 import axios from "./axios";
 
 export const getPacienteRequest = () => axios.get("/pacientes");
@@ -8,6 +7,5 @@ export const deletePacienteRequest = (id) => axios.delete(`/pacientes/${id}`);
 export const getPacienteByOwnerRequest = (ownerId) => axios.get(`/pacientes/owner/${ownerId}`);
 export const getPacienteByIdRequest = (id) => axios.get(`/pacientes/${id}`);
 
-// ========== NUEVAS FUNCIONES ==========
 export const marcarFallecidoRequest = (id, data) => axios.put(`/pacientes/${id}/fallecido`, data);
 export const reactivarPacienteRequest = (id) => axios.put(`/pacientes/${id}/reactivar`);
