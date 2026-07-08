@@ -372,26 +372,23 @@ function CitaDetallePage() {
     { label: "Mascota", value: 'No especificada (pendiente de registro)' }
   ];
 
-  // informacion de la cita
+  // informacion de la cita - NUEVO ORDEN
   const informacionCita = [
+    // Fila 1: Doctor y Especialidad
     { label: "Doctor", value: cita?.doctorId ? `${cita.doctorId.username} ${cita.doctorId.lastname}` : 'No asignado' },
     { label: "Especialidad del Doctor", value: cita?.doctorId?.especialidad || 'No especificada' },
+    // Fila 2: Título, Descripción, Tipo, Origen, Fecha, Hora, Notas, Estado
     { label: "Título de la cita", value: cita?.titulo || 'Sin título' },
     { label: "Descripción", value: cita?.descripcion || 'No especificada' },
-    { label: "Notas Adicionales", value: cita?.notas || 'No especificadas' },
+    { label: "Tipo de cita", value: cita?.tipoCita || 'No especificado' },
+    { label: "Origen de la cita", value: esCitaTemporal() ? 'Cliente Temporal (pendiente de completar registro)' : 'Cliente Registrado' },
     { label: "Fecha", value: mostrarFechaLocal(cita?.fecha) },
     { label: "Hora", value: cita?.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
-    { label: "Tipo de cita", value: cita?.tipoCita || 'No especificado' },
-    { 
-      label: "Origen de la cita", 
-      value: esCitaTemporal() 
-        ? 'Cliente Temporal (pendiente de completar registro)' 
-        : 'Cliente Registrado'
-    },
-    { label: "Dueño", value: obtenerNombreDueno() },
+    { label: "Notas Adicionales", value: cita?.notas || 'No especificadas' },
+    { label: "Estado de la cita", value: obtenerEstadoTexto() },
+    // Fila 3: Correo y Teléfono del dueño
     { label: "Correo del dueño", value: obtenerEmailDueno() },
     { label: "Teléfono del dueño", value: obtenerTelefonoDueno() },
-    { label: "Estado de la cita", value: obtenerEstadoTexto() },
     ...(pacienteFallecido ? [
       { label: "Estado de la mascota", value: "FALLECIDA - No se pueden crear nuevos registros" }
     ] : [])
