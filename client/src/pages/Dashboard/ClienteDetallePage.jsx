@@ -25,23 +25,23 @@ function ClienteDetallePage() {
   const [citasLoading, setCitasLoading] = useState(false);
   const [fechaFiltro, setFechaFiltro] = useState("");
 
-  // Función para cargar todas las citas de las mascotas del cliente
+  // funcion para cargar todas las citas de las mascotas del cliente
   const cargarCitasCliente = async () => {
     if (!id) return;
     
     setCitasLoading(true);
     try {
-      // Obtener todas las mascotas del cliente
+      // obtener todas las mascotas del cliente
       const mascotasRes = await getPacienteByOwnerRequest(id);
       const mascotasData = mascotasRes.data;
       
       let todasLasCitas = [];
       
-      // Para cada mascota, obtener sus citas
+      // para cada mascota, obtener sus citas
       for (const mascota of mascotasData) {
         try {
           const citasRes = await getCitasByPacienteRequest(mascota._id);
-          // Agregar el nombre de la mascota a cada cita para referencia
+          // agregar el nombre de la mascota a cada cita para referencia
           const citasConMascota = citasRes.data.map(cita => ({
             ...cita,
             nombreMascota: mascota.nombre
@@ -52,7 +52,7 @@ function ClienteDetallePage() {
         }
       }
       
-      // Ordenar por fecha descendente (más reciente primero)
+      // ordenar por fecha descendente (mas reciente primero)
       todasLasCitas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
       
       setCitas(todasLasCitas);
@@ -74,7 +74,7 @@ function ClienteDetallePage() {
         const mascotasRes = await getPacienteByOwnerRequest(id);
         setMascotas(mascotasRes.data);
         
-        // Cargar citas después de obtener las mascotas
+        // cargar citas despues de obtener las mascotas
         await cargarCitasCliente();
       } catch (error) {
         manejarErrorResponse(error, setErrors, setSuccessMessage);
@@ -93,11 +93,11 @@ function ClienteDetallePage() {
       await createPacienteRequest(data);
       setModalAbierto(false);
       
-      // Recargar mascotas
+      // recargar mascotas
       const mascotasRes = await getPacienteByOwnerRequest(id);
       setMascotas(mascotasRes.data);
       
-      // Recargar citas
+      // recargar citas
       await cargarCitasCliente();
       
       setSuccessMessage("Mascota creada exitosamente");
@@ -113,7 +113,7 @@ function ClienteDetallePage() {
     return `${day}/${month}/${year}`;
   };
 
-  // Filtrar citas por fecha
+  // filtrar citas por fecha
   const citasFiltradas = citas.filter(cita => {
     if (!fechaFiltro) return true;
     const fechaCita = cita.fecha?.split('T')[0];
@@ -121,15 +121,15 @@ function ClienteDetallePage() {
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="px-4 md:px-6 py-4 md:py-6 max-w-full">
       <button
         onClick={() => navigate('/clientes')}
-        className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition"
+        className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition text-sm md:text-base"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
         </svg>
-        Volver 
+        Volver a Clientes
       </button>
 
       {loading && (
@@ -143,7 +143,7 @@ function ClienteDetallePage() {
           <p className="text-gray-500 text-lg">Cliente no encontrado</p>
           <button
             onClick={() => navigate('/clientes')}
-            className="mt-4 text-cyan-600 hover:text-cyan-700"
+            className="mt-4 text-cyan-600 hover:text-cyan-700 text-sm md:text-base"
           >
             Volver a la lista
           </button>
@@ -152,8 +152,22 @@ function ClienteDetallePage() {
 
       {!loading && cliente && (
         <>
+          {/* header con titulo y boton */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">Información del Cliente</h2>
+            <button 
+              onClick={() => {
+                setErrors([]);
+                setModalAbierto(true);
+              }}
+              className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium text-sm"
+            >
+              Agregar Mascota
+            </button>
+          </div>
+
           <InfoCard
-            title="Información del Cliente"
+            title=""
             data={[
               { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname}` },
               { label: "Email", value: cliente.email },
@@ -163,51 +177,42 @@ function ClienteDetallePage() {
             ]}
           />
           
-          <div className="mt-4 mb-6">
-            <button 
-              onClick={() => {
-                setErrors([]);
-                setModalAbierto(true);
-              }}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              Agregar Mascota
-            </button>
+          {/* seccion de mascotas */}
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Mascotas de {cliente.username}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mascotas.map((mascota) => (
+                <div key={mascota._id} className="relative">
+                  <InfoCard
+                    title={mascota.nombre}
+                    data={[
+                      { label: "Especie", value: mascota.especie },
+                      { label: "Raza", value: mascota.raza || 'Sin raza' },
+                      { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
+                    ]}
+                  />
+                  <button
+                    onClick={() => navigate(`/pacientes/${mascota._id}`)}
+                    className="absolute top-2 right-2 bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-700 transition text-sm font-medium shadow-sm"
+                  >
+                    Ver Detalle
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <h3 className="text-xl font-semibold mb-4">Mascotas de {cliente.username}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            {mascotas.map((mascota) => (
-              <div key={mascota._id} className="relative">
-                <InfoCard
-                  title={mascota.nombre}
-                  data={[
-                    { label: "Especie", value: mascota.especie },
-                    { label: "Raza", value: mascota.raza || 'Sin raza' },
-                    { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
-                  ]}
-                />
-                <button
-                  onClick={() => navigate(`/pacientes/${mascota._id}`)}
-                  className="absolute top-2 right-2 bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-700 transition text-sm font-medium shadow-sm"
-                >
-                  Ver Detalle
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* SECCIÓN DE CITAS */}
+          {/* seccion de citas */}
           <div className="mt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-              <h3 className="text-xl font-semibold">Historial de Citas</h3>
+              <h3 className="text-xl font-semibold text-gray-800">Historial de Citas</h3>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600">Filtrar por fecha:</label>
                 <input 
                   type="date" 
                   value={fechaFiltro} 
                   onChange={(e) => setFechaFiltro(e.target.value)} 
-                  className="px-3 py-1.5 border border-cyan-400 rounded-lg text-sm"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
                 {fechaFiltro && (
                   <button 
@@ -225,15 +230,15 @@ function ClienteDetallePage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
               </div>
             ) : citas.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-gray-500">Este cliente no tiene citas registradas</p>
               </div>
             ) : citasFiltradas.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-gray-500">No hay citas para la fecha seleccionada</p>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
                 <DataTable
                   columns={[
                     { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
@@ -255,6 +260,7 @@ function ClienteDetallePage() {
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         title="Agregar Nueva Mascota"
+        size="lg"
       >
         <DynamicForm
           {...createConfig.registerPaciente}
