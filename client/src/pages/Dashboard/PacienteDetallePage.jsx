@@ -610,7 +610,7 @@ function PacienteDetallePage() {
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Medicamentos recetados</p>
                                                                         <p className="text-gray-800 font-medium mt-1">
-                                                                            {registro.medicamentos && registro.medicamentos.length > 0 
+                                                                            {Array.isArray(registro.medicamentos) && registro.medicamentos.length > 0 
                                                                                 ? registro.medicamentos.map(m => `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}`).join(', ')
                                                                                 : 'No especificados'}
                                                                         </p>
@@ -618,7 +618,7 @@ function PacienteDetallePage() {
                                                                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                                                         <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Exámenes realizados</p>
                                                                         <p className="text-gray-800 font-medium mt-1">
-                                                                            {registro.examenes && registro.examenes.length > 0 
+                                                                            {Array.isArray(registro.examenes) && registro.examenes.length > 0 
                                                                                 ? registro.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
                                                                                 : 'No especificados'}
                                                                         </p>
