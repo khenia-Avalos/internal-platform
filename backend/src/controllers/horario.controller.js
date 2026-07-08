@@ -124,7 +124,7 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     
     console.log('\n========== GET HORARIOS PUBLICOS ==========');
     console.log(` Doctor ID: ${doctorId}`);
-    console.log(` Fecha: ${fecha}`);
+    console.log(` Fecha recibida: ${fecha}`);
     
     // Validar formato de fecha
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
@@ -139,28 +139,23 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
     
-    // ========== CREAR FECHA EN ZONA LOCAL ==========
-    const [year, month, day] = fecha.split('-').map(Number);
-    const fechaSeleccionada = new Date(year, month - 1, day);
-    fechaSeleccionada.setHours(0, 0, 0, 0);
+    // ========== USAR EL STRING DE FECHA DIRECTAMENTE ==========
+    // En lugar de crear objetos Date, usar el string para comparar
+    const hoyStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
     
-    const ahora = new Date();
-    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-    hoy.setHours(0, 0, 0, 0);
+    console.log(` fecha recibida: ${fecha}`);
+    console.log(` hoy string: ${hoyStr}`);
+    console.log(` fecha < hoy: ${fecha < hoyStr}`);
     
-    console.log(` fechaSeleccionada: ${fechaSeleccionada}`);
-    console.log(` hoy: ${hoy}`);
-    
-    // Validar que la fecha no sea pasada
-    if (fechaSeleccionada < hoy) {
+    // Validar que la fecha no sea pasada (usando strings)
+    if (fecha < hoyStr) {
       console.log('❌ Fecha pasada - no se muestran horarios');
       return res.json([]);
     }
     
-    // ========== VERIFICAR SI ES HOY CORRECTAMENTE ==========
-    const esHoy = fechaSeleccionada.getFullYear() === hoy.getFullYear() &&
-                  fechaSeleccionada.getMonth() === hoy.getMonth() &&
-                  fechaSeleccionada.getDate() === hoy.getDate();
+    // Verificar si es hoy
+    const esHoy = fecha === hoyStr;
+    console.log(` esHoy: ${esHoy}`);
     
     // Obtener hora actual en Costa Rica
     const ahoraCR = new Date();
@@ -172,11 +167,11 @@ export const getHorariosDisponiblesPublicos = async (req, res) => {
     });
     const horaActualEnMinutos = parseInt(horaActualStr.split(':')[0]) * 60 + parseInt(horaActualStr.split(':')[1]);
     
-    console.log(` esHoy: ${esHoy}`);
     console.log(` Hora actual Costa Rica: ${horaActualStr} (${horaActualEnMinutos} minutos)`);
     
     // Obtener el NÚMERO del día
-    const numeroDia = fechaSeleccionada.getDay();
+    const fechaObj = new Date(fecha);
+    const numeroDia = fechaObj.getDay();
     const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const nombreDia = diasSemana[numeroDia];
     
