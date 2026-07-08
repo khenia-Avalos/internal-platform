@@ -73,7 +73,7 @@ export const getPausasActivas = async (req, res) => {
   }
 };
 
-// NUEVA FUNCIÓN: Obtener historial completo de pausas (activas e inactivas)
+//  Obtener historial completo de pausas (activas e inactivas)
 export const getHistorialPausas = async (req, res) => {
   try {
     const { doctorId } = req.params;
@@ -95,7 +95,7 @@ export const getHistorialPausas = async (req, res) => {
   }
 };
 
-// NUEVA FUNCIÓN: Obtener historial con filtro por fecha
+// Obtener historial con filtro por fecha
 export const getHistorialPausasPorFecha = async (req, res) => {
   try {
     const { doctorId } = req.params;

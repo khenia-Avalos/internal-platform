@@ -10,7 +10,7 @@ conn.once('open', () => {
     });
 });
 
-// Obtener documentos por paciente
+// obtener documentos por paciente
 export const getDocumentosByPaciente = async (req, res) => {
     try {
         const { pacienteId } = req.params;
@@ -27,7 +27,7 @@ export const getDocumentosByPaciente = async (req, res) => {
     }
 };
 
-// Subir documento a GridFS
+// subir documento a gridfs
 export const uploadDocumento = async (req, res) => {
     try {
         const { pacienteId, nombre, tipo, descripcion } = req.body;
@@ -39,7 +39,7 @@ export const uploadDocumento = async (req, res) => {
             });
         }
 
-        // 🔥 Guardar en GridFS
+        // guardar en gridfs
         const uploadStream = gfs.openUploadStream(
             req.file.originalname,
             {
@@ -73,7 +73,7 @@ export const uploadDocumento = async (req, res) => {
             data: guardado 
         });
     } catch (error) {
-        console.error('❌ Error al subir documento:', error);
+        console.error('Error al subir documento:', error);
         const errorResponse = manejarError(error);
         res.status(errorResponse.status).json({ 
             success: false,
@@ -82,7 +82,7 @@ export const uploadDocumento = async (req, res) => {
     }
 };
 
-// 🔥 Ver y descargar documento desde GridFS
+// ver y descargar documento desde gridfs
 export const verDocumento = async (req, res) => {
     try {
         const { id } = req.params;
@@ -97,13 +97,13 @@ export const verDocumento = async (req, res) => {
 
         const downloadStream = gfs.openDownloadStream(documento.fileId);
         
-        // 🔥 Forzar el Content-Type para PDF
+        // forzar el content-type para pdf
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(documento.nombre)}"`);
         
         downloadStream.pipe(res);
     } catch (error) {
-        console.error('❌ Error al ver documento:', error);
+        console.error('Error al ver documento:', error);
         const errorResponse = manejarError(error);
         res.status(errorResponse.status).json({ 
             success: false,
@@ -112,7 +112,7 @@ export const verDocumento = async (req, res) => {
     }
 };
 
-// Eliminar documento
+// eliminar documento
 export const deleteDocumento = async (req, res) => {
     try {
         const { id } = req.params;

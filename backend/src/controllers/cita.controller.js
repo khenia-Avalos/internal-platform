@@ -257,16 +257,16 @@ export const getHorariosDisponibles = async (req, res) => {
   try {
     const { doctorId, fecha } = req.params;
     
-    console.log("========== INICIO getHorariosDisponibles ==========");
+    console.log("INICIO getHorariosDisponibles ");
     console.log("   doctorId:", doctorId);
     console.log("   fecha:", fecha);
     
-    // 1. CREAR FECHA SELECCIONADA EN ZONA HORARIA LOCAL
+    // crear fecha seleccionada en zona horaria local
     const [year, month, day] = fecha.split('-').map(Number);
     const fechaSeleccionada = new Date(year, month - 1, day);
     fechaSeleccionada.setHours(0, 0, 0, 0);
     
-    // 2. CREAR FECHA DE HOY EN ZONA HORARIA LOCAL
+    // crear fecha de hoy en zona horaria local
     const ahora = new Date();
     const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
     hoy.setHours(0, 0, 0, 0);
@@ -275,7 +275,7 @@ export const getHorariosDisponibles = async (req, res) => {
     console.log("   hoy:", hoy);
     console.log("   esHoy:", fechaSeleccionada.getTime() === hoy.getTime());
     
-    // 3. VALIDAR QUE LA FECHA NO SEA PASADA
+    // validar que la fecha no sea pasada
     if (fechaSeleccionada < hoy) {
       console.log("Fecha pasada - no se muestran horarios");
       return res.json([]);
@@ -283,7 +283,7 @@ export const getHorariosDisponibles = async (req, res) => {
     
     const esHoy = fechaSeleccionada.getTime() === hoy.getTime();
     
-    // 4. OBTENER HORA ACTUAL EN ZONA LOCAL (CR)
+    // obtener hora actual en zona local
     const ahoraLocal = new Date();
     const horaActualStr = ahoraLocal.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -296,11 +296,11 @@ export const getHorariosDisponibles = async (req, res) => {
     console.log("   horaActualStr:", horaActualStr);
     console.log("   horaActualEnMinutos:", horaActualEnMinutos);
     
-    // 5. OBTENER DÍA DE LA SEMANA
+    // obtener dia de la semana
     const diaSemana = fechaSeleccionada.getDay();
     console.log("   diaSemana:", diaSemana);
     
-    // 6. BUSCAR HORARIO DEL DOCTOR PARA ESE DÍA
+    // buscar horario del doctor para ese dia
     const horario = await Horario.findOne({ doctorId, dia: diaSemana });
     
     if (!horario || !horario.activo) {
@@ -313,13 +313,13 @@ export const getHorariosDisponibles = async (req, res) => {
     console.log("   horaFin:", horario.horaFin);
     console.log("   intervalo:", horario.intervalo);
     
-    // 7. CREAR RANGO DE FECHAS PARA CONSULTAS
+    // crear rango de fechas para consultas
     const fechaInicio = new Date(year, month - 1, day);
     fechaInicio.setHours(0, 0, 0, 0);
     const fechaFin = new Date(year, month - 1, day);
     fechaFin.setHours(23, 59, 59, 999);
     
-    // 8. OBTENER PAUSAS DEL DOCTOR PARA ESA FECHA
+    // obtener pausas del doctor para esa fecha
     const pausas = await Pausa.find({ 
       doctorId, 
       fecha: {
@@ -330,7 +330,7 @@ export const getHorariosDisponibles = async (req, res) => {
     });
     console.log("   pausas encontradas:", pausas.length);
     
-    // 9. OBTENER CITAS DEL DOCTOR PARA ESA FECHA
+    // obtener citas del doctor para esa fecha
     const citas = await Cita.find({ 
       doctorId, 
       fecha: {
@@ -341,12 +341,12 @@ export const getHorariosDisponibles = async (req, res) => {
     });
     console.log("   citas encontradas:", citas.length);
     
-    // 10. GENERAR TODOS LOS SLOTS POSIBLES
+    // generar todos los slots posibles
     const duracion = horario.intervalo;
     const slots = [];
     let horaActualSlot = horario.horaInicio;
     
-    // Función auxiliar para sumar minutos
+    // funcion auxiliar para sumar minutos
     const sumarMinutosAHoraLocal = (horaStr, minutos) => {
       const [horas, mins] = horaStr.split(':').map(Number);
       let totalMinutos = horas * 60 + mins + minutos;
@@ -363,24 +363,23 @@ export const getHorariosDisponibles = async (req, res) => {
     
     console.log("   slots generados:", slots.length);
     
-    // 11. FILTRAR SLOTS DISPONIBLES
+    // filtrar slots disponibles
     const slotsDisponibles = slots.filter(slot => {
       let disponible = true;
       
-      // CONVERTIR HORA DEL SLOT A MINUTOS
+      // convertir hora del slot a minutos
       const [slotHora, slotMinuto] = slot.inicio.split(':').map(Number);
       const slotEnMinutos = slotHora * 60 + slotMinuto;
       
-      // 11a. SI ES HOY, FILTRAR HORAS QUE YA PASARON (margen de 15 minutos)
+      // si es hoy, filtrar horas que ya pasaron (margen de 15 minutos)
       if (esHoy) {
-        // Permitir slots que empiecen al menos 15 minutos después de la hora actual
         if (slotEnMinutos < horaActualEnMinutos + 15) {
-          console.log(`   Slot ${slot.inicio}-${slot.fin}: ❌ hora pasada (${slot.inicio} < ${horaActualStr})`);
+          console.log(`   Slot ${slot.inicio}-${slot.fin}: hora pasada (${slot.inicio} < ${horaActualStr})`);
           return false;
         }
       }
       
-      // 11b. VERIFICAR SI EL SLOT CAE DENTRO DE UNA PAUSA
+      // verificar si el slot cae dentro de una pausa
       for (const pausa of pausas) {
         const inicioPausa = new Date(pausa.inicio);
         const finPausa = pausa.fin ? new Date(pausa.fin) : new Date(inicioPausa.getTime() + 75 * 60000);
@@ -396,25 +395,23 @@ export const getHorariosDisponibles = async (req, res) => {
           hour12: false 
         });
         
-        // Si el slot está dentro de la pausa
         if (slot.inicio >= inicioPausaStr && slot.fin <= finPausaStr) {
-          console.log(`   Slot ${slot.inicio}-${slot.fin}: ❌ dentro de pausa (${inicioPausaStr}-${finPausaStr})`);
+          console.log(`   Slot ${slot.inicio}-${slot.fin}: dentro de pausa (${inicioPausaStr}-${finPausaStr})`);
           return false;
         }
       }
       
-      // 11c. VERIFICAR SI EL SLOT ESTÁ OCUPADO POR UNA CITA
+      // verificar si el slot esta ocupado por una cita
       for (const cita of citas) {
-        // Si el slot se superpone con una cita existente
         if ((slot.inicio >= cita.horaInicio && slot.inicio < cita.horaFin) ||
             (slot.fin > cita.horaInicio && slot.fin <= cita.horaFin) ||
             (slot.inicio <= cita.horaInicio && slot.fin >= cita.horaFin)) {
-          console.log(`   Slot ${slot.inicio}-${slot.fin}: ❌ ocupado por cita (${cita.horaInicio}-${cita.horaFin})`);
+          console.log(`   Slot ${slot.inicio}-${slot.fin}: ocupado por cita (${cita.horaInicio}-${cita.horaFin})`);
           return false;
         }
       }
       
-      console.log(`   Slot ${slot.inicio}-${slot.fin}: ✅ disponible`);
+      console.log(`   Slot ${slot.inicio}-${slot.fin}: disponible`);
       return true;
     });
     

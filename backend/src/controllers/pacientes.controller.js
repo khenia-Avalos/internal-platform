@@ -152,31 +152,28 @@ export const getPacienteById = async (req, res) => {
   }
 };
 
-// ============================================
-// NUEVAS FUNCIONES PARA FALLECIDO
-// ============================================
 
-// Marcar paciente como fallecido
+// marcar paciente como fallecido
 export const marcarFallecido = async (req, res) => {
   try {
     const { id } = req.params;
     const { motivoFallecimiento } = req.body;
     
-    console.log(`🕊️ Marcando paciente ${id} como fallecido`);
+    console.log(`marcando paciente ${id} como fallecido`);
     
     const paciente = await Paciente.findById(id);
     if (!paciente) {
       return res.status(404).json({ message: "Paciente no encontrado" });
     }
     
-    // Verificar si ya está fallecido
+    // verificar si ya esta fallecido
     if (paciente.fallecido) {
       return res.status(400).json({ 
         message: "El paciente ya está marcado como fallecido" 
       });
     }
     
-    // Actualizar paciente
+    // actualizar paciente
     const pacienteActualizado = await Paciente.findByIdAndUpdate(
       id,
       {
@@ -187,7 +184,7 @@ export const marcarFallecido = async (req, res) => {
       { new: true }
     ).populate('ownerId', 'username lastname email phoneNumber');
     
-    console.log(`✅ Paciente ${pacienteActualizado.nombre} marcado como fallecido`);
+    console.log(`paciente ${pacienteActualizado.nombre} marcado como fallecido`);
     
     res.json({
       message: `Paciente ${pacienteActualizado.nombre} marcado como fallecido`,
@@ -203,12 +200,12 @@ export const marcarFallecido = async (req, res) => {
   }
 };
 
-// Reactivar paciente (desmarcar como fallecido)
+// reactivar paciente (desmarcar como fallecido)
 export const reactivarPaciente = async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log(`🔄 Reactivando paciente ${id}`);
+    console.log(`reactivando paciente ${id}`);
     
     const paciente = await Paciente.findById(id);
     if (!paciente) {
@@ -231,7 +228,7 @@ export const reactivarPaciente = async (req, res) => {
       { new: true }
     ).populate('ownerId', 'username lastname email phoneNumber');
     
-    console.log(`✅ Paciente ${pacienteActualizado.nombre} reactivado`);
+    console.log(`paciente ${pacienteActualizado.nombre} reactivado`);
     
     res.json({
       message: `Paciente ${pacienteActualizado.nombre} reactivado exitosamente`,

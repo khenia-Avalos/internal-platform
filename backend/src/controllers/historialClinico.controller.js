@@ -3,33 +3,33 @@ import HistorialClinico from '../models/historialClinico.model.js';
 import Paciente from '../models/pacientes.model.js';
 import { manejarError } from '../utils/errorHandler.js';
 
-// Obtener historial por cita
+// obtener historial por cita
 export const getHistorialByCita = async (req, res) => {
-  console.log('🔥🔥🔥 getHistorialByCita EJECUTÁNDOSE 🔥🔥🔥');
-  console.log('📝 citaId recibido:', req.params.citaId);
+  console.log('getHistorialByCita ejecutandose');
+  console.log('citaId recibido:', req.params.citaId);
   
   try {
     const { citaId } = req.params;
-    console.log('🔍 Buscando historial para cita:', citaId);
+    console.log('buscando historial para cita:', citaId);
     
     const historial = await HistorialClinico.findOne({ citaId })
       .populate('pacienteId', 'nombre especie raza edad fallecido')
       .populate('citaId', 'fecha horaInicio titulo doctorId');
     
-    console.log('📊 Resultado de búsqueda:', historial ? 'ENCONTRADO' : 'NO ENCONTRADO');
+    console.log('resultado de busqueda:', historial ? 'encontrado' : 'no encontrado');
     
     if (!historial) {
-      console.log('❌ No hay registro clínico para esta cita');
+      console.log('no hay registro clinico para esta cita');
       return res.status(404).json({ 
         success: false,
         message: 'No hay registro clínico para esta cita' 
       });
     }
     
-    console.log('✅ Historial encontrado, enviando respuesta');
+    console.log('historial encontrado, enviando respuesta');
     res.json({ success: true, data: historial });
   } catch (error) {
-    console.error('❌ Error en getHistorialByCita:', error);
+    console.error('error en getHistorialByCita:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -38,22 +38,22 @@ export const getHistorialByCita = async (req, res) => {
   }
 };
 
-// Obtener historial por paciente
+// obtener historial por paciente
 export const getHistorialByPaciente = async (req, res) => {
-  console.log('🔥 getHistorialByPaciente LLAMADO');
+  console.log('getHistorialByPaciente llamado');
   try {
     const { pacienteId } = req.params;
-    console.log('🔍 Buscando historial para paciente:', pacienteId);
+    console.log('buscando historial para paciente:', pacienteId);
     
     const historial = await HistorialClinico.find({ pacienteId })
       .populate('pacienteId', 'nombre especie raza fallecido')
       .populate('citaId', 'fecha horaInicio titulo estado')
       .sort({ createdAt: -1 });
     
-    console.log(`📊 Encontrados ${historial.length} registros`);
+    console.log(`encontrados ${historial.length} registros`);
     res.json({ success: true, data: historial });
   } catch (error) {
-    console.error('❌ Error en getHistorialByPaciente:', error);
+    console.error('error en getHistorialByPaciente:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -62,29 +62,29 @@ export const getHistorialByPaciente = async (req, res) => {
   }
 };
 
-// Obtener historial por ID
+// obtener historial por id
 export const getHistorialById = async (req, res) => {
-  console.log('🔥 getHistorialById LLAMADO');
+  console.log('getHistorialById llamado');
   try {
     const { id } = req.params;
-    console.log('🔍 Buscando historial por ID:', id);
+    console.log('buscando historial por id:', id);
     
     const historial = await HistorialClinico.findById(id)
       .populate('pacienteId', 'nombre especie raza fallecido')
       .populate('citaId', 'fecha horaInicio titulo');
     
     if (!historial) {
-      console.log('❌ Registro no encontrado');
+      console.log('registro no encontrado');
       return res.status(404).json({ 
         success: false,
         message: 'Registro clínico no encontrado' 
       });
     }
     
-    console.log('✅ Registro encontrado');
+    console.log('registro encontrado');
     res.json({ success: true, data: historial });
   } catch (error) {
-    console.error('❌ Error en getHistorialById:', error);
+    console.error('error en getHistorialById:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -93,10 +93,10 @@ export const getHistorialById = async (req, res) => {
   }
 };
 
-// Crear historial
+// crear historial
 export const createHistorial = async (req, res) => {
-  console.log('🔥🔥🔥 createHistorial LLAMADO 🔥🔥🔥');
-  console.log('📝 Datos recibidos:', JSON.stringify(req.body, null, 2));
+  console.log('createHistorial llamado');
+  console.log('datos recibidos:', JSON.stringify(req.body, null, 2));
   
   try {
     const { 
@@ -112,30 +112,30 @@ export const createHistorial = async (req, res) => {
       proximaCitaSugerida
     } = req.body;
 
-    // Verificar campos obligatorios
+    // verificar campos obligatorios
     if (!pacienteId || !citaId) {
-      console.log('❌ Faltan campos obligatorios: pacienteId o citaId');
+      console.log('faltan campos obligatorios: pacienteId o citaId');
       return res.status(400).json({ 
         success: false,
         message: 'pacienteId y citaId son obligatorios' 
       });
     }
 
-    // ========== VALIDACIÓN: Verificar si el paciente está fallecido ==========
-    console.log('🔍 Verificando estado del paciente:', pacienteId);
+    // validacion: verificar si el paciente esta fallecido
+    console.log('verificando estado del paciente:', pacienteId);
     const paciente = await Paciente.findById(pacienteId);
     if (!paciente) {
-      console.log('❌ Paciente no encontrado');
+      console.log('paciente no encontrado');
       return res.status(404).json({ 
         success: false,
         message: 'Paciente no encontrado' 
       });
     }
     
-    console.log(`📊 Paciente: ${paciente.nombre}, fallecido: ${paciente.fallecido}`);
+    console.log(`paciente: ${paciente.nombre}, fallecido: ${paciente.fallecido}`);
     
     if (paciente.fallecido === true) {
-      console.log('❌ Paciente fallecido, no se puede crear registro clínico');
+      console.log('paciente fallecido, no se puede crear registro clinico');
       return res.status(400).json({ 
         success: false,
         message: `No se puede crear un registro clínico para ${paciente.nombre} porque está marcado como fallecido.`,
@@ -143,17 +143,17 @@ export const createHistorial = async (req, res) => {
       });
     }
 
-    // Verificar si ya existe un registro para esta cita
+    // verificar si ya existe un registro para esta cita
     const existe = await HistorialClinico.findOne({ citaId });
     if (existe) {
-      console.log('❌ Ya existe un registro para esta cita');
+      console.log('ya existe un registro para esta cita');
       return res.status(400).json({ 
         success: false,
         message: 'Ya existe un registro clínico para esta cita' 
       });
     }
 
-    // Crear el nuevo registro
+    // crear el nuevo registro
     const nuevo = new HistorialClinico({
       pacienteId,
       citaId,
@@ -168,9 +168,9 @@ export const createHistorial = async (req, res) => {
       estadoConsulta: 'completada'
     });
 
-    console.log('💾 Guardando historial...');
+    console.log('guardando historial...');
     const guardado = await nuevo.save();
-    console.log('✅ Historial guardado con ID:', guardado._id);
+    console.log('historial guardado con id:', guardado._id);
     
     res.status(201).json({ 
       success: true, 
@@ -178,7 +178,7 @@ export const createHistorial = async (req, res) => {
       data: guardado 
     });
   } catch (error) {
-    console.error('❌ Error al crear historial:', error);
+    console.error('error al crear historial:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -187,30 +187,30 @@ export const createHistorial = async (req, res) => {
   }
 };
 
-// Actualizar historial
+// actualizar historial
 export const updateHistorial = async (req, res) => {
-  console.log('🔥 updateHistorial LLAMADO');
+  console.log('updateHistorial llamado');
   try {
     const { id } = req.params;
     const data = req.body;
-    console.log('📝 Actualizando historial ID:', id);
-    console.log('📝 Datos a actualizar:', JSON.stringify(data, null, 2));
+    console.log('actualizando historial id:', id);
+    console.log('datos a actualizar:', JSON.stringify(data, null, 2));
 
-    // ========== VALIDACIÓN: Verificar si el paciente está fallecido ==========
+    // validacion: verificar si el paciente esta fallecido
     const historialExistente = await HistorialClinico.findById(id);
     if (!historialExistente) {
-      console.log('❌ Registro no encontrado');
+      console.log('registro no encontrado');
       return res.status(404).json({ 
         success: false,
         message: 'Registro clínico no encontrado' 
       });
     }
     
-    console.log('🔍 Verificando estado del paciente:', historialExistente.pacienteId);
+    console.log('verificando estado del paciente:', historialExistente.pacienteId);
     const paciente = await Paciente.findById(historialExistente.pacienteId);
     
     if (paciente && paciente.fallecido === true) {
-      console.log('❌ Paciente fallecido, no se puede actualizar registro clínico');
+      console.log('paciente fallecido, no se puede actualizar registro clinico');
       return res.status(400).json({ 
         success: false,
         message: `No se puede actualizar el registro clínico porque el paciente está marcado como fallecido.`,
@@ -218,7 +218,7 @@ export const updateHistorial = async (req, res) => {
       });
     }
 
-    // Actualizar el registro
+    // actualizar el registro
     const actualizado = await HistorialClinico.findByIdAndUpdate(
       id, 
       data, 
@@ -226,21 +226,21 @@ export const updateHistorial = async (req, res) => {
     );
     
     if (!actualizado) {
-      console.log('❌ Registro no encontrado para actualizar');
+      console.log('registro no encontrado para actualizar');
       return res.status(404).json({ 
         success: false,
         message: 'Registro clínico no encontrado' 
       });
     }
     
-    console.log('✅ Registro actualizado:', actualizado._id);
+    console.log('registro actualizado:', actualizado._id);
     res.json({ 
       success: true, 
       message: 'Registro actualizado exitosamente',
       data: actualizado 
     });
   } catch (error) {
-    console.error('❌ Error al actualizar:', error);
+    console.error('error al actualizar:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -249,33 +249,33 @@ export const updateHistorial = async (req, res) => {
   }
 };
 
-// Eliminar historial
+// eliminar historial
 export const deleteHistorial = async (req, res) => {
-  console.log('🔥 deleteHistorial LLAMADO');
+  console.log('deleteHistorial llamado');
   try {
     const { id } = req.params;
-    console.log('🗑️ Eliminando historial ID:', id);
+    console.log('eliminando historial id:', id);
     
-    // Verificar si existe
+    // verificar si existe
     const historialExistente = await HistorialClinico.findById(id);
     if (!historialExistente) {
-      console.log('❌ Registro no encontrado para eliminar');
+      console.log('registro no encontrado para eliminar');
       return res.status(404).json({ 
         success: false,
         message: 'Registro clínico no encontrado' 
       });
     }
     
-    // Eliminar
+    // eliminar
     const eliminado = await HistorialClinico.findByIdAndDelete(id);
     
-    console.log('✅ Registro eliminado:', eliminado._id);
+    console.log('registro eliminado:', eliminado._id);
     res.json({ 
       success: true, 
       message: 'Registro clínico eliminado exitosamente' 
     });
   } catch (error) {
-    console.error(' Error al eliminar:', error);
+    console.error('error al eliminar:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,
@@ -284,14 +284,12 @@ export const deleteHistorial = async (req, res) => {
   }
 };
 
-// ============================================
-// FUNCIÓN ADICIONAL: Verificar si un paciente está fallecido
-// ============================================
+// funcion adicional: verificar si un paciente esta fallecido
 export const verificarPacienteFallecido = async (req, res) => {
   try {
     const { pacienteId } = req.params;
     
-    console.log(' Verificando si paciente está fallecido:', pacienteId);
+    console.log('verificando si paciente esta fallecido:', pacienteId);
     
     const paciente = await Paciente.findById(pacienteId).select('nombre fallecido fechaFallecimiento');
     
@@ -312,7 +310,7 @@ export const verificarPacienteFallecido = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(' Error en verificarPacienteFallecido:', error);
+    console.error('error en verificarPacienteFallecido:', error);
     const errorResponse = manejarError(error);
     res.status(errorResponse.status).json({ 
       success: false,

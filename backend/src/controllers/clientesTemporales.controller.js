@@ -331,7 +331,7 @@ export const completarRegistroClienteTemporal = async (req, res) => {
       raza, edad, sexo, colorPelaje, peso, temperatura, antecedentesMedicos 
     } = req.body;
     
-    console.log(`\n========== COMPLETAR REGISTRO ==========`);
+    console.log(`\n COMPLETAR REGISTRO =`);
     console.log(`Cliente ID: ${id}`);
     console.log(`Datos recibidos:`, { lastname, cedula, direccion, email, raza, edad, sexo, colorPelaje, peso, temperatura });
     
