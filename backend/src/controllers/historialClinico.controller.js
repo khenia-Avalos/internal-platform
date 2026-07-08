@@ -153,7 +153,6 @@ export const createHistorial = async (req, res) => {
       });
     }
 
-    // crear el nuevo registro
     const nuevo = new HistorialClinico({
       pacienteId,
       citaId,
@@ -161,8 +160,8 @@ export const createHistorial = async (req, res) => {
       sintomas: sintomas || '',
       diagnostico: diagnostico || '',
       tratamiento: tratamiento || '',
-      medicamentos: medicamentos || [],
-      examenes: examenes || [],
+      medicamentos: medicamentos || '', // String
+      examenes: examenes || '',         // String
       observaciones: observaciones || '',
       proximaCitaSugerida: proximaCitaSugerida || null,
       estadoConsulta: 'completada'
@@ -218,10 +217,18 @@ export const updateHistorial = async (req, res) => {
       });
     }
 
-    // actualizar el registro
     const actualizado = await HistorialClinico.findByIdAndUpdate(
       id, 
-      data, 
+      {
+        motivoConsulta: data.motivoConsulta || '',
+        sintomas: data.sintomas || '',
+        diagnostico: data.diagnostico || '',
+        tratamiento: data.tratamiento || '',
+        medicamentos: data.medicamentos || '', // String
+        examenes: data.examenes || '',         // String
+        observaciones: data.observaciones || '',
+        proximaCitaSugerida: data.proximaCitaSugerida || null
+      },
       { new: true, runValidators: true }
     );
     

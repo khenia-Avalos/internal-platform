@@ -1,3 +1,4 @@
+// models/historialClinico.model.js
 import mongoose from 'mongoose';
 
 const historialClinicoSchema = new mongoose.Schema({
@@ -29,12 +30,12 @@ const historialClinicoSchema = new mongoose.Schema({
     default: ''
   },
   medicamentos: {
-    type: Array,
-    default: []
+    type: String,
+    default: ''
   },
   examenes: {
-    type: Array,
-    default: []
+    type: String,
+    default: ''
   },
   observaciones: {
     type: String,
