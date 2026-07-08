@@ -34,14 +34,37 @@ export const InfoCard = ({
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
               : 'space-y-3'
           }>
-            {data.map((item, index) => (
-              <div key={index}>
-                <p className="text-sm text-gray-500">{item.label}</p>
-                <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
-                  {item.value || 'No especificado'}
-                </p>
-              </div>
-            ))}
+            {data.map((item, index) => {
+              // Si es un título (isTitle: true), mostrarlo centrado y ocupando todo el ancho
+              if (item.isTitle) {
+                return (
+                  <div key={index} className={layout === 'grid' ? 'col-span-full' : ''}>
+                    <h3 className="text-xl font-semibold text-gray-800 text-center">
+                      {item.label}
+                    </h3>
+                  </div>
+                );
+              }
+              
+              // Si es un separador
+              if (item.isSeparator) {
+                return (
+                  <div key={index} className={layout === 'grid' ? 'col-span-full' : ''}>
+                    <hr className="border-gray-200 my-2" />
+                  </div>
+                );
+              }
+              
+              // Item normal
+              return (
+                <div key={index}>
+                  <p className="text-sm text-gray-500">{item.label}</p>
+                  <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
+                    {item.value || 'No especificado'}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
 
