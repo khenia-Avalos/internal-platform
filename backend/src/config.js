@@ -1,4 +1,4 @@
-console.log('🔧 Cargando config.js...');
+console.log(' Cargando config.js...');
 
 const NODE_ENV_VALUE = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV_VALUE === 'production';

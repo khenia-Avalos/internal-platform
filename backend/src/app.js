@@ -40,10 +40,10 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-// 🔥 SERVIR ARCHIVOS ESTÁTICOS
+// servir archivos estaticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 🔥 RUTAS
+// rutas
 app.use('/api/historial', historialRoutes);
 app.use('/api/documentos', documentoRoutes);
 
