@@ -1,3 +1,4 @@
+// backend/src/routes/cita.routes.js
 import { Router } from 'express';
 import { 
   createCita,
@@ -22,13 +23,15 @@ router.post('/citas', createCita);
 router.get('/confirmar-cita/:id', confirmarCitaConToken);
 router.get('/cancelar-cita/:id', cancelarCitaConToken);
 
+// ✅ AGREGAR ESTA RUTA PÚBLICA PARA COMPATIBILIDAD
+router.get('/public/horarios/:doctorId/:fecha', getHorariosDisponibles);
 
 // Rutas protegidas (requieren autenticación)
 router.get('/citas/doctor/:doctorId', validateToken, getCitasByDoctor);
 router.get('/citas/paciente/:pacienteId', validateToken, getCitasByPaciente);
 router.put('/citas/:id', validateToken, updateCita);
 router.delete('/citas/:id', validateToken, deleteCita);
-router.get('/citas', validateToken, getCitasRequest); // nueva ruta para obtener todas las citas
-router.get('/citas/:id', validateToken, getCitaById); // nueva ruta para obtener una cita por ID
+router.get('/citas', validateToken, getCitasRequest);
+router.get('/citas/:id', validateToken, getCitaById);
 
 export default router;
