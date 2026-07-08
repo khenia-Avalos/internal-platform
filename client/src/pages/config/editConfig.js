@@ -367,8 +367,9 @@ editHistorialClinico: {
     {
       name: "medicamentos",
       type: "textarea",
-      label: "Medicamentos recetados",
-      rows: 3
+      label: "Pronóstico",
+      rows: 3,
+      helperText: "Escribe el pronóstico en una línea (ej: Mejora con tratamiento)"
     },
     {
       name: "examenes",

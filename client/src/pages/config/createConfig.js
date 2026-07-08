@@ -504,9 +504,9 @@ historialClinico: {
     {
       name: "medicamentos",
       type: "textarea",
-      label: "Medicamentos recetados",
+      label: "Pronóstico",
       rows: 3,
-      helperText: "Escribe cada medicamento en una línea (ej: Amoxicilina 500mg cada 8h)"
+      helperText: "Escribe el pronóstico en una línea (ej: Mejora con tratamiento)"
     },
     {
       name: "examenes",
