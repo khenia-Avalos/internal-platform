@@ -439,127 +439,105 @@ function CitaDetallePage() {
 
       {!loading && cita && (
         <>
-          {/* card 1: informacion de la mascota con grid personalizado */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div className="bg-gray-100 px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Información de la Mascota</h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-                {informacionMascota.map((item, index) => (
-                  <div key={index}>
-                    <p className="text-sm text-gray-500">{item.label}</p>
-                    <p className="text-base font-medium text-gray-800">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* card 1: informacion de la mascota usando InfoCard */}
+          <InfoCard
+            title="Información de la Mascota"
+            data={informacionMascota}
+          />
 
           {/* card 2: informacion de la cita con botones dentro */}
           <div className="mt-6">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="bg-gray-100 px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-800">Información de la Cita</h2>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {informacionCita.map((item, index) => (
-                    <div key={index}>
-                      <p className="text-sm text-gray-500">{item.label}</p>
-                      <p className="text-base font-medium text-gray-800">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* separador */}
-                <div className="border-t border-gray-200 my-6"></div>
-                
-                {/* botones de accion dentro de la card */}
-                <div className="flex flex-wrap gap-3">
-                  {cita.estado === 'pendiente' && (
-                    <>
+            <InfoCard
+              title="Información de la Cita"
+              data={informacionCita}
+            >
+              {/* separador */}
+              <div className="border-t border-gray-200 my-6"></div>
+              
+              {/* botones de accion dentro de la card */}
+              <div className="flex flex-wrap gap-3">
+                {cita.estado === 'pendiente' && (
+                  <>
+                    <button 
+                      onClick={() => cambiarEstado('confirmada')} 
+                      disabled={updating || pacienteFallecido}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-sm font-medium"
+                    >
+                      Confirmar Cita
+                    </button>
+                    <button 
+                      onClick={() => cambiarEstado('cancelada')} 
+                      disabled={updating}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
+                    >
+                      Cancelar Cita
+                    </button>
+                    {isClient ? (
+                      <a
+                        href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center text-sm font-medium"
+                      >
+                        Reagendar por WhatsApp
+                      </a>
+                    ) : (
                       <button 
-                        onClick={() => cambiarEstado('confirmada')} 
+                        onClick={abrirModalReagendar}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                      >
+                        Reagendar Cita
+                      </button>
+                    )}
+                  </>
+                )}
+                
+                {cita.estado === 'confirmada' && (
+                  <>
+                    {(isAdmin || isDoctor) && (
+                      <button 
+                        onClick={() => cambiarEstado('completada')} 
                         disabled={updating || pacienteFallecido}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-sm font-medium"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium"
                       >
-                        Confirmar Cita
+                        Marcar como Completada
                       </button>
+                    )}
+                    <button 
+                      onClick={() => cambiarEstado('cancelada')} 
+                      disabled={updating}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
+                    >
+                      Cancelar Cita
+                    </button>
+                    {isClient ? (
+                      <a
+                        href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center text-sm font-medium"
+                      >
+                        Reagendar por WhatsApp
+                      </a>
+                    ) : (
                       <button 
-                        onClick={() => cambiarEstado('cancelada')} 
-                        disabled={updating}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
+                        onClick={abrirModalReagendar}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
                       >
-                        Cancelar Cita
+                        Reagendar Cita
                       </button>
-                      {isClient ? (
-                        <a
-                          href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center text-sm font-medium"
-                        >
-                          Reagendar por WhatsApp
-                        </a>
-                      ) : (
-                        <button 
-                          onClick={abrirModalReagendar}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
-                        >
-                          Reagendar Cita
-                        </button>
-                      )}
-                    </>
-                  )}
-                  
-                  {cita.estado === 'confirmada' && (
-                    <>
-                      {(isAdmin || isDoctor) && (
-                        <button 
-                          onClick={() => cambiarEstado('completada')} 
-                          disabled={updating || pacienteFallecido}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium"
-                        >
-                          Marcar como Completada
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => cambiarEstado('cancelada')} 
-                        disabled={updating}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
-                      >
-                        Cancelar Cita
-                      </button>
-                      {isClient ? (
-                        <a
-                          href={`https://wa.me/50670932898?text=${encodeURIComponent(obtenerMensajeWhatsApp())}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition inline-block text-center text-sm font-medium"
-                        >
-                          Reagendar por WhatsApp
-                        </a>
-                      ) : (
-                        <button 
-                          onClick={abrirModalReagendar}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
-                        >
-                          Reagendar Cita
-                        </button>
-                      )}
-                    </>
-                  )}
-                  
-                  {cita.estado === 'cancelada' && (
-                    <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>
-                  )}
-                  {cita.estado === 'completada' && (
-                    <p className="text-green-600 font-medium">Esta cita ya fue completada</p>
-                  )}
-                </div>
+                    )}
+                  </>
+                )}
+                
+                {cita.estado === 'cancelada' && (
+                  <p className="text-red-600 font-medium">Esta cita ha sido cancelada</p>
+                )}
+                {cita.estado === 'completada' && (
+                  <p className="text-green-600 font-medium">Esta cita ya fue completada</p>
+                )}
               </div>
-            </div>
+            </InfoCard>
           </div>
 
           {/* card 3: cliente temporal si existe */}
