@@ -127,14 +127,13 @@ function CitaDetallePage() {
       
       if (res.data.data) {
         const h = res.data.data;
-        // ========== AHORA ES TEXTO LIBRE ==========
         setHistorialFormData({
           motivoConsulta: h.motivoConsulta || '',
           sintomas: h.sintomas || '',
           diagnostico: h.diagnostico || '',
           tratamiento: h.tratamiento || '',
-          medicamentos: h.medicamentos || '', // String
-          examenes: h.examenes || '',         // String
+          medicamentos: h.medicamentos || '',
+          examenes: h.examenes || '',
           observaciones: h.observaciones || '',
           proximaCitaSugerida: h.proximaCitaSugerida ? 
             new Date(h.proximaCitaSugerida).toISOString().split('T')[0] : ''
@@ -151,7 +150,6 @@ function CitaDetallePage() {
     }
   };
 
-  // ========== HANDLE CREATE - ACTUALIZADO ==========
   const handleCreateHistorial = async (data) => {
     console.log('handleCreateHistorial ejecutándose');
     console.log('Datos del formulario:', data);
@@ -167,7 +165,6 @@ function CitaDetallePage() {
         return;
       }
       
-      // ========== ENVÍO SIMPLE - TEXTO LIBRE ==========
       const datosEnvio = {
         pacienteId: cita.pacienteId._id,
         citaId: id,
@@ -175,8 +172,8 @@ function CitaDetallePage() {
         sintomas: data.sintomas || '',
         diagnostico: data.diagnostico || '',
         tratamiento: data.tratamiento || '',
-        medicamentos: data.medicamentos || '', // Texto libre
-        examenes: data.examenes || '',         // Texto libre
+        medicamentos: data.medicamentos || '',
+        examenes: data.examenes || '',
         observaciones: data.observaciones || '',
         proximaCitaSugerida: data.proximaCitaSugerida || null
       };
@@ -202,7 +199,6 @@ function CitaDetallePage() {
     }
   };
 
-  // ========== HANDLE UPDATE - ACTUALIZADO ==========
   const handleUpdateHistorial = async (data) => {
     console.log('handleUpdateHistorial ejecutándose');
     console.log('Datos a actualizar:', data);
@@ -218,14 +214,13 @@ function CitaDetallePage() {
         return;
       }
       
-      // ========== ENVÍO SIMPLE - TEXTO LIBRE ==========
       const datosEnvio = {
         motivoConsulta: data.motivoConsulta || '',
         sintomas: data.sintomas || '',
         diagnostico: data.diagnostico || '',
         tratamiento: data.tratamiento || '',
-        medicamentos: data.medicamentos || '', // Texto libre
-        examenes: data.examenes || '',         // Texto libre
+        medicamentos: data.medicamentos || '',
+        examenes: data.examenes || '',
         observaciones: data.observaciones || '',
         proximaCitaSugerida: data.proximaCitaSugerida || null
       };
@@ -272,7 +267,6 @@ function CitaDetallePage() {
     setShowHistorialForm(true);
   };
 
-  // funciones de estado de cita
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
     let mensajeExito = '';
@@ -346,7 +340,6 @@ function CitaDetallePage() {
     setShowReagendarModal(true);
   };
 
-  // informacion de la mascota para mostrar arriba
   const informacionMascota = cita?.pacienteId ? [
     { label: "Nombre de la mascota", value: cita.pacienteId.nombre },
     { label: "Especie", value: cita.pacienteId.especie },
@@ -356,12 +349,9 @@ function CitaDetallePage() {
     { label: "Mascota", value: 'No especificada (pendiente de registro)' }
   ];
 
-  // informacion de la cita - NUEVO ORDEN
   const informacionCita = [
-    // Fila 1: Doctor y Especialidad
     { label: "Doctor", value: cita?.doctorId ? `${cita.doctorId.username} ${cita.doctorId.lastname}` : 'No asignado' },
     { label: "Especialidad del Doctor", value: cita?.doctorId?.especialidad || 'No especificada' },
-    // Fila 2: Título, Descripción, Tipo, Origen, Fecha, Hora, Notas, Estado
     { label: "Título de la cita", value: cita?.titulo || 'Sin título' },
     { label: "Descripción", value: cita?.descripcion || 'No especificada' },
     { label: "Tipo de cita", value: cita?.tipoCita || 'No especificado' },
@@ -370,7 +360,6 @@ function CitaDetallePage() {
     { label: "Hora", value: cita?.horaInicio ? `${cita.horaInicio} - ${cita.horaFin}` : 'No especificada' },
     { label: "Notas Adicionales", value: cita?.notas || 'No especificadas' },
     { label: "Estado de la cita", value: obtenerEstadoTexto() },
-    // Fila 3: Correo y Teléfono del dueño
     { label: "Correo del dueño", value: obtenerEmailDueno() },
     { label: "Teléfono del dueño", value: obtenerTelefonoDueno() },
     ...(pacienteFallecido ? [
@@ -378,7 +367,6 @@ function CitaDetallePage() {
     ] : [])
   ];
 
-  // informacion del cliente temporal
   const informacionClienteTemporal = cita?.clienteTemporalId && !cita?.pacienteId ? [
     { label: "Nombre", value: cita.clienteTemporalId.username },
     { label: "Email", value: cita.clienteTemporalId.email || 'No registrado' },
@@ -420,22 +408,18 @@ function CitaDetallePage() {
 
       {!loading && cita && (
         <>
-          {/* card 1: informacion de la mascota usando InfoCard */}
           <InfoCard
             title="Información de la Mascota"
             data={informacionMascota}
           />
 
-          {/* card 2: informacion de la cita con botones dentro */}
           <div className="mt-6">
             <InfoCard
               title="Información de la Cita"
               data={informacionCita}
             >
-              {/* separador */}
               <div className="border-t border-gray-200 my-6"></div>
               
-              {/* botones de accion dentro de la card */}
               <div className="flex flex-wrap gap-3">
                 {cita.estado === 'pendiente' && (
                   <>
@@ -521,7 +505,6 @@ function CitaDetallePage() {
             </InfoCard>
           </div>
 
-          {/* card 3: cliente temporal si existe */}
           {informacionClienteTemporal.length > 0 && (
             <div className="mt-6">
               <InfoCard
@@ -531,7 +514,6 @@ function CitaDetallePage() {
             </div>
           )}
 
-          {/* mensaje de alerta si la mascota esta fallecida */}
           {pacienteFallecido && (
             <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg">
               <p className="text-gray-800 font-medium">
@@ -543,7 +525,6 @@ function CitaDetallePage() {
             </div>
           )}
 
-          {/* card 4: registro clinico */}
           <div className="mt-8">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
               <h3 className="text-xl font-semibold text-gray-800">Registro Clínico</h3>
@@ -593,14 +574,14 @@ function CitaDetallePage() {
                   { label: "Síntomas reportados", value: historial.sintomas || 'No especificados' },
                   { label: "Diagnóstico", value: historial.diagnostico || 'No especificado' },
                   { label: "Tratamiento indicado", value: historial.tratamiento || 'No especificado' },
-                  // ========== MEDICAMENTOS Y EXAMENES COMO TEXTO LIBRE ==========
                   { label: "Pronóstico", value: historial.medicamentos || 'No especificados' },
                   { label: "Exámenes realizados", value: historial.examenes || 'No especificados' },
                   { label: "Observaciones adicionales", value: historial.observaciones || 'No especificadas' },
                   { 
                     label: "Próxima cita sugerida", 
+                    // ✅ CAMBIO AQUÍ: usar mostrarFechaLocal en lugar de mostrarFechaHora
                     value: historial.proximaCitaSugerida 
-                      ? mostrarFechaHora(historial.proximaCitaSugerida)
+                      ? mostrarFechaLocal(historial.proximaCitaSugerida)
                       : 'No sugerida'
                   },
                 ]}
