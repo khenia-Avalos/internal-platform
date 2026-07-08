@@ -111,7 +111,9 @@ function CitaDetallePage() {
     return `Hola, quisiera reagendar mi cita del ${fecha} a las ${hora} con ${doctor} para ${mascota}. ¿Podrían ayudarme?`;
   };
 
-  // funciones de historial clinico
+  // ============================================
+  // FUNCIONES DE HISTORIAL CLINICO - ACTUALIZADAS
+  // ============================================
 
   const cargarHistorial = async () => {
     if (!id) return;
@@ -125,25 +127,14 @@ function CitaDetallePage() {
       
       if (res.data.data) {
         const h = res.data.data;
-        const medicamentosText = Array.isArray(h.medicamentos) && h.medicamentos.length > 0
-          ? h.medicamentos.map(m => 
-              `${m.nombre || ''} | ${m.dosis || ''} | ${m.frecuencia || ''} | ${m.duracion || ''} | ${m.via || ''}`
-            ).join('\n')
-          : '';
-        
-        const examenesText = Array.isArray(h.examenes) && h.examenes.length > 0
-          ? h.examenes.map(e => 
-              `${e.nombre || ''} | ${e.resultado || ''} | ${e.fecha ? new Date(e.fecha).toISOString().split('T')[0] : ''}`
-            ).join('\n')
-          : '';
-        
+        // ========== AHORA ES TEXTO LIBRE ==========
         setHistorialFormData({
           motivoConsulta: h.motivoConsulta || '',
           sintomas: h.sintomas || '',
           diagnostico: h.diagnostico || '',
           tratamiento: h.tratamiento || '',
-          medicamentos: medicamentosText,
-          examenes: examenesText,
+          medicamentos: h.medicamentos || '', // String
+          examenes: h.examenes || '',         // String
           observaciones: h.observaciones || '',
           proximaCitaSugerida: h.proximaCitaSugerida ? 
             new Date(h.proximaCitaSugerida).toISOString().split('T')[0] : ''
@@ -160,6 +151,7 @@ function CitaDetallePage() {
     }
   };
 
+  // ========== HANDLE CREATE - ACTUALIZADO ==========
   const handleCreateHistorial = async (data) => {
     console.log('handleCreateHistorial ejecutándose');
     console.log('Datos del formulario:', data);
@@ -170,12 +162,12 @@ function CitaDetallePage() {
         return;
       }
       
-      // verificar si el paciente esta fallecido
       if (pacienteFallecido) {
         toast.error('No se puede crear un registro clínico porque la mascota está marcada como fallecida');
         return;
       }
       
+      // ========== ENVÍO SIMPLE - TEXTO LIBRE ==========
       const datosEnvio = {
         pacienteId: cita.pacienteId._id,
         citaId: id,
@@ -183,10 +175,8 @@ function CitaDetallePage() {
         sintomas: data.sintomas || '',
         diagnostico: data.diagnostico || '',
         tratamiento: data.tratamiento || '',
-        medicamentos: data.medicamentos ? 
-          data.medicamentos.split('\n').filter(line => line.trim()) : [],
-        examenes: data.examenes ?
-          data.examenes.split('\n').filter(line => line.trim()) : [],
+        medicamentos: data.medicamentos || '', // Texto libre
+        examenes: data.examenes || '',         // Texto libre
         observaciones: data.observaciones || '',
         proximaCitaSugerida: data.proximaCitaSugerida || null
       };
@@ -212,6 +202,7 @@ function CitaDetallePage() {
     }
   };
 
+  // ========== HANDLE UPDATE - ACTUALIZADO ==========
   const handleUpdateHistorial = async (data) => {
     console.log('handleUpdateHistorial ejecutándose');
     console.log('Datos a actualizar:', data);
@@ -222,21 +213,19 @@ function CitaDetallePage() {
         return;
       }
       
-      // verificar si el paciente esta fallecido
       if (pacienteFallecido) {
         toast.error('No se puede actualizar el registro clínico porque la mascota está marcada como fallecida');
         return;
       }
       
+      // ========== ENVÍO SIMPLE - TEXTO LIBRE ==========
       const datosEnvio = {
         motivoConsulta: data.motivoConsulta || '',
         sintomas: data.sintomas || '',
         diagnostico: data.diagnostico || '',
         tratamiento: data.tratamiento || '',
-        medicamentos: data.medicamentos ? 
-          data.medicamentos.split('\n').filter(line => line.trim()) : [],
-        examenes: data.examenes ?
-          data.examenes.split('\n').filter(line => line.trim()) : [],
+        medicamentos: data.medicamentos || '', // Texto libre
+        examenes: data.examenes || '',         // Texto libre
         observaciones: data.observaciones || '',
         proximaCitaSugerida: data.proximaCitaSugerida || null
       };
@@ -284,8 +273,6 @@ function CitaDetallePage() {
   };
 
   // funciones de estado de cita
-
-
   const cambiarEstado = async (nuevoEstado) => {
     let mensajeConfirmacion = '';
     let mensajeExito = '';
@@ -606,20 +593,9 @@ function CitaDetallePage() {
                   { label: "Síntomas reportados", value: historial.sintomas || 'No especificados' },
                   { label: "Diagnóstico", value: historial.diagnostico || 'No especificado' },
                   { label: "Tratamiento indicado", value: historial.tratamiento || 'No especificado' },
-                  { 
-                    label: "Medicamentos recetados", 
-                    value: Array.isArray(historial.medicamentos) && historial.medicamentos.length > 0 
-                      ? historial.medicamentos.map(m => 
-                          `${m.nombre}${m.dosis ? ` (${m.dosis})` : ''}${m.frecuencia ? ` c/${m.frecuencia}` : ''}`
-                        ).join(', ')
-                      : 'No especificados'
-                  },
-                  { 
-                    label: "Exámenes realizados", 
-                    value: Array.isArray(historial.examenes) && historial.examenes.length > 0
-                      ? historial.examenes.map(e => `${e.nombre}${e.resultado ? `: ${e.resultado}` : ''}`).join(', ')
-                      : 'No especificados'
-                  },
+                  // ========== MEDICAMENTOS Y EXAMENES COMO TEXTO LIBRE ==========
+                  { label: "Medicamentos recetados", value: historial.medicamentos || 'No especificados' },
+                  { label: "Exámenes realizados", value: historial.examenes || 'No especificados' },
                   { label: "Observaciones adicionales", value: historial.observaciones || 'No especificadas' },
                   { 
                     label: "Próxima cita sugerida", 
