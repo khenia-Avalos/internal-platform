@@ -122,6 +122,7 @@ function ClienteDetallePage() {
 
   return (
     <div className="px-4 md:px-6 py-4 md:py-6 max-w-full">
+      {/* boton de volver */}
       <button
         onClick={() => navigate('/clientes')}
         className="mb-6 flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition text-sm md:text-base"
@@ -152,106 +153,148 @@ function ClienteDetallePage() {
 
       {!loading && cliente && (
         <>
-          {/* header con titulo y boton */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Información del Cliente</h2>
-            <button 
-              onClick={() => {
-                setErrors([]);
-                setModalAbierto(true);
-              }}
-              className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium text-sm"
-            >
-              Agregar Mascota
-            </button>
-          </div>
-
-          <InfoCard
-            title=""
-            data={[
-              { label: "Nombre completo", value: `${cliente.username} ${cliente.lastname}` },
-              { label: "Email", value: cliente.email },
-              { label: "Teléfono", value: cliente.phoneNumber },
-              { label: "Cédula", value: cliente.cedula },
-              { label: "Dirección", value: cliente.direccion },
-            ]}
-          />
-          
-          {/* seccion de mascotas */}
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Mascotas de {cliente.username}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mascotas.map((mascota) => (
-                <div key={mascota._id} className="relative">
-                  <InfoCard
-                    title={mascota.nombre}
-                    data={[
-                      { label: "Especie", value: mascota.especie },
-                      { label: "Raza", value: mascota.raza || 'Sin raza' },
-                      { label: "Edad", value: mascota.edad ? `${mascota.edad} años` : 'No especificada' },
-                    ]}
-                  />
-                  <button
-                    onClick={() => navigate(`/pacientes/${mascota._id}`)}
-                    className="absolute top-2 right-2 bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-700 transition text-sm font-medium shadow-sm"
-                  >
-                    Ver Detalle
-                  </button>
-                </div>
-              ))}
+          {/* card principal unificada */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* header con titulo y boton */}
+            <div className="bg-gray-100 px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4">
+              <h2 className="text-xl font-semibold text-gray-800">Información del Cliente</h2>
+              <button 
+                onClick={() => {
+                  setErrors([]);
+                  setModalAbierto(true);
+                }}
+                className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition font-medium text-sm"
+              >
+                Agregar Mascota
+              </button>
             </div>
-          </div>
 
-          {/* seccion de citas */}
-          <div className="mt-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">Historial de Citas</h3>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600">Filtrar por fecha:</label>
-                <input 
-                  type="date" 
-                  value={fechaFiltro} 
-                  onChange={(e) => setFechaFiltro(e.target.value)} 
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                />
-                {fechaFiltro && (
-                  <button 
-                    onClick={() => setFechaFiltro("")} 
-                    className="text-sm text-red-500 hover:text-red-700"
-                  >
-                    Limpiar
-                  </button>
+            <div className="p-6">
+              {/* seccion: informacion del cliente */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-gray-500">Nombre completo</p>
+                  <p className="text-base font-medium text-gray-800">{cliente.username} {cliente.lastname}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="text-base font-medium text-gray-800">{cliente.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Teléfono</p>
+                  <p className="text-base font-medium text-gray-800">{cliente.phoneNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Cédula</p>
+                  <p className="text-base font-medium text-gray-800">{cliente.cedula}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Dirección</p>
+                  <p className="text-base font-medium text-gray-800">{cliente.direccion}</p>
+                </div>
+              </div>
+
+              {/* separador */}
+              <div className="border-t border-gray-200 my-6"></div>
+
+              {/* seccion: mascotas */}
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Mascotas de {cliente.username}</h3>
+                </div>
+
+                {mascotas.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-gray-500">No hay mascotas registradas</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {mascotas.map((mascota) => (
+                      <div key={mascota._id} className="relative bg-white rounded-xl shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow">
+                        <div className="mb-2">
+                          <h4 className="text-lg font-semibold text-gray-800">{mascota.nombre}</h4>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Especie:</span>
+                            <span className="font-medium text-gray-700">{mascota.especie}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Raza:</span>
+                            <span className="font-medium text-gray-700">{mascota.raza || 'Sin raza'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Edad:</span>
+                            <span className="font-medium text-gray-700">{mascota.edad ? `${mascota.edad} años` : 'No especificada'}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/pacientes/${mascota._id}`)}
+                          className="mt-3 w-full bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-700 transition text-sm font-medium"
+                        >
+                          Ver Detalle
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* separador */}
+              <div className="border-t border-gray-200 my-6"></div>
+
+              {/* seccion: historial de citas */}
+              <div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">Historial de Citas</h3>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Filtrar por fecha:</label>
+                    <input 
+                      type="date" 
+                      value={fechaFiltro} 
+                      onChange={(e) => setFechaFiltro(e.target.value)} 
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    />
+                    {fechaFiltro && (
+                      <button 
+                        onClick={() => setFechaFiltro("")} 
+                        className="text-sm text-red-500 hover:text-red-700"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {citasLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                  </div>
+                ) : citas.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-gray-500">Este cliente no tiene citas registradas</p>
+                  </div>
+                ) : citasFiltradas.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-gray-500">No hay citas para la fecha seleccionada</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <DataTable
+                      columns={[
+                        { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
+                        { header: "Hora", accessor: "horaInicio" },
+                        { header: "Mascota", accessor: "nombreMascota" },
+                        { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username || 'No asignado' },
+                        { header: "Estado", accessor: "estado" }
+                      ]}
+                      data={citasFiltradas}
+                      onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
+                    />
+                  </div>
                 )}
               </div>
             </div>
-
-            {citasLoading ? (
-              <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-              </div>
-            ) : citas.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">Este cliente no tiene citas registradas</p>
-              </div>
-            ) : citasFiltradas.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">No hay citas para la fecha seleccionada</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
-                <DataTable
-                  columns={[
-                    { header: "Fecha", accessor: "fecha", render: (cita) => mostrarFechaLocal(cita.fecha) },
-                    { header: "Hora", accessor: "horaInicio" },
-                    { header: "Mascota", accessor: "nombreMascota" },
-                    { header: "Doctor", accessor: "doctorId", render: (cita) => cita.doctorId?.username || 'No asignado' },
-                    { header: "Estado", accessor: "estado" }
-                  ]}
-                  data={citasFiltradas}
-                  onRowClick={(cita) => navigate(`/citas/${cita._id}`)}
-                />
-              </div>
-            )}
           </div>
         </>
       )}
