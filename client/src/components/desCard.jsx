@@ -17,7 +17,7 @@ export const InfoCard = ({
       {/* Header con título y estado */}
       <div className="bg-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <h2 className={`text-xl font-semibold text-gray-800 ${titleClassName}`}>
-          {title || "Informacion"}
+          {title || "Información"}
         </h2>
         {status && (
           <span className={`text-sm font-medium ${statusColor}`}>
@@ -31,15 +31,15 @@ export const InfoCard = ({
         {data && data.length > 0 && (
           <div className={
             layout === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'
               : 'space-y-3'
           }>
             {data.map((item, index) => {
               // Si es un título (isTitle: true), mostrarlo centrado y ocupando todo el ancho
               if (item.isTitle) {
                 return (
-                  <div key={index} className={layout === 'grid' ? 'col-span-full' : ''}>
-                    <h3 className="text-xl font-semibold text-gray-800 text-center">
+                  <div key={index} className="col-span-full text-left">
+                    <h3 className="text-xl font-semibold text-gray-800">
                       {item.label}
                     </h3>
                   </div>
@@ -49,15 +49,15 @@ export const InfoCard = ({
               // Si es un separador
               if (item.isSeparator) {
                 return (
-                  <div key={index} className={layout === 'grid' ? 'col-span-full' : ''}>
+                  <div key={index} className="col-span-full">
                     <hr className="border-gray-200 my-2" />
                   </div>
                 );
               }
               
-              // Item normal
+              // Item normal con texto alineado a la izquierda
               return (
-                <div key={index}>
+                <div key={index} className="text-left">
                   <p className="text-sm text-gray-500">{item.label}</p>
                   <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
                     {item.value || 'No especificado'}
