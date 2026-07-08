@@ -38,8 +38,8 @@ export const InfoCard = ({
               // Si es un título (isTitle: true), mostrarlo centrado y ocupando todo el ancho
               if (item.isTitle) {
                 return (
-                  <div key={index} className="col-span-full text-left">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                  <div key={index} className="col-span-full">
+                    <h3 className="text-xl font-semibold text-gray-800 text-center">
                       {item.label}
                     </h3>
                   </div>
@@ -55,9 +55,9 @@ export const InfoCard = ({
                 );
               }
               
-              // Item normal con texto alineado a la izquierda
+              // Item normal con texto centrado
               return (
-                <div key={index} className="text-left">
+                <div key={index} className="text-center">
                   <p className="text-sm text-gray-500">{item.label}</p>
                   <p className={`text-base font-medium ${item.valueColor || 'text-gray-800'}`}>
                     {item.value || 'No especificado'}
