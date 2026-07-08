@@ -1,4 +1,3 @@
-// backend/src/routes/cita.routes.js
 import { Router } from 'express';
 import { 
   createCita,
@@ -16,22 +15,45 @@ import { validateToken } from '../middlewares/validateToken.js';
 
 const router = Router();
 
-// Rutas públicas (para agendar sin login)
-router.get('/citas/horarios/:doctorId/:fecha', getHorariosDisponibles);
-router.post('/citas', createCita);
-// Rutas para confirmar/cancelar desde el correo (públicas, sin validateToken)
-router.get('/confirmar-cita/:id', confirmarCitaConToken);
-router.get('/cancelar-cita/:id', cancelarCitaConToken);
+// ============================================
+// RUTAS PÚBLICAS (sin autenticación)
+// ============================================
 
-// ✅ AGREGAR ESTA RUTA PÚBLICA PARA COMPATIBILIDAD
+// Obtener horarios disponibles (ruta principal)
+router.get('/citas/horarios/:doctorId/:fecha', getHorariosDisponibles);
+
+// Ruta pública para horarios (para compatibilidad con HomePage)
 router.get('/public/horarios/:doctorId/:fecha', getHorariosDisponibles);
 
-// Rutas protegidas (requieren autenticación)
+// Crear cita (público para agendar sin login)
+router.post('/citas', createCita);
+
+// Confirmar cita desde el correo
+router.get('/confirmar-cita/:id', confirmarCitaConToken);
+
+// Cancelar cita desde el correo
+router.get('/cancelar-cita/:id', cancelarCitaConToken);
+
+// ============================================
+// RUTAS PROTEGIDAS (requieren autenticación)
+// ============================================
+
+// Obtener citas por doctor
 router.get('/citas/doctor/:doctorId', validateToken, getCitasByDoctor);
+
+// Obtener citas por paciente
 router.get('/citas/paciente/:pacienteId', validateToken, getCitasByPaciente);
-router.put('/citas/:id', validateToken, updateCita);
-router.delete('/citas/:id', validateToken, deleteCita);
+
+// Obtener todas las citas
 router.get('/citas', validateToken, getCitasRequest);
+
+// Obtener una cita por ID
 router.get('/citas/:id', validateToken, getCitaById);
+
+// Actualizar cita
+router.put('/citas/:id', validateToken, updateCita);
+
+// Eliminar cita
+router.delete('/citas/:id', validateToken, deleteCita);
 
 export default router;
