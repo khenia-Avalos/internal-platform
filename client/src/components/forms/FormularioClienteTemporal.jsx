@@ -19,6 +19,7 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     cedula: '',
     nombreMascota: '',
     especie: '',
+    otraEspecie: '', // Nuevo campo para especificar "otro"
     doctorId: '',
     fechaCita: '',
     tipoCita: 'consulta',
@@ -162,6 +163,9 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
     if (!formData.especie) {
       nuevosErrores.push('La especie de la mascota es requerida');
       nuevosFieldErrors.especie = 'La especie es requerida';
+    } else if (formData.especie === 'otro' && (!formData.otraEspecie || formData.otraEspecie.trim() === '')) {
+      nuevosErrores.push('Debe especificar la especie de la mascota');
+      nuevosFieldErrors.otraEspecie = 'Especifique la especie';
     }
     
     // Validar doctor
@@ -170,25 +174,21 @@ export const FormularioClienteTemporal = ({ onSuccess, onCancel }) => {
       nuevosFieldErrors.doctorId = 'Seleccione un veterinario';
     }
   
-    //  Validar fecha (que no sea pasada)
-if (!formData.fechaCita) {
-  nuevosErrores.push('La fecha de la cita es requerida');
-  nuevosFieldErrors.fechaCita = 'Seleccione una fecha';
-} else {
-  // Crear fecha seleccionada en hora local (no UTC)
-  const [year, month, day] = formData.fechaCita.split('-').map(Number);
-  const fechaSeleccionada = new Date(year, month - 1, day);
-  
-  // Fecha actual en hora local (sin horas)
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  
-  // Comparar correctamente
-  if (fechaSeleccionada < hoy) {
-    nuevosErrores.push('No se pueden agendar citas para fechas pasadas');
-    nuevosFieldErrors.fechaCita = 'Seleccione una fecha futura';
-  }
-}
+    // Validar fecha (que no sea pasada)
+    if (!formData.fechaCita) {
+      nuevosErrores.push('La fecha de la cita es requerida');
+      nuevosFieldErrors.fechaCita = 'Seleccione una fecha';
+    } else {
+      const [year, month, day] = formData.fechaCita.split('-').map(Number);
+      const fechaSeleccionada = new Date(year, month - 1, day);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      if (fechaSeleccionada < hoy) {
+        nuevosErrores.push('No se pueden agendar citas para fechas pasadas');
+        nuevosFieldErrors.fechaCita = 'Seleccione una fecha futura';
+      }
+    }
     
     // Validar horario
     if (!horarioSeleccionado) {
@@ -200,7 +200,6 @@ if (!formData.fechaCita) {
       setErrors(nuevosErrores);
       setFieldErrors(nuevosFieldErrors);
       
-      // Enfocar el primer campo con error
       const primerCampoError = Object.keys(nuevosFieldErrors)[0];
       if (primerCampoError) {
         const inputElement = document.querySelector(`[name="${primerCampoError}"]`);
@@ -216,6 +215,11 @@ if (!formData.fechaCita) {
     setErrors([]);
     
     try {
+      // Determinar la especie final (si es "otro", usar el valor de otraEspecie)
+      const especieFinal = formData.especie === 'otro' 
+        ? formData.otraEspecie.trim() 
+        : formData.especie;
+      
       const datosEnvio = {
         username: formData.username.trim(),
         lastname: formData.lastname || '',
@@ -223,7 +227,7 @@ if (!formData.fechaCita) {
         email: formData.email.toLowerCase().trim(),
         cedula: formData.cedula.trim(),
         nombreMascota: formData.nombreMascota.trim(),
-        especie: formData.especie,
+        especie: especieFinal,
         doctorId: formData.doctorId,
         fechaCita: formData.fechaCita,
         horaInicio: horarioSeleccionado.inicio,
@@ -234,11 +238,11 @@ if (!formData.fechaCita) {
         notas: formData.notas || ''
       };
       
-      console.log(" Datos a enviar:", datosEnvio);
+      console.log("Datos a enviar:", datosEnvio);
       
       await createClienteTemporalRequest(datosEnvio);
       
-      toast.success(' ¡Cita agendada exitosamente! Se ha enviado un correo de confirmación.', {
+      toast.success('¡Cita agendada exitosamente! Se ha enviado un correo de confirmación.', {
         duration: 5000,
         position: "top-right"
       });
@@ -246,19 +250,16 @@ if (!formData.fechaCita) {
       if (onSuccess) onSuccess();
       
     } catch (error) {
-      console.error(' Error:', error);
+      console.error('Error:', error);
       
-      // Manejar error específico del backend
       if (error.response?.data?.message) {
         const mensaje = error.response.data.message;
         const field = error.response.data.field;
         
-        // Si el backend envió un campo específico, mostrar error junto a ese campo
         if (field) {
           setFieldErrors({ [field]: mensaje });
           setErrors([mensaje]);
           
-          // Enfocar el campo con error
           const inputElement = document.querySelector(`[name="${field}"]`);
           if (inputElement) {
             inputElement.focus();
@@ -268,11 +269,11 @@ if (!formData.fechaCita) {
           setErrors([mensaje]);
         }
         
-        toast.error(` ${mensaje}`, { duration: 5000 });
+        toast.error(mensaje, { duration: 5000 });
       } else {
         const mensajeError = 'Error al agendar cita. Intente nuevamente.';
         setErrors([mensajeError]);
-        toast.error(` ${mensajeError}`);
+        toast.error(mensajeError);
       }
     } finally {
       setLoading(false);
@@ -288,11 +289,11 @@ if (!formData.fechaCita) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4"> Agendar Cita </h2>
+      <h2 className="text-xl font-semibold mb-4">Agendar Cita</h2>
       
-      <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
-        <p className="text-sm text-blue-700">
-           Agendamiento rápido - La cédula será su identificador único.
+      <div className="bg-cyan-50 p-3 rounded-lg mb-4 border border-cyan-200">
+        <p className="text-sm text-cyan-700">
+          Agendamiento rápido - La cédula será su identificador único.
         </p>
       </div>
 
@@ -300,7 +301,7 @@ if (!formData.fechaCita) {
       {errors.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
           {errors.map((err, i) => (
-            <p key={i} className="text-sm"> {err}</p>
+            <p key={i} className="text-sm">{err}</p>
           ))}
         </div>
       )}
@@ -309,7 +310,7 @@ if (!formData.fechaCita) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del dueño * 
+            Nombre del dueño *
             {fieldErrors.username && <span className="text-red-500 ml-2 text-xs">{fieldErrors.username}</span>}
           </label>
           <input
@@ -336,7 +337,7 @@ if (!formData.fechaCita) {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Cédula * 
+            Cédula *
             {fieldErrors.cedula && <span className="text-red-500 ml-2 text-xs">{fieldErrors.cedula}</span>}
           </label>
           <input
@@ -352,7 +353,7 @@ if (!formData.fechaCita) {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Teléfono * 
+            Teléfono *
             {fieldErrors.phoneNumber && <span className="text-red-500 ml-2 text-xs">{fieldErrors.phoneNumber}</span>}
           </label>
           <input
@@ -368,7 +369,7 @@ if (!formData.fechaCita) {
         
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Correo electrónico * 
+            Correo electrónico *
             {fieldErrors.email && <span className="text-red-500 ml-2 text-xs">{fieldErrors.email}</span>}
           </label>
           <input
@@ -389,7 +390,7 @@ if (!formData.fechaCita) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre de la mascota * 
+            Nombre de la mascota *
             {fieldErrors.nombreMascota && <span className="text-red-500 ml-2 text-xs">{fieldErrors.nombreMascota}</span>}
           </label>
           <input
@@ -404,7 +405,7 @@ if (!formData.fechaCita) {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Especie * 
+            Especie *
             {fieldErrors.especie && <span className="text-red-500 ml-2 text-xs">{fieldErrors.especie}</span>}
           </label>
           <select
@@ -414,16 +415,37 @@ if (!formData.fechaCita) {
             className={getInputClass('especie')}
           >
             <option value="">Selecciona una especie</option>
-            <option value="perro">Perro </option>
-            <option value="gato">Gato </option>
-            <option value="conejo">Conejo </option>
-            <option value="ave">Ave </option>
-            <option value="hámster">Hámster </option>
-            <option value="tortuga">Tortuga </option>
+            <option value="perro">Perro</option>
+            <option value="gato">Gato</option>
+            <option value="conejo">Conejo</option>
+            <option value="ave">Ave</option>
+            <option value="hámster">Hámster</option>
+            <option value="tortuga">Tortuga</option>
             <option value="otro">Otro</option>
           </select>
         </div>
       </div>
+
+      {/* Campo adicional para especificar "otro" */}
+      {formData.especie === 'otro' && (
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Especificar especie *
+              {fieldErrors.otraEspecie && <span className="text-red-500 ml-2 text-xs">{fieldErrors.otraEspecie}</span>}
+            </label>
+            <input
+              type="text"
+              name="otraEspecie"
+              value={formData.otraEspecie}
+              onChange={handleChange}
+              className={getInputClass('otraEspecie')}
+              placeholder="Ej: Cerdo, Caballo, Cobayo, etc."
+            />
+            <p className="text-xs text-gray-400 mt-1">Especifique la especie de su mascota</p>
+          </div>
+        </div>
+      )}
 
       {/* Datos de la cita */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -435,14 +457,14 @@ if (!formData.fechaCita) {
             onChange={handleChange}
             className="w-full border border-cyan-400 rounded-md px-3 py-2"
           >
-            <option value="consulta">Consulta médica </option>
-            <option value="estetica">Estética (baño/corte) </option>
+            <option value="consulta">Consulta médica</option>
+            <option value="estetica">Estética (baño/corte)</option>
           </select>
         </div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Veterinario * 
+            Veterinario *
             {fieldErrors.doctorId && <span className="text-red-500 ml-2 text-xs">{fieldErrors.doctorId}</span>}
           </label>
           <select
@@ -464,7 +486,7 @@ if (!formData.fechaCita) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Fecha de la cita * 
+            Fecha de la cita *
             {fieldErrors.fechaCita && <span className="text-red-500 ml-2 text-xs">{fieldErrors.fechaCita}</span>}
           </label>
           <input
@@ -472,14 +494,14 @@ if (!formData.fechaCita) {
             name="fechaCita"
             value={formData.fechaCita}
             onChange={handleChange}
-            min={obtenerFechaMinima()} //  Esto deshabilita fechas pasadas en el calendario
+            min={obtenerFechaMinima()}
             className={getInputClass('fechaCita')}
           />
         </div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Horario disponible * 
+            Horario disponible *
             {fieldErrors.horario && <span className="text-red-500 ml-2 text-xs">{fieldErrors.horario}</span>}
           </label>
           {cargandoHorarios ? (
@@ -508,7 +530,7 @@ if (!formData.fechaCita) {
           )}
           {horarioSeleccionado && (
             <p className="text-sm text-green-600 mt-1">
-               Horario seleccionado: {horarioSeleccionado.inicio} - {horarioSeleccionado.fin}
+              Horario seleccionado: {horarioSeleccionado.inicio} - {horarioSeleccionado.fin}
             </p>
           )}
         </div>
