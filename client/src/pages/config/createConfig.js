@@ -393,7 +393,7 @@ completarRegistroCliente: {
     },
     {
       name: "peso",
-      type: "number",
+      type: "text",
       label: "Peso (kg)",
       placeholder: "Ej: 8.5",
       validation: {
@@ -407,7 +407,7 @@ completarRegistroCliente: {
     },
     {
       name: "temperatura",
-      type: "number",
+      type: "text",
       label: "Temperatura (°C)",
       placeholder: "Ej: 38.5",
       validation: {

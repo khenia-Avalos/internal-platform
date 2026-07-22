@@ -170,7 +170,7 @@ editpaciente: {
     },
     {
       name: "temperatura",
-      type: "number",
+      type: "text",
       label: "Temperatura",
       placeholder: "Temperatura del paciente"
     },
