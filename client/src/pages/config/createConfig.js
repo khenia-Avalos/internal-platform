@@ -346,7 +346,27 @@ completarRegistroCliente: {
       placeholder: "Ej: Pérez Gómez",
       validation: { required: "El apellido es requerido" }
     },
-  
+    {
+        name: "email",
+        type: "email",
+        label: "Correo electrónico",
+        placeholder: "tu@email.com",
+        validation: {
+          required: "El email es requerido",
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: "Email inválido"
+          }
+        }
+      },
+     
+    {
+      name: "cedula",
+      type: "text",
+      label: "Cédula",
+      placeholder: "000000000",
+      validation: { required: "La cédula es requerida" }
+    },
     {
       name: "direccion",
       type: "text",

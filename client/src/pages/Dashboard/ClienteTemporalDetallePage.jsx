@@ -49,22 +49,84 @@ function ClienteTemporalDetallePage() {
     }
   }, [id]);
 
+  // ========== FUNCIÓN PARA PREPARAR DEFAULT VALUES ==========
+  const getDefaultValues = () => {
+    if (!cliente) return {};
+    
+    return {
+      // Datos del cliente que ya tiene
+      lastname: cliente.lastname || '',
+      cedula: cliente.cedula || '',
+      direccion: cliente.direccion || '',
+      email: cliente.email || '',
+      
+      // Datos de la mascota (vacíos para completar)
+      raza: '',
+      edad: '',
+      sexo: '',
+      colorPelaje: '',
+      peso: '',
+      temperatura: '',
+      antecedentesMedicos: ''
+    };
+  };
+
+  // ========== HANDLE SUBMIT CON VALIDACIONES ==========
   const handleSubmitCompletar = async (data) => {
+    console.log("📝 Datos recibidos del formulario:", data);
+    
     setSubmitting(true);
     setErrors([]);
     
     try {
+      // Sanitizar datos usando optional chaining y valores por defecto
       const dataToSend = {
-        lastname: data.lastname.trim(),
-        direccion: data.direccion.trim(),
-        raza: data.raza || '',
-        edad: data.edad ? parseInt(data.edad) : null,
-        sexo: data.sexo || '',
-        colorPelaje: data.colorPelaje || '',
-        peso: data.peso ? parseFloat(data.peso) : null,
-        temperatura: data.temperatura ? parseFloat(data.temperatura) : null,
-        antecedentesMedicos: data.antecedentesMedicos || ''
+        lastname: data?.lastname?.trim() || '',
+        cedula: data?.cedula?.trim() || '',
+        direccion: data?.direccion?.trim() || '',
+        email: data?.email?.toLowerCase().trim() || '',
+        raza: data?.raza || '',
+        edad: data?.edad ? parseInt(data.edad) : null,
+        sexo: data?.sexo || '',
+        colorPelaje: data?.colorPelaje || '',
+        peso: data?.peso ? parseFloat(data.peso) : null,
+        temperatura: data?.temperatura ? parseFloat(data.temperatura) : null,
+        antecedentesMedicos: data?.antecedentesMedicos || ''
       };
+      
+      console.log("📤 Datos a enviar:", dataToSend);
+      
+      // Validar campos obligatorios
+      const camposRequeridos = ['lastname', 'cedula', 'direccion', 'email'];
+      const camposFaltantes = camposRequeridos.filter(campo => !dataToSend[campo]);
+      
+      if (camposFaltantes.length > 0) {
+        const mensaje = `Los siguientes campos son obligatorios: ${camposFaltantes.join(', ')}`;
+        setErrors([mensaje]);
+        toast.error(mensaje);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Validar formato de email
+      const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+      if (dataToSend.email && !emailRegex.test(dataToSend.email)) {
+        const mensaje = 'Ingrese un correo electrónico válido';
+        setErrors([mensaje]);
+        toast.error(mensaje);
+        setSubmitting(false);
+        return;
+      }
+      
+      // Validar cédula
+      const cedulaRegex = /^\d{6,12}$/;
+      if (dataToSend.cedula && !cedulaRegex.test(dataToSend.cedula)) {
+        const mensaje = 'La cédula debe tener 6-12 dígitos numéricos';
+        setErrors([mensaje]);
+        toast.error(mensaje);
+        setSubmitting(false);
+        return;
+      }
       
       await completarRegistroClienteTemporalRequest(id, dataToSend);
       
@@ -78,6 +140,7 @@ function ClienteTemporalDetallePage() {
       
     } catch (error) {
       console.error("Error al completar registro:", error);
+      console.error("Detalles del error:", error.response?.data);
       
       if (error.response?.data?.message) {
         const mensaje = error.response.data.message;
@@ -199,7 +262,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* ========== MODAL MEJORADO ========== */}
+      {/* ========== MODAL CON VALORES PRECARGADOS ========== */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
@@ -213,8 +276,10 @@ function ClienteTemporalDetallePage() {
           {/* indicador de campos requeridos */}
           <div className="mb-4 text-sm text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-200">
             <span className="text-red-500">*</span> Campos obligatorios
+            <span className="ml-4 text-cyan-600">✓</span> Campos precargados con la información del cliente
           </div>
           
+          {/* ========== DYNAMICFORM CON DEFAULT VALUES PRECARGADOS ========== */}
           <DynamicForm
             {...createConfig.completarRegistroCliente}
             onSubmit={handleSubmitCompletar}
@@ -222,6 +287,7 @@ function ClienteTemporalDetallePage() {
             successMessage={successMessage}
             submitLabel={submitting ? 'Guardando...' : 'Completar Registro'}
             layout="grid"
+            defaultValues={getDefaultValues()} // ← PRECARGAR DATOS DEL CLIENTE
           />
         </div>
       </Modal>
