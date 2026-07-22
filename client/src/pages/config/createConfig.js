@@ -346,19 +346,7 @@ completarRegistroCliente: {
       placeholder: "Ej: Pérez Gómez",
       validation: { required: "El apellido es requerido" }
     },
-    {
-      name: "cedula",
-      type: "text",
-      label: "Cédula *",
-      placeholder: "000000000",
-      validation: { 
-        required: "La cédula es requerida",
-        pattern: {
-          value: /^\d{6,12}$/,
-          message: "La cédula debe tener 6-12 dígitos numéricos"
-        }
-      }
-    },
+  
     {
       name: "direccion",
       type: "text",
@@ -366,19 +354,7 @@ completarRegistroCliente: {
       placeholder: "San José, Costa Rica",
       validation: { required: "La dirección es requerida" }
     },
-    {
-      name: "email",
-      type: "email",
-      label: "Correo electrónico *",
-      placeholder: "cliente@ejemplo.com",
-      validation: { 
-        required: "El correo electrónico es requerido",
-        pattern: {
-          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-          message: "Ingrese un correo electrónico válido"
-        }
-      }
-    },
+   
     // DATOS DE LA MASCOTA
     {
       name: "raza",
