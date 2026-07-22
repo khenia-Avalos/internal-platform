@@ -56,9 +56,7 @@ function ClienteTemporalDetallePage() {
     try {
       const dataToSend = {
         lastname: data.lastname.trim(),
-        cedula: data.cedula.trim(),
         direccion: data.direccion.trim(),
-        email: data.email.toLowerCase().trim(),
         raza: data.raza || '',
         edad: data.edad ? parseInt(data.edad) : null,
         sexo: data.sexo || '',
