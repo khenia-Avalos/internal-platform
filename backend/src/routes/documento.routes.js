@@ -1,3 +1,5 @@
+// src/routes/documentos.routes.js
+
 import { Router } from 'express';
 import { 
     getDocumentosByPaciente,
@@ -5,7 +7,11 @@ import {
     deleteDocumento,
     verDocumento
 } from '../controllers/documento.controller.js';
-import { validateToken, adminRequired } from '../middlewares/validateToken.js';
+import { 
+    validateToken, 
+    doctorOrRecepcionOrAdminRequired,
+    canViewDocuments
+} from '../middlewares/validateToken.js';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
@@ -16,11 +22,19 @@ const upload = multer({
 
 const router = Router();
 
+// Todas las rutas requieren token
 router.use(validateToken);
 
-router.get('/paciente/:pacienteId', getDocumentosByPaciente);
-router.post('/', adminRequired, upload.single('archivo'), uploadDocumento);
-router.get('/ver/:id', verDocumento);
-router.delete('/:id', adminRequired, deleteDocumento);
+// GET - Clientes tambien pueden ver documentos
+router.get('/paciente/:pacienteId', canViewDocuments, getDocumentosByPaciente);
+
+// POST - Solo admin, doctor y recepcion pueden subir
+router.post('/', doctorOrRecepcionOrAdminRequired, upload.single('archivo'), uploadDocumento);
+
+// GET - Clientes tambien pueden ver documentos
+router.get('/ver/:id', canViewDocuments, verDocumento);
+
+// DELETE - Solo admin, doctor y recepcion pueden eliminar
+router.delete('/:id', doctorOrRecepcionOrAdminRequired, deleteDocumento);
 
 export default router;
