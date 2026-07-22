@@ -201,7 +201,7 @@ function ClienteTemporalDetallePage() {
         </>
       )}
 
-      {/* modal para completar registro usando DynamicForm */}
+      {/* ========== MODAL MEJORADO ========== */}
       <Modal
         isOpen={mostrarModalCompletar}
         onClose={() => {
@@ -209,16 +209,21 @@ function ClienteTemporalDetallePage() {
           setErrors([]);
         }}
         title="Completar Registro de Cliente"
-        size="lg"
+        size="xl"
       >
-        <div className="bg-white p-6 rounded-lg max-h-[70vh] overflow-y-auto">
+        <div className="p-4 md:p-6">
+          {/* indicador de campos requeridos */}
+          <div className="mb-4 text-sm text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <span className="text-red-500">*</span> Campos obligatorios
+          </div>
+          
           <DynamicForm
             {...createConfig.completarRegistroCliente}
             onSubmit={handleSubmitCompletar}
             errors={errors}
             successMessage={successMessage}
             submitLabel={submitting ? 'Guardando...' : 'Completar Registro'}
-            disabled={submitting}
+            layout="grid"
           />
         </div>
       </Modal>
