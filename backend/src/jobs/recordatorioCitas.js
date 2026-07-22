@@ -7,8 +7,39 @@ import { SENDGRID_API_KEY, SENDGRID_FROM_EMAIL } from '../config.js';
 // configurar sendgrid
 sgMail.setApiKey(SENDGRID_API_KEY);
 
+// ========== FUNCIÓN PARA FORMATEAR FECHA CORRECTAMENTE ==========
+const formatearFechaLocal = (fechaStr) => {
+  if (!fechaStr) return 'No especificada';
+  
+  // Si es un string ISO, extraer solo la fecha
+  if (typeof fechaStr === 'string' && fechaStr.includes('T')) {
+    const [year, month, day] = fechaStr.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+  }
+  
+  // Si es un string con formato YYYY-MM-DD
+  if (typeof fechaStr === 'string' && fechaStr.includes('-')) {
+    const [year, month, day] = fechaStr.split('-');
+    return `${day}/${month}/${year}`;
+  }
+  
+  // Si es un objeto Date
+  try {
+    const date = new Date(fechaStr);
+    if (isNaN(date.getTime())) return 'No especificada';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  } catch {
+    return 'No especificada';
+  }
+};
+
 const sendReminderEmail = async (email, nombre, cita) => {
-  const fecha = new Date(cita.fecha).toLocaleDateString('es-CR', { timeZone: 'America/Costa_Rica' });
+  // ========== USAR LA FUNCIÓN DE FORMATEO ==========
+  const fecha = formatearFechaLocal(cita.fecha);
+  
   const html = `
 <!DOCTYPE html>
 <html>
