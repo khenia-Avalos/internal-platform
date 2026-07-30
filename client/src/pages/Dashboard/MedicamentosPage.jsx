@@ -243,58 +243,54 @@ function MedicamentosPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <DataTable
-              columns={[
-                { 
-                  header: "Foto", 
-                  accessor: "foto",
-                  render: (item) => (
-                    item.foto ? (
-                      <img 
-                        src={item.foto} 
-                        alt={item.nombre} 
-                        className="w-12 h-12 object-cover rounded-lg border border-gray-200"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `
-                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                              <span class="text-2xl"></span>
-                            </div>
-                          `;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                        <span className="text-2xl"></span>
-                      </div>
-                    )
-                  )
-                },
-                { header: "Medicamento", accessor: "nombre" },
-                { header: "Vía", accessor: "via" },
-                { header: "Presentación", accessor: "presentacion" },
-                { 
-                  header: "Para qué sirve", 
-                  accessor: "paraQueSirve",
-                  render: (item) => (
-                    <span className="line-clamp-2 max-w-xs text-sm">
-                      {item.paraQueSirve}
-                    </span>
-                  )
-                }
-              ]}
-              data={medicamentos}
-              onEdit={isAdmin ? (medicamento) => {
-                setMedicamentoSeleccionado(medicamento);
-                setShowEditForm(true);
-                setErrors([]);
-              } : undefined}
-              onDelete={isAdmin ? (medicamento) => {
-                handleDeleteMedicamento(medicamento._id, medicamento.nombre);
-              } : undefined}
+        <div className="overflow-x-auto">
+  <DataTable
+    columns={[
+      { 
+        header: "Foto", 
+        accessor: "foto",
+        render: (item) => (
+          item.foto ? (
+            <img 
+              src={item.foto} 
+              alt={item.nombre} 
+              className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
             />
-          </div>
+          ) : (
+            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+              <span className="text-2xl">💊</span>
+            </div>
+          )
+        )
+      },
+      { header: "Medicamento", accessor: "nombre" },
+      { header: "Vía", accessor: "via" },
+      { header: "Presentación", accessor: "presentacion" },
+      { 
+        header: "Para qué sirve", 
+        accessor: "paraQueSirve",
+        render: (item) => (
+          <span className="line-clamp-2 max-w-xs text-sm">
+            {item.paraQueSirve}
+          </span>
+        )
+      }
+    ]}
+    data={medicamentos}
+    onRowClick={(medicamento) => navigate(`/medicamentos/${medicamento._id}`)}
+    onEdit={isAdmin ? (medicamento) => {
+      setMedicamentoSeleccionado(medicamento);
+      setShowEditForm(true);
+      setErrors([]);
+    } : undefined}
+    onDelete={isAdmin ? (medicamento) => {
+      handleDeleteMedicamento(medicamento._id, medicamento.nombre);
+    } : undefined}
+  />
+</div>
         )}
       </div>
     </div>
