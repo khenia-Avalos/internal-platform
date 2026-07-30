@@ -259,14 +259,14 @@ function MedicamentosPage() {
                           e.target.style.display = 'none';
                           e.target.parentElement.innerHTML = `
                             <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                              <span class="text-2xl">💊</span>
+                              <span class="text-2xl"></span>
                             </div>
                           `;
                         }}
                       />
                     ) : (
                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                        <span className="text-2xl">💊</span>
+                        <span className="text-2xl"></span>
                       </div>
                     )
                   )
