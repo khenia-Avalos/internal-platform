@@ -390,6 +390,80 @@ editHistorialClinico: {
     }
   ],
   submitLabel: "Actualizar Registro Clínico"
+},
+
+
+
+editMedicamento: {
+  title: "Editar Medicamento",
+  fields: [
+    {
+      name: "nombre",
+      type: "text",
+      label: "Nombre del medicamento *",
+      placeholder: "Ej: Amoxicilina",
+      validation: { required: "El nombre es requerido" }
+    },
+    {
+      name: "via",
+      type: "select",
+      label: "Vía de administración *",
+      options: [
+        { value: "Oral", label: "Oral" },
+        { value: "Intramuscular", label: "Intramuscular" },
+        { value: "Intravenosa", label: "Intravenosa" },
+        { value: "Subcutánea", label: "Subcutánea" },
+        { value: "Tópica", label: "Tópica" },
+        { value: "Inhalatoria", label: "Inhalatoria" },
+        { value: "Oftálmica", label: "Oftálmica" },
+        { value: "Ótica", label: "Ótica" }
+      ],
+      validation: { required: "La vía es requerida" }
+    },
+    {
+      name: "presentacion",
+      type: "text",
+      label: "Presentación *",
+      placeholder: "Ej: Cápsulas 500mg, Jarabe 250ml",
+      validation: { required: "La presentación es requerida" }
+    },
+    {
+      name: "paraQueSirve",
+      type: "textarea",
+      label: "¿Para qué sirve? *",
+      placeholder: "Descripción de los usos del medicamento...",
+      rows: 3,
+      validation: { required: "Este campo es requerido" }
+    },
+    {
+      name: "foto",
+      type: "text",
+      label: "URL de la foto",
+      placeholder: "https://ejemplo.com/foto.jpg"
+    },
+    {
+      name: "dosis",
+      type: "text",
+      label: "Dosis recomendada",
+      placeholder: "Ej: 500mg cada 8 horas"
+    },
+    {
+      name: "contraindicaciones",
+      type: "textarea",
+      label: "Contraindicaciones",
+      placeholder: "Situaciones donde no se debe usar...",
+      rows: 2
+    },
+    {
+      name: "efectosSecundarios",
+      type: "textarea",
+      label: "Efectos secundarios",
+      placeholder: "Posibles efectos adversos...",
+      rows: 2
+    }
+  ],
+  submitLabel: "Actualizar Medicamento",
+  successMessage: "Medicamento actualizado exitosamente"
 }
 
 };

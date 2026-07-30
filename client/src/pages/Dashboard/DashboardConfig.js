@@ -47,6 +47,11 @@ export const dashboardModules = {
       name: "Pacientes",
       component: PacientesPage,
     },
+     {
+      id: "medicamentos",
+      name: "Medicamentos",
+      component: MedicamentosPage,
+    },
   ],
   
   [ROLES.DOCTOR]: [

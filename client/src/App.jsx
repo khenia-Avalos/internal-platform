@@ -18,6 +18,8 @@ import DoctorDetallePage from './pages/Dashboard/DoctorDetallePage.jsx';
 import CitaDetallePage from "./pages/Dashboard/CitaDetallePage";
 import ForgotPassword from "./pages/ForgotPassword"; 
 import ResetPassword from "./pages/ResetPassword"; 
+import MedicamentosPage from './pages/Dashboard/MedicamentosPage';
+
 
 function App() {
   
@@ -51,6 +53,8 @@ function App() {
                     <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
                     <Route path="/doctores/:id" element={<DoctorDetallePage />} /> 
                                       <Route path="/clientes-temporales/:id" element={<ClienteTemporalDetallePage />} />
+                                      <Route path="/medicamentos" element={<MedicamentosPage />} />
+
 
                   </Route>
                 </Route>
