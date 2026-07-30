@@ -17,6 +17,8 @@ import citaRoutes from './routes/cita.routes.js';
 import clientesTemporalesRoutes from './routes/clientesTemporales.routes.js';
 import historialRoutes from './routes/historialClinico.routes.js';
 import documentoRoutes from './routes/documento.routes.js';
+import medicamentoRoutes from './routes/medicamento.routes.js';
+
 import { FRONTEND_URL } from "./config.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -61,5 +63,7 @@ app.use("/api", internadoRoutes);
 app.use("/api", pausaRoutes);
 app.use("/api", citaRoutes);
 app.use("/api", clientesTemporalesRoutes);
+app.use('/api', medicamentoRoutes);
+
 
 export default app;
